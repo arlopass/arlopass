@@ -1,0 +1,23 @@
+{
+  "name": "@byom-ai/bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@byom-ai/audit": "file:../../packages/audit",
+    "@byom-ai/policy": "file:../../packages/policy",
+    "@byom-ai/protocol": "file:../../packages/protocol",
+    "@byom-ai/telemetry": "file:../../packages/telemetry"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "byom-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BYOM AI monorepo workspace bootstrap",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "adapters/*"
+  ],
+  "scripts": {
+    "dev:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode setup",
+    "dev:validate": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode validate",
+    "dev:watch": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode watch",
+    "dev:bridge": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode bridge",
+    "dev:full": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode full",
+    "dev:bash:setup": "bash ./scripts/dev/run-dev.sh setup",
+    "dev:bash:validate": "bash ./scripts/dev/run-dev.sh validate",
+    "dev:bash:watch": "bash ./scripts/dev/run-dev.sh watch",
+    "dev:bash:bridge": "bash ./scripts/dev/run-dev.sh bridge",
+    "dev:bash:full": "bash ./scripts/dev/run-dev.sh full",
+    "build": "npm run -ws --if-present build",
+    "lint": "npm run -ws --if-present lint",
+    "typecheck": "npm run -ws --if-present typecheck",
+    "test": "vitest --workspace vitest.workspace.ts --run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@typescript-eslint/eslint-plugin": "^8.30.1",
+    "@typescript-eslint/parser": "^8.30.1",
+    "eslint": "^8.57.1",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.9"
+  }
+}

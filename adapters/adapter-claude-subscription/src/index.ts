@@ -228,9 +228,10 @@ export class ClaudeSubscriptionAdapter implements AdapterContract {
     let fullContent = "";
 
     try {
-      while (true) {
+      let streaming = true;
+      while (streaming) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) { streaming = false; break; }
         const text = decoder.decode(value, { stream: true });
         // Anthropic uses SSE format: "data: {...}\n\n"
         for (const line of text.split("\n")) {

@@ -1,0 +1,226 @@
+import { describe, expect, it } from "vitest";
+
+import { BYOMClient } from "../client.js";
+import {
+  BYOMStateError,
+  BYOMTimeoutError,
+  SDK_MACHINE_CODES,
+} from "../errors.js";
+import type {
+  ChatSendPayload,
+  ChatSendResponsePayload,
+  ChatStreamPayload,
+  ChatStreamResponsePayload,
+  TransportRequest,
+  TransportResponse,
+} from "../types.js";
+import {
+  MockTransport,
+  connectAndSelectProvider,
+  consumeStream,
+  createDefaultRequestHandler,
+  createDefaultStreamHandler,
+  createDeterministicClock,
+  createDeterministicIdGenerator,
+  createResponseEnvelope,
+  delay,
+  setupConnectedClient,
+} from "./test-helpers.js";
+
+describe("BYOMClient", () => {
+  it("supports connect -> listProviders -> selectProvider -> chat -> disconnect flow", async () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    transport.streamHandler = createDefaultStreamHandler();
+
+    const client = setupConnectedClient(transport);
+
+    const connectResult = await client.connect({ appId: "acme.app" });
+    expect(client.state).toBe("connected");
+    expect(connectResult.sessionId).toMatch(/^session\./);
+    expect(connectResult.correlationId).toMatch(/^corr\./);
+
+    const providersResult = await client.listProviders();
+    expect(providersResult.providers).toHaveLength(1);
+    expect(providersResult.correlationId).toMatch(/^corr\./);
+
+    const selected = await client.selectProvider({
+      providerId: "provider.ollama",
+      modelId: "model.llama3",
+    });
+    expect(selected).toMatchObject({
+      providerId: "provider.ollama",
+      modelId: "model.llama3",
+    });
+    expect(selected.correlationId).toMatch(/^corr\./);
+
+    const sendResult = await client.chat.send({
+      messages: [{ role: "user", content: "hello" }],
+    });
+    expect(sendResult.message.content).toBe("Hello from BYOM.");
+    expect(sendResult.correlationId).toMatch(/^corr\./);
+
+    const streamEvents = await consumeStream(
+      client.chat.stream({
+        messages: [{ role: "user", content: "stream hello" }],
+      }),
+    );
+    expect(streamEvents).toEqual([
+      {
+        type: "chunk",
+        delta: "Hello",
+        index: 0,
+        correlationId: streamEvents[0]?.correlationId,
+      },
+      {
+        type: "done",
+        correlationId: streamEvents[0]?.correlationId,
+      },
+    ]);
+
+    await client.disconnect();
+    expect(client.state).toBe("disconnected");
+    expect(client.sessionId).toBeUndefined();
+    expect(client.selectedProvider).toBeUndefined();
+    expect(transport.disconnectCalls).toEqual([connectResult.sessionId]);
+
+    const connectCall = transport.calls.find(
+      (entry) =>
+        entry.kind === "request" &&
+        entry.request.envelope.capability === "session.create" &&
+        "appId" in (entry.request.envelope.payload as Record<string, unknown>),
+    );
+    const sendCall = transport.calls.find(
+      (entry) =>
+        entry.kind === "request" &&
+        entry.request.envelope.capability === "chat.completions",
+    );
+    const streamCall = transport.calls.find(
+      (entry) =>
+        entry.kind === "stream" &&
+        entry.request.envelope.capability === "chat.stream",
+    );
+
+    expect(connectCall).toBeDefined();
+    expect(sendCall).toBeDefined();
+    expect(streamCall).toBeDefined();
+
+    const sendRequestCorrelation = sendCall?.request.envelope.correlationId;
+    const streamRequestCorrelation = streamCall?.request.envelope.correlationId;
+
+    expect(sendResult.correlationId).toBe(sendRequestCorrelation);
+    expect(streamEvents.every((event) => event.correlationId === streamRequestCorrelation)).toBe(
+      true,
+    );
+  });
+
+  it("rejects chat operations when provider is not selected", async () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    transport.streamHandler = createDefaultStreamHandler();
+    const client = setupConnectedClient(transport);
+
+    await client.connect({ appId: "acme.app" });
+
+    await expect(
+      client.chat.send({
+        messages: [{ role: "user", content: "blocked" }],
+      }),
+    ).rejects.toMatchObject({
+      machineCode: SDK_MACHINE_CODES.MISSING_PROVIDER_SELECTION,
+      reasonCode: "request.invalid",
+    });
+  });
+
+  it("rejects connect if state is not disconnected", async () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    transport.streamHandler = createDefaultStreamHandler();
+    const client = setupConnectedClient(transport);
+
+    await client.connect({ appId: "acme.app" });
+    await expect(client.connect({ appId: "acme.again" })).rejects.toBeInstanceOf(
+      BYOMStateError,
+    );
+  });
+
+  it("normalizes chat.send timeout failures into typed timeout errors", async () => {
+    const transport = new MockTransport();
+    transport.streamHandler = createDefaultStreamHandler();
+    transport.requestHandler = async (request) => {
+      if (request.envelope.capability === "chat.completions") {
+        await delay(25);
+        const envelope = createResponseEnvelope<
+          ChatSendPayload,
+          ChatSendResponsePayload
+        >(
+          request as TransportRequest<ChatSendPayload>,
+          {
+            message: {
+              role: "assistant",
+              content: "late response",
+            },
+          },
+        );
+        return { envelope } as TransportResponse<unknown>;
+      }
+
+      return createDefaultRequestHandler()(request);
+    };
+
+    const client = new BYOMClient({
+      transport,
+      timeoutMs: 10,
+      now: createDeterministicClock(),
+      randomId: createDeterministicIdGenerator(),
+      origin: "https://example.app",
+    });
+
+    await connectAndSelectProvider(client);
+
+    await expect(
+      client.chat.send({
+        messages: [{ role: "user", content: "slow request" }],
+      }),
+    ).rejects.toBeInstanceOf(BYOMTimeoutError);
+  });
+
+  it("normalizes chat.stream timeout failures into typed timeout errors", async () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    transport.streamHandler = async (request) => {
+      async function* streamGenerator(): AsyncIterable<TransportResponse<unknown>> {
+        await delay(25);
+        const envelope = createResponseEnvelope<
+          ChatStreamPayload,
+          ChatStreamResponsePayload
+        >(request as TransportRequest<ChatStreamPayload>, {
+          type: "chunk",
+          delta: "late",
+          index: 0,
+        });
+        yield { envelope };
+      }
+
+      return streamGenerator();
+    };
+
+    const client = new BYOMClient({
+      transport,
+      timeoutMs: 10,
+      now: createDeterministicClock(),
+      randomId: createDeterministicIdGenerator(),
+      origin: "https://example.app",
+    });
+
+    await connectAndSelectProvider(client);
+
+    await expect(
+      consumeStream(
+        client.chat.stream({
+          messages: [{ role: "user", content: "slow stream" }],
+        }),
+      ),
+    ).rejects.toBeInstanceOf(BYOMTimeoutError);
+  });
+});

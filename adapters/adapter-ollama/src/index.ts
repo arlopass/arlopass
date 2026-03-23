@@ -175,9 +175,10 @@ export class OllamaAdapter implements AdapterContract {
     let fullContent = "";
 
     try {
-      while (true) {
+      let streaming = true;
+      while (streaming) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) { streaming = false; break; }
         const text = decoder.decode(value, { stream: true });
         for (const line of text.split("\n")) {
           const trimmed = line.trim();
