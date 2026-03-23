@@ -3,24 +3,84 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http: https:"
+    />
     <title>BYOM AI Wallet &mdash; Connect Provider</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
-  <body>
+  <body class="byom-wallet-options">
     <div class="options-page">
       <header class="options-header">
         <div class="options-header__brand">
-          <span class="options-header__logo" aria-hidden="true">&#9881;</span>
+          <span class="options-header__logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <path
+                d="M12 22v-5M9 8V2M15 8V2M18 8h1a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5v-1a2 2 0 0 1 2-2h1"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
           <h1 class="options-header__title">BYOM Wallet &mdash; Connect Provider</h1>
         </div>
       </header>
 
       <main class="options-main" role="main">
-        <section class="connect-placeholder">
-          <h2>Add a Provider</h2>
-          <p class="connect-placeholder__subtitle">Provider connection flow coming soon.</p>
-          <p>Configure AI providers (Ollama, Claude, Copilot CLI, etc.) to use with BYOM Wallet.</p>
+        <section class="options-layout" aria-label="Provider connection workspace">
+          <article class="options-card options-card--connect">
+            <h2 class="options-card__title">Connect a Provider</h2>
+            <p class="options-card__subtitle">
+              Configure and test provider connections before saving them to your wallet.
+            </p>
+
+            <form id="provider-connect-form" class="options-form" novalidate>
+              <div class="form-row">
+                <label for="provider-connector">Connector</label>
+                <select id="provider-connector" name="connector"></select>
+              </div>
+
+              <div class="form-row">
+                <label for="provider-display-name">Display Name (optional)</label>
+                <input
+                  id="provider-display-name"
+                  name="displayName"
+                  type="text"
+                  maxlength="80"
+                  placeholder="Leave blank to use connector default"
+                />
+              </div>
+
+              <div id="provider-connector-fields" class="connector-fields"></div>
+
+              <div class="options-form__actions">
+                <button id="btn-test-connection" class="btn btn--secondary" type="button">
+                  Test Connection
+                </button>
+                <button id="btn-save-provider" class="btn btn--primary" type="submit">
+                  Save Provider
+                </button>
+              </div>
+
+              <p class="options-form__security-note">
+                Secrets entered for tests are used in-memory and are not persisted in extension storage.
+              </p>
+            </form>
+
+            <div id="provider-connect-feedback" class="options-feedback" role="status" aria-live="polite"></div>
+          </article>
+
+          <article class="options-card options-card--providers">
+            <h2 class="options-card__title">Connected Providers</h2>
+            <p class="options-card__subtitle">
+              Manage active provider selection and remove stale connections.
+            </p>
+            <div id="connected-providers-list" class="connected-providers-list"></div>
+          </article>
         </section>
       </main>
     </div>

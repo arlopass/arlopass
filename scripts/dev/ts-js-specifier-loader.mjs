@@ -13,7 +13,16 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const ts = require("typescript");
+let ts;
+try {
+  ts = require("typescript");
+} catch (error) {
+  const message =
+    "Missing dependency: typescript. Run `npm ci` at repository root before starting the bridge/dev scripts.";
+  throw new Error(
+    error instanceof Error ? `${message} (${error.message})` : message,
+  );
+}
 
 export async function resolve(specifier, context, nextResolve) {
   try {

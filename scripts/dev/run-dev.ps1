@@ -3,7 +3,9 @@ param(
   [ValidateSet("setup", "validate", "watch", "bridge", "full")]
   [string]$Mode = "full",
   [switch]$SkipInstall,
-  [string]$SharedSecret
+  [string]$SharedSecret,
+  [string]$ExtensionId,
+  [switch]$SkipNativeHostRegistration
 )
 
 Set-StrictMode -Version Latest
@@ -24,6 +26,37 @@ function Invoke-InRepo {
   }
   finally {
     Pop-Location
+  }
+}
+
+function Invoke-Native {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FilePath,
+    [Parameter(Mandatory = $true)]
+    [string[]]$Arguments,
+    [string]$FailureMessage
+  )
+
+  & $FilePath @Arguments
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -ne 0) {
+    if ([string]::IsNullOrWhiteSpace($FailureMessage)) {
+      $joinedArgs = $Arguments -join " "
+      throw "Command failed with exit code ${exitCode}: $FilePath $joinedArgs"
+    }
+
+    throw "$FailureMessage (exit code $exitCode)."
+  }
+}
+
+function Ensure-DevTooling {
+  Invoke-InRepo {
+    $typescriptPackage = Join-Path $repoRoot "node_modules\typescript\package.json"
+    if (-not (Test-Path -LiteralPath $typescriptPackage)) {
+      Write-Host "TypeScript dependency missing. Running npm install..." -ForegroundColor Yellow
+      Invoke-Native -FilePath "npm" -Arguments @("install") -FailureMessage "npm install failed while installing dependencies"
+    }
   }
 }
 
@@ -126,15 +159,15 @@ function Stop-DevWatchers {
 
 function Invoke-Setup {
   Invoke-InRepo {
-    npm ci
+    Invoke-Native -FilePath "npm" -Arguments @("ci") -FailureMessage "npm ci failed"
   }
 }
 
 function Invoke-Validate {
   Invoke-InRepo {
-    npm run lint
-    npm run typecheck
-    npm run test
+    Invoke-Native -FilePath "npm" -Arguments @("run", "lint") -FailureMessage "npm run lint failed"
+    Invoke-Native -FilePath "npm" -Arguments @("run", "typecheck") -FailureMessage "npm run typecheck failed"
+    Invoke-Native -FilePath "npm" -Arguments @("run", "test") -FailureMessage "npm run test failed"
   }
 }
 
@@ -144,11 +177,38 @@ function Invoke-Bridge {
   )
 
   Ensure-SharedSecret -ExplicitSecret $ExplicitSecret
+  Ensure-DevTooling
 
   Invoke-InRepo {
-    npm run typecheck -w @byom-ai/bridge
+    Invoke-Native `
+      -FilePath "npm" `
+      -Arguments @("run", "typecheck", "-w", "@byom-ai/bridge") `
+      -FailureMessage "Bridge typecheck failed"
     Write-Host "Bridge starting. Load extension from: $repoRoot\apps\extension" -ForegroundColor Cyan
-    node --loader ./scripts/dev/ts-js-specifier-loader.mjs ./apps/bridge/src/main.ts
+    Invoke-Native `
+      -FilePath "node" `
+      -Arguments @("--loader", "./scripts/dev/ts-js-specifier-loader.mjs", "./apps/bridge/src/main.ts") `
+      -FailureMessage "Bridge runtime failed to start"
+  }
+}
+
+function Register-NativeHost {
+  param(
+    [string]$ExplicitExtensionId
+  )
+
+  Invoke-InRepo {
+    $registerScript = Join-Path $repoRoot "scripts\dev\register-native-host.ps1"
+    if (-not (Test-Path -LiteralPath $registerScript)) {
+      throw "Native host registration script not found: $registerScript"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ExplicitExtensionId)) {
+      & $registerScript
+    }
+    else {
+      & $registerScript -ExtensionId $ExplicitExtensionId
+    }
   }
 }
 
@@ -183,6 +243,10 @@ switch ($Mode) {
   "full" {
     if (-not $SkipInstall.IsPresent) {
       Invoke-Setup
+    }
+
+    if (-not $SkipNativeHostRegistration.IsPresent) {
+      Register-NativeHost -ExplicitExtensionId $ExtensionId
     }
 
     $watchers = Start-DevWatchers

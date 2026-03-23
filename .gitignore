@@ -3,3 +3,5 @@ node_modules/
 **/dist/
 coverage/
 *.tsbuildinfo
+.agents
+skills-lock.json

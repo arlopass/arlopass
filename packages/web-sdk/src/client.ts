@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import {
   CAPABILITY_CATALOG,
   DEFAULT_PROTOCOL_VERSION,
@@ -317,7 +315,20 @@ function parseChatInput(input: ChatInput): readonly ChatMessage[] {
 }
 
 function defaultRandomId(): string {
-  return randomUUID().replace(/-/g, "");
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID().replace(/-/g, "");
+  }
+
+  if (typeof globalThis.crypto?.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  const fallback = Array.from({ length: 32 }, () =>
+    Math.floor(Math.random() * 16).toString(16),
+  ).join("");
+  return fallback;
 }
 
 function createInternalConfig(options: BYOMClientOptions): InternalClientConfig {

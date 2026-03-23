@@ -13,7 +13,7 @@
     "options.html"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node ./scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest run --passWithNoTests"
@@ -25,6 +25,7 @@
     "@byom-ai/web-sdk": "file:../../packages/web-sdk"
   },
   "devDependencies": {
-    "@types/chrome": "^0.1.38"
+    "@types/chrome": "^0.1.38",
+    "esbuild": "^0.25.12"
   }
 }

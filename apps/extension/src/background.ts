@@ -23,6 +23,7 @@ import {
   type GrantPermissionMatch,
   type GrantStoreOptions,
 } from "./permissions/grant-store.js";
+import { registerDefaultTransportMessageListener } from "./transport/runtime.js";
 import type {
   Grant,
   GrantRevocationReason,
@@ -339,6 +340,141 @@ export function createWalletMessageHandler(
     return handler(payload ?? {});
   };
 }
+
+type ChromeRuntimeLike = Readonly<{
+  onMessage: Readonly<{
+    addListener(
+      listener: (
+        message: unknown,
+        sender: unknown,
+        sendResponse: (response: WalletActionResponse) => void,
+      ) => boolean | void,
+    ): void;
+  }>;
+  openOptionsPage?: () => Promise<void> | void;
+  lastError?: Readonly<{ message?: string }>;
+}>;
+
+type ChromeStorageAreaLike = Readonly<{
+  get(
+    keys: readonly string[],
+    callback: (items: Record<string, unknown>) => void,
+  ): void;
+  set(
+    items: Record<string, unknown>,
+    callback?: () => void,
+  ): void;
+}>;
+
+function createChromeStorageAdapter(
+  runtime: ChromeRuntimeLike,
+  storage: ChromeStorageAreaLike,
+): WalletStorageAdapter {
+  return {
+    get(keys): Promise<Record<string, unknown>> {
+      return new Promise((resolve, reject) => {
+        storage.get(keys, (items) => {
+          const runtimeError = runtime.lastError;
+          if (runtimeError !== undefined) {
+            reject(new Error(runtimeError.message ?? "chrome.storage.local.get failed."));
+            return;
+          }
+          resolve(items);
+        });
+      });
+    },
+    set(items): Promise<void> {
+      return new Promise((resolve, reject) => {
+        storage.set(items, () => {
+          const runtimeError = runtime.lastError;
+          if (runtimeError !== undefined) {
+            reject(new Error(runtimeError.message ?? "chrome.storage.local.set failed."));
+            return;
+          }
+          resolve();
+        });
+      });
+    },
+  };
+}
+
+const WALLET_MESSAGE_LISTENER_FLAG = "__byom.wallet.listener.registered.v1";
+
+type ExtensionGlobalState = typeof globalThis & Record<string, unknown>;
+
+/**
+ * Registers the runtime wallet message listener against chrome APIs.
+ * Safe to call multiple times; only the first successful registration is kept.
+ */
+export function registerDefaultWalletMessageListener(options: {
+  reportError?: (error: Error) => void;
+} = {}): void {
+  const reportError =
+    options.reportError ?? ((error: Error) => console.error("BYOM Wallet message handler failed", error));
+
+  if (typeof chrome === "undefined") {
+    return;
+  }
+
+  const runtime = chrome.runtime as unknown as ChromeRuntimeLike | undefined;
+  const storageLocal = chrome.storage?.local as unknown as ChromeStorageAreaLike | undefined;
+  if (runtime === undefined || storageLocal === undefined) {
+    return;
+  }
+
+  const globalState = globalThis as ExtensionGlobalState;
+  if (globalState[WALLET_MESSAGE_LISTENER_FLAG] === true) {
+    return;
+  }
+
+  const storage = createChromeStorageAdapter(runtime, storageLocal);
+  const runtimeOpenOptionsPage = runtime.openOptionsPage;
+  const openOptionsPage =
+    typeof runtimeOpenOptionsPage === "function"
+      ? () => {
+          runtimeOpenOptionsPage();
+        }
+      : undefined;
+
+  const handleWalletMessage = createWalletMessageHandler(
+    openOptionsPage === undefined
+      ? { storage }
+      : { storage, openOptionsPage },
+  );
+
+  runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (!isWalletMessageEnvelope(message)) {
+      return false;
+    }
+
+    void handleWalletMessage(message)
+      .then((response) => {
+        sendResponse(
+          response ?? {
+            ok: false,
+            errorCode: "internal_error",
+            message: "Wallet action failed unexpectedly.",
+          },
+        );
+      })
+      .catch((error: unknown) => {
+        const errorObject = error instanceof Error ? error : new Error(String(error));
+        reportError(errorObject);
+        sendResponse({
+          ok: false,
+          errorCode: "internal_error",
+          message: "Wallet action failed unexpectedly.",
+        });
+      });
+
+    return true;
+  });
+
+  globalState[WALLET_MESSAGE_LISTENER_FLAG] = true;
+}
+
+registerDefaultWalletMessageListener();
+registerDefaultTransportMessageListener();
 
 // ---------------------------------------------------------------------------
 // ExtensionBackgroundService

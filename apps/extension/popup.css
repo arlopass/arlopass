@@ -1,76 +1,380 @@
-/* ============================================================
-   BYOM Wallet Popup — MetaMask-Inspired Visual System
-   ============================================================ */
+:root {
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --text-primary: #24292E;
+  --text-secondary: #6A737D;
+  --bg-main: #FFFFFF;
+  --bg-secondary: #F2F4F6;
+  --border-subtle: 1px solid #EAECEF;
+  --radius-container: 12px;
+  --radius-button: 8px;
+  --btn-primary-bg: #121212;
+  --btn-primary-text: #FFFFFF;
+  --badge-success-bg: #E6F4EA;
+  --badge-success-text: #137333;
+}
 
-/* ── Reset ───────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
+body {
+  /* Remove default margin and background */
   margin: 0;
   padding: 0;
+  background: none; /* or transparent */
+  overflow: hidden; /* Ensures content stays within boundaries */
 }
 
-/* ── Design Tokens ───────────────────────────────────────── */
-:root {
-  --color-bg:            #f2f4f6;
-  --color-surface:       #ffffff;
-  --color-surface-raised:#f8f9fb;
-  --color-border:        #d8dce4;
-  --color-border-focus:  #037dd6;
-
-  --color-text-primary:  #1a1f2e;
-  --color-text-secondary:#6c737f;
-  --color-text-muted:    #9ea6b4;
-
-  --color-brand:         #037dd6;
-  --color-brand-hover:   #025ea0;
-  --color-brand-active:  #024b80;
-
-  --color-success:       #1e7e34;
-  --color-success-bg:    #d4edda;
-  --color-success-text:  #145523;
-
-  --color-warn:          #b45309;
-  --color-warn-bg:       #fef3c7;
-  --color-warn-text:     #92400e;
-
-  --color-neutral:       #6c737f;
-  --color-neutral-bg:    #f0f2f5;
-  --color-neutral-text:  #4a5060;
-
-  --color-danger:        #d73a49;
-  --color-danger-hover:  #b02030;
-  --color-danger-bg:     #fdecea;
-  --color-danger-text:   #9b1a26;
-
-  --color-active-border: #037dd6;
-  --color-active-bg:     #e8f3fd;
-
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-pill: 999px;
-
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
-
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-size-xs:  11px;
-  --font-size-sm:  12px;
-  --font-size-md:  14px;
-  --font-size-lg:  16px;
-  --font-size-xl:  18px;
-
-  --spacing-xs:  4px;
-  --spacing-sm:  8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 20px;
-
-  --popup-width: 360px;
+.byom-wallet-popup {
+  border-radius: var(--radius-container);
 }
 
-/* ── Accessibility: Screen-reader only ───────────────────── */
-.sr-only {
+.byom-wallet-popup,
+.byom-wallet-options {
+  margin: 0;
+  font-family: var(--font-family-primary);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.byom-wallet-popup *,
+.byom-wallet-popup *::before,
+.byom-wallet-popup *::after,
+.byom-wallet-options *,
+.byom-wallet-options *::before,
+.byom-wallet-options *::after {
+  box-sizing: border-box;
+}
+
+.byom-wallet-popup {
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
+}
+
+.byom-wallet-popup .popup {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+}
+
+.byom-wallet-popup .popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  background: var(--bg-main);
+  border-bottom: var(--border-subtle);
+}
+
+.byom-wallet-popup .popup-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.byom-wallet-popup .popup-header__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+}
+
+.byom-wallet-popup .popup-header__logo svg {
+  width: 20px;
+  height: 20px;
+}
+
+.byom-wallet-popup .popup-header__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.byom-wallet-popup .popup-header__status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.byom-wallet-popup .popup-main {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.byom-wallet-popup .wallet-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.byom-wallet-popup .provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.byom-wallet-popup .provider-card {
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  border-radius: var(--radius-container);
+  padding: 14px;
+}
+
+.byom-wallet-popup .provider-card--active {
+  border-color: #d8e2f0;
+  background: #f8fafc;
+}
+
+.byom-wallet-popup .provider-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.byom-wallet-popup .provider-card__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.byom-wallet-popup .status-chip,
+.byom-wallet-popup .active-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.byom-wallet-popup .status-chip--connected {
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+}
+
+.byom-wallet-popup .status-chip--disconnected {
+  background: #eef1f4;
+  color: #4f5965;
+}
+
+.byom-wallet-popup .status-chip--attention {
+  background: #fff4e5;
+  color: #9f580a;
+}
+
+.byom-wallet-popup .active-badge {
+  background: #edf2ff;
+  color: #3f5fa8;
+}
+
+.byom-wallet-popup .provider-card__model-row {
+  margin-top: 10px;
+}
+
+.byom-wallet-popup .model-select {
+  width: 100%;
+  border: var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 8px 10px;
+}
+
+.byom-wallet-popup .provider-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.byom-wallet-popup .btn {
+  appearance: none;
+  border: var(--border-subtle);
+  border-radius: var(--radius-button);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.byom-wallet-popup .btn:disabled,
+.byom-wallet-popup .btn[aria-disabled="true"] {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.byom-wallet-popup .btn--small {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.byom-wallet-popup .btn--primary {
+  border: 0;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.byom-wallet-popup .btn--secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.byom-wallet-popup .btn--danger {
+  background: #f7f8fa;
+  color: #8e2e2e;
+}
+
+.byom-wallet-popup .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--bg-main);
+  border: var(--border-subtle);
+  border-radius: var(--radius-container);
+  padding: 24px;
+}
+
+.byom-wallet-popup .empty-state__icon {
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.byom-wallet-popup .empty-state__icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.byom-wallet-popup .empty-state__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.byom-wallet-popup .empty-state__subtitle {
+  margin: 8px 0 24px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.byom-wallet-popup .error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: var(--border-subtle);
+  border-radius: var(--radius-button);
+  background: #fff7f7;
+  color: #8f3131;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+.byom-wallet-popup .error-banner__icon {
+  width: 14px;
+  height: 14px;
+  color: #8f3131;
+  flex: 0 0 14px;
+  margin-top: 2px;
+}
+
+.byom-wallet-popup .error-banner__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.byom-wallet-popup .error-banner__message {
+  flex: 1;
+}
+
+.byom-wallet-popup .error-banner__code {
+  font-size: 11px;
+  color: #6A737D;
+}
+
+.byom-wallet-popup .loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-subtle);
+  border-radius: var(--radius-container);
+  background: var(--bg-main);
+  padding: 20px 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.byom-wallet-popup .warning-count {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.byom-wallet-popup .popup-footer {
+  padding: 12px 16px 18px;
+  background: var(--bg-main);
+  border-top: var(--border-subtle);
+}
+
+.byom-wallet-popup .quick-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.byom-wallet-popup .quick-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.byom-wallet-popup .security-footer {
+  margin: 14px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.byom-wallet-popup .sr-only,
+.byom-wallet-options .sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -82,452 +386,305 @@
   border: 0;
 }
 
-/* ── Focus Rings ─────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--color-border-focus);
+.byom-wallet-popup :focus-visible,
+.byom-wallet-options :focus-visible {
+  outline: 2px solid #8fb6de;
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
-/* ── Base ────────────────────────────────────────────────── */
-body {
-  font-family: var(--font-family);
-  font-size: var(--font-size-md);
-  color: var(--color-text-primary);
-  background: var(--color-bg);
-  min-width: var(--popup-width);
-  max-width: var(--popup-width);
-  overflow-x: hidden;
+.byom-wallet-options .options-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 22px;
 }
 
-/* ── Popup Shell ─────────────────────────────────────────── */
-.popup {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  width: var(--popup-width);
+.byom-wallet-options .options-header {
+  padding-bottom: 14px;
+  margin-bottom: 18px;
 }
 
-/* ── Header ──────────────────────────────────────────────── */
-.popup-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.popup-header__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.popup-header__logo {
-  font-size: var(--font-size-xl);
-  color: var(--color-brand);
-}
-
-.popup-header__title {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.01em;
-}
-
-.popup-header__status-chip {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  padding: 2px var(--spacing-sm);
-  border-radius: var(--radius-pill);
-  background: var(--color-success-bg);
-  color: var(--color-success-text);
-  border: 1px solid rgba(30, 126, 52, 0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* ── Main Content ────────────────────────────────────────── */
-.popup-main {
-  flex: 1;
-  padding: var(--spacing-md);
-  overflow-y: auto;
-  max-height: 400px;
-}
-
-.wallet-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-/* ── Provider List ───────────────────────────────────────── */
-.provider-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-/* ── Provider Card ───────────────────────────────────────── */
-.provider-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  box-shadow: var(--shadow-card);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.provider-card:hover {
-  box-shadow: var(--shadow-card-hover);
-}
-
-.provider-card--active {
-  border-color: var(--color-active-border);
-  background: var(--color-active-bg);
-}
-
-.provider-card__header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  margin-bottom: var(--spacing-sm);
-}
-
-.provider-card__name {
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── Status Chips ────────────────────────────────────────── */
-.status-chip {
+.byom-wallet-options .options-header__brand {
   display: inline-flex;
   align-items: center;
-  font-size: var(--font-size-xs);
+  gap: 10px;
+}
+
+.byom-wallet-options .options-header__logo {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+}
+
+.byom-wallet-options .options-header__logo svg {
+  width: 20px;
+  height: 20px;
+}
+
+.byom-wallet-options .options-header__title {
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
-  padding: 2px var(--spacing-xs);
-  border-radius: var(--radius-pill);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+  color: var(--text-primary);
 }
 
-.status-chip--connected {
-  background: var(--color-success-bg);
-  color: var(--color-success-text);
-  border: 1px solid rgba(30, 126, 52, 0.2);
+.byom-wallet-options .options-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.2fr) minmax(300px, 1fr);
+  gap: 16px;
 }
 
-.status-chip--disconnected {
-  background: var(--color-neutral-bg);
-  color: var(--color-neutral-text);
-  border: 1px solid rgba(108, 115, 127, 0.2);
+.byom-wallet-options .options-card {
+  border: var(--border-subtle);
+  border-radius: var(--radius-container);
+  background: var(--bg-main);
+  padding: 20px;
 }
 
-.status-chip--attention {
-  background: var(--color-warn-bg);
-  color: var(--color-warn-text);
-  border: 1px solid rgba(180, 83, 9, 0.2);
+.byom-wallet-options .options-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-/* ── Active Badge ────────────────────────────────────────── */
-.active-badge {
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  padding: 2px var(--spacing-xs);
-  border-radius: var(--radius-pill);
-  background: var(--color-brand);
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
+.byom-wallet-options .options-card__subtitle {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-/* ── Model Select ────────────────────────────────────────── */
-.provider-card__model-row {
-  margin: var(--spacing-xs) 0;
+.byom-wallet-options .options-form {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.model-select {
+.byom-wallet-options .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.byom-wallet-options .form-row label {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.byom-wallet-options .form-row input,
+.byom-wallet-options .form-row select {
   width: 100%;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-  appearance: auto;
+  border: var(--border-subtle);
+  border-radius: var(--radius-button);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 10px 12px;
 }
 
-.model-select:hover {
-  border-color: var(--color-brand);
+.byom-wallet-options .field-help {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-.model-select:focus-visible {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
+.byom-wallet-options .options-form__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
 }
 
-/* ── Provider Actions ────────────────────────────────────── */
-.provider-card__actions {
-  display: flex;
-  gap: var(--spacing-xs);
-  justify-content: flex-end;
-  margin-top: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-/* ── Buttons ─────────────────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  font-family: var(--font-family);
-  font-size: var(--font-size-md);
+.byom-wallet-options .btn {
+  appearance: none;
+  border: var(--border-subtle);
+  border-radius: var(--radius-button);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 14px;
   font-weight: 600;
   line-height: 1;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  padding: 10px 12px;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-  text-decoration: none;
-  white-space: nowrap;
 }
 
-.btn:focus-visible {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
+.byom-wallet-options .btn--small {
+  font-size: 12px;
+  padding: 8px 10px;
 }
 
-.btn:disabled,
-.btn[aria-disabled="true"] {
-  opacity: 0.5;
-  cursor: not-allowed;
+.byom-wallet-options .btn--primary {
+  border: 0;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.byom-wallet-options .btn--secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.byom-wallet-options .btn--danger {
+  background: #f7f8fa;
+  color: #8e2e2e;
+}
+
+.byom-wallet-options .btn:disabled,
+.byom-wallet-options .btn[aria-disabled="true"] {
+  opacity: 0.55;
   pointer-events: none;
 }
 
-.btn--primary {
-  background: var(--color-brand);
-  color: #fff;
-  border-color: var(--color-brand);
+.byom-wallet-options .options-form__security-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-.btn--primary:hover {
-  background: var(--color-brand-hover);
-  border-color: var(--color-brand-hover);
+.byom-wallet-options .options-feedback {
+  margin-top: 12px;
+  min-height: 0;
 }
 
-.btn--primary:active {
-  background: var(--color-brand-active);
+.byom-wallet-options .options-feedback--success,
+.byom-wallet-options .options-feedback--error,
+.byom-wallet-options .options-feedback--info {
+  border: var(--border-subtle);
+  border-radius: var(--radius-button);
+  padding: 10px 12px;
 }
 
-.btn--secondary {
-  background: var(--color-surface);
-  color: var(--color-brand);
-  border-color: var(--color-brand);
+.byom-wallet-options .options-feedback--success {
+  background: #edf7ee;
+  color: #1f5f2b;
 }
 
-.btn--secondary:hover {
-  background: var(--color-active-bg);
+.byom-wallet-options .options-feedback--error {
+  background: #fff7f7;
+  color: #8f3131;
 }
 
-.btn--danger {
-  background: var(--color-surface);
-  color: var(--color-danger);
-  border-color: var(--color-danger);
+.byom-wallet-options .options-feedback--info {
+  background: #f4f7fb;
+  color: #31527b;
 }
 
-.btn--danger:hover {
-  background: var(--color-danger-bg);
+.byom-wallet-options .options-feedback__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.btn--small {
-  font-size: var(--font-size-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
+.byom-wallet-options .options-feedback__message {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-/* ── Empty State ─────────────────────────────────────────── */
-.empty-state {
+.byom-wallet-options .connected-providers-list {
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+.byom-wallet-options .providers-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.byom-wallet-options .provider-row {
+  border: var(--border-subtle);
+  border-radius: var(--radius-button);
+  padding: 12px;
+  background: #fcfcfd;
+}
+
+.byom-wallet-options .provider-row__heading {
+  display: flex;
   align-items: center;
-  text-align: center;
-  padding: var(--spacing-xl) var(--spacing-lg);
-  background: var(--color-surface);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-lg);
-  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.empty-state__icon {
-  font-size: 32px;
-  margin-bottom: var(--spacing-xs);
-  opacity: 0.6;
-}
-
-.empty-state__title {
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.empty-state__subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-/* ── Error Banner ────────────────────────────────────────── */
-.error-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-danger-bg);
-  border: 1px solid rgba(215, 58, 73, 0.3);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  color: var(--color-danger-text);
-  margin-bottom: var(--spacing-sm);
-}
-
-.error-banner__icon {
-  flex-shrink: 0;
-  font-size: var(--font-size-md);
-  margin-top: 1px;
-}
-
-.error-banner__message {
-  flex: 1;
-  font-weight: 500;
-}
-
-.error-banner__code {
-  flex-shrink: 0;
-  font-size: var(--font-size-xs);
+.byom-wallet-options .provider-row__heading h3 {
+  margin: 0;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--color-danger);
-  opacity: 0.75;
-  white-space: nowrap;
+  color: var(--text-primary);
 }
 
-/* ── Loading State ───────────────────────────────────────── */
-.loading-state {
-  display: flex;
+.byom-wallet-options .provider-row__meta {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.byom-wallet-options .provider-status,
+.byom-wallet-options .provider-active {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 4px 8px;
 }
 
-/* ── Warning Count ───────────────────────────────────────── */
-.warning-count {
-  font-size: var(--font-size-xs);
-  color: var(--color-warn-text);
-  background: var(--color-warn-bg);
-  border: 1px solid rgba(180, 83, 9, 0.2);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  margin-top: var(--spacing-xs);
-  text-align: center;
+.byom-wallet-options .provider-status--connected {
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
-/* ── Footer ──────────────────────────────────────────────── */
-.popup-footer {
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+.byom-wallet-options .provider-status--disconnected {
+  background: #eef1f4;
+  color: #4f5965;
 }
 
-.quick-actions {
+.byom-wallet-options .provider-status--attention {
+  background: #fff4e5;
+  color: #9f580a;
+}
+
+.byom-wallet-options .provider-active {
+  background: #edf2ff;
+  color: #3f5fa8;
+}
+
+.byom-wallet-options .provider-row__actions {
   display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-}
-
-.quick-actions .btn {
-  flex: 1;
-}
-
-.security-footer {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  text-align: center;
-  line-height: 1.4;
-}
-
-/* ── Options Page ────────────────────────────────────────── */
-.options-page {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: var(--spacing-xl);
-  min-width: var(--popup-width);
-}
-
-.options-header {
-  margin-bottom: var(--spacing-xl);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.options-header__brand {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 8px;
+  margin-top: 10px;
 }
 
-.options-header__logo {
-  font-size: var(--font-size-xl);
-  color: var(--color-brand);
+.byom-wallet-options .provider-model-select {
+  min-width: 180px;
+  border: var(--border-subtle);
+  border-radius: var(--radius-button);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-family-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 8px 10px;
 }
 
-.options-header__title {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.options-main {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-card);
-}
-
-.connect-placeholder {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.connect-placeholder h2 {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.connect-placeholder__subtitle {
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.connect-placeholder p {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
+@media (max-width: 980px) {
+  .byom-wallet-options .options-layout {
+    grid-template-columns: 1fr;
+  }
 }

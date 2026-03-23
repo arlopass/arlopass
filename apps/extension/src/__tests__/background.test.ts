@@ -10,6 +10,7 @@
  *  - In-flight revocation: grant revoked while transport awaits response
  *  - Wallet action handler: setActiveProvider, setActiveModel (provider-switching),
  *    revokeProvider (active nulling), openConnectFlow, unsupported action, invalid envelope
+ *  - Runtime bootstrap listener: registers chrome.runtime.onMessage bridge and routes actions
  */
 import { describe, expect, it, vi } from "vitest";
 
@@ -23,6 +24,7 @@ import type {
 import {
   ExtensionBackgroundService,
   createWalletMessageHandler,
+  registerDefaultWalletMessageListener,
   type BridgeGrantSynchronizer,
   type WalletStorageAdapter,
 } from "../background.js";
@@ -901,5 +903,133 @@ describe("createWalletMessageHandler — routing", () => {
     });
 
     expect(result).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Runtime bootstrap: registerDefaultWalletMessageListener
+// ---------------------------------------------------------------------------
+
+type RuntimeMessageListener = (
+  message: unknown,
+  sender: unknown,
+  sendResponse: (response: unknown) => void,
+) => boolean | void;
+
+function makeChromeHarness(initial: FakeStorageState = {}): {
+  chromeMock: Record<string, unknown>;
+  state: FakeStorageState;
+  addListener: ReturnType<typeof vi.fn>;
+  openOptionsPage: ReturnType<typeof vi.fn>;
+  getListener: () => RuntimeMessageListener | undefined;
+} {
+  const state: FakeStorageState = { ...initial };
+  let runtimeListener: RuntimeMessageListener | undefined;
+
+  const openOptionsPage = vi.fn();
+  const addListener = vi.fn((listener: RuntimeMessageListener) => {
+    runtimeListener = listener;
+  });
+
+  const chromeMock = {
+    runtime: {
+      onMessage: {
+        addListener,
+      },
+      openOptionsPage,
+      lastError: undefined as { message?: string } | undefined,
+    },
+    storage: {
+      local: {
+        get: vi.fn(
+          (
+            keys: readonly string[],
+            callback: (items: Record<string, unknown>) => void,
+          ) => {
+            const result: Record<string, unknown> = {};
+            for (const key of keys) {
+              result[key] = state[key];
+            }
+            callback(result);
+          },
+        ),
+        set: vi.fn((items: Record<string, unknown>, callback?: () => void) => {
+          Object.assign(state, items);
+          callback?.();
+        }),
+      },
+    },
+  };
+
+  return {
+    chromeMock: chromeMock as Record<string, unknown>,
+    state,
+    addListener,
+    openOptionsPage,
+    getListener: () => runtimeListener,
+  };
+}
+
+async function flushMicrotasks(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
+describe("registerDefaultWalletMessageListener", () => {
+  const LISTENER_FLAG_KEY = "__byom.wallet.listener.registered.v1";
+
+  it("registers once and routes wallet.openConnectFlow to chrome.runtime.openOptionsPage", async () => {
+    const { chromeMock, addListener, openOptionsPage, getListener } = makeChromeHarness();
+    const globalState = globalThis as Record<string, unknown>;
+    globalState["chrome"] = chromeMock;
+
+    try {
+      const reportError = vi.fn();
+      registerDefaultWalletMessageListener({ reportError });
+
+      expect(addListener).toHaveBeenCalledOnce();
+
+      const listener = getListener();
+      expect(listener).toBeDefined();
+
+      const sendResponse = vi.fn();
+      const keepAlive = listener?.(
+        {
+          channel: "byom.wallet",
+          action: "wallet.openConnectFlow",
+          requestId: "req.bootstrap.001",
+          payload: {},
+        },
+        {},
+        sendResponse,
+      );
+
+      expect(keepAlive).toBe(true);
+
+      await flushMicrotasks();
+
+      expect(openOptionsPage).toHaveBeenCalledOnce();
+      expect(sendResponse).toHaveBeenCalledWith({ ok: true });
+      expect(reportError).not.toHaveBeenCalled();
+    } finally {
+      delete globalState["chrome"];
+      delete globalState[LISTENER_FLAG_KEY];
+    }
+  });
+
+  it("does not register duplicate listeners when invoked multiple times", () => {
+    const { chromeMock, addListener } = makeChromeHarness();
+    const globalState = globalThis as Record<string, unknown>;
+    globalState["chrome"] = chromeMock;
+
+    try {
+      registerDefaultWalletMessageListener();
+      registerDefaultWalletMessageListener();
+
+      expect(addListener).toHaveBeenCalledTimes(1);
+    } finally {
+      delete globalState["chrome"];
+      delete globalState[LISTENER_FLAG_KEY];
+    }
   });
 });

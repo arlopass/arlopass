@@ -7,14 +7,25 @@
     <title>BYOM AI Wallet</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
-  <body>
+  <body class="byom-wallet-popup">
     <div class="popup">
       <header class="popup-header">
         <div class="popup-header__brand">
-          <span class="popup-header__logo" aria-hidden="true">&#9881;</span>
+          <span class="popup-header__logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <path
+                d="M12 22v-5M9 8V2M15 8V2M18 8h1a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5v-1a2 2 0 0 1 2-2h1"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
           <h1 class="popup-header__title">BYOM Wallet</h1>
         </div>
-        <span class="popup-header__status-chip" id="wallet-status" aria-label="Wallet status">Ready</span>
+        <span class="popup-header__status-chip" id="wallet-status" aria-label="Wallet status">READY</span>
       </header>
 
       <main class="popup-main" role="main">

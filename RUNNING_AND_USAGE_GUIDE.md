@@ -64,6 +64,13 @@ Supported modes for both scripts:
 - `bridge` — build and run the bridge
 - `full` — setup (unless skipped) + watchers + bridge
 
+PowerShell `full` mode also auto-registers the native messaging host for Chrome/Edge
+using the extension manifest key. You can run that step explicitly with:
+
+```powershell
+npm run dev:register-native-host
+```
+
 PowerShell examples:
 
 ```powershell
@@ -88,6 +95,9 @@ npm run dev:validate
 npm run dev:watch
 npm run dev:bridge
 npm run dev:full
+npm run dev:register-native-host
+npm run dev:examples
+npm run build:examples
 ```
 
 ---
@@ -135,7 +145,8 @@ Set a 32-byte hex shared secret (64 hex chars):
 
 ```powershell
 $bytes = New-Object byte[] 32
-[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
 $env:BYOM_BRIDGE_SHARED_SECRET = ($bytes | ForEach-Object { $_.ToString("x2") }) -join ""
 ```
 
@@ -161,6 +172,30 @@ Then:
 4. Select folder: `D:\projects\byom-web\apps\extension`
 
 After TS changes, rebuild (or keep `--watch`) and click **Reload** on the extension card.
+
+### 4.4 Run the examples web app (extension + SDK showcase)
+
+The repository now includes a Mantine-based examples app:
+
+- Workspace: `apps\examples-web`
+- Start command: `npm run dev:examples`
+- Build command: `npm run build:examples`
+
+Run it:
+
+```powershell
+npm run dev:examples
+```
+
+Open the printed local URL (default `http://127.0.0.1:4172`).
+
+The app demonstrates:
+
+- Connect/list/select/send/stream BYOM SDK flows
+- Extension injected transport (`window.byom`) vs mock fallback transport
+- Provider/model switching scenarios
+- Typed SDK error handling (policy denial, transient failure, timeout simulation)
+- Integration snippet for real app embedding
 
 ---
 
@@ -232,7 +267,8 @@ At app level, use `BYOMClient` with any object implementing `BYOMTransport`.
 Important for current v0.1.0 state:
 
 - `@byom-ai/web-sdk` is fully usable as a library.
-- Extension transport injection utility exists (`injectProvider`), but auto-injection bootstrap is not yet wired by default; `window.byom` may be undefined until you wire that path.
+- The extension now auto-injects `window.byom` on `http(s)` pages through its content-script bridge.
+- If `window.byom` is still missing, reload the unpacked extension, refresh the target tab, and verify the extension has site access for that origin.
 
 If your app already has a BYOM transport on `window.byom`, you can do:
 
@@ -278,7 +314,7 @@ for await (const event of client.chat.stream({
 }
 ```
 
-If you do not rely on extension injection yet, pass your own transport implementation:
+If you do not rely on extension injection in your deployment, pass your own transport implementation:
 
 ```ts
 import type { BYOMTransport } from "@byom-ai/web-sdk";
@@ -305,9 +341,9 @@ const transport: BYOMTransport = {
 ### Current state in v0.1.0
 
 - Popup and options UI are implemented.
-- Connect flow page is currently a placeholder screen.
+- Options page now includes a full provider connection flow (test + save + activate + remove).
 - Wallet data shape is enforced by `apps\extension\src\ui\popup-state.ts`.
-- Wallet message handler utility exists (`createWalletMessageHandler`) but is not auto-registered in a runtime bootstrap by default.
+- Wallet message handler is auto-registered by background runtime bootstrap.
 
 Storage keys used by popup:
 
@@ -315,7 +351,12 @@ Storage keys used by popup:
 - `byom.wallet.activeProvider.v1`
 - `byom.wallet.ui.lastError.v1`
 
-You can seed demo state from extension service worker console:
+The options page writes to storage keys:
+
+- `byom.wallet.providers.v1`
+- `byom.wallet.activeProvider.v1`
+
+If needed, you can still seed demo state from extension service worker console:
 
 ```js
 chrome.storage.local.set({
@@ -344,36 +385,7 @@ chrome.storage.local.set({
 });
 ```
 
-Then open extension popup to inspect state rendering. If action buttons do not persist changes, add a background bootstrap that wires the wallet message handler:
-
-```ts
-import { createWalletMessageHandler } from "./background.js";
-
-const storage = {
-  get: (keys: readonly string[]) =>
-    new Promise<Record<string, unknown>>((resolve) => {
-      chrome.storage.local.get(keys, (result) => resolve(result as Record<string, unknown>));
-    }),
-  set: (items: Record<string, unknown>) =>
-    new Promise<void>((resolve) => {
-      chrome.storage.local.set(items, () => resolve());
-    }),
-};
-
-const handleWallet = createWalletMessageHandler({
-  storage,
-  openOptionsPage: () => chrome.runtime.openOptionsPage(),
-});
-
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  void handleWallet(message).then((result) => {
-    if (result !== null) {
-      sendResponse(result);
-    }
-  });
-  return true;
-});
-```
+Then open extension popup to inspect state rendering and actions.
 
 ---
 
@@ -452,6 +464,7 @@ Operational docs:
 - Verify manifest `name` is exactly `com.byom.bridge`.
 - Verify extension ID is present in `allowed_origins`.
 - Verify `BYOM_BRIDGE_SHARED_SECRET` alignment.
+- Run `npm run dev:register-native-host`, then reload the extension.
 
 ### `auth.invalid` during handshake
 
@@ -478,8 +491,8 @@ npm run build
 
 ## 12) Recommended next hardening steps
 
-- Add explicit extension background bootstrap wiring for wallet message handling.
-- Implement end-to-end provider connect flow in `options.html`.
+- Wire end-to-end SDK request mediation through native messaging (beyond provider setup).
+- Persist provider secret material in OS secure storage via bridge/keychain integration.
 - Add bridge service installation scripts (Windows/macOS/Linux) and signed release artifacts.
 - Add example web app demonstrating `BYOMClient` + extension transport end-to-end.
 

@@ -74,6 +74,14 @@ run_setup() {
   npm ci
 }
 
+ensure_dev_tooling() {
+  cd "$REPO_ROOT"
+  if ! node -e "require.resolve('typescript/package.json')" >/dev/null 2>&1; then
+    echo "TypeScript dependency missing. Running npm install..."
+    npm install
+  fi
+}
+
 run_validate() {
   cd "$REPO_ROOT"
   npm run lint
@@ -95,6 +103,7 @@ start_watchers() {
 run_bridge() {
   local explicit_secret="${1:-}"
   ensure_shared_secret "$explicit_secret"
+  ensure_dev_tooling
 
   cd "$REPO_ROOT"
   npm run typecheck -w @byom-ai/bridge

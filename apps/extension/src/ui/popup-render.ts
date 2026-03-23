@@ -68,19 +68,43 @@ function renderProviderCard(
 }
 
 function renderErrorBanner(error: WalletError): string {
+  const alertIcon = `
+    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+      <path
+        d="M12 9v4m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.2 16c-.77 1.33.19 3 1.73 3Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>`;
+
   return `<div class="error-banner" role="alert" aria-live="polite">
-      <span class="error-banner__icon" aria-hidden="true">&#9888;</span>
+      <span class="error-banner__icon" aria-hidden="true">${alertIcon}</span>
       <span class="error-banner__message">${escapeHtml(error.message)}</span>
       <span class="error-banner__code">[${escapeHtml(error.code)}]</span>
     </div>`;
 }
 
 function renderEmptyState(): string {
-  return `<div class="empty-state" role="status">
-      <div class="empty-state__icon" aria-hidden="true">&#128268;</div>
-      <p class="empty-state__title">No providers connected</p>
+  const plugIcon = `
+    <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+      <path
+        d="M12 22v-5M9 8V2M15 8V2M18 8h1a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5v-1a2 2 0 0 1 2-2h1"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>`;
+
+  return `<article class="empty-state" role="status">
+      <div class="empty-state__icon" aria-hidden="true">${plugIcon}</div>
+      <h2 class="empty-state__title">No providers connected</h2>
       <p class="empty-state__subtitle">Connect an AI provider to get started.</p>
-    </div>`;
+    </article>`;
 }
 
 export function renderWalletView(model: WalletViewModel): string {
