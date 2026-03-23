@@ -70,6 +70,21 @@ function formatTimestamp(date: Date): string {
   return date.toLocaleTimeString();
 }
 
+function formatModelLabel(modelId: string): string {
+  const normalized = modelId.trim();
+  if (normalized.length === 0) {
+    return modelId;
+  }
+
+  const words = normalized
+    .split(/[-_.]/g)
+    .filter((part) => part.length > 0)
+    .map((part) =>
+      part.length <= 3 ? part.toUpperCase() : `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`,
+    );
+  return words.join(" ");
+}
+
 function serializeError(error: unknown): string {
   if (error instanceof BYOMSDKError) {
     const detailsEntry =
@@ -210,10 +225,13 @@ export default function App(): JSX.Element {
   );
   const modelOptions = useMemo(
     () =>
-      (selectedProvider?.models ?? []).map((model) => ({
-        value: model,
-        label: model,
-      })),
+      (selectedProvider?.models ?? []).map((model) => {
+        const humanLabel = formatModelLabel(model);
+        return {
+          value: model,
+          label: humanLabel === model ? model : `${humanLabel} (${model})`,
+        };
+      }),
     [selectedProvider],
   );
 
@@ -221,7 +239,7 @@ export default function App(): JSX.Element {
     () =>
       providers.map((provider) => ({
         value: provider.providerId,
-        label: `${provider.providerName} (${provider.providerId})`,
+        label: `${provider.providerName} · ${provider.models.length} model(s)`,
       })),
     [providers],
   );
@@ -278,7 +296,7 @@ export default function App(): JSX.Element {
       transportProfile === "slow"
         ? 1_500
         : transportProfile === "injected" || transportProfile === "auto"
-          ? 45_000
+          ? 120_000
           : 6_000;
     const client = new BYOMClient({
       transport: resolved.transport,

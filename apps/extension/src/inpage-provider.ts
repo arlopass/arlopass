@@ -1,6 +1,4 @@
 import type {
-  ChatSendPayload,
-  ChatSendResponsePayload,
   ChatStreamResponsePayload,
   ProtocolEnvelopePayload,
   TransportRequest,
@@ -12,7 +10,8 @@ import type { BYOMTransport } from "@byom-ai/web-sdk";
 const PAGE_TO_CONTENT_CHANNEL = "byom.transport.page-to-content.v1";
 const CONTENT_TO_PAGE_CHANNEL = "byom.transport.content-to-page.v1";
 const REQUEST_TIMEOUT_MS = 15_000;
-const STREAM_CHUNK_SIZE = 96;
+const REQUEST_TIMEOUT_GRACE_MS = 5_000;
+const MAX_REQUEST_TIMEOUT_MS = 10 * 60_000;
 const INJECTED_PROVIDER_TAG = Symbol.for("byom.extension.injected-provider");
 
 type RuntimeWindow = Window &
@@ -24,7 +23,7 @@ type PageToContentMessage = Readonly<{
   channel: typeof PAGE_TO_CONTENT_CHANNEL;
   source: "byom-inpage-provider";
   requestId: string;
-  action: "request" | "disconnect";
+  action: "request" | "request-stream" | "disconnect";
   payload: unknown;
 }>;
 
@@ -34,6 +33,7 @@ type ContentToPageMessage = Readonly<{
   requestId: string;
   ok: boolean;
   envelope?: ProtocolEnvelopePayload<unknown>;
+  envelopes?: readonly ProtocolEnvelopePayload<unknown>[];
   error?: Readonly<{
     message: string;
     machineCode?: string;
@@ -116,17 +116,47 @@ function normalizeTransportResponse(
   };
 }
 
-function chunkText(value: string, chunkSize: number): readonly string[] {
-  const normalized = value.trim();
-  if (normalized.length <= chunkSize) {
-    return [normalized];
+function normalizeTransportStreamResponses(
+  response: ContentToPageMessage,
+): readonly TransportResponse<ChatStreamResponsePayload>[] {
+  if (!response.ok) {
+    throw asErrorPayload(response.error, "Transport stream request failed.");
   }
 
-  const chunks: string[] = [];
-  for (let cursor = 0; cursor < normalized.length; cursor += chunkSize) {
-    chunks.push(normalized.slice(cursor, cursor + chunkSize));
+  if (!Array.isArray(response.envelopes)) {
+    throw new Error("Transport stream response is missing envelopes.");
   }
-  return chunks;
+
+  return response.envelopes.map((envelope) => ({
+    envelope,
+  })) as readonly TransportResponse<ChatStreamResponsePayload>[];
+}
+
+function resolveBridgeRequestTimeoutMs(
+  action: PageToContentMessage["action"],
+  payload: unknown,
+): number {
+  if (action === "disconnect") {
+    return REQUEST_TIMEOUT_MS;
+  }
+
+  if (
+    !isRecord(payload) ||
+    typeof payload["timeoutMs"] !== "number" ||
+    !Number.isFinite(payload["timeoutMs"])
+  ) {
+    return REQUEST_TIMEOUT_MS;
+  }
+
+  const requestedTimeoutMs = Math.floor(payload["timeoutMs"]);
+  if (requestedTimeoutMs <= 0) {
+    return REQUEST_TIMEOUT_MS;
+  }
+
+  return Math.max(
+    REQUEST_TIMEOUT_MS,
+    Math.min(MAX_REQUEST_TIMEOUT_MS, requestedTimeoutMs + REQUEST_TIMEOUT_GRACE_MS),
+  );
 }
 
 function createBridgeDispatcher() {
@@ -159,10 +189,11 @@ function createBridgeDispatcher() {
   });
 
   const send = async (
-    action: "request" | "disconnect",
+    action: "request" | "request-stream" | "disconnect",
     payload: unknown,
   ): Promise<ContentToPageMessage> => {
     const requestId = createRequestId();
+    const timeoutMs = resolveBridgeRequestTimeoutMs(action, payload);
 
     const message: PageToContentMessage = {
       channel: PAGE_TO_CONTENT_CHANNEL,
@@ -178,11 +209,11 @@ function createBridgeDispatcher() {
         reject(
           new Error(
             `Timed out waiting for extension bridge response (${String(
-              REQUEST_TIMEOUT_MS,
+              timeoutMs,
             )}ms).`,
           ),
         );
-      }, REQUEST_TIMEOUT_MS);
+      }, timeoutMs);
 
       pending.set(requestId, {
         resolve,
@@ -221,62 +252,15 @@ function createInjectedTransport(): BYOMTransport {
         );
       }
 
-      const completionRequest: TransportRequest<ChatSendPayload> = {
-        envelope: {
-          ...request.envelope,
-          capability: "chat.completions",
-          payload: request.envelope.payload as ChatSendPayload,
-        },
-        ...(request.timeoutMs !== undefined ? { timeoutMs: request.timeoutMs } : {}),
-      };
-      const completionResponse = await bridge.send("request", completionRequest);
-      const normalized = normalizeTransportResponse(
-        completionResponse,
-      ) as TransportResponse<ChatSendResponsePayload>;
-
-      const message = normalized.envelope.payload.message;
-      const content = typeof message?.content === "string" ? message.content : "";
-      const chunks = chunkText(content, STREAM_CHUNK_SIZE);
-
-      const correlationId = request.envelope.correlationId;
-      const nowIso = new Date().toISOString();
-      const expiresIso = new Date(Date.now() + 60_000).toISOString();
+      const streamResponse = await bridge.send("request-stream", request);
+      const normalized = normalizeTransportStreamResponses(streamResponse);
 
       const streamIterable = async function* (): AsyncIterable<
         TransportResponse<TResponsePayload>
       > {
-        for (let index = 0; index < chunks.length; index += 1) {
-          const payload: ChatStreamResponsePayload = {
-            type: "chunk",
-            delta: chunks[index] ?? "",
-            index,
-          };
-
-          yield {
-            envelope: {
-              ...request.envelope,
-              capability: "chat.stream",
-              correlationId,
-              issuedAt: nowIso,
-              expiresAt: expiresIso,
-              payload,
-            } as ProtocolEnvelopePayload<TResponsePayload>,
-          };
+        for (const entry of normalized) {
+          yield entry as TransportResponse<TResponsePayload>;
         }
-
-        const donePayload: ChatStreamResponsePayload = {
-          type: "done",
-        };
-        yield {
-          envelope: {
-            ...request.envelope,
-            capability: "chat.stream",
-            correlationId,
-            issuedAt: nowIso,
-            expiresAt: expiresIso,
-            payload: donePayload,
-          } as ProtocolEnvelopePayload<TResponsePayload>,
-        };
       };
 
       return streamIterable();

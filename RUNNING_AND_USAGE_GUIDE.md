@@ -62,7 +62,7 @@ Supported modes for both scripts:
 - `validate` — run `lint`, `typecheck`, `test`
 - `watch` — watch builds for bridge + extension
 - `bridge` — build and run the bridge
-- `full` — setup (unless skipped) + watchers + bridge
+- `full` — dependency sync (unless skipped) + watchers + bridge
 
 PowerShell `full` mode also auto-registers the native messaging host for Chrome/Edge
 using the extension manifest key. You can run that step explicitly with:
@@ -70,6 +70,13 @@ using the extension manifest key. You can run that step explicitly with:
 ```powershell
 npm run dev:register-native-host
 ```
+
+In PowerShell `watch` / `full` mode, pressing `Ctrl+C` in the main runner now
+stops watcher process trees and closes watcher terminals automatically.
+In PowerShell `full` mode, dependency sync is incremental (`npm install`) when
+`node_modules` already exists, which avoids common Windows lock churn during
+restart loops. If a clean install path still hits transient `EPERM` locks
+(`npm ci`), the script falls back to `npm install`.
 
 PowerShell examples:
 

@@ -41,7 +41,12 @@ const DEMO_PROVIDERS: readonly ProviderDescriptor[] = [
   {
     providerId: "provider.local-cli",
     providerName: "Local CLI Bridge",
-    models: ["model.copilot-cli", "model.claude-code"],
+    models: [
+      "gpt-5.3-codex",
+      "gpt-5.2",
+      "claude-sonnet-4-5",
+      "claude-opus-4-5",
+    ],
   },
 ];
 

@@ -2,6 +2,7 @@ import {
   EnvelopeValidationError,
   PROTOCOL_MACHINE_CODES,
   ProviderUnavailableError,
+  TimeoutError,
   TransientNetworkError,
   isProtocolError,
   parseEnvelope,
@@ -12,6 +13,7 @@ import type {
   ChatMessage,
   ChatSendPayload,
   ChatSendResponsePayload,
+  ChatStreamResponsePayload,
   ConnectResponsePayload,
   ProviderDescriptor,
   ProviderListResponsePayload,
@@ -22,6 +24,7 @@ import type {
 const WALLET_KEY_PROVIDERS = "byom.wallet.providers.v1";
 const WALLET_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
 const RESPONSE_TTL_MS = 60_000;
+const STREAM_CHUNK_SIZE = 96;
 
 const DEFAULT_CAPABILITIES = [
   "provider.list",
@@ -64,7 +67,7 @@ export type WalletStorageAdapter = Readonly<{
   set(items: Record<string, unknown>): Promise<void>;
 }>;
 
-type SupportedTransportAction = "request" | "disconnect";
+type SupportedTransportAction = "request" | "request-stream" | "disconnect";
 
 export type TransportMessageEnvelope = Readonly<{
   channel: "byom.transport";
@@ -93,6 +96,7 @@ export type TransportActionResponse =
   | Readonly<{
       ok: true;
       envelope?: CanonicalEnvelope<unknown>;
+      envelopes?: readonly CanonicalEnvelope<unknown>[];
     }>
   | Readonly<{
       ok: false;
@@ -121,6 +125,15 @@ type CompletionProvider = Readonly<{
   metadata: Readonly<Record<string, string>>;
 }>;
 
+type CliSessionCacheEntry = Readonly<{
+  cliSessionId: string;
+  expiresAtMs: number;
+}>;
+
+const CLI_SESSION_CACHE_TTL_MS = 30 * 60_000;
+const MAX_CLI_SESSION_CACHE_ENTRIES = 512;
+const cliSessionCache = new Map<string, CliSessionCacheEntry>();
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -128,6 +141,48 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function normalizeText(value: string, fallback = ""): string {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : fallback;
+}
+
+function chunkText(value: string, chunkSize: number): readonly string[] {
+  const normalized = value.trim();
+  if (normalized.length <= chunkSize) {
+    return [normalized];
+  }
+
+  const chunks: string[] = [];
+  for (let cursor = 0; cursor < normalized.length; cursor += chunkSize) {
+    chunks.push(normalized.slice(cursor, cursor + chunkSize));
+  }
+  return chunks;
+}
+
+function createCliSessionCacheKey(options: {
+  hostName: string;
+  providerId: string;
+  modelId: string;
+  sessionId: string;
+}): string {
+  return `${options.hostName}::${options.providerId}::${options.modelId}::${options.sessionId}`;
+}
+
+function toProtocolErrorDetails(value: unknown): Record<string, ProtocolErrorDetailValue> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const details: Record<string, ProtocolErrorDetailValue> = {};
+  for (const [key, detailValue] of Object.entries(value)) {
+    if (
+      typeof detailValue === "string" ||
+      typeof detailValue === "number" ||
+      typeof detailValue === "boolean" ||
+      detailValue === null
+    ) {
+      details[key] = detailValue;
+    }
+  }
+
+  return details;
 }
 
 function parseStoredProvider(value: unknown): StoredProvider | null {
@@ -687,6 +742,10 @@ function createDefaultNativeMessenger(): (
 
 async function runCliBridgeCompletion(options: {
   provider: CompletionProvider;
+  messages: readonly ChatMessage[];
+  timeoutMs: number;
+  correlationId: string;
+  sessionId?: string;
   sendNativeMessage: (
     hostName: string,
     message: Record<string, unknown>,
@@ -696,37 +755,182 @@ async function runCliBridgeCompletion(options: {
     options.provider.metadata["nativeHostName"] ?? "com.byom.bridge",
     "com.byom.bridge",
   );
+  const cliType = normalizeText(
+    options.provider.metadata["cliType"] ?? "copilot-cli",
+    "copilot-cli",
+  );
+  const thinkingLevel = normalizeText(
+    options.provider.metadata["thinkingLevel"] ?? "",
+    "",
+  );
   if (!/^[a-z0-9]+(\.[a-z0-9-]+)+$/.test(hostName)) {
     throw new ProviderUnavailableError("Native bridge host name is invalid.", {
       details: { hostName },
     });
   }
 
-  const challenge = await options.sendNativeMessage(hostName, {
-    type: "handshake.challenge",
+  const sessionId = normalizeText(options.sessionId ?? "", "");
+  const cacheKey =
+    sessionId.length > 0
+      ? createCliSessionCacheKey({
+          hostName,
+          providerId: options.provider.providerId,
+          modelId: options.provider.modelId,
+          sessionId,
+        })
+      : undefined;
+  const nowMs = Date.now();
+  const cachedSession =
+    cacheKey !== undefined ? cliSessionCache.get(cacheKey) : undefined;
+  const resumeSessionId =
+    cachedSession !== undefined && cachedSession.expiresAtMs > nowMs
+      ? cachedSession.cliSessionId
+      : undefined;
+  if (
+    cacheKey !== undefined &&
+    cachedSession !== undefined &&
+    cachedSession.expiresAtMs <= nowMs
+  ) {
+    cliSessionCache.delete(cacheKey);
+  }
+  const executionResponse = await options.sendNativeMessage(hostName, {
+    type: "cli.chat.execute",
+    correlationId: options.correlationId,
+    ...(sessionId.length > 0 ? { sessionId } : {}),
+    ...(resumeSessionId !== undefined ? { resumeSessionId } : {}),
+    providerId: options.provider.providerId,
+    modelId: options.provider.modelId,
+    cliType,
+    ...(thinkingLevel.length > 0 ? { thinkingLevel } : {}),
+    messages: options.messages.map((message) => ({
+      role: message.role,
+      content: message.content,
+    })),
+    timeoutMs: options.timeoutMs,
   });
-  if (!isRecord(challenge) || challenge["type"] !== "handshake.challenge") {
-    throw new ProviderUnavailableError("Native bridge returned an unexpected payload.", {
-      details: { hostName },
-    });
+
+  if (!isRecord(executionResponse)) {
+    throw new ProviderUnavailableError(
+      "Native bridge returned an invalid CLI execution response.",
+      {
+        details: {
+          hostName,
+          providerId: options.provider.providerId,
+          modelId: options.provider.modelId,
+        },
+      },
+    );
   }
 
-  throw new ProviderUnavailableError(
-    `Native bridge "${hostName}" is reachable, but CLI chat execution is not implemented in this build.`,
-    {
-      details: {
-        hostName,
-        providerId: options.provider.providerId,
-        modelId: options.provider.modelId,
+  if (executionResponse["type"] === "error") {
+    const reasonCode =
+      typeof executionResponse["reasonCode"] === "string"
+        ? executionResponse["reasonCode"]
+        : "provider.unavailable";
+    const message =
+      typeof executionResponse["message"] === "string"
+        ? executionResponse["message"]
+        : "CLI execution failed in native bridge.";
+    const details = {
+      hostName,
+      providerId: options.provider.providerId,
+      modelId: options.provider.modelId,
+      ...toProtocolErrorDetails(executionResponse["details"]),
+    };
+    if (reasonCode === "transport.timeout") {
+      throw new TimeoutError(message, { details });
+    }
+
+    if (reasonCode === "request.invalid") {
+      throw new EnvelopeValidationError(message, {
+        reasonCode: "request.invalid",
+        details,
+      });
+    }
+
+    if (reasonCode === "transport.transient_failure") {
+      throw new TransientNetworkError(message, { details });
+    }
+
+    throw new ProviderUnavailableError(message, { details });
+  }
+
+  if (executionResponse["type"] !== "cli.chat.result") {
+    throw new ProviderUnavailableError(
+      "Native bridge returned an unexpected CLI execution payload.",
+      {
+        details: {
+          hostName,
+          providerId: options.provider.providerId,
+          modelId: options.provider.modelId,
+        },
       },
-    },
-  );
+    );
+  }
+
+  const responseCorrelationId = executionResponse["correlationId"];
+  if (
+    typeof responseCorrelationId === "string" &&
+    responseCorrelationId !== options.correlationId
+  ) {
+    throw new ProviderUnavailableError(
+      "Native bridge returned mismatched correlation ID for CLI execution.",
+      {
+        details: {
+          hostName,
+          expectedCorrelationId: options.correlationId,
+          receivedCorrelationId: responseCorrelationId,
+        },
+      },
+    );
+  }
+
+  const content =
+    typeof executionResponse["content"] === "string"
+      ? executionResponse["content"].trim()
+      : "";
+  if (content.length === 0) {
+    throw new ProviderUnavailableError(
+      "Native bridge CLI execution returned empty assistant content.",
+      {
+        details: {
+          hostName,
+          providerId: options.provider.providerId,
+          modelId: options.provider.modelId,
+        },
+      },
+    );
+  }
+
+  if (cacheKey !== undefined) {
+    const responseCliSessionId =
+      typeof executionResponse["cliSessionId"] === "string"
+        ? executionResponse["cliSessionId"].trim()
+        : "";
+    if (responseCliSessionId.length > 0) {
+      cliSessionCache.set(cacheKey, {
+        cliSessionId: responseCliSessionId,
+        expiresAtMs: Date.now() + CLI_SESSION_CACHE_TTL_MS,
+      });
+      while (cliSessionCache.size > MAX_CLI_SESSION_CACHE_ENTRIES) {
+        const oldest = cliSessionCache.keys().next().value as string | undefined;
+        if (oldest === undefined) {
+          break;
+        }
+        cliSessionCache.delete(oldest);
+      }
+    }
+  }
+
+  return content;
 }
 
 async function resolveCompletion(options: {
   provider: CompletionProvider;
   messages: readonly ChatMessage[];
   timeoutMs: number;
+  correlationId: string;
+  sessionId?: string;
   fetchImpl: typeof fetch;
   sendNativeMessage: (
     hostName: string,
@@ -755,6 +959,10 @@ async function resolveCompletion(options: {
     case "cli":
       return runCliBridgeCompletion({
         provider: options.provider,
+        messages: options.messages,
+        timeoutMs: options.timeoutMs,
+        correlationId: options.correlationId,
+        ...(options.sessionId !== undefined ? { sessionId: options.sessionId } : {}),
         sendNativeMessage: options.sendNativeMessage,
       });
 
@@ -821,7 +1029,9 @@ async function dispatchTransportRequest(options: {
       const completion = await resolveCompletion({
         provider,
         messages,
-        timeoutMs: options.requestTimeoutMs ?? 10_000,
+        timeoutMs: options.requestTimeoutMs ?? 90_000,
+        correlationId: options.envelope.correlationId,
+        sessionId: options.envelope.sessionId,
         fetchImpl: options.dependencies.fetchImpl,
         sendNativeMessage: options.dependencies.sendNativeMessage,
       });
@@ -852,13 +1062,77 @@ async function dispatchTransportRequest(options: {
   }
 }
 
+async function dispatchTransportStreamRequest(options: {
+  envelope: CanonicalEnvelope<unknown>;
+  requestTimeoutMs?: number;
+  storage: WalletStorageAdapter;
+  dependencies: Required<RuntimeDependencies>;
+  now: () => Date;
+}): Promise<readonly CanonicalEnvelope<ChatStreamResponsePayload>[]> {
+  if (options.envelope.capability !== "chat.stream") {
+    throw new EnvelopeValidationError(
+      "request-stream action requires chat.stream capability.",
+      {
+        reasonCode: "request.invalid",
+        details: { capability: options.envelope.capability },
+      },
+    );
+  }
+
+  const snapshot = await readWalletSnapshot(options.storage);
+  const provider = resolveProviderSelection(
+    snapshot,
+    options.envelope.providerId,
+    options.envelope.modelId,
+  );
+  const messages = parseChatMessages(options.envelope.payload as ChatSendPayload);
+  const completion = await resolveCompletion({
+    provider,
+    messages,
+    timeoutMs: options.requestTimeoutMs ?? 90_000,
+    correlationId: options.envelope.correlationId,
+    sessionId: options.envelope.sessionId,
+    fetchImpl: options.dependencies.fetchImpl,
+    sendNativeMessage: options.dependencies.sendNativeMessage,
+  });
+
+  const now = options.now();
+  const chunks = chunkText(completion, STREAM_CHUNK_SIZE);
+  const envelopes: CanonicalEnvelope<ChatStreamResponsePayload>[] = [];
+  for (let index = 0; index < chunks.length; index += 1) {
+    envelopes.push(
+      createResponseEnvelope(
+        options.envelope,
+        {
+          type: "chunk",
+          delta: chunks[index] ?? "",
+          index,
+        },
+        now,
+      ) as CanonicalEnvelope<ChatStreamResponsePayload>,
+    );
+  }
+
+  envelopes.push(
+    createResponseEnvelope(
+      options.envelope,
+      { type: "done" },
+      now,
+    ) as CanonicalEnvelope<ChatStreamResponsePayload>,
+  );
+
+  return envelopes;
+}
+
 function isTransportMessageEnvelope(
   message: unknown,
 ): message is TransportMessageEnvelope {
   return (
     isRecord(message) &&
     message["channel"] === "byom.transport" &&
-    (message["action"] === "request" || message["action"] === "disconnect")
+    (message["action"] === "request" ||
+      message["action"] === "request-stream" ||
+      message["action"] === "disconnect")
   );
 }
 
@@ -890,6 +1164,27 @@ export function createTransportMessageHandler(
 
       const parsedRequest = assertTransportRequestPayload(message.request);
       const envelope = parseEnvelope(parsedRequest.envelope);
+
+      if (message.action === "request-stream") {
+        const envelopes = await dispatchTransportStreamRequest({
+          envelope,
+          storage: options.storage,
+          dependencies: {
+            now,
+            fetchImpl,
+            sendNativeMessage,
+          },
+          now,
+          ...(parsedRequest.timeoutMs !== undefined
+            ? { requestTimeoutMs: parsedRequest.timeoutMs }
+            : {}),
+        });
+
+        return {
+          ok: true,
+          envelopes,
+        };
+      }
 
       const responsePayload = await dispatchTransportRequest({
         envelope,

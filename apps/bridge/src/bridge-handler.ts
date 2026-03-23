@@ -4,6 +4,12 @@ import {
   type TelemetryMetrics,
 } from "@byom-ai/telemetry";
 
+import {
+  CliChatExecutionError,
+  CopilotCliChatExecutor,
+  type CliChatExecutor,
+  type CliChatMessage,
+} from "./cli/copilot-chat-executor.js";
 import { HandshakeManager } from "./session/handshake.js";
 import type { HandshakeChallengeResponse } from "./session/handshake.js";
 import { RequestVerifier } from "./session/request-verifier.js";
@@ -16,6 +22,7 @@ export type BridgeHandlerOptions = Readonly<{
   handshakeManager?: HandshakeManager;
   requestVerifier?: RequestVerifier;
   enforcer?: RuntimeEnforcer;
+  cliChatExecutor?: CliChatExecutor;
   metrics?: TelemetryMetrics;
 }>;
 
@@ -23,8 +30,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function errorResponse(reasonCode: string, message: string): NativeMessage {
-  return { type: "error", reasonCode, message };
+function errorResponse(
+  reasonCode: string,
+  message: string,
+  options: Readonly<{
+    correlationId?: string;
+    details?: Readonly<Record<string, string | number | boolean | null>>;
+  }> = {},
+): NativeMessage {
+  return {
+    type: "error",
+    reasonCode,
+    message,
+    ...(options.correlationId !== undefined
+      ? { correlationId: options.correlationId }
+      : {}),
+    ...(options.details !== undefined ? { details: options.details } : {}),
+  };
 }
 
 /**
@@ -36,6 +58,9 @@ function errorResponse(reasonCode: string, message: string): NativeMessage {
  *  - grant.sync           → mirrors an extension grant into the runtime enforcer
  *  - grant.revoke         → removes a grant from the runtime enforcer
  *  - request.check        → validates an envelope and enforces runtime permissions
+ *  - cli.models.list      → returns curated model catalog for a supported CLI type
+ *  - cli.thinking-levels.list → returns thinking levels for a model/CLI pair
+ *  - cli.chat.execute     → executes non-streaming chat against selected local CLI
  *
  * Every failure path produces an explicit { type: "error", reasonCode, message }
  * response — there are no silent fallbacks.
@@ -45,6 +70,7 @@ export class BridgeHandler {
   readonly #handshakeManager: HandshakeManager;
   readonly #requestVerifier: RequestVerifier;
   readonly #enforcer: RuntimeEnforcer;
+  readonly #cliChatExecutor: CliChatExecutor;
   readonly #metrics: TelemetryMetrics | undefined;
 
   constructor(options: BridgeHandlerOptions) {
@@ -54,6 +80,8 @@ export class BridgeHandler {
     this.#requestVerifier =
       options.requestVerifier ?? new RequestVerifier();
     this.#enforcer = options.enforcer ?? new RuntimeEnforcer();
+    this.#cliChatExecutor =
+      options.cliChatExecutor ?? new CopilotCliChatExecutor();
     this.#metrics = options.metrics;
   }
 
@@ -100,6 +128,15 @@ export class BridgeHandler {
 
       case "request.check":
         return this.#handleRequestCheck(message);
+
+      case "cli.models.list":
+        return this.#handleCliModelsList(message);
+
+      case "cli.thinking-levels.list":
+        return this.#handleCliThinkingLevelsList(message);
+
+      case "cli.chat.execute":
+        return this.#handleCliChatExecute(message);
 
       default:
         return errorResponse(
@@ -283,5 +320,181 @@ export class BridgeHandler {
       grantId: result.grantId,
       consumed: result.consumed,
     };
+  }
+
+  async #handleCliModelsList(message: NativeMessage): Promise<NativeMessage> {
+    const cliType =
+      typeof message["cliType"] === "string" && message["cliType"].trim().length > 0
+        ? message["cliType"]
+        : "copilot-cli";
+
+    try {
+      const result = await this.#cliChatExecutor.listModels({ cliType });
+      return {
+        type: "cli.models.list",
+        cliType: result.cliType,
+        source: result.source,
+        models: result.models,
+      };
+    } catch (error) {
+      if (error instanceof CliChatExecutionError) {
+        return errorResponse(error.reasonCode, error.message, {
+          ...(error.details !== undefined ? { details: error.details } : {}),
+        });
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return errorResponse("transport.transient_failure", errorMessage);
+    }
+  }
+
+  async #handleCliThinkingLevelsList(message: NativeMessage): Promise<NativeMessage> {
+    const cliType =
+      typeof message["cliType"] === "string" && message["cliType"].trim().length > 0
+        ? message["cliType"]
+        : "copilot-cli";
+    const modelId =
+      typeof message["modelId"] === "string" ? message["modelId"].trim() : "";
+    if (modelId.length === 0) {
+      return errorResponse(
+        "request.invalid",
+        "cli.thinking-levels.list requires a non-empty modelId.",
+      );
+    }
+
+    try {
+      const result = await this.#cliChatExecutor.listThinkingLevels({
+        cliType,
+        modelId,
+      });
+      return {
+        type: "cli.thinking-levels.list",
+        cliType: result.cliType,
+        modelId: result.modelId,
+        source: result.source,
+        thinkingLevels: result.thinkingLevels,
+      };
+    } catch (error) {
+      if (error instanceof CliChatExecutionError) {
+        return errorResponse(error.reasonCode, error.message, {
+          ...(error.details !== undefined ? { details: error.details } : {}),
+        });
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return errorResponse("transport.transient_failure", errorMessage);
+    }
+  }
+
+  async #handleCliChatExecute(message: NativeMessage): Promise<NativeMessage> {
+    const correlationId =
+      typeof message["correlationId"] === "string"
+        ? message["correlationId"]
+        : undefined;
+    const providerId =
+      typeof message["providerId"] === "string" ? message["providerId"] : undefined;
+    const modelId =
+      typeof message["modelId"] === "string" ? message["modelId"] : undefined;
+    const sessionId =
+      typeof message["sessionId"] === "string" && message["sessionId"].trim().length > 0
+        ? message["sessionId"]
+        : undefined;
+    const timeoutMs =
+      typeof message["timeoutMs"] === "number" &&
+      Number.isFinite(message["timeoutMs"])
+        ? message["timeoutMs"]
+        : undefined;
+    const cliType =
+      typeof message["cliType"] === "string" && message["cliType"].trim().length > 0
+        ? message["cliType"]
+        : undefined;
+    const thinkingLevel =
+      typeof message["thinkingLevel"] === "string" &&
+      message["thinkingLevel"].trim().length > 0
+        ? message["thinkingLevel"]
+        : undefined;
+    const resumeSessionId =
+      typeof message["resumeSessionId"] === "string" &&
+      message["resumeSessionId"].trim().length > 0
+        ? message["resumeSessionId"]
+        : undefined;
+
+    const rawMessages = Array.isArray(message["messages"]) ? message["messages"] : undefined;
+    if (
+      correlationId === undefined ||
+      correlationId.trim().length === 0 ||
+      providerId === undefined ||
+      providerId.trim().length === 0 ||
+      modelId === undefined ||
+      modelId.trim().length === 0 ||
+      rawMessages === undefined
+    ) {
+      return errorResponse(
+        "request.invalid",
+        "cli.chat.execute requires non-empty correlationId, providerId, modelId, and messages array.",
+        {
+          ...(correlationId !== undefined ? { correlationId } : {}),
+        },
+      );
+    }
+
+    const messages: CliChatMessage[] = [];
+    for (const entry of rawMessages) {
+      if (
+        !isRecord(entry) ||
+        (entry["role"] !== "system" &&
+          entry["role"] !== "user" &&
+          entry["role"] !== "assistant") ||
+        typeof entry["content"] !== "string" ||
+        entry["content"].trim().length === 0
+      ) {
+        return errorResponse("request.invalid", "cli.chat.execute contains an invalid message.", {
+          correlationId,
+        });
+      }
+      messages.push({
+        role: entry["role"],
+        content: entry["content"],
+      });
+    }
+
+    try {
+        const executionResult = await this.#cliChatExecutor.execute({
+          correlationId,
+          providerId,
+          modelId,
+          ...(sessionId !== undefined ? { sessionId } : {}),
+          ...(resumeSessionId !== undefined ? { resumeSessionId } : {}),
+          ...(cliType !== undefined ? { cliType } : {}),
+          ...(thinkingLevel !== undefined ? { thinkingLevel } : {}),
+          messages,
+          ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+        });
+        return {
+          type: "cli.chat.result",
+          correlationId: executionResult.correlationId,
+          providerId: executionResult.providerId,
+          modelId: executionResult.modelId,
+          content: executionResult.content,
+          ...(executionResult.cliSessionId !== undefined
+            ? { cliSessionId: executionResult.cliSessionId }
+            : {}),
+        };
+    } catch (error) {
+      if (error instanceof CliChatExecutionError) {
+        return errorResponse(error.reasonCode, error.message, {
+          correlationId,
+          ...(error.details !== undefined ? { details: error.details } : {}),
+        });
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return errorResponse("transport.transient_failure", errorMessage, {
+        correlationId,
+      });
+    }
   }
 }

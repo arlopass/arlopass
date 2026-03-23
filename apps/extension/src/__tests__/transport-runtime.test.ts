@@ -349,7 +349,7 @@ describe("createTransportMessageHandler", () => {
     }
   });
 
-  it("returns provider.unavailable for CLI chat completion until bridge execution is implemented", async () => {
+  it("routes CLI chat.completions through native bridge execution", async () => {
     const storage = makeStorageAdapter({
       [WALLET_KEY_PROVIDERS]: [
         {
@@ -358,17 +358,89 @@ describe("createTransportMessageHandler", () => {
           type: "cli",
           status: "connected",
           models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
-          metadata: { nativeHostName: "com.byom.bridge" },
+          metadata: { nativeHostName: "com.byom.bridge.cli-1", cliType: "copilot-cli" },
         },
       ],
     });
 
-    const sendNativeMessage = vi.fn(async () => ({
-      type: "handshake.challenge",
-      nonce: "nonce-1",
-      issuedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-    }));
+    const sendNativeMessage = vi.fn(
+      async (...args: [string, Record<string, unknown>]) => {
+        const [hostName, message] = args;
+        void hostName;
+        void message;
+        return {
+          type: "cli.chat.result",
+          correlationId: "corr.test.001",
+          providerId: "provider.cli",
+          modelId: "gpt-5.3-codex",
+          content: "Live bridge output",
+        };
+      },
+    );
+
+    const handler = createTransportMessageHandler({
+      storage,
+      dependencies: { sendNativeMessage },
+    });
+
+    const result = await handler({
+      channel: "byom.transport",
+      action: "request",
+      request: {
+        envelope: makeEnvelope(
+          "chat.completions",
+          { messages: [{ role: "user", content: "hello" }] },
+          "provider.cli",
+          "gpt-5.3-codex",
+        ),
+      },
+    });
+
+    expect(sendNativeMessage).toHaveBeenCalledTimes(1);
+    const executeMessage = sendNativeMessage.mock.calls[0]?.[1] as
+      | Record<string, unknown>
+      | undefined;
+    expect(executeMessage?.["type"]).toBe("cli.chat.execute");
+    expect(executeMessage?.["cliType"]).toBe("copilot-cli");
+    expect(executeMessage?.["sessionId"]).toBe("sess.test.001");
+    expect(result?.ok).toBe(true);
+    if (result?.ok !== true) {
+      return;
+    }
+    const payload = result.envelope?.payload as {
+      message: { role: string; content: string };
+    };
+    expect(payload.message.role).toBe("assistant");
+    expect(payload.message.content).toBe("Live bridge output");
+  });
+
+  it("maps native CLI execution timeout error to transport.timeout", async () => {
+    const storage = makeStorageAdapter({
+      [WALLET_KEY_PROVIDERS]: [
+        {
+          id: "provider.cli",
+          name: "Local CLI Bridge",
+          type: "cli",
+          status: "connected",
+          models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
+          metadata: { nativeHostName: "com.byom.bridge.cli-2" },
+        },
+      ],
+    });
+
+    const sendNativeMessage = vi.fn(
+      async (...args: [string, Record<string, unknown>]) => {
+        const [hostName, message] = args;
+        void hostName;
+        void message;
+        return {
+          type: "error",
+          reasonCode: "transport.timeout",
+          message: "CLI request timed out.",
+          details: { timeoutMs: 30_000 },
+        };
+      },
+    );
 
     const handler = createTransportMessageHandler({
       storage,
@@ -393,8 +465,207 @@ describe("createTransportMessageHandler", () => {
     if (result?.ok !== false) {
       return;
     }
-    expect(result.error.reasonCode).toBe("provider.unavailable");
-    expect(result.error.machineCode).toBe("BYOM_PROVIDER_UNAVAILABLE");
-    expect(result.error.message).toContain("not implemented");
+    expect(result.error.reasonCode).toBe("transport.timeout");
+    expect(result.error.machineCode).toBe("BYOM_TIMEOUT");
+  });
+
+  it("issues one native execute call per CLI request", async () => {
+    const storage = makeStorageAdapter({
+      [WALLET_KEY_PROVIDERS]: [
+        {
+          id: "provider.cli",
+          name: "Local CLI Bridge",
+          type: "cli",
+          status: "connected",
+          models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
+          metadata: { nativeHostName: "com.byom.bridge.cli-cache", cliType: "copilot-cli" },
+        },
+      ],
+    });
+
+    let responseIndex = 0;
+    const sendNativeMessage = vi.fn(
+      async (...args: [string, Record<string, unknown>]) => {
+        const [hostName, message] = args;
+        void hostName;
+        void message;
+        responseIndex += 1;
+        return {
+          type: "cli.chat.result",
+          correlationId: "corr.test.001",
+          providerId: "provider.cli",
+          modelId: "gpt-5.3-codex",
+          content: `Live bridge output ${String(responseIndex)}`,
+        };
+      },
+    );
+
+    const handler = createTransportMessageHandler({
+      storage,
+      dependencies: { sendNativeMessage },
+    });
+
+    await handler({
+      channel: "byom.transport",
+      action: "request",
+      request: {
+        envelope: makeEnvelope(
+          "chat.completions",
+          { messages: [{ role: "user", content: "first" }] },
+          "provider.cli",
+          "gpt-5.3-codex",
+        ),
+      },
+    });
+
+    await handler({
+      channel: "byom.transport",
+      action: "request",
+      request: {
+        envelope: makeEnvelope(
+          "chat.completions",
+          { messages: [{ role: "user", content: "second" }] },
+          "provider.cli",
+          "gpt-5.3-codex",
+        ),
+      },
+    });
+
+    const executeCalls = sendNativeMessage.mock.calls.filter(
+      (call) => call[1]?.["type"] === "cli.chat.execute",
+    );
+    expect(executeCalls).toHaveLength(2);
+  });
+
+  it("sends cached resumeSessionId for subsequent CLI requests", async () => {
+    const storage = makeStorageAdapter({
+      [WALLET_KEY_PROVIDERS]: [
+        {
+          id: "provider.cli",
+          name: "Local CLI Bridge",
+          type: "cli",
+          status: "connected",
+          models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
+          metadata: { nativeHostName: "com.byom.bridge.cli-resume", cliType: "copilot-cli" },
+        },
+      ],
+    });
+
+    let responseIndex = 0;
+    const sendNativeMessage = vi.fn(
+      async (...args: [string, Record<string, unknown>]) => {
+        const [hostName, message] = args;
+        void hostName;
+        void message;
+        responseIndex += 1;
+        return {
+          type: "cli.chat.result",
+          correlationId: "corr.test.001",
+          providerId: "provider.cli",
+          modelId: "gpt-5.3-codex",
+          content: `Live bridge output ${String(responseIndex)}`,
+          ...(responseIndex === 1 ? { cliSessionId: "copilot-session-cached-001" } : {}),
+        };
+      },
+    );
+
+    const handler = createTransportMessageHandler({
+      storage,
+      dependencies: { sendNativeMessage },
+    });
+
+    await handler({
+      channel: "byom.transport",
+      action: "request",
+      request: {
+        envelope: makeEnvelope(
+          "chat.completions",
+          { messages: [{ role: "user", content: "first" }] },
+          "provider.cli",
+          "gpt-5.3-codex",
+        ),
+      },
+    });
+
+    await handler({
+      channel: "byom.transport",
+      action: "request",
+      request: {
+        envelope: makeEnvelope(
+          "chat.completions",
+          { messages: [{ role: "user", content: "second" }] },
+          "provider.cli",
+          "gpt-5.3-codex",
+        ),
+      },
+    });
+
+    const firstCallMessage = sendNativeMessage.mock.calls[0]?.[1] as
+      | Record<string, unknown>
+      | undefined;
+    const secondCallMessage = sendNativeMessage.mock.calls[1]?.[1] as
+      | Record<string, unknown>
+      | undefined;
+    expect(firstCallMessage?.["resumeSessionId"]).toBeUndefined();
+    expect(secondCallMessage?.["resumeSessionId"]).toBe("copilot-session-cached-001");
+  });
+
+  it("returns stream envelopes for request-stream chat.stream action", async () => {
+    const storage = makeStorageAdapter({
+      [WALLET_KEY_PROVIDERS]: [
+        {
+          id: "provider.ollama",
+          name: "Ollama Local",
+          type: "local",
+          status: "connected",
+          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          metadata: { baseUrl: "http://localhost:11434" },
+        },
+      ],
+    });
+
+    const fetchImpl = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          message: {
+            role: "assistant",
+            content:
+              "Streaming path now routes through request-stream and emits chunk events.",
+          },
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    }) as unknown as typeof fetch;
+
+    const handler = createTransportMessageHandler({
+      storage,
+      dependencies: { fetchImpl },
+    });
+
+    const result = await handler({
+      channel: "byom.transport",
+      action: "request-stream",
+      request: {
+        envelope: makeEnvelope("chat.stream", {
+          messages: [{ role: "user", content: "hello" }],
+        }),
+      },
+    });
+
+    expect(result?.ok).toBe(true);
+    if (result?.ok !== true) {
+      return;
+    }
+
+    expect(Array.isArray(result.envelopes)).toBe(true);
+    const envelopes = result.envelopes as Array<CanonicalEnvelope<unknown>>;
+    expect(envelopes.length).toBeGreaterThan(1);
+    expect((envelopes[0]?.payload as { type?: string })?.type).toBe("chunk");
+    expect((envelopes[envelopes.length - 1]?.payload as { type?: string })?.type).toBe(
+      "done",
+    );
   });
 });

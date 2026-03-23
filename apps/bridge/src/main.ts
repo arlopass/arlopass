@@ -2,6 +2,7 @@ import process from "node:process";
 import { randomBytes } from "node:crypto";
 
 import { BridgeHandler } from "./bridge-handler.js";
+import { CopilotCliChatExecutor } from "./cli/copilot-chat-executor.js";
 import { NativeHost } from "./native-host.js";
 
 /**
@@ -19,7 +20,27 @@ async function main(): Promise<void> {
   const sharedSecret =
     secretEnv !== undefined ? Buffer.from(secretEnv, "hex") : randomBytes(32);
 
-  const bridgeHandler = new BridgeHandler({ sharedSecret });
+  const cliChatExecutor = new CopilotCliChatExecutor();
+  const probeTargets = [
+    { cliType: "copilot-cli", label: "GitHub Copilot CLI" },
+    { cliType: "claude-code", label: "Claude Code" },
+  ] as const;
+  for (const target of probeTargets) {
+    try {
+      await cliChatExecutor.probe(5_000, target.cliType);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      process.stderr.write(
+        `[byom-bridge] warning: ${target.label} probe failed; that CLI path may be unavailable: ${errorMessage}\n`,
+      );
+    }
+  }
+
+  const bridgeHandler = new BridgeHandler({
+    sharedSecret,
+    cliChatExecutor,
+  });
 
   const host = new NativeHost({
     input: process.stdin,

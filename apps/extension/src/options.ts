@@ -27,15 +27,22 @@ type ConnectionTestResult = Readonly<{
   models: readonly ProviderModel[];
 }>;
 
+type ConnectorSelectOption = Readonly<{
+  value: string;
+  label: string;
+}>;
+
 type ConnectorField = Readonly<{
   key: string;
   label: string;
-  type: "text" | "password" | "url";
+  type: "text" | "password" | "url" | "select";
   placeholder?: string;
+  defaultValue?: string;
   required?: boolean;
   helpText?: string;
   maxLength?: number;
   minLength?: number;
+  options?: readonly ConnectorSelectOption[];
 }>;
 
 type ConnectorDefinition = Readonly<{
@@ -57,12 +64,7 @@ const STORAGE_KEY_PROVIDERS = "byom.wallet.providers.v1";
 const STORAGE_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
 const STORAGE_KEY_LAST_ERROR = "byom.wallet.ui.lastError.v1";
 const PROVIDER_ID_PREFIX = "provider";
-
-const OLLAMA_KNOWN_MODELS: readonly ProviderModel[] = [
-  { id: "llama3.2", name: "Llama 3.2" },
-  { id: "mistral", name: "Mistral" },
-  { id: "qwen2.5", name: "Qwen 2.5" },
-];
+const NATIVE_MESSAGE_TIMEOUT_MS = 15_000;
 
 const CLAUDE_KNOWN_MODELS: readonly ProviderModel[] = [
   { id: "claude-opus-4-5", name: "Claude Opus 4.5" },
@@ -70,10 +72,25 @@ const CLAUDE_KNOWN_MODELS: readonly ProviderModel[] = [
   { id: "claude-haiku-4-5", name: "Claude Haiku 4.5" },
 ];
 
-const LOCAL_BRIDGE_KNOWN_MODELS: readonly ProviderModel[] = [
-  { id: "copilot-cli", name: "GitHub Copilot CLI" },
-  { id: "claude-code", name: "Claude Code" },
-  { id: "custom-cli", name: "Custom CLI Adapter" },
+type SupportedCliType = "copilot-cli" | "claude-code";
+
+type CliClientCatalogEntry = Readonly<{
+  id: SupportedCliType;
+  label: string;
+  defaultProviderName: string;
+}>;
+
+const CLI_CLIENTS: readonly CliClientCatalogEntry[] = [
+  {
+    id: "copilot-cli",
+    label: "GitHub Copilot CLI",
+    defaultProviderName: "GitHub Copilot CLI",
+  },
+  {
+    id: "claude-code",
+    label: "Claude Code",
+    defaultProviderName: "Claude Code",
+  },
 ];
 
 function escapeHtml(value: string): string {
@@ -112,6 +129,74 @@ function normalizeUrl(value: string): string {
 function normalizeText(value: string, fallback = ""): string {
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : fallback;
+}
+
+function cliClientById(cliTypeRaw: string | undefined): CliClientCatalogEntry {
+  const cliType = normalizeText(cliTypeRaw ?? "", "copilot-cli");
+  const match = CLI_CLIENTS.find((candidate) => candidate.id === cliType);
+  return match ?? CLI_CLIENTS[0]!;
+}
+
+function toConnectorSelectOptions(
+  options: readonly {
+    id: string;
+    label: string;
+  }[],
+): readonly ConnectorSelectOption[] {
+  return options.map((option) => ({
+    value: option.id,
+    label: option.label,
+  }));
+}
+
+function toConnectorModelOptions(models: readonly ProviderModel[]): readonly ConnectorSelectOption[] {
+  return models.map((model) => ({
+    value: model.id,
+    label: model.name,
+  }));
+}
+
+function parseProviderModels(value: unknown): ProviderModel[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const models: ProviderModel[] = [];
+  for (const entry of value) {
+    if (
+      isRecord(entry) &&
+      typeof entry["id"] === "string" &&
+      typeof entry["name"] === "string"
+    ) {
+      models.push({
+        id: entry["id"],
+        name: entry["name"],
+      });
+    }
+  }
+  return models;
+}
+
+function parseOllamaTagsModels(value: unknown): ProviderModel[] {
+  if (!isRecord(value) || !Array.isArray(value["models"])) {
+    return [];
+  }
+
+  return (value["models"] as unknown[])
+    .map((entry) => (isRecord(entry) ? entry["name"] : undefined))
+    .filter((name): name is string => typeof name === "string" && name.length > 0)
+    .slice(0, 40)
+    .map((name) => ({ id: name, name }));
+}
+
+async function discoverOllamaModels(baseUrl: string): Promise<readonly ProviderModel[]> {
+  const tagsResponse = await runFetchCheck(`${baseUrl}/api/tags`);
+  if (!tagsResponse.ok) {
+    return [];
+  }
+
+  const payload = (await tagsResponse.json()) as unknown;
+  return parseOllamaTagsModels(payload);
 }
 
 function createProviderId(connectorId: string): string {
@@ -269,6 +354,302 @@ function formatValidationTransportError(options: {
   return `${options.serviceName} validation failed: ${errorMessage}`;
 }
 
+function formatNativeHostRuntimeError(rawMessage: string): string {
+  const hint =
+    rawMessage.includes("Specified native messaging host not found")
+      ? " Run `npm run dev:register-native-host`, then reload the extension and retry."
+      : rawMessage.includes("Error when communicating with the native messaging host")
+        ? " The native host process started but exited unexpectedly. Re-run `npm run dev:full` and verify bridge startup logs."
+        : "";
+  return `Native host not reachable: ${rawMessage}.${hint}`;
+}
+
+async function sendNativeMessage(
+  hostName: string,
+  message: Readonly<Record<string, unknown>>,
+  options: Readonly<{ timeoutMs?: number }> = {},
+): Promise<
+  | Readonly<{ ok: true; response: unknown }>
+  | Readonly<{ ok: false; errorMessage: string }>
+> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timeoutMs = options.timeoutMs ?? NATIVE_MESSAGE_TIMEOUT_MS;
+    const timeoutHandle = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve({
+        ok: false,
+        errorMessage: `Native host response timed out after ${String(timeoutMs)}ms.`,
+      });
+    }, timeoutMs);
+
+    try {
+      chrome.runtime.sendNativeMessage(hostName, message, (response) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timeoutHandle);
+        const runtimeError = chrome.runtime.lastError;
+        if (runtimeError !== undefined) {
+          resolve({
+            ok: false,
+            errorMessage: runtimeError.message ?? "unknown error",
+          });
+          return;
+        }
+
+        resolve({
+          ok: true,
+          response,
+        });
+      });
+    } catch (error) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timeoutHandle);
+      const err = error instanceof Error ? error : new Error(String(error));
+      resolve({
+        ok: false,
+        errorMessage: err.message,
+      });
+    }
+  });
+}
+
+type CliConnectorCache = {
+  hostName: string;
+  cliType: SupportedCliType;
+  models: readonly ProviderModel[];
+  thinkingLevelsByModel: Record<string, readonly string[]>;
+};
+
+function createCliCacheKey(hostName: string, cliType: SupportedCliType): string {
+  return `${hostName}::${cliType}`;
+}
+
+const cliConnectorCacheByKey: Record<string, CliConnectorCache> = {};
+
+function parseThinkingLevels(value: unknown): readonly string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const levels = value
+    .map((entry) => (typeof entry === "string" ? entry.trim().toLowerCase() : ""))
+    .map((entry) => (entry === "medium" ? "med" : entry))
+    .filter((entry) => entry.length > 0);
+  return [...new Set(levels)];
+}
+
+function toThinkingLevelOptions(levels: readonly string[]): readonly ConnectorSelectOption[] {
+  return levels.map((level) => ({
+    value: level,
+    label:
+      level === "xhigh"
+        ? "Very High"
+        : level === "med"
+          ? "Medium"
+          : `${level[0]?.toUpperCase() ?? ""}${level.slice(1)}`,
+  }));
+}
+
+function serializeThinkingLevelsMap(
+  thinkingLevelsByModel: Record<string, readonly string[]>,
+): string {
+  const normalized = Object.fromEntries(
+    Object.entries(thinkingLevelsByModel).filter((entry) => entry[1].length > 0),
+  );
+  return JSON.stringify(normalized);
+}
+
+async function ensureNativeBridgeHandshake(hostName: string): Promise<void> {
+  const challengeResponse = await sendNativeMessage(hostName, {
+    type: "handshake.challenge",
+  }, { timeoutMs: 5_000 });
+  if (!challengeResponse.ok) {
+    throw new Error(formatNativeHostRuntimeError(challengeResponse.errorMessage));
+  }
+  if (
+    !isRecord(challengeResponse.response) ||
+    challengeResponse.response["type"] !== "handshake.challenge"
+  ) {
+    throw new Error("Native host responded with an unexpected payload.");
+  }
+}
+
+async function fetchCliModelsFromBridge(options: {
+  hostName: string;
+  cliType: SupportedCliType;
+}): Promise<readonly ProviderModel[]> {
+  await ensureNativeBridgeHandshake(options.hostName);
+  const modelListResponse = await sendNativeMessage(options.hostName, {
+    type: "cli.models.list",
+    cliType: options.cliType,
+  }, { timeoutMs: 10_000 });
+  if (!modelListResponse.ok) {
+    throw new Error(formatNativeHostRuntimeError(modelListResponse.errorMessage));
+  }
+
+  if (!isRecord(modelListResponse.response)) {
+    throw new Error("Native host returned an invalid models payload.");
+  }
+  if (modelListResponse.response["type"] === "error") {
+    const message =
+      typeof modelListResponse.response["message"] === "string"
+        ? modelListResponse.response["message"]
+        : "Native host failed to list CLI models.";
+    throw new Error(message);
+  }
+  if (modelListResponse.response["type"] !== "cli.models.list") {
+    throw new Error("Native host returned an unexpected models payload.");
+  }
+
+  const models = parseProviderModels(modelListResponse.response["models"]);
+  if (models.length === 0) {
+    throw new Error("Native host did not return any models for this CLI type.");
+  }
+  return models;
+}
+
+async function fetchCliThinkingLevelsFromBridge(options: {
+  hostName: string;
+  cliType: SupportedCliType;
+  modelId: string;
+}): Promise<readonly string[]> {
+  await ensureNativeBridgeHandshake(options.hostName);
+  const levelsResponse = await sendNativeMessage(options.hostName, {
+    type: "cli.thinking-levels.list",
+    cliType: options.cliType,
+    modelId: options.modelId,
+  }, { timeoutMs: 10_000 });
+  if (!levelsResponse.ok) {
+    throw new Error(formatNativeHostRuntimeError(levelsResponse.errorMessage));
+  }
+
+  if (!isRecord(levelsResponse.response)) {
+    throw new Error("Native host returned an invalid thinking-level payload.");
+  }
+  if (levelsResponse.response["type"] === "error") {
+    const message =
+      typeof levelsResponse.response["message"] === "string"
+        ? levelsResponse.response["message"]
+        : "Native host failed to list thinking levels.";
+    throw new Error(message);
+  }
+  if (levelsResponse.response["type"] !== "cli.thinking-levels.list") {
+    throw new Error("Native host returned an unexpected thinking-level payload.");
+  }
+
+  return parseThinkingLevels(levelsResponse.response["thinkingLevels"]);
+}
+
+function readCliConnectorCache(
+  hostName: string,
+  cliType: SupportedCliType,
+): CliConnectorCache | undefined {
+  return cliConnectorCacheByKey[createCliCacheKey(hostName, cliType)];
+}
+
+function writeCliConnectorCache(cache: CliConnectorCache): void {
+  cliConnectorCacheByKey[createCliCacheKey(cache.hostName, cache.cliType)] = cache;
+}
+
+async function getCliConnectorCache(options: {
+  hostName: string;
+  cliType: SupportedCliType;
+}): Promise<CliConnectorCache> {
+  const cached = readCliConnectorCache(options.hostName, options.cliType);
+  if (cached !== undefined && cached.models.length > 0) {
+    return cached;
+  }
+
+  const models = await fetchCliModelsFromBridge({
+    hostName: options.hostName,
+    cliType: options.cliType,
+  });
+  const nextCache: CliConnectorCache = {
+    hostName: options.hostName,
+    cliType: options.cliType,
+    models,
+    thinkingLevelsByModel: {},
+  };
+  writeCliConnectorCache(nextCache);
+  return nextCache;
+}
+
+async function getCliThinkingLevelsForModel(options: {
+  hostName: string;
+  cliType: SupportedCliType;
+  modelId: string;
+}): Promise<readonly string[]> {
+  const cache = await getCliConnectorCache({
+    hostName: options.hostName,
+    cliType: options.cliType,
+  });
+  const cachedLevels = cache.thinkingLevelsByModel[options.modelId];
+  if (cachedLevels !== undefined) {
+    return cachedLevels;
+  }
+
+  const levels = await fetchCliThinkingLevelsFromBridge(options);
+  const nextCache: CliConnectorCache = {
+    ...cache,
+    thinkingLevelsByModel: {
+      ...cache.thinkingLevelsByModel,
+      [options.modelId]: levels,
+    },
+  };
+  writeCliConnectorCache(nextCache);
+  return levels;
+}
+
+async function hydrateCliProviderMetadata(options: {
+  provider: StoredProvider;
+  hostName: string;
+  cliType: SupportedCliType;
+  selectedModelId: string;
+  selectedThinkingLevel: string;
+}): Promise<StoredProvider> {
+  const cache = await getCliConnectorCache({
+    hostName: options.hostName,
+    cliType: options.cliType,
+  });
+  const selectedModelId = cache.models.some((model) => model.id === options.selectedModelId)
+    ? options.selectedModelId
+    : "";
+  const modelThinkingLevels =
+    selectedModelId.length > 0 ? (cache.thinkingLevelsByModel[selectedModelId] ?? []) : [];
+  const selectedThinkingLevel = modelThinkingLevels.includes(options.selectedThinkingLevel)
+    ? options.selectedThinkingLevel
+    : "";
+
+  const metadata: Record<string, string> = {
+    ...(options.provider.metadata ?? {}),
+    nativeHostName: options.hostName,
+    cliType: options.cliType,
+    thinkingLevelsByModel: serializeThinkingLevelsMap(cache.thinkingLevelsByModel),
+  };
+  if (selectedModelId.length > 0) {
+    metadata["selectedModelId"] = selectedModelId;
+  }
+  if (selectedThinkingLevel.length > 0) {
+    metadata["thinkingLevel"] = selectedThinkingLevel;
+  }
+
+  return {
+    ...options.provider,
+    models: cache.models,
+    metadata,
+    lastSyncedAt: Date.now(),
+  };
+}
+
 const CONNECTORS: readonly ConnectorDefinition[] = [
   {
     id: "ollama",
@@ -280,17 +661,19 @@ const CONNECTORS: readonly ConnectorDefinition[] = [
         key: "baseUrl",
         label: "Base URL",
         type: "url",
+        defaultValue: "http://localhost:11434",
         placeholder: "http://localhost:11434",
         required: true,
         maxLength: 200,
         helpText: "Endpoint for your local Ollama runtime.",
       },
       {
-        key: "modelHint",
-        label: "Preferred Model (optional)",
-        type: "text",
-        placeholder: "llama3.2",
-        maxLength: 80,
+        key: "modelId",
+        label: "Preferred Model",
+        type: "select",
+        required: true,
+        options: [{ value: "", label: "Loading models..." }],
+        helpText: "Discovered from Ollama /api/tags when reachable.",
       },
     ],
     async testConnection(config): Promise<ConnectionTestResult> {
@@ -320,27 +703,39 @@ const CONNECTORS: readonly ConnectorDefinition[] = [
         };
       }
 
-      let models: ProviderModel[] = [...OLLAMA_KNOWN_MODELS];
+      let models: readonly ProviderModel[];
       try {
-        const tagsResponse = await runFetchCheck(`${baseUrl}/api/tags`);
-        if (tagsResponse.ok) {
-          const payload = (await tagsResponse.json()) as { models?: Array<{ name?: string }> };
-          const discovered = (payload.models ?? [])
-            .map((item) => item.name)
-            .filter((name): name is string => typeof name === "string" && name.length > 0)
-            .slice(0, 20)
-            .map((name) => ({ id: name, name }));
-          if (discovered.length > 0) {
-            models = discovered;
-          }
-        }
-      } catch {
-        // Best-effort discovery; keep defaults.
+        models = await discoverOllamaModels(baseUrl);
+      } catch (error) {
+        return {
+          ok: false,
+          status: "attention",
+          message: formatValidationTransportError({
+            serviceName: "Ollama",
+            endpoint: `${baseUrl}/api/tags`,
+            error,
+          }),
+          models: [],
+        };
       }
 
-      const modelHint = normalizeText(config["modelHint"] ?? "");
-      if (modelHint.length > 0 && !models.some((model) => model.id === modelHint)) {
-        models = [{ id: modelHint, name: modelHint }, ...models];
+      if (models.length === 0) {
+        return {
+          ok: false,
+          status: "attention",
+          message: "Ollama model discovery returned no models. Add a model locally and retry.",
+          models: [],
+        };
+      }
+
+      const selectedModelId = normalizeText(config["modelId"] ?? "", "");
+      if (selectedModelId.length > 0 && !models.some((model) => model.id === selectedModelId)) {
+        return {
+          ok: false,
+          status: "attention",
+          message: `Selected model "${selectedModelId}" is not available in Ollama.`,
+          models: [],
+        };
       }
 
       return {
@@ -351,8 +746,10 @@ const CONNECTORS: readonly ConnectorDefinition[] = [
       };
     },
     sanitizeMetadata(config): Readonly<Record<string, string>> {
+      const modelId = normalizeText(config["modelId"] ?? "", "");
       return {
         baseUrl: normalizeUrl(config["baseUrl"] ?? "http://localhost:11434"),
+        ...(modelId.length > 0 ? { selectedModelId: modelId } : {}),
       };
     },
   },
@@ -477,26 +874,45 @@ const CONNECTORS: readonly ConnectorDefinition[] = [
     id: "local-cli-bridge",
     label: "Native Bridge Host (CLI clients)",
     type: "cli",
-    defaultName: "Local CLI Bridge",
+    defaultName: "GitHub Copilot CLI",
     fields: [
       {
         key: "nativeHostName",
         label: "Native Host Name",
         type: "text",
+        defaultValue: "com.byom.bridge",
         required: true,
         maxLength: 120,
         placeholder: "com.byom.bridge",
       },
       {
-        key: "modelHint",
-        label: "Client/Model Hint (optional)",
-        type: "text",
-        placeholder: "copilot-cli",
-        maxLength: 100,
+        key: "cliType",
+        label: "CLI Type",
+        type: "select",
+        required: true,
+        options: toConnectorSelectOptions(CLI_CLIENTS),
+        helpText: "Choose which local CLI runtime should execute chat requests.",
+      },
+      {
+        key: "modelId",
+        label: "Model",
+        type: "select",
+        required: true,
+        options: [{ value: "", label: "Loading models..." }],
+        helpText: "Fetched from native bridge for selected CLI type.",
+      },
+      {
+        key: "thinkingLevel",
+        label: "Thinking Level",
+        type: "select",
+        required: false,
+        options: [{ value: "", label: "Loading thinking levels..." }],
+        helpText: "Fetched from native bridge for selected model.",
       },
     ],
     async testConnection(config): Promise<ConnectionTestResult> {
       const hostName = normalizeText(config["nativeHostName"] ?? "com.byom.bridge", "com.byom.bridge");
+      const cliClient = cliClientById(config["cliType"]);
       if (!/^[a-z0-9]+(\.[a-z0-9-]+)+$/.test(hostName)) {
         return {
           ok: false,
@@ -506,76 +922,75 @@ const CONNECTORS: readonly ConnectorDefinition[] = [
         };
       }
 
-      const response = await new Promise<ConnectionTestResult>((resolve) => {
-        try {
-          chrome.runtime.sendNativeMessage(
+      try {
+        const cache = await getCliConnectorCache({
+          hostName,
+          cliType: cliClient.id,
+        });
+        const models = cache.models;
+
+        const selectedModelId = normalizeText(config["modelId"] ?? "", "");
+        if (selectedModelId.length > 0) {
+          if (!models.some((model) => model.id === selectedModelId)) {
+            return {
+              ok: false,
+              status: "attention",
+              message: `Selected model "${selectedModelId}" is not available for ${cliClient.label}.`,
+              models: [],
+            };
+          }
+          await getCliThinkingLevelsForModel({
             hostName,
-            { type: "handshake.challenge" },
-            (message) => {
-              const runtimeError = chrome.runtime.lastError;
-              if (runtimeError !== undefined) {
-                const rawMessage = runtimeError.message ?? "unknown error";
-                const hint =
-                  rawMessage.includes("Specified native messaging host not found")
-                    ? " Run `npm run dev:register-native-host`, then reload the extension and retry."
-                    : rawMessage.includes("Error when communicating with the native messaging host")
-                      ? " The native host process started but exited unexpectedly. Re-run `npm run dev:full` and verify bridge startup logs."
-                      : "";
-                resolve({
-                  ok: false,
-                  status: "attention",
-                  message: `Native host not reachable: ${rawMessage}.${hint}`,
-                  models: [],
-                });
-                return;
-              }
-
-              if (!isRecord(message) || message["type"] !== "handshake.challenge") {
-                resolve({
-                  ok: false,
-                  status: "attention",
-                  message: "Native host responded with an unexpected payload.",
-                  models: [],
-                });
-                return;
-              }
-
-              resolve({
-                ok: true,
-                status: "connected",
-                message: "Native bridge host is reachable.",
-                models: [...LOCAL_BRIDGE_KNOWN_MODELS],
-              });
-            },
-          );
-        } catch (error) {
-          const err = error instanceof Error ? error : new Error(String(error));
-          resolve({
-            ok: false,
-            status: "attention",
-            message: `Native host test failed: ${err.message}`,
-            models: [],
+            cliType: cliClient.id,
+            modelId: selectedModelId,
+          });
+        } else if (models[0] !== undefined) {
+          await getCliThinkingLevelsForModel({
+            hostName,
+            cliType: cliClient.id,
+            modelId: models[0].id,
           });
         }
-      });
 
-      const modelHint = normalizeText(config["modelHint"] ?? "");
-      if (response.ok && modelHint.length > 0 && !response.models.some((model) => model.id === modelHint)) {
         return {
-          ...response,
-          models: [{ id: modelHint, name: modelHint }, ...response.models],
+          ok: true,
+          status: "connected",
+          message: `${cliClient.label} bridge is reachable.`,
+          models,
+        };
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        return {
+          ok: false,
+          status: "attention",
+          message: err.message,
+          models: [],
         };
       }
-
-      return response;
     },
     sanitizeMetadata(config): Readonly<Record<string, string>> {
-      return {
-        nativeHostName: normalizeText(
-          config["nativeHostName"] ?? "com.byom.bridge",
-          "com.byom.bridge",
-        ),
+      const hostName = normalizeText(
+        config["nativeHostName"] ?? "com.byom.bridge",
+        "com.byom.bridge",
+      );
+      const cliClient = cliClientById(config["cliType"]);
+      const selectedModelId = normalizeText(config["modelId"] ?? "", "");
+      const selectedThinkingLevel = normalizeText(config["thinkingLevel"] ?? "", "");
+      const cache = readCliConnectorCache(hostName, cliClient.id);
+      const metadata: Record<string, string> = {
+        nativeHostName: hostName,
+        cliType: cliClient.id,
       };
+      if (selectedModelId.length > 0) {
+        metadata["selectedModelId"] = selectedModelId;
+      }
+      if (selectedThinkingLevel.length > 0) {
+        metadata["thinkingLevel"] = selectedThinkingLevel;
+      }
+      if (cache !== undefined) {
+        metadata["thinkingLevelsByModel"] = serializeThinkingLevelsMap(cache.thinkingLevelsByModel);
+      }
+      return metadata;
     },
   },
 ];
@@ -588,6 +1003,210 @@ function connectorById(connectorId: string): ConnectorDefinition {
   return connector;
 }
 
+function updateSelectOptions(
+  selectElement: HTMLSelectElement,
+  options: readonly ConnectorSelectOption[],
+  preferredValue: string | undefined,
+): void {
+  selectElement.innerHTML = options
+    .map(
+      (option) =>
+        `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`,
+    )
+    .join("");
+
+  if (preferredValue !== undefined && options.some((option) => option.value === preferredValue)) {
+    selectElement.value = preferredValue;
+    return;
+  }
+
+  const firstOption = options[0];
+  if (firstOption !== undefined) {
+    selectElement.value = firstOption.value;
+  }
+}
+
+function setSelectLoadingState(selectElement: HTMLSelectElement, label: string): void {
+  updateSelectOptions(selectElement, [{ value: "", label }], undefined);
+  selectElement.disabled = true;
+  selectElement.setAttribute("aria-busy", "true");
+}
+
+function setSelectUnavailableState(selectElement: HTMLSelectElement, label: string): void {
+  updateSelectOptions(selectElement, [{ value: "", label }], undefined);
+  selectElement.disabled = true;
+  selectElement.setAttribute("aria-busy", "false");
+}
+
+function setSelectOptionsReady(
+  selectElement: HTMLSelectElement,
+  options: readonly ConnectorSelectOption[],
+  preferredValue: string | undefined,
+): void {
+  updateSelectOptions(selectElement, options, preferredValue);
+  selectElement.disabled = options.length === 0;
+  selectElement.setAttribute("aria-busy", "false");
+}
+
+let cliModelSyncCounter = 0;
+let cliThinkingSyncCounter = 0;
+
+async function syncCliThinkingSelector(form: HTMLFormElement): Promise<void> {
+  const hostNameField = form.elements.namedItem("nativeHostName");
+  const cliTypeField = form.elements.namedItem("cliType");
+  const modelField = form.elements.namedItem("modelId");
+  const thinkingField = form.elements.namedItem("thinkingLevel");
+  if (
+    !(hostNameField instanceof HTMLInputElement) ||
+    !(cliTypeField instanceof HTMLSelectElement) ||
+    !(modelField instanceof HTMLSelectElement) ||
+    !(thinkingField instanceof HTMLSelectElement)
+  ) {
+    return;
+  }
+
+  const syncId = ++cliThinkingSyncCounter;
+  const modelId = normalizeText(modelField.value, "");
+  if (modelId.length === 0) {
+    setSelectUnavailableState(thinkingField, "Select a model first.");
+    return;
+  }
+
+  setSelectLoadingState(thinkingField, "Loading thinking levels...");
+  const hostName = normalizeText(hostNameField.value, "com.byom.bridge");
+  const cliType = cliClientById(cliTypeField.value).id;
+  const previousThinkingLevel = normalizeText(thinkingField.value, "");
+  try {
+    const thinkingLevels = await getCliThinkingLevelsForModel({
+      hostName,
+      cliType,
+      modelId,
+    });
+    if (syncId !== cliThinkingSyncCounter) {
+      return;
+    }
+    if (thinkingLevels.length === 0) {
+      setSelectUnavailableState(thinkingField, "No thinking levels available for this model.");
+      return;
+    }
+    setSelectOptionsReady(
+      thinkingField,
+      toThinkingLevelOptions(thinkingLevels),
+      previousThinkingLevel,
+    );
+  } catch (error) {
+    if (syncId !== cliThinkingSyncCounter) {
+      return;
+    }
+    const message = error instanceof Error ? error.message : "Unable to load thinking levels.";
+    setSelectUnavailableState(
+      thinkingField,
+      `Thinking levels unavailable: ${message}`,
+    );
+  }
+}
+
+async function syncCliModelSelector(form: HTMLFormElement): Promise<void> {
+  const hostNameField = form.elements.namedItem("nativeHostName");
+  const cliTypeField = form.elements.namedItem("cliType");
+  const modelField = form.elements.namedItem("modelId");
+  const thinkingField = form.elements.namedItem("thinkingLevel");
+  if (
+    !(hostNameField instanceof HTMLInputElement) ||
+    !(cliTypeField instanceof HTMLSelectElement) ||
+    !(modelField instanceof HTMLSelectElement) ||
+    !(thinkingField instanceof HTMLSelectElement)
+  ) {
+    return;
+  }
+
+  const syncId = ++cliModelSyncCounter;
+  const hostName = normalizeText(hostNameField.value, "com.byom.bridge");
+  const cliClient = cliClientById(cliTypeField.value);
+  const previousModelId = normalizeText(modelField.value, "");
+  setSelectLoadingState(modelField, "Loading models...");
+  setSelectLoadingState(thinkingField, "Loading thinking levels...");
+  try {
+    const cache = await getCliConnectorCache({
+      hostName,
+      cliType: cliClient.id,
+    });
+    if (syncId !== cliModelSyncCounter) {
+      return;
+    }
+    if (cache.models.length === 0) {
+      setSelectUnavailableState(modelField, "No models available for this CLI.");
+      setSelectUnavailableState(thinkingField, "Select a model first.");
+      return;
+    }
+    setSelectOptionsReady(
+      modelField,
+      toConnectorModelOptions(cache.models),
+      previousModelId,
+    );
+    await syncCliThinkingSelector(form);
+  } catch (error) {
+    if (syncId !== cliModelSyncCounter) {
+      return;
+    }
+    const message = error instanceof Error ? error.message : "Unable to load models.";
+    setSelectUnavailableState(modelField, `Models unavailable: ${message}`);
+    setSelectUnavailableState(thinkingField, "Thinking levels unavailable.");
+  }
+}
+
+let ollamaModelSyncCounter = 0;
+
+async function syncOllamaModelSelector(form: HTMLFormElement): Promise<void> {
+  const baseUrlField = form.elements.namedItem("baseUrl");
+  const modelField = form.elements.namedItem("modelId");
+  if (
+    !(baseUrlField instanceof HTMLInputElement) ||
+    !(modelField instanceof HTMLSelectElement)
+  ) {
+    return;
+  }
+
+  const syncId = ++ollamaModelSyncCounter;
+  const previousModelId = normalizeText(modelField.value, "");
+  setSelectLoadingState(modelField, "Loading models...");
+  let models: readonly ProviderModel[] = [];
+  let unavailableReason = "No models available.";
+
+  const baseUrlCandidate = normalizeText(baseUrlField.value, "http://localhost:11434");
+  try {
+    const normalizedBaseUrl = normalizeUrl(baseUrlCandidate);
+    models = await discoverOllamaModels(normalizedBaseUrl);
+    if (models.length === 0) {
+      unavailableReason = "No Ollama models found at /api/tags.";
+    }
+  } catch (error) {
+    unavailableReason =
+      error instanceof Error ? error.message : "Unable to load Ollama models.";
+  }
+
+  if (syncId !== ollamaModelSyncCounter) {
+    return;
+  }
+
+  if (models.length === 0) {
+    setSelectUnavailableState(modelField, `Models unavailable: ${unavailableReason}`);
+    return;
+  }
+  setSelectOptionsReady(modelField, toConnectorModelOptions(models), previousModelId);
+}
+
+function resolveConnectorDefaultName(
+  connector: ConnectorDefinition,
+  fieldValues: Readonly<Record<string, string>>,
+): string {
+  if (connector.id === "local-cli-bridge") {
+    return cliClientById(fieldValues["cliType"]).defaultProviderName;
+  }
+
+  return connector.defaultName;
+}
+
 function renderConnectorFields(container: HTMLElement, connector: ConnectorDefinition): void {
   const html = connector.fields
     .map((field) => {
@@ -598,14 +1217,34 @@ function renderConnectorFields(container: HTMLElement, connector: ConnectorDefin
         typeof field.maxLength === "number" ? ` maxlength="${field.maxLength}"` : "";
       const placeholderAttr =
         field.placeholder !== undefined ? ` placeholder="${escapeHtml(field.placeholder)}"` : "";
+      const defaultValueAttr =
+        field.defaultValue !== undefined ? ` value="${escapeHtml(field.defaultValue)}"` : "";
       const autoCompleteAttr = field.type === "password" ? ` autocomplete="off"` : "";
+      const fieldId = `field-${escapeHtml(field.key)}`;
+      const label = `<label for="${fieldId}">${escapeHtml(field.label)}</label>`;
+
+      if (field.type === "select") {
+        const optionsMarkup = (field.options ?? [])
+          .map(
+            (option) =>
+              `<option value="${escapeHtml(option.value)}"${field.defaultValue === option.value ? " selected" : ""}>${escapeHtml(option.label)}</option>`,
+          )
+          .join("");
+        return `<div class="form-row">
+          ${label}
+          <select id="${fieldId}" name="${escapeHtml(field.key)}"${requiredAttr}>
+            ${optionsMarkup}
+          </select>
+          ${field.helpText !== undefined ? `<p class="field-help">${escapeHtml(field.helpText)}</p>` : ""}
+        </div>`;
+      }
 
       return `<div class="form-row">
-        <label for="field-${escapeHtml(field.key)}">${escapeHtml(field.label)}</label>
+        ${label}
         <input
-          id="field-${escapeHtml(field.key)}"
+          id="${fieldId}"
           name="${escapeHtml(field.key)}"
-          type="${escapeHtml(field.type)}"${requiredAttr}${minLengthAttr}${maxLengthAttr}${placeholderAttr}${autoCompleteAttr}
+          type="${escapeHtml(field.type)}"${requiredAttr}${minLengthAttr}${maxLengthAttr}${placeholderAttr}${defaultValueAttr}${autoCompleteAttr}
         />
         ${field.helpText !== undefined ? `<p class="field-help">${escapeHtml(field.helpText)}</p>` : ""}
       </div>`;
@@ -621,11 +1260,14 @@ function collectConnectorFieldValues(
 ): Readonly<Record<string, string>> {
   const values: Record<string, string> = {};
   for (const field of connector.fields) {
-    const input = form.elements.namedItem(field.key);
-    if (!(input instanceof HTMLInputElement)) {
+    const fieldElement = form.elements.namedItem(field.key);
+    if (
+      !(fieldElement instanceof HTMLInputElement) &&
+      !(fieldElement instanceof HTMLSelectElement)
+    ) {
       throw new Error(`Missing field "${field.label}".`);
     }
-    const value = input.value.trim();
+    const value = fieldElement.value.trim();
     if (field.required === true && value.length === 0) {
       throw new Error(`"${field.label}" is required.`);
     }
@@ -835,6 +1477,7 @@ async function handleProviderModelChange(
 }
 
 function setupConnectorPicker(
+  form: HTMLFormElement,
   selectElement: HTMLSelectElement,
   fieldsContainer: HTMLElement,
   feedbackNode: HTMLElement,
@@ -848,11 +1491,21 @@ function setupConnectorPicker(
     throw new Error("No connectors are configured.");
   }
   renderConnectorFields(fieldsContainer, initialConnector);
+  if (initialConnector.id === "local-cli-bridge") {
+    void syncCliModelSelector(form);
+  } else if (initialConnector.id === "ollama") {
+    void syncOllamaModelSelector(form);
+  }
   clearFeedback(feedbackNode);
 
   selectElement.addEventListener("change", () => {
     const connector = connectorById(selectElement.value);
     renderConnectorFields(fieldsContainer, connector);
+    if (connector.id === "local-cli-bridge") {
+      void syncCliModelSelector(form);
+    } else if (connector.id === "ollama") {
+      void syncOllamaModelSelector(form);
+    }
     clearFeedback(feedbackNode);
   });
 }
@@ -891,10 +1544,11 @@ async function onSaveProvider(
   }
 
   const displayNameInput = form.elements.namedItem("displayName");
+  const defaultDisplayName = resolveConnectorDefaultName(connector, fieldValues);
   const displayName =
     displayNameInput instanceof HTMLInputElement
-      ? normalizeText(displayNameInput.value, connector.defaultName)
-      : connector.defaultName;
+      ? normalizeText(displayNameInput.value, defaultDisplayName)
+      : defaultDisplayName;
 
   const snapshot = await getStorageSnapshot();
   const existingByName = snapshot.providers.find(
@@ -909,7 +1563,7 @@ async function onSaveProvider(
     return;
   }
 
-  const provider: StoredProvider = {
+  let provider: StoredProvider = {
     id: createProviderId(connector.id),
     name: displayName,
     type: connector.type,
@@ -918,12 +1572,32 @@ async function onSaveProvider(
     lastSyncedAt: Date.now(),
     metadata: connector.sanitizeMetadata(fieldValues),
   };
+  if (connector.id === "local-cli-bridge") {
+    provider = await hydrateCliProviderMetadata({
+      provider,
+      hostName: normalizeText(
+        fieldValues["nativeHostName"] ?? "com.byom.bridge",
+        "com.byom.bridge",
+      ),
+      cliType: cliClientById(fieldValues["cliType"]).id,
+      selectedModelId: normalizeText(fieldValues["modelId"] ?? "", ""),
+      selectedThinkingLevel: normalizeText(fieldValues["thinkingLevel"] ?? "", ""),
+    });
+  }
 
   const providers = [...snapshot.providers, provider];
+  const preferredModelId =
+    connector.id === "local-cli-bridge" || connector.id === "ollama"
+      ? normalizeText(fieldValues["modelId"] ?? "")
+      : "";
+  const initialModelId =
+    preferredModelId.length > 0 && provider.models.some((model) => model.id === preferredModelId)
+      ? preferredModelId
+      : provider.models[0]?.id;
   const activeProvider =
     snapshot.activeProvider ??
-    (provider.models[0] !== undefined
-      ? { providerId: provider.id, modelId: provider.models[0].id }
+    (initialModelId !== undefined
+      ? { providerId: provider.id, modelId: initialModelId }
       : { providerId: provider.id });
 
   await writeStorageState({
@@ -975,10 +1649,48 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  setupConnectorPicker(connectorSelect, fieldsContainer, feedbackNode);
+  setupConnectorPicker(form, connectorSelect, fieldsContainer, feedbackNode);
   void refreshConnectedProviders(providersContainer);
 
   const actionButtons: readonly HTMLButtonElement[] = [btnTest, btnSave];
+
+  form.addEventListener("change", (event) => {
+    const target = event.target;
+    if (
+      connectorSelect.value === "local-cli-bridge" &&
+      target instanceof HTMLSelectElement &&
+      target.name === "cliType"
+    ) {
+      void syncCliModelSelector(form);
+      return;
+    }
+
+    if (
+      connectorSelect.value === "local-cli-bridge" &&
+      target instanceof HTMLInputElement &&
+      target.name === "nativeHostName"
+    ) {
+      void syncCliModelSelector(form);
+      return;
+    }
+
+    if (
+      connectorSelect.value === "local-cli-bridge" &&
+      target instanceof HTMLSelectElement &&
+      target.name === "modelId"
+    ) {
+      void syncCliThinkingSelector(form);
+      return;
+    }
+
+    if (
+      connectorSelect.value === "ollama" &&
+      target instanceof HTMLInputElement &&
+      target.name === "baseUrl"
+    ) {
+      void syncOllamaModelSelector(form);
+    }
+  });
 
   btnTest.addEventListener("click", () => {
     const connector = connectorById(connectorSelect.value);

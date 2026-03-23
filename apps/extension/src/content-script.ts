@@ -2,7 +2,7 @@ const PAGE_TO_CONTENT_CHANNEL = "byom.transport.page-to-content.v1";
 const CONTENT_TO_PAGE_CHANNEL = "byom.transport.content-to-page.v1";
 const INPAGE_SCRIPT_ID = "byom-extension-inpage-provider-v1";
 
-type TransportBridgeAction = "request" | "disconnect";
+type TransportBridgeAction = "request" | "request-stream" | "disconnect";
 
 type PageToContentMessage = Readonly<{
   channel: typeof PAGE_TO_CONTENT_CHANNEL;
@@ -18,6 +18,7 @@ type ContentToPageMessage = Readonly<{
   requestId: string;
   ok: boolean;
   envelope?: unknown;
+  envelopes?: readonly unknown[];
   error?: Readonly<{
     message: string;
     machineCode?: string;
@@ -38,7 +39,9 @@ function isPageBridgeMessage(message: unknown): message is PageToContentMessage 
     message["channel"] === PAGE_TO_CONTENT_CHANNEL &&
     message["source"] === "byom-inpage-provider" &&
     typeof message["requestId"] === "string" &&
-    (message["action"] === "request" || message["action"] === "disconnect")
+    (message["action"] === "request" ||
+      message["action"] === "request-stream" ||
+      message["action"] === "disconnect")
   );
 }
 
@@ -80,7 +83,7 @@ function extractDisconnectSessionId(payload: unknown): string | undefined {
 function relayToBackground(message: PageToContentMessage): void {
   const requestId = message.requestId;
 
-  if (message.action === "request") {
+  if (message.action === "request" || message.action === "request-stream") {
     if (!isRecord(message.payload) || !isRecord(message.payload["envelope"])) {
       postError(
         requestId,
@@ -106,7 +109,7 @@ function relayToBackground(message: PageToContentMessage): void {
     chrome.runtime.sendMessage(
       {
         channel: "byom.transport",
-        action: "request",
+        action: message.action,
         request: requestPayload,
       },
       (response: unknown) => {
@@ -140,6 +143,7 @@ function relayToBackground(message: PageToContentMessage): void {
             requestId,
             ok: true,
             ...(isRecord(response["envelope"]) ? { envelope: response["envelope"] } : {}),
+            ...(Array.isArray(response["envelopes"]) ? { envelopes: response["envelopes"] } : {}),
           });
           return;
         }
