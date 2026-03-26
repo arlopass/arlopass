@@ -44,11 +44,29 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
   const { activeSDK, setActiveSDK, sdks } = useSDK();
   const [localSDK, setLocalSDK] = useState(activeSDK);
 
-    const hasVariants = variants != null && variants.length > 0;
+  // Friendly display labels for the language badge
+  const LANGUAGE_LABELS: Record<string, string> = {
+    tsx: "React TSX",
+    ts: "TypeScript",
+    typescript: "TypeScript",
+    jsx: "React JSX",
+    js: "JavaScript",
+    javascript: "JavaScript",
+    bash: "Terminal",
+    sh: "Terminal",
+    shell: "Terminal",
+    css: "CSS",
+    json: "JSON",
+    html: "HTML",
+  };
+
+  const hasVariants = variants != null && variants.length > 0;
 
   // Resolve the code to display
   let displayCode = code ?? "";
-  let displayLabel = sdks.find((s) => s.id === activeSDK)?.label ?? "TypeScript";
+  let displayLabel = language
+    ? (LANGUAGE_LABELS[language] ?? language)
+    : (sdks.find((s) => s.id === activeSDK)?.label ?? "TypeScript");
 
   if (hasVariants) {
     const match = variants.find((v) => v.sdkId === localSDK) ?? variants[0];
@@ -63,9 +81,25 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
     setActiveSDK(id);
   };
 
+  // Map friendly language names to Monaco language identifiers
+  const LANGUAGE_MAP: Record<string, string> = {
+    tsx: "typescript",
+    ts: "typescript",
+    typescript: "typescript",
+    jsx: "javascript",
+    js: "javascript",
+    javascript: "javascript",
+    bash: "shell",
+    sh: "shell",
+    shell: "shell",
+    css: "css",
+    json: "json",
+    html: "html",
+  };
+
   // Resolve Monaco language
   const monacoLang = useMemo(() => {
-    if (language) return language;
+    if (language) return LANGUAGE_MAP[language] ?? language;
     const sdk = sdks.find((s) => s.id === localSDK);
     return sdk?.language ?? "typescript";
   }, [language, localSDK, sdks]);
