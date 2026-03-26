@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Divider } from "@mantine/core";
-import { CodeBlock, InlineCode, ApiTable } from "../../components";
+import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 import { navigate } from "../../router";
 
 const props = [
@@ -80,7 +80,24 @@ export default function ConnectionStatusPrimitive() {
         reads connection state automatically via{" "}
         <InlineCode>useConnection</InlineCode>.
       </Text>
-      <CodeBlock title="Uncontrolled" code={uncontrolledExample} language="tsx" />
+      <PreviewCode
+        preview={
+          <div style={{ display: "flex", gap: 12, fontFamily: "system-ui", fontSize: 13, flexWrap: "wrap" }}>
+            {["connected", "disconnected", "connecting", "degraded", "failed"].map(s => (
+              <span key={s} style={{
+                padding: "4px 10px",
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 500,
+                background: s === "connected" ? "#d1fae5" : s === "disconnected" ? "#f3f4f6" : s === "connecting" ? "#dbeafe" : s === "degraded" ? "#fef3c7" : "#fee2e2",
+                color: s === "connected" ? "#065f46" : s === "disconnected" ? "#6b7280" : s === "connecting" ? "#1e40af" : s === "degraded" ? "#92400e" : "#991b1b",
+              }}>{s}</span>
+            ))}
+          </div>
+        }
+        code={uncontrolledExample}
+        title="ConnectionStatus"
+      />
 
       <Title order={3}>Controlled usage</Title>
       <Text>

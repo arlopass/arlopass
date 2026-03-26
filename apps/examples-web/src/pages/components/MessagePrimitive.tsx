@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
-import { CodeBlock, InlineCode, ApiTable } from "../../components";
+import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 import { navigate } from "../../router";
 
 const parts = [
@@ -109,7 +109,24 @@ export default function MessagePrimitive() {
         Use <InlineCode>Message</InlineCode> on its own to render a single
         message outside of a <InlineCode>Chat</InlineCode> context.
       </Text>
-      <CodeBlock title="Standalone message" code={standaloneExample} language="tsx" />
+      <PreviewCode
+        preview={
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "system-ui" }}>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase" as const }}>User</span>
+              <div style={{ fontSize: 14, marginTop: 4 }}>Explain React hooks in one sentence.</div>
+              <span style={{ fontSize: 11, color: "#9ca3af", marginTop: 4, display: "block" }}>complete</span>
+            </div>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#f9fafb" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase" as const }}>Assistant</span>
+              <div style={{ fontSize: 14, marginTop: 4 }}>Hooks are functions that let you use state and lifecycle features in function components.</div>
+              <span style={{ fontSize: 11, color: "#9ca3af", marginTop: 4, display: "block" }}>complete</span>
+            </div>
+          </div>
+        }
+        code={standaloneExample}
+        title="Message display"
+      />
 
       <Title order={3}>Inside Chat.Messages</Title>
       <Text>

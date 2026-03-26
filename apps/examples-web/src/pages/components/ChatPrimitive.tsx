@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
-import { CodeBlock, Callout, InlineCode, ApiTable } from "../../components";
+import { CodeBlock, Callout, InlineCode, ApiTable, PreviewCode } from "../../components";
 import { navigate } from "../../router";
 
 const parts = [
@@ -173,7 +173,35 @@ export default function ChatPrimitive() {
         <InlineCode>Chat.Root</InlineCode> manages all conversation state
         internally via <InlineCode>useConversation</InlineCode>.
       </Text>
-      <CodeBlock title="Uncontrolled chat" code={uncontrolledExample} language="tsx" />
+      <PreviewCode
+        preview={
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: 16, maxWidth: 400, fontFamily: "system-ui" }}>
+            <div style={{ padding: "12px 0", color: "#9ca3af", textAlign: "center", fontSize: 14 }}>
+              No messages yet — say hello!
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+              <div style={{ alignSelf: "flex-end", background: "#2563eb", color: "white", borderRadius: 12, padding: "8px 14px", fontSize: 14, maxWidth: "75%" }}>
+                What is BYOM?
+              </div>
+              <div style={{ alignSelf: "flex-start", background: "#f4f4f5", borderRadius: 12, padding: "8px 14px", fontSize: 14, maxWidth: "75%" }}>
+                BYOM is an AI wallet for the web. It lets you use your own AI providers…
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, borderTop: "1px solid #e5e7eb", paddingTop: 12 }}>
+              <input
+                disabled
+                placeholder="Type a message…"
+                style={{ flex: 1, border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 12px", fontSize: 14, background: "white" }}
+              />
+              <button style={{ background: "#2563eb", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 14, cursor: "pointer" }}>
+                Send
+              </button>
+            </div>
+          </div>
+        }
+        code={uncontrolledExample}
+        title="Uncontrolled chat"
+      />
 
       <Divider />
       <Title order={3}>Controlled usage</Title>

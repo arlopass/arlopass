@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Divider } from "@mantine/core";
-import { CodeBlock, InlineCode, ApiTable } from "../../components";
+import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 import { navigate } from "../../router";
 
 const props = [
@@ -78,7 +78,16 @@ export default function StreamingTextPrimitive() {
 
       <Divider />
       <Title order={3}>Usage</Title>
-      <CodeBlock title="Basic" code={usageExample} language="tsx" />
+      <PreviewCode
+        preview={
+          <div style={{ fontFamily: "system-ui", fontSize: 14, padding: 12, background: "#f9fafb", borderRadius: 8, border: "1px solid #e5e7eb" }}>
+            <span>BYOM is an AI wallet that lets you use your own providers</span>
+            <span style={{ color: "#2563eb" }}>▌</span>
+          </div>
+        }
+        code={usageExample}
+        title="StreamingText"
+      />
 
       <Title order={3}>With Chat</Title>
       <Text>

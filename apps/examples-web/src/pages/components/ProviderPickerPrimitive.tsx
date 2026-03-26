@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
-import { CodeBlock, InlineCode, ApiTable } from "../../components";
+import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 import { navigate } from "../../router";
 
 const parts = [
@@ -103,7 +103,32 @@ export default function ProviderPickerPrimitive() {
         <InlineCode>ProviderPicker.Root</InlineCode> automatically reads from{" "}
         <InlineCode>useProviders</InlineCode>. No props needed.
       </Text>
-      <CodeBlock title="Uncontrolled" code={uncontrolledExample} language="tsx" />
+      <PreviewCode
+        preview={
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: "system-ui", maxWidth: 300 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 4 }}>Provider</label>
+              <select disabled style={{ width: "100%", padding: "8px 12px", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 14, background: "white" }}>
+                <option>Ollama Local</option>
+                <option>Claude Subscription</option>
+                <option>OpenAI</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 4 }}>Model</label>
+              <select disabled style={{ width: "100%", padding: "8px 12px", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 14, background: "white" }}>
+                <option>llama3</option>
+                <option>llama3.1</option>
+              </select>
+            </div>
+            <button style={{ background: "#2563eb", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 14, cursor: "pointer" }}>
+              Select
+            </button>
+          </div>
+        }
+        code={uncontrolledExample}
+        title="ProviderPicker"
+      />
 
       <Divider />
       <Title order={3}>Controlled usage</Title>

@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
-import { CodeBlock, InlineCode, ApiTable } from "../../components";
+import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 import { navigate } from "../../router";
 
 const parts = [
@@ -113,7 +113,22 @@ export default function ToolActivityPrimitive() {
 
       <Divider />
       <Title order={3}>Usage</Title>
-      <CodeBlock title="Tool calls display" code={usageExample} language="tsx" />
+      <PreviewCode
+        preview={
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "system-ui", fontSize: 13 }}>
+            <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 8, padding: "8px 12px" }}>
+              <strong>search_docs</strong> — executing…
+              <div style={{ color: "#92400e", fontSize: 12, marginTop: 2 }}>{'{"query":"authentication"}'}</div>
+            </div>
+            <div style={{ background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 8, padding: "8px 12px" }}>
+              <strong>search_docs</strong> — complete
+              <div style={{ color: "#065f46", fontSize: 12, marginTop: 2 }}>Found 3 results</div>
+            </div>
+          </div>
+        }
+        code={usageExample}
+        title="ToolActivity"
+      />
 
       <Title order={3}>Inside a Chat message</Title>
       <Text>
