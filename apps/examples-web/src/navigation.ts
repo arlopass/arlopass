@@ -28,6 +28,13 @@ export const NAVIGATION: NavCategory[] = [
         ],
     },
     {
+        label: "Advanced",
+        items: [
+            { id: "conversation-manager", label: "Conversation Manager" },
+            { id: "tool-calling", label: "Tool Calling" },
+        ],
+    },
+    {
         label: "Scenarios",
         items: [
             { id: "sdk-happy-path", label: "SDK Happy Path" },
@@ -35,6 +42,8 @@ export const NAVIGATION: NavCategory[] = [
             { id: "extension-first", label: "Extension-first" },
             { id: "error-timeout", label: "Error Handling" },
             { id: "provider-switching", label: "Provider Switching" },
+            { id: "context-window", label: "Context Window" },
+            { id: "auto-tools", label: "Auto Tool Calling" },
         ],
     },
     {

@@ -1,5 +1,10 @@
 export * from "./client.js";
+export * from "./conversation.js";
 export * from "./errors.js";
+export * from "./model-context-windows.js";
 export * from "./state-machine.js";
+export * from "./token-estimation.js";
+export { parseToolCalls, buildToolSystemPrompt, formatToolResults, shouldPrimeTools, buildToolPrimingMessage, stripToolCalls } from "./tool-parser.js";
+export * from "./tools.js";
 export * from "./transport.js";
 export * from "./types.js";

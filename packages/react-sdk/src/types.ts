@@ -1,29 +1,29 @@
 "use client";
 
 import type {
-  ChatMessage as WebSDKChatMessage,
-  ChatRole as WebSDKChatRole,
-  ClientState as WebSDKClientState,
-  ProviderDescriptor as WebSDKProviderDescriptor,
-  SelectProviderInput as WebSDKSelectProviderInput,
-  ChatOperationOptions as WebSDKChatOperationOptions,
-  ChatStreamEvent as WebSDKChatStreamEvent,
+    ChatMessage as WebSDKChatMessage,
+    ChatRole as WebSDKChatRole,
+    ClientState as WebSDKClientState,
+    ProviderDescriptor as WebSDKProviderDescriptor,
+    SelectProviderInput as WebSDKSelectProviderInput,
+    ChatOperationOptions as WebSDKChatOperationOptions,
+    ChatStreamEvent as WebSDKChatStreamEvent,
 } from "@byom-ai/web-sdk";
 
 import type {
-  BYOMSDKError as WebSDKBYOMSDKError,
-  BYOMStateError as WebSDKBYOMStateError,
+    BYOMSDKError as WebSDKBYOMSDKError,
+    BYOMStateError as WebSDKBYOMStateError,
 } from "@byom-ai/web-sdk";
 
 import type { BYOMTransport as WebSDKBYOMTransport } from "@byom-ai/web-sdk";
 
 import type {
-  ToolDefinition as WebSDKToolDefinition,
-  ConversationStreamEvent as WebSDKConversationStreamEvent,
-  ToolCall as WebSDKToolCall,
-  ToolResult as WebSDKToolResult,
-  ToolCallEvent as WebSDKToolCallEvent,
-  ToolResultEvent as WebSDKToolResultEvent,
+    ToolDefinition as WebSDKToolDefinition,
+    ConversationStreamEvent as WebSDKConversationStreamEvent,
+    ToolCall as WebSDKToolCall,
+    ToolResult as WebSDKToolResult,
+    ToolCallEvent as WebSDKToolCallEvent,
+    ToolResultEvent as WebSDKToolResultEvent,
 } from "@byom-ai/web-sdk";
 
 // Re-export web-sdk types so developers only need @byom-ai/react
@@ -49,126 +49,126 @@ export type { WebSDKToolResultEvent as ToolResultEvent };
 export type MessageId = string;
 
 export type ToolCallInfo = Readonly<{
-  toolCallId: string;
-  name: string;
-  arguments: Record<string, unknown>;
-  result?: string;
-  status: "pending" | "executing" | "complete" | "error";
+    toolCallId: string;
+    name: string;
+    arguments: Record<string, unknown>;
+    result?: string;
+    status: "pending" | "executing" | "complete" | "error";
 }>;
 
 export type TrackedChatMessage = Readonly<{
-  id: MessageId;
-  role: ChatRole;
-  content: string;
-  inResponseTo?: MessageId;
-  status: "pending" | "streaming" | "complete" | "error";
-  pinned: boolean;
-  toolCalls?: readonly ToolCallInfo[];
+    id: MessageId;
+    role: ChatRole;
+    content: string;
+    inResponseTo?: MessageId;
+    status: "pending" | "streaming" | "complete" | "error";
+    pinned: boolean;
+    toolCalls?: readonly ToolCallInfo[];
 }>;
 
 export type SubscriptionEvent =
-  | "response"
-  | "stream"
-  | "error"
-  | "tool_call"
-  | "tool_result";
+    | "response"
+    | "stream"
+    | "error"
+    | "tool_call"
+    | "tool_result";
 
 export type ChatSubscribe = {
-  (
-    event: "response",
-    messageId: MessageId,
-    handler: (msg: TrackedChatMessage) => void,
-  ): () => void;
-  (
-    event: "response",
-    handler: (msg: TrackedChatMessage) => void,
-  ): () => void;
-  (
-    event: "stream",
-    messageId: MessageId,
-    handler: (delta: string, accumulated: string) => void,
-  ): () => void;
-  (
-    event: "error",
-    handler: (
-      error: WebSDKBYOMSDKError,
-      messageId: MessageId | null,
-    ) => void,
-  ): () => void;
-  (
-    event: "error",
-    messageId: MessageId,
-    handler: (error: WebSDKBYOMSDKError) => void,
-  ): () => void;
-  (
-    event: "tool_call",
-    handler: (
-      toolCallId: string,
-      name: string,
-      args: Record<string, unknown>,
-      messageId: MessageId,
-    ) => void,
-  ): () => void;
-  (
-    event: "tool_call",
-    messageId: MessageId,
-    handler: (
-      toolCallId: string,
-      name: string,
-      args: Record<string, unknown>,
-    ) => void,
-  ): () => void;
-  (
-    event: "tool_result",
-    handler: (
-      toolCallId: string,
-      name: string,
-      result: string,
-      messageId: MessageId,
-    ) => void,
-  ): () => void;
-  (
-    event: "tool_result",
-    messageId: MessageId,
-    handler: (toolCallId: string, name: string, result: string) => void,
-  ): () => void;
+    (
+        event: "response",
+        messageId: MessageId,
+        handler: (msg: TrackedChatMessage) => void,
+    ): () => void;
+    (
+        event: "response",
+        handler: (msg: TrackedChatMessage) => void,
+    ): () => void;
+    (
+        event: "stream",
+        messageId: MessageId,
+        handler: (delta: string, accumulated: string) => void,
+    ): () => void;
+    (
+        event: "error",
+        handler: (
+            error: WebSDKBYOMSDKError,
+            messageId: MessageId | null,
+        ) => void,
+    ): () => void;
+    (
+        event: "error",
+        messageId: MessageId,
+        handler: (error: WebSDKBYOMSDKError) => void,
+    ): () => void;
+    (
+        event: "tool_call",
+        handler: (
+            toolCallId: string,
+            name: string,
+            args: Record<string, unknown>,
+            messageId: MessageId,
+        ) => void,
+    ): () => void;
+    (
+        event: "tool_call",
+        messageId: MessageId,
+        handler: (
+            toolCallId: string,
+            name: string,
+            args: Record<string, unknown>,
+        ) => void,
+    ): () => void;
+    (
+        event: "tool_result",
+        handler: (
+            toolCallId: string,
+            name: string,
+            result: string,
+            messageId: MessageId,
+        ) => void,
+    ): () => void;
+    (
+        event: "tool_result",
+        messageId: MessageId,
+        handler: (toolCallId: string, name: string, result: string) => void,
+    ): () => void;
 };
 
 export type BYOMProviderProps = Readonly<{
-  appId: string;
-  defaultProvider?: string;
-  defaultModel?: string;
-  autoConnect?: boolean;
-  onError?: (error: WebSDKBYOMSDKError) => void;
-  children: React.ReactNode;
+    appId: string;
+    defaultProvider?: string;
+    defaultModel?: string;
+    autoConnect?: boolean;
+    onError?: (error: WebSDKBYOMSDKError) => void;
+    children: React.ReactNode;
 }>;
 
 // Restricted subscribe type for useChat (no tool events)
 export type ChatSubscribeNoTools = {
-  (
-    event: "response",
-    messageId: MessageId,
-    handler: (msg: TrackedChatMessage) => void,
-  ): () => void;
-  (
-    event: "response",
-    handler: (msg: TrackedChatMessage) => void,
-  ): () => void;
-  (
-    event: "stream",
-    messageId: MessageId,
-    handler: (delta: string, accumulated: string) => void,
-  ): () => void;
-  (
-    event: "error",
-    handler: (
-      error: WebSDKBYOMSDKError,
-      messageId: MessageId | null,
-    ) => void,
-  ): () => void;
-  (
-    event: "error",
-    messageId: MessageId,
-    handler: (error: WebSDKBYOMSDKError) => void,
-  ): () => void;
+    (
+        event: "response",
+        messageId: MessageId,
+        handler: (msg: TrackedChatMessage) => void,
+    ): () => void;
+    (
+        event: "response",
+        handler: (msg: TrackedChatMessage) => void,
+    ): () => void;
+    (
+        event: "stream",
+        messageId: MessageId,
+        handler: (delta: string, accumulated: string) => void,
+    ): () => void;
+    (
+        event: "error",
+        handler: (
+            error: WebSDKBYOMSDKError,
+            messageId: MessageId | null,
+        ) => void,
+    ): () => void;
+    (
+        event: "error",
+        messageId: MessageId,
+        handler: (error: WebSDKBYOMSDKError) => void,
+    ): () => void;
 };

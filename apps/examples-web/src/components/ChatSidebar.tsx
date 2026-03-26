@@ -7,26 +7,32 @@ import {
   Group,
   Loader,
   Menu,
+  Pill,
   ScrollArea,
   Select,
   Stack,
   Text,
   Textarea,
+  Transition,
 } from "@mantine/core";
 import {
   IconChevronDown,
   IconMessage,
   IconPlugConnected,
+  IconSearch,
   IconSend,
+  IconTool,
   IconX,
 } from "@tabler/icons-react";
 import {
   BYOMClient,
+  ConversationManager,
   type BYOMTransport,
   type ChatMessage,
   type ProviderDescriptor,
 } from "@byom-ai/web-sdk";
-import { buildSystemPrompt } from "../docs-context";
+import { searchDocs } from "../docs-context";
+import { NAVIGATION } from "../navigation";
 import { Markdown } from "./Markdown";
 
 type ChatState = "disconnected" | "connecting" | "connected" | "error";
@@ -44,20 +50,43 @@ function fmtModel(m: string): string {
 
 export type ChatSidebarProps = {
   onClose: () => void;
+  onNavigate?: ((pageId: string) => void) | undefined;
 };
 
-export function ChatSidebar({ onClose }: ChatSidebarProps) {
+type ToolActivityState =
+  | { phase: "idle" }
+  | { phase: "priming" }
+  | { phase: "matched"; tools: readonly string[] }
+  | { phase: "executing"; name: string; detail?: string | undefined }
+  | { phase: "result"; name: string };
+
+const TOOL_IDLE: ToolActivityState = { phase: "idle" };
+
+type DisplayMessage = ChatMessage & {
+  /** Tool names that were called to produce this response. */
+  usedTools?: readonly string[];
+};
+
+export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   const clientRef = useRef<BYOMClient | null>(null);
-  const [chatState, setChatState] = useState<ChatState>("connecting"); // start as connecting to avoid flash
+  const onNavigateRef = useRef(onNavigate);
+  onNavigateRef.current = onNavigate;
+  const [chatState, setChatState] = useState<ChatState>("connecting");
   const [autoConnectDone, setAutoConnectDone] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [providers, setProviders] = useState<readonly ProviderDescriptor[]>([]);
   const [selProv, setSelProv] = useState<string | null>(null);
   const [selModel, setSelModel] = useState<string | null>(null);
   const [chatIn, setChatIn] = useState("");
-  const [msgs, setMsgs] = useState<ChatMessage[]>([]);
+  const [msgs, setMsgs] = useState<DisplayMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
+  const [toolState, setToolState] = useState<ToolActivityState>(TOOL_IDLE);
+  const usedToolsRef = useRef<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const convRef = useRef<ConversationManager | null>(null);
+  const inputHistoryRef = useRef<string[]>([]);
+  const historyIndexRef = useRef(-1);
+  const draftRef = useRef("");
 
   const selProvider = useMemo(() => providers.find((p) => p.providerId === selProv) ?? null, [providers, selProv]);
   const provOpts = useMemo(() => providers.map((p) => ({ value: p.providerId, label: p.providerName })), [providers]);
@@ -98,6 +127,9 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
         }
       }
       setChatState("connected");
+
+      // Initialize ConversationManager with search_docs + navigate tools
+      convRef.current = createConversation(client, onNavigateRef);
     } catch (e) {
       setChatState("error");
       setErrorMsg(e instanceof Error ? e.message : String(e));
@@ -131,41 +163,106 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
   const handleSend = useCallback(async () => {
     const txt = chatIn.trim();
     if (!txt || streaming) return;
-    const c = clientRef.current;
-    if (!c || chatState !== "connected") {
+    const conv = convRef.current;
+    if (!conv || chatState !== "connected") {
       setMsgs((p) => [...p, { role: "user", content: txt }, { role: "assistant", content: "⚠️ Not connected." }]);
       setChatIn(""); return;
     }
     setMsgs((p) => [...p, { role: "user", content: txt }]);
     setChatIn("");
+    inputHistoryRef.current.push(txt);
+    historyIndexRef.current = -1;
+    draftRef.current = "";
     setStreaming(true);
+    setToolState(TOOL_IDLE);
+    usedToolsRef.current = [];
     let full = "";
+    let isNewRound = false;
     try {
-      const systemPrompt = buildSystemPrompt(txt);
-      const messages: ChatMessage[] = [
-        { role: "system", content: systemPrompt },
-        ...msgs.slice(-10),
-        { role: "user", content: txt },
-      ];
-      const stream = await c.chat.stream({ messages });
-      for await (const ch of stream) {
-        if (ch.type === "chunk") {
-          full += ch.delta;
+      for await (const event of conv.stream(txt)) {
+        if (event.type === "chunk") {
+          if (isNewRound) {
+            full = "";
+            isNewRound = false;
+          }
+          full += event.delta;
+          // Only create/update the bubble when we have visible content
+          if (full.trim().length > 0) {
+            setMsgs((p) => {
+              const last = p[p.length - 1];
+              if (last?.role === "assistant") return [...p.slice(0, -1), { role: "assistant", content: full }];
+              return [...p, { role: "assistant", content: full }];
+            });
+          }
+        }
+        if (event.type === "tool_priming_start") {
+          setToolState({ phase: "priming" });
+        }
+        if (event.type === "tool_priming_match") {
+          setToolState({ phase: "matched", tools: event.tools });
+        }
+        if (event.type === "tool_priming_end") {
+          setToolState(TOOL_IDLE);
+        }
+        if (event.type === "tool_call") {
+          // Remove the in-progress assistant bubble (it has raw tool call markup)
           setMsgs((p) => {
             const last = p[p.length - 1];
-            if (last?.role === "assistant") return [...p.slice(0, -1), { role: "assistant", content: full }];
-            return [...p, { role: "assistant", content: full }];
+            if (last?.role === "assistant") return p.slice(0, -1);
+            return p;
           });
+          isNewRound = true;
+          // Track which tools were used for this response
+          if (!usedToolsRef.current.includes(event.name)) {
+            usedToolsRef.current.push(event.name);
+          }
+          const detail = event.name === "navigate_to_page"
+            ? String(event.arguments.page_id ?? "")
+            : event.name === "search_docs"
+              ? String(event.arguments.query ?? "")
+              : undefined;
+          setToolState({ phase: "executing", name: event.name, detail });
         }
-        if (ch.type === "done") break;
+        if (event.type === "tool_result") {
+          setToolState({ phase: "result", name: event.name });
+        }
       }
-      if (!full) setMsgs((p) => [...p, { role: "assistant", content: "(empty response)" }]);
+      // Final cleanup: build the definitive message list
+      const tools = [...usedToolsRef.current];
+      setMsgs((prev) => {
+        // Remove any empty assistant bubbles from tool call stripping
+        let cleaned = prev.filter((m) => m.role !== "assistant" || m.content.trim().length > 0);
+
+        if (tools.length > 0) {
+          const lastAssistantIdx = cleaned.reduce((acc, m, idx) => m.role === "assistant" ? idx : acc, -1);
+          const lastAssistant = lastAssistantIdx >= 0 ? cleaned[lastAssistantIdx] : undefined;
+          if (lastAssistant !== undefined && lastAssistant.content.trim().length > 0) {
+            // Tag existing final assistant message with tools used
+            cleaned = cleaned.map((m) =>
+              m === lastAssistant ? { ...m, usedTools: tools } : m,
+            );
+          } else {
+            // No text response — add a friendly completion message
+            const toolNames = tools.map((t) => t.replace(/_/g, " ")).join(", ");
+            cleaned.push({
+              role: "assistant",
+              content: `Done — used ${toolNames}.`,
+              usedTools: tools,
+            });
+          }
+        } else if (!full) {
+          cleaned.push({ role: "assistant", content: "(empty response)" });
+        }
+
+        return cleaned;
+      });
     } catch (e) {
       setMsgs((p) => [...p, { role: "assistant", content: `Error: ${e instanceof Error ? e.message : String(e)}` }]);
     } finally {
       setStreaming(false);
+      setToolState(TOOL_IDLE);
     }
-  }, [chatIn, msgs, streaming, chatState]);
+  }, [chatIn, streaming, chatState]);
 
   // ─── Render ──────────────────────────────────────────────────────────
 
@@ -215,25 +312,79 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
               {chatState === "connected" ? "Ask anything about BYOM." : "Connect to start chatting."}
             </Text>
           )}
-          {msgs.map((m, i) => (
-            <Box
-              key={i}
-              style={{
-                padding: "8px 12px",
-                borderRadius: 8,
-                background: m.role === "user" ? "var(--mantine-color-blue-0)" : "var(--mantine-color-gray-0)",
-                maxWidth: "90%",
-                alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-              }}
-            >
-              {m.role === "assistant" ? (
-                <Markdown content={m.content} className="chat-markdown" />
-              ) : (
-                <Text fz="sm" style={{ whiteSpace: "pre-wrap" }}>{m.content}</Text>
+          {msgs.map((m, i) => {
+            // Skip empty assistant bubbles
+            if (m.role === "assistant" && m.content.trim().length === 0 && (m.usedTools === undefined || m.usedTools.length === 0)) return null;
+            return (
+            <Box key={i} style={{ maxWidth: "90%", alignSelf: m.role === "user" ? "flex-end" : "flex-start" }}>
+              <Box
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: m.role === "user" ? "var(--mantine-color-blue-0)" : "var(--mantine-color-gray-0)",
+                }}
+              >
+                {m.role === "assistant" ? (
+                  <Markdown content={m.content} className="chat-markdown" />
+                ) : (
+                  <Text fz="sm" style={{ whiteSpace: "pre-wrap" }}>{m.content}</Text>
+                )}
+              </Box>
+              {m.role === "assistant" && m.usedTools !== undefined && m.usedTools.length > 0 && (
+                <Group gap={4} mt={3} ml={4}>
+                  <IconTool size={10} color="var(--mantine-color-dimmed)" />
+                  {m.usedTools.map((t) => (
+                    <Pill key={t} size="xs" style={{ background: "var(--mantine-color-gray-1)", color: "var(--mantine-color-dimmed)", fontSize: 9, fontWeight: 500 }}>
+                      {t.replace(/_/g, " ")}
+                    </Pill>
+                  ))}
+                </Group>
               )}
             </Box>
-          ))}
-          {streaming && <Loader size="xs" ml="xs" />}
+          ); })}
+          {streaming && (
+            <Box ml="xs" py={4}>
+              {toolState.phase === "priming" && (
+                <Group gap={6} align="center">
+                  <IconSearch size={12} color="var(--mantine-color-blue-5)" />
+                  <Text fz={11} c="blue" fw={500}>Looking for tools...</Text>
+                  <Loader size={10} color="blue" />
+                </Group>
+              )}
+              {toolState.phase === "matched" && (
+                <Group gap={6} align="center" wrap="nowrap">
+                  <IconTool size={12} color="var(--mantine-color-teal-6)" />
+                  <Text fz={11} c="teal" fw={500}>Found:</Text>
+                  {toolState.tools.map((t) => (
+                    <Pill key={t} size="xs" style={{ background: "var(--mantine-color-teal-0)", color: "var(--mantine-color-teal-7)", fontSize: 10, fontWeight: 600 }}>
+                      {t.replace(/_/g, " ")}
+                    </Pill>
+                  ))}
+                </Group>
+              )}
+              {toolState.phase === "executing" && (
+                <Group gap={6} align="center" wrap="nowrap">
+                  <Loader size={10} color="violet" />
+                  <Pill size="xs" style={{ background: "var(--mantine-color-violet-0)", color: "var(--mantine-color-violet-7)", fontSize: 10, fontWeight: 600 }}>
+                    {toolState.name.replace(/_/g, " ")}
+                  </Pill>
+                  {toolState.detail && (
+                    <Text fz={10} c="dimmed" truncate style={{ maxWidth: 150 }}>{toolState.detail}</Text>
+                  )}
+                </Group>
+              )}
+              {toolState.phase === "result" && (
+                <Group gap={6} align="center">
+                  <Text fz={11} c="teal" fw={500}>✓</Text>
+                  <Pill size="xs" style={{ background: "var(--mantine-color-teal-0)", color: "var(--mantine-color-teal-7)", fontSize: 10, fontWeight: 600 }}>
+                    {toolState.name.replace(/_/g, " ")}
+                  </Pill>
+                  <Text fz={10} c="teal">done</Text>
+                </Group>
+              )}
+              {toolState.phase === "idle" && <Loader size="xs" />}
+            </Box>
+          )}
         </Stack>
       </ScrollArea>
 
@@ -282,7 +433,39 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
             placeholder="Ask about BYOM..."
             value={chatIn}
             onChange={(e) => setChatIn(e.currentTarget.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSend(); } }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void handleSend();
+                return;
+              }
+              const history = inputHistoryRef.current;
+              if (history.length === 0) return;
+              if (e.key === "ArrowUp") {
+                // Only navigate history when cursor is at the start
+                const el = e.currentTarget;
+                if (el.selectionStart !== 0 || el.selectionEnd !== 0) return;
+                e.preventDefault();
+                if (historyIndexRef.current === -1) {
+                  draftRef.current = chatIn;
+                  historyIndexRef.current = history.length - 1;
+                } else if (historyIndexRef.current > 0) {
+                  historyIndexRef.current -= 1;
+                }
+                setChatIn(history[historyIndexRef.current] ?? "");
+              }
+              if (e.key === "ArrowDown") {
+                if (historyIndexRef.current === -1) return;
+                e.preventDefault();
+                if (historyIndexRef.current < history.length - 1) {
+                  historyIndexRef.current += 1;
+                  setChatIn(history[historyIndexRef.current] ?? "");
+                } else {
+                  historyIndexRef.current = -1;
+                  setChatIn(draftRef.current);
+                }
+              }
+            }}
             minRows={1}
             maxRows={4}
             autosize
@@ -302,4 +485,77 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
       </Box>
     </Stack>
   );
+}
+
+// ─── ConversationManager factory with search_docs tool ───────────────
+
+const CHAT_SYSTEM_PROMPT = `You are a helpful assistant for the BYOM AI Wallet documentation website. You answer questions about the BYOM extension, web SDK, providers, app connections, credentials, and how to integrate with BYOM.
+
+When the user asks about BYOM features, SDK usage, providers, or integration, use the search_docs tool to find relevant documentation before answering.
+When the user asks to see a specific page, demo, or example, use the navigate_to_page tool to take them there.
+
+Important:
+- Be concise and accurate
+- Include code examples when relevant
+- Reference specific BYOM concepts (providers, models, vault, app connections)
+- If asked about implementation, show @byom-ai/web-sdk TypeScript code`;
+
+function createConversation(
+  client: BYOMClient,
+  onNavigateRef: React.RefObject<((pageId: string) => void) | undefined>,
+): ConversationManager {
+  const allPageIds = NAVIGATION.flatMap((cat) => cat.items.map((item) => item.id));
+  const pageList = NAVIGATION.flatMap((cat) =>
+    cat.items.map((item) => `${item.id}: ${item.label} (${cat.label})`),
+  ).join(", ");
+
+  return new ConversationManager({
+    client,
+    systemPrompt: CHAT_SYSTEM_PROMPT,
+    primeTools: true,
+    hideToolCalls: true,
+    tools: [
+      {
+        name: "search_docs",
+        description: "Search BYOM documentation for relevant pages about the SDK, extension, providers, apps, credentials, or integration patterns. Use this when the user asks about BYOM features.",
+        parameters: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Search query about BYOM" },
+          },
+          required: ["query"],
+        },
+        handler: async (args) => {
+          const query = typeof args.query === "string" ? args.query : "";
+          const results = searchDocs(query, 3);
+          if (results.length === 0) return JSON.stringify({ found: false, message: "No relevant docs found." });
+          return JSON.stringify(results.map((r) => ({ title: r.title, content: r.content })));
+        },
+      },
+      {
+        name: "navigate_to_page",
+        description: `Navigate the user to a specific page in the examples app. Available pages: ${pageList}. Use this when the user asks to see a demo, example, or specific page.`,
+        parameters: {
+          type: "object",
+          properties: {
+            page_id: { type: "string", description: "The page ID to navigate to", enum: allPageIds },
+          },
+          required: ["page_id"],
+        },
+        handler: async (args) => {
+          const pageId = typeof args.page_id === "string" ? args.page_id : "";
+          
+          console.log("Navigating to page:", pageId);
+          if (!allPageIds.includes(pageId)) {
+            return JSON.stringify({ success: false, error: `Unknown page: ${pageId}` });
+          }
+          console.log("Navigating to page:", pageId);
+          onNavigateRef.current?.(pageId);
+          const label = NAVIGATION.flatMap((c) => c.items).find((i) => i.id === pageId)?.label ?? pageId;
+          return JSON.stringify({ success: true, navigated_to: pageId, label });
+        },
+      },
+    ],
+    maxToolRounds: 3,
+  });
 }

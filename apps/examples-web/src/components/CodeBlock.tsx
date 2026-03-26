@@ -36,13 +36,15 @@ export type CodeBlockProps = {
   onRun?: (() => void) | undefined;
   /** Compact mode — no header */
   compact?: boolean | undefined;
+  /** INTERNAL, do not use. Used to adjust styling when rendered inside a PreviewCode component */
+  inPreview?: boolean | undefined;
 };
 
-export function CodeBlock({ title, code, variants, language, onRun, compact }: CodeBlockProps) {
+export function CodeBlock({ title, code, variants, language, onRun, compact, inPreview }: CodeBlockProps) {
   const { activeSDK, setActiveSDK, sdks } = useSDK();
   const [localSDK, setLocalSDK] = useState(activeSDK);
 
-  const hasVariants = variants != null && variants.length > 0;
+    const hasVariants = variants != null && variants.length > 0;
 
   // Resolve the code to display
   let displayCode = code ?? "";
@@ -74,7 +76,7 @@ export function CodeBlock({ title, code, variants, language, onRun, compact }: C
 
   if (compact) {
     return (
-      <Box>
+      <Box style={inPreview ? {} : { overflow: "hidden", border: "1px solid var(--mantine-color-gray-3)" }}>
         <Editor
           height={editorHeight}
           language={monacoLang}
@@ -87,7 +89,7 @@ export function CodeBlock({ title, code, variants, language, onRun, compact }: C
   }
 
   return (
-    <Box>
+    <Box style={inPreview ? {} : { border: "1px solid var(--mantine-color-gray-3)", borderRadius: 8, overflow: "hidden" }}>
       {/* Header bar */}
       <Group
         justify="space-between"

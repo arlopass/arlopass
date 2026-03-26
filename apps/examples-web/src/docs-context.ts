@@ -172,6 +172,126 @@ The stream is routed through: web page → content script → background service
 Each chunk is delivered as it arrives from the provider.`,
         keywords: ["stream", "streaming", "chunk", "delta", "async", "iterable", "real-time"],
     },
+    {
+        id: "conversation-manager",
+        title: "ConversationManager",
+        content: `The ConversationManager class provides automatic conversation history management:
+
+import { ConversationManager } from "@byom-ai/web-sdk";
+
+const conversation = new ConversationManager({
+  client,
+  systemPrompt: "You are a helpful assistant.",
+  maxTokens: 8192, // optional — auto-resolves from model
+});
+
+// Send messages — history managed automatically
+const reply = await conversation.send("What is a closure?");
+
+// Streaming
+for await (const event of conversation.stream("Explain useEffect.")) {
+  if (event.type === "chunk") process.stdout.write(event.delta);
+}
+
+// Pin important context that survives truncation
+conversation.addMessage(
+  { role: "user", content: "We use React 19 + TypeScript." },
+  { pinned: true },
+);
+
+// Optional auto-summarization of evicted messages
+const conv = new ConversationManager({
+  client,
+  summarize: true,
+  summarizationPrompt: "Summarize focusing on code decisions.",
+});
+
+Key features:
+- Token-aware sliding window truncation
+- System prompt pinning (never evicted)
+- Message pinning via addMessage({ pinned: true }) or setPin()
+- Auto-summarization of evicted messages (opt-in)
+- Built-in model context window lookup (25+ models)
+- getContextWindow() and getTokenCount() for inspection`,
+        keywords: ["conversation", "manager", "history", "context", "window", "truncation", "pin", "pinning", "summarize", "summarization", "tokens", "maxTokens"],
+    },
+    {
+        id: "tool-calling",
+        title: "Tool / Function Calling",
+        content: `SDK-side function/tool calling via ConversationManager:
+
+import { ConversationManager } from "@byom-ai/web-sdk";
+
+const conversation = new ConversationManager({
+  client,
+  tools: [{
+    name: "search_docs",
+    description: "Search documentation",
+    parameters: {
+      type: "object",
+      properties: { query: { type: "string" } },
+      required: ["query"],
+    },
+    handler: async (args) => JSON.stringify(await searchDocs(args.query)),
+  }],
+});
+
+// Auto mode: SDK calls handler, feeds result back, loops until text response
+const reply = await conversation.send("Find docs about closures");
+
+// Manual mode (no handler): yields tool_call events, use submitToolResult()
+for await (const event of conversation.stream("Get weather")) {
+  if (event.type === "tool_call") {
+    const result = await fetchWeather(event.arguments.city);
+    conversation.submitToolResult(event.toolCallId, result);
+  }
+  if (event.type === "chunk") console.log(event.delta);
+}
+
+How it works:
+- Tool definitions injected into system prompt as XML blocks
+- Model responds with <tool_call> XML tags
+- SDK parses, executes handlers (or yields events for manual), feeds results back
+- Loops until model produces text response or maxToolRounds reached
+- Works with ALL providers (Ollama, Anthropic, CLI) — no adapter changes
+
+Advanced features:
+
+Tool Priming (primeTools):
+Small models often fail to output the correct <tool_call> XML format. Tool priming sends a focused
+preliminary message asking the model to select the right tool. Three layers:
+- Auto-detect (always on, zero cost): SDK scans user message for tool name fragments and parameter values
+- ConversationManager-level: new ConversationManager({ primeTools: true, tools: [...] })
+- Per-message: conversation.send("...", { primeTools: true })
+
+Hide Tool Calls (hideToolCalls):
+Strip <tool_call> XML markup from responses stored in conversation history:
+  new ConversationManager({ hideToolCalls: true, tools: [...] })
+  conversation.send("...", { hideToolCalls: true }) // per-message override
+
+Match Ranges:
+Every ToolCall and tool_call event includes matchRange: { start, end } — character indices in the response.
+Use for highlighting, custom rendering, or manual stripping.
+  import { parseToolCalls, stripToolCalls } from "@byom-ai/web-sdk";
+  const result = parseToolCalls(text, toolNames, toolDefs);
+  const clean = stripToolCalls(text, result.matchRanges);
+
+Priming Lifecycle Events:
+Stream events for building rich tool UX:
+  tool_priming_start — "Looking for tools..." (message: string)
+  tool_priming_match — tools found (tools: string[])
+  tool_priming_end — priming complete
+  tool_call — model called a tool (includes matchRange)
+  tool_result — tool execution complete
+
+Multi-Format Parsing (5 strategies):
+1. XML tags: <tool_call>{"name":"x","arguments":{}}</tool_call>
+2. JSON code blocks: \`\`\`json {"name":"x",...} \`\`\`
+3. Bare JSON with "name" field
+4. Loose function syntax: tool_name args (at line start)
+5. Parameter-key reverse mapping: {"page_id":"x"} → navigate_to_page`,
+        keywords: ["tool", "tools", "function", "calling", "function calling", "handler", "tool_call", "tool_result", "manual", "auto", "rag", "priming", "primeTools", "hideToolCalls", "matchRange", "stripToolCalls", "parsing", "lifecycle"],
+    },
 ];
 
 // Add scenarios from catalog

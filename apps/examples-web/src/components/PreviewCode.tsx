@@ -61,6 +61,7 @@ export function PreviewCode({
           variants={variants}
           onRun={onRun}
           compact={false}
+          inPreview
         />
       )}
     </Stack>

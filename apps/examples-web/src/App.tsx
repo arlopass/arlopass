@@ -27,9 +27,11 @@ import { IconMessage } from "@tabler/icons-react";
 import {
   BYOMClient,
   BYOMSDKError,
+  ConversationManager,
   type BYOMTransport,
   type ChatMessage,
   type ProviderDescriptor,
+  type ConversationStreamEvent,
 } from "@byom-ai/web-sdk";
 
 import { createDemoTransport, getInjectedTransport, type DemoTransportMode } from "./demo-transport";
@@ -90,6 +92,9 @@ export default function App() {
   const [history, setHistory] = useState<readonly ChatMessage[]>([]);
   const [preview, setPreview] = useState("");
   const [logs, setLogs] = useState<readonly LogEntry[]>([]);
+  const [convHistory, setConvHistory] = useState<readonly ChatMessage[]>([]);
+  const [convTokens, setConvTokens] = useState(0);
+  const [toolLog, setToolLog] = useState<string[]>([]);
   const [injAvail, setInjAvail] = useState(() => getInjectedTransport() !== null);
 
   useEffect(() => {
@@ -339,6 +344,491 @@ console.log(reply.message.content);`}
               </Stack>
             )}
 
+            {page === "conversation-manager" && (
+              <Stack gap="lg">
+                <Title order={2}>Conversation Manager</Title>
+                <Text c="dimmed">
+                  Automatic conversation history management with token-aware truncation, message pinning, and optional auto-summarization.
+                </Text>
+
+                <Callout type="info" title="What it does">
+                  <List spacing="xs" fz="sm">
+                    <List.Item>Tracks conversation history automatically across send/stream calls</List.Item>
+                    <List.Item>Truncates oldest messages when context window fills up</List.Item>
+                    <List.Item>Pins important messages so they survive truncation</List.Item>
+                    <List.Item>Optionally summarizes evicted messages instead of dropping them</List.Item>
+                    <List.Item>Resolves model context window from a built-in lookup table or developer override</List.Item>
+                  </List>
+                </Callout>
+
+                <CodeBlock
+                  title="conversation-manager-basic.ts"
+                  code={`import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+
+const client = new BYOMClient({ transport: window.byom, origin: location.origin });
+await client.connect({ appId: "com.example.app" });
+await client.selectProvider({ providerId: "...", modelId: "..." });
+
+// Create manager — auto-resolves context window for the selected model
+const conversation = new ConversationManager({
+  client,
+  systemPrompt: "You are a helpful coding assistant.",
+  // maxTokens: 8192,  // optional override
+});
+
+// Send messages — history managed automatically
+const reply1 = await conversation.send("What is a closure?");
+console.log(reply1.content);
+
+// Conversation continues with full context
+const reply2 = await conversation.send("Show me an example.");
+console.log(reply2.content);
+
+// Pin important context that should never be evicted
+conversation.addMessage(
+  { role: "user", content: "We are using React 19 + TypeScript." },
+  { pinned: true },
+);
+
+// Check what would be sent in the next request
+console.log("Context window:", conversation.getContextWindow());
+console.log("Token usage:", conversation.getTokenCount());`}
+                />
+
+                <CodeBlock
+                  title="conversation-manager-streaming.ts"
+                  code={`// Streaming works the same way
+for await (const event of conversation.stream("Explain useEffect.")) {
+  if (event.type === "chunk") process.stdout.write(event.delta);
+}
+// History updated automatically after stream completes`}
+                />
+
+                <CodeBlock
+                  title="conversation-manager-summarization.ts"
+                  code={`// Enable auto-summarization — evicted messages get summarized
+const conversation = new ConversationManager({
+  client,
+  systemPrompt: "You are a code reviewer.",
+  summarize: true,
+  summarizationPrompt: "Summarize focusing on code decisions and variable names.",
+});
+
+// After many messages, old ones are summarized into a pinned recap
+// instead of being silently dropped`}
+                />
+
+                <PreviewCode
+                  preview={
+                    <Stack gap="sm">
+                      <Text fz="sm">Try the ConversationManager live (requires connection).</Text>
+                      <Textarea
+                        label="Message"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.currentTarget.value)}
+                        minRows={2}
+                        autosize
+                      />
+                      <Group gap="xs">
+                        <Button
+                          disabled={isBusy || !sid}
+                          loading={busy === "ConvSend"}
+                          onClick={() => run("ConvSend", async () => {
+                            const c = clientRef.current;
+                            if (!c) throw new Error("Connect first.");
+                            const conv = new ConversationManager({ client: c, maxTokens: 8192, systemPrompt: "You are helpful." });
+                            // Replay existing history
+                            for (const m of convHistory) conv.addMessage(m);
+                            const reply = await conv.send(prompt);
+                            setConvHistory(conv.getMessages());
+                            setConvTokens(conv.getTokenCount());
+                            log("success", `ConvManager reply (${String(reply.content.length)} chars, ${String(conv.getTokenCount())} tokens)`);
+                          })}
+                        >
+                          Send via ConversationManager
+                        </Button>
+                        <Button variant="subtle" size="xs" onClick={() => { setConvHistory([]); setConvTokens(0); }}>Clear</Button>
+                      </Group>
+                      {convTokens > 0 && <Badge size="sm" variant="light">{convTokens} tokens in context</Badge>}
+                      {convHistory.length > 0 && (
+                        <Stack gap={4}>
+                          {convHistory.map((m, i) => (
+                            <Card key={i} withBorder p="xs">
+                              <Badge size="xs" color={m.role === "user" ? "blue" : m.role === "system" ? "gray" : "green"} mb={4}>{m.role}</Badge>
+                              <Text fz="xs" style={{ whiteSpace: "pre-wrap" }} lineClamp={4}>{m.content}</Text>
+                            </Card>
+                          ))}
+                        </Stack>
+                      )}
+                    </Stack>
+                  }
+                  code={`const conv = new ConversationManager({
+  client,
+  maxTokens: 8192,
+  systemPrompt: "You are helpful.",
+});
+
+const reply = await conv.send("${prompt}");
+console.log(reply.content);
+console.log("Tokens:", conv.getTokenCount());`}
+                  title="live-conversation-manager.ts"
+                />
+              </Stack>
+            )}
+
+            {page === "tool-calling" && (
+              <Stack gap="lg">
+                <Title order={2}>Tool / Function Calling</Title>
+                <Text c="dimmed">
+                  Let the model call your functions during a conversation. The SDK manages the tool-call → execute → result → continue loop.
+                </Text>
+
+                <Callout type="info" title="How it works">
+                  <List spacing="xs" fz="sm">
+                    <List.Item>Define tools with name, description, JSON Schema parameters, and an optional handler function</List.Item>
+                    <List.Item>The SDK injects tool definitions into the system prompt automatically</List.Item>
+                    <List.Item>When the model responds with {"<tool_call>"} XML tags, the SDK parses and executes the handler</List.Item>
+                    <List.Item>Tool results are fed back to the model, which continues until it produces a text response</List.Item>
+                    <List.Item>Works with ALL providers (Ollama, Anthropic, CLI) — no adapter changes needed</List.Item>
+                  </List>
+                </Callout>
+
+                <CodeBlock
+                  title="auto-tool-calling.ts"
+                  code={`import { ConversationManager } from "@byom-ai/web-sdk";
+
+const conversation = new ConversationManager({
+  client,
+  systemPrompt: "You are a research assistant.",
+  tools: [
+    {
+      name: "search_docs",
+      description: "Search the documentation for relevant pages",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query" },
+        },
+        required: ["query"],
+      },
+      // Auto-execute handler — SDK calls this automatically
+      handler: async (args) => {
+        const results = await fetch(\`/api/search?q=\${args.query}\`);
+        return JSON.stringify(await results.json());
+      },
+    },
+  ],
+});
+
+// The model will call search_docs if it needs to look something up
+const reply = await conversation.send("Find docs about authentication");
+// reply.content already includes info from the search results`}
+                />
+
+                <CodeBlock
+                  title="manual-tool-calling.ts"
+                  code={`// Manual mode — you control tool execution via stream events
+const conversation = new ConversationManager({
+  client,
+  tools: [
+    {
+      name: "confirm_action",
+      description: "Ask user to confirm a dangerous action",
+      parameters: {
+        type: "object",
+        properties: {
+          action: { type: "string", description: "Action to confirm" },
+        },
+      },
+      // No handler → manual mode
+    },
+  ],
+});
+
+for await (const event of conversation.stream("Delete all logs")) {
+  if (event.type === "tool_call") {
+    // Show confirmation dialog to user
+    const confirmed = await showConfirmDialog(event.arguments.action);
+    conversation.submitToolResult(
+      event.toolCallId,
+      JSON.stringify({ confirmed }),
+    );
+  }
+  if (event.type === "chunk") {
+    process.stdout.write(event.delta);
+  }
+}`}
+                />
+
+                <CodeBlock
+                  title="mixed-mode.ts"
+                  code={`// Mix auto + manual tools — handlers auto-execute, others pause
+const conversation = new ConversationManager({
+  client,
+  tools: [
+    {
+      name: "search",
+      description: "Search docs",
+      handler: async (args) => searchDocs(args.query), // auto
+    },
+    {
+      name: "confirm",
+      description: "User confirmation",
+      // no handler → manual via stream events
+    },
+  ],
+  maxToolRounds: 5, // safety limit on tool call loops
+});`}
+                />
+
+                <Title order={3} mt="md">Tool Priming</Title>
+                <Text c="dimmed" fz="sm">
+                  Small models often fail to use the correct tool call format. Tool priming sends a focused
+                  preliminary message that instructs the model to select and call the right tool.
+                  Three layers: auto-detect (zero cost), ConversationManager-level, and per-message.
+                </Text>
+
+                <CodeBlock
+                  title="tool-priming.ts"
+                  code={`// Layer 1: Auto-detect (always on, zero LLM cost)
+// The SDK scans user messages for tool name fragments and
+// parameter values — priming triggers automatically when relevant.
+
+// Layer 2: Enable for all messages
+const conversation = new ConversationManager({
+  client,
+  primeTools: true, // ← priming for every message
+  tools: [...],
+});
+
+// Layer 3: Enable per message
+await conversation.send("Navigate to streaming", {
+  primeTools: true, // ← just this message
+});`}
+                />
+
+                <Title order={3} mt="md">Hide Tool Call Markup</Title>
+                <Text c="dimmed" fz="sm">
+                  By default, tool call XML tags are visible in responses. Enable hideToolCalls
+                  to strip them — the conversation history stays clean.
+                </Text>
+
+                <CodeBlock
+                  title="hide-tool-calls.ts"
+                  code={`const conversation = new ConversationManager({
+  client,
+  tools: [...],
+  hideToolCalls: true, // strip <tool_call> markup from stored messages
+});
+
+// Per-message override
+await conversation.send("search for closures", {
+  hideToolCalls: true,
+});
+
+// getMessages() returns clean text without XML tags`}
+                />
+
+                <Title order={3} mt="md">Match Ranges &amp; Highlighting</Title>
+                <Text c="dimmed" fz="sm">
+                  Every tool call includes a matchRange with character indices in the original response.
+                  Use this to highlight, annotate, or strip tool calls in custom UI.
+                </Text>
+
+                <CodeBlock
+                  title="match-ranges.ts"
+                  code={`import { parseToolCalls, stripToolCalls } from "@byom-ai/web-sdk";
+
+const result = parseToolCalls(modelResponse, toolNames, toolDefs);
+for (const call of result.toolCalls) {
+  console.log(call.name, call.matchRange);
+  // { start: 42, end: 128 } — character indices in modelResponse
+}
+
+// Strip all tool call markup, leaving only surrounding prose
+const cleanText = stripToolCalls(modelResponse, result.matchRanges);
+
+// Or access matchRange from stream events
+for await (const event of conversation.stream("...")) {
+  if (event.type === "tool_call") {
+    console.log(event.matchRange); // { start, end }
+  }
+}`}
+                />
+
+                <Title order={3} mt="md">Priming Lifecycle Events</Title>
+                <Text c="dimmed" fz="sm">
+                  When tool priming is active, the stream yields lifecycle events for building
+                  rich UX — loading indicators, tool discovery animations, etc.
+                </Text>
+
+                <CodeBlock
+                  title="priming-events.ts"
+                  code={`for await (const event of conversation.stream("...")) {
+  switch (event.type) {
+    case "tool_priming_start":
+      showStatus("Looking for available tools...");
+      break;
+    case "tool_priming_match":
+      showStatus(\`Found tools: \${event.tools.join(", ")}\`);
+      // event.tools = ["search_docs", "navigate_to_page"]
+      break;
+    case "tool_priming_end":
+      clearStatus();
+      break;
+    case "tool_call":
+      showPill(event.name); // e.g., Pill badge with tool name
+      break;
+    case "tool_result":
+      showCheckmark(event.name);
+      break;
+    case "chunk":
+      appendText(event.delta);
+      break;
+    case "done":
+      break;
+  }
+}`}
+                />
+
+                <Title order={3} mt="md">Multi-Format Parsing</Title>
+                <Text c="dimmed" fz="sm">
+                  The SDK automatically detects tool calls in 5 formats — from strict XML tags
+                  to bare JSON objects. This ensures compatibility across all model sizes.
+                </Text>
+
+                <CodeBlock
+                  title="parsing-strategies.ts"
+                  code={`// The SDK parses all of these formats automatically:
+
+// 1. XML tags (Anthropic, larger models)
+// <tool_call>{"name":"search","arguments":{"query":"x"}}</tool_call>
+
+// 2. JSON in code blocks (GPT-style)
+// \`\`\`json
+// {"name":"search","arguments":{"query":"x"}}
+// \`\`\`
+
+// 3. Bare JSON with "name" field
+// {"name":"search","arguments":{"query":"x"}}
+
+// 4. Function-call syntax at line start
+// search_docs "closures"
+
+// 5. JSON with known parameter keys (smallest models)
+// {"page_id":"providers"}  →  maps to navigate_to_page
+
+// No configuration needed — all strategies run automatically.
+// Priority: XML > code blocks > bare JSON > loose > param-keys`}
+                />
+
+                <PreviewCode
+                  preview={
+                    <Stack gap="sm">
+                      <Text fz="sm">Try tool calling live. This demo defines a mock &quot;get_time&quot; tool that returns the current time.</Text>
+                      <Textarea
+                        label="Message"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.currentTarget.value)}
+                        minRows={2}
+                        autosize
+                        placeholder="What time is it?"
+                      />
+                      <Group gap="xs">
+                        <Button
+                          disabled={isBusy || !sid}
+                          loading={busy === "ToolSend"}
+                          onClick={() => run("ToolSend", async () => {
+                            const c = clientRef.current;
+                            if (!c) throw new Error("Connect first.");
+                            setToolLog([]);
+                            const conv = new ConversationManager({
+                              client: c,
+                              maxTokens: 8192,
+                              systemPrompt: "You are helpful. Use the available tools when needed.",
+                              tools: [
+                                {
+                                  name: "get_time",
+                                  description: "Get the current date and time",
+                                  handler: async () => {
+                                    const t = new Date().toLocaleString();
+                                    setToolLog((p) => [...p, `🔧 get_time() → ${t}`]);
+                                    return t;
+                                  },
+                                },
+                                {
+                                  name: "calculate",
+                                  description: "Evaluate a math expression",
+                                  parameters: {
+                                    type: "object",
+                                    properties: { expression: { type: "string", description: "Math expression to evaluate" } },
+                                    required: ["expression"],
+                                  },
+                                  handler: async (args) => {
+                                    const expr = String(args.expression);
+                                    setToolLog((p) => [...p, `🔧 calculate("${expr}")`]);
+                                    try {
+                                      const result = String(Function(`"use strict"; return (${expr.replace(/[^0-9+\-*/().%\s]/g, "")})`)());
+                                      setToolLog((p) => [...p, `  → ${result}`]);
+                                      return result;
+                                    } catch { return "Error: invalid expression"; }
+                                  },
+                                },
+                              ],
+                            });
+                            const reply = await conv.send(prompt);
+                            setToolLog((p) => [...p, `💬 ${reply.content}`]);
+                            log("success", `Tool calling reply (${String(reply.content.length)} chars)`);
+                          })}
+                        >
+                          Send with Tools
+                        </Button>
+                        <Button variant="subtle" size="xs" onClick={() => setToolLog([])}>Clear log</Button>
+                      </Group>
+                      {toolLog.length > 0 && (
+                        <Card withBorder bg="gray.0" p="xs">
+                          <ScrollArea h={200}>
+                            <Stack gap={2}>
+                              {toolLog.map((entry, i) => (
+                                <Text key={i} fz="xs" ff="monospace" style={{ whiteSpace: "pre-wrap" }}>{entry}</Text>
+                              ))}
+                            </Stack>
+                          </ScrollArea>
+                        </Card>
+                      )}
+                    </Stack>
+                  }
+                  code={`const conv = new ConversationManager({
+  client,
+  tools: [
+    {
+      name: "get_time",
+      description: "Get the current date and time",
+      handler: async () => new Date().toLocaleString(),
+    },
+    {
+      name: "calculate",
+      description: "Evaluate a math expression",
+      parameters: {
+        type: "object",
+        properties: {
+          expression: { type: "string" },
+        },
+        required: ["expression"],
+      },
+      handler: async (args) => {
+        return String(eval(args.expression));
+      },
+    },
+  ],
+});
+
+const reply = await conv.send("${prompt}");`}
+                  title="live-tool-demo.ts"
+                />
+              </Stack>
+            )}
+
             {SCENARIO_CATALOG.filter((s) => s.id === page).map((s) => (
               <Stack key={s.id} gap="lg">
                 <Title order={2}>{s.title}</Title>
@@ -375,7 +865,7 @@ console.log(reply.message.content);`}
       {/* Right aside — AI Chat (independent connection) */}
       {chatOpen && (
         <AppShell.Aside>
-          <ChatSidebar onClose={toggleChat} />
+          <ChatSidebar onClose={toggleChat} onNavigate={setPage} />
         </AppShell.Aside>
       )}
     </AppShell>

@@ -72,6 +72,34 @@ export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
     expectedOutcome:
       "One app can safely pivot across Ollama, Claude, and CLI-backed providers.",
   },
+  {
+    id: "context-window",
+    title: "Context window management",
+    summary:
+      "Use ConversationManager to automatically manage conversation history within the model's context window.",
+    steps: [
+      "Create a ConversationManager with a BYOMClient, system prompt, and optional maxTokens override.",
+      "Send messages via conversation.send() — history is tracked automatically.",
+      "Pin important messages so they survive truncation when the context window fills up.",
+      "Enable auto-summarization to preserve context from evicted messages.",
+    ],
+    expectedOutcome:
+      "Long conversations stay within the model's context limit without manual history management.",
+  },
+  {
+    id: "auto-tools",
+    title: "Automatic tool calling",
+    summary:
+      "Let the model call functions during a conversation — the SDK handles the tool execution loop automatically.",
+    steps: [
+      "Define tools with name, description, JSON Schema parameters, and a handler function.",
+      "Pass tools to ConversationManager — the SDK injects tool definitions into the system prompt.",
+      "Call conversation.send() — if the model responds with <tool_call> tags, the SDK auto-executes the handler.",
+      "The SDK feeds tool results back and loops until the model produces a final text response.",
+    ],
+    expectedOutcome:
+      "The model can dynamically invoke your functions (search, API calls, etc.) and incorporate results into its response.",
+  },
 ];
 
 export const EXTENSION_SNIPPET = `import { BYOMClient, type BYOMTransport } from "@byom-ai/web-sdk";

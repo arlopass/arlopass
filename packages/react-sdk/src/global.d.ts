@@ -1,9 +1,9 @@
 import type { BYOMTransport } from "@byom-ai/web-sdk";
 
 declare global {
-  interface Window {
-    byom?: BYOMTransport;
-  }
+    interface Window {
+        byom?: BYOMTransport;
+    }
 }
 
-export {};
+export { };
