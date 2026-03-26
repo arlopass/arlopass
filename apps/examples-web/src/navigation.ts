@@ -39,6 +39,19 @@ export const NAVIGATION: NavCategory[] = [
         ],
     },
     {
+        label: "Components Library",
+        items: [
+            { id: "components/overview", label: "Overview" },
+            { id: "components/chat", label: "Chat" },
+            { id: "components/message", label: "Message" },
+            { id: "components/streaming-text", label: "StreamingText" },
+            { id: "components/provider-picker", label: "ProviderPicker" },
+            { id: "components/tool-activity", label: "ToolActivity" },
+            { id: "components/connection-status", label: "ConnectionStatus" },
+            { id: "components/registry", label: "Block registry" },
+        ],
+    },
+    {
         label: "React SDK Reference",
         items: [
             { id: "reference/react/provider", label: "BYOMProvider" },

@@ -20,6 +20,15 @@ const loaders: Record<string, () => Promise<PageModule>> = {
     "guides/testing": () => import("./guides/TestingGuide.js"),
     "guides/guard-components": () => import("./guides/GuardComponents.js"),
     "guides/security": () => import("./guides/SecurityModel.js"),
+    // Components Library
+    "components/overview": () => import("./components/Overview.js"),
+    "components/chat": () => import("./components/ChatPrimitive.js"),
+    "components/message": () => import("./components/MessagePrimitive.js"),
+    "components/streaming-text": () => import("./components/StreamingTextPrimitive.js"),
+    "components/provider-picker": () => import("./components/ProviderPickerPrimitive.js"),
+    "components/tool-activity": () => import("./components/ToolActivityPrimitive.js"),
+    "components/connection-status": () => import("./components/ConnectionStatusPrimitive.js"),
+    "components/registry": () => import("./components/BlockRegistry.js"),
     // Reference: React SDK
     "reference/react/provider": () => import("./reference/react/ReactProvider.js"),
     "reference/react/hooks": () => import("./reference/react/HooksAPI.js"),
