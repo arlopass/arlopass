@@ -7,22 +7,33 @@ import { Button } from "@mantine/core";
 export type ApproveStepProps = {
   origin: string;
   displayName: string;
+  iconUrl?: string | undefined;
+  description?: string | undefined;
   onApprove: () => void;
   onDecline: () => void;
 };
 
-export function ApproveStep({ origin, displayName, onApprove, onDecline }: ApproveStepProps) {
+export function ApproveStep({ origin, displayName, iconUrl, description, onApprove, onDecline }: ApproveStepProps) {
   return (
     <>
       <Center style={{ flex: 1 }}>
         <Stack gap={16} align="center" maw={300}>
-          <IconPlugConnected size={48} color={tokens.color.textSecondary} stroke={1.5} />
+          {iconUrl ? (
+            <img src={iconUrl} alt="" width={48} height={48} style={{ borderRadius: 10 }} />
+          ) : (
+            <IconPlugConnected size={48} color={tokens.color.textSecondary} stroke={1.5} />
+          )}
           <Text fw={600} fz="lg" c={tokens.color.textPrimary} ta="center">
             {displayName}
           </Text>
           <Text fz="xs" c={tokens.color.textSecondary} ta="center">
             {origin}
           </Text>
+          {description && (
+            <Text fz="xs" c={tokens.color.textSecondary} ta="center">
+              {description}
+            </Text>
+          )}
           <Text fz="sm" c={tokens.color.textSecondary} ta="center">
             This app wants to connect to your BYOM wallet to use AI providers and models.
           </Text>

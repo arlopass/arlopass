@@ -1,4 +1,4 @@
-import { Stack, Title, Text } from "@mantine/core";
+import { Stack, Title, Text, Divider } from "@mantine/core";
 import { CodeBlock, Callout, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 

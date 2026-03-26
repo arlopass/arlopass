@@ -241,6 +241,56 @@ function readOllamaResponseContent(payload: Record<string, unknown>): string | u
   return undefined;
 }
 
+function isDevOrigin(origin: string): boolean {
+  try {
+    const hostname = new URL(origin).hostname;
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]" ||
+      hostname === "0.0.0.0" ||
+      hostname.endsWith(".local") ||
+      origin.startsWith("chrome-extension://")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function validateAppIdForOrigin(
+  appId: string,
+  origin: string,
+): { valid: boolean; reason?: string | undefined } {
+  if (isDevOrigin(origin)) return { valid: true };
+  try {
+    const hostname = new URL(origin).hostname;
+    const expectedPrefix = hostname.split(".").reverse().join(".");
+    if (!appId.startsWith(expectedPrefix)) {
+      return {
+        valid: false,
+        reason: `AppId "${appId}" does not match origin "${origin}". Expected prefix: "${expectedPrefix}".`,
+      };
+    }
+    if (appId.length > expectedPrefix.length && appId[expectedPrefix.length] !== ".") {
+      return {
+        valid: false,
+        reason: `AppId "${appId}" has invalid characters after domain prefix "${expectedPrefix}".`,
+      };
+    }
+    return { valid: true };
+  } catch {
+    return { valid: false, reason: `Invalid origin: "${origin}".` };
+  }
+}
+
+function validateAppIconUrl(url: string, origin: string): boolean {
+  if (url.length > 2048) return false;
+  if (url.startsWith("data:image/")) return true;
+  if (url.startsWith("https://")) return true;
+  if (isDevOrigin(origin) && url.startsWith("http://")) return true;
+  return false;
+}
+
 function createCliSessionCacheKey(options: {
   hostName: string;
   providerId: string;
@@ -2007,6 +2057,93 @@ async function dispatchTransportRequest(options: {
   switch (options.envelope.capability) {
     case "session.create": {
       if (isRecord(options.envelope.payload) && typeof options.envelope.payload["appId"] === "string") {
+        const appId = options.envelope.payload["appId"] as string;
+
+        // Validate appId matches origin
+        const validation = validateAppIdForOrigin(appId, options.envelope.origin);
+        if (!validation.valid) {
+          throw new EnvelopeValidationError(
+            validation.reason ?? "AppId does not match origin.",
+            {
+              reasonCode: "policy.denied",
+              details: {
+                appId,
+                origin: options.envelope.origin,
+              },
+            },
+          );
+        }
+
+        // Extract app metadata
+        const payload = options.envelope.payload;
+        const appName = typeof payload["appName"] === "string" ? payload["appName"].trim().slice(0, 200) : undefined;
+        const appDescription = typeof payload["appDescription"] === "string" ? payload["appDescription"].trim().slice(0, 500) : undefined;
+        const appIcon = typeof payload["appIcon"] === "string" && validateAppIconUrl(payload["appIcon"], options.envelope.origin)
+          ? payload["appIcon"]
+          : undefined;
+
+        // If the origin is not already an approved connected app, trigger the
+        // popup onboarding wizard and wait for the user's decision.
+        if (connectedApp === null) {
+          const PENDING_KEY = "byom.wallet.pendingConnection.v1";
+          const RESULT_KEY = "byom.wallet.connectionResult.v1";
+
+          await options.storage.set({
+            [PENDING_KEY]: {
+              origin: options.envelope.origin,
+              appId,
+              ...(appName !== undefined ? { appName } : {}),
+              ...(appDescription !== undefined ? { appDescription } : {}),
+              ...(appIcon !== undefined ? { appIcon } : {}),
+              requestedAt: Date.now(),
+            },
+          });
+
+          // Open the popup so the user sees the connection wizard
+          try {
+            if (typeof chrome !== "undefined" && typeof chrome.action?.openPopup === "function") {
+              await chrome.action.openPopup();
+            }
+          } catch {
+            // openPopup may not be available in all contexts
+          }
+
+          // Poll storage for user decision (max 120 s)
+          const POLL_TIMEOUT = 120_000;
+          const POLL_INTERVAL = 500;
+          const pollStart = Date.now();
+          let approved = false;
+          let answered = false;
+
+          while (Date.now() - pollStart < POLL_TIMEOUT) {
+            const data = await options.storage.get([RESULT_KEY]);
+            const result = data[RESULT_KEY];
+            if (result != null && isRecord(result) && result["origin"] === options.envelope.origin) {
+              approved = result["approved"] === true;
+              answered = true;
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
+          }
+
+          // Clean up pending state
+          await options.storage.set({ [PENDING_KEY]: null });
+          await options.storage.set({ [RESULT_KEY]: null });
+
+          if (!answered || !approved) {
+            throw new EnvelopeValidationError(
+              "Connection was declined by the user.",
+              {
+                reasonCode: "policy.denied",
+                details: {
+                  appId,
+                  origin: options.envelope.origin,
+                },
+              },
+            );
+          }
+        }
+
         const response: ConnectResponsePayload = {
           capabilities: DEFAULT_CAPABILITIES,
         };

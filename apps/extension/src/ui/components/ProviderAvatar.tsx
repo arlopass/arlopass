@@ -10,7 +10,7 @@ const slugMap: Record<string, string> = {
   openai: "openai",
   ollama: "ollama",
   gemini: "gemini-color",
-  microsoft: "microsoft-color",
+  microsoft: "azureai-color",
   githubcopilot: "githubcopilot",
   opencode: "opencode",
   bedrock: "bedrock-color",

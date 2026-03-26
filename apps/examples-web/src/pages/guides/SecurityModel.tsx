@@ -1,4 +1,4 @@
-import { Stack, Title, Text } from "@mantine/core";
+import { Stack, Title, Text, Divider } from "@mantine/core";
 import { Callout, CodeBlock } from "../../components";
 import { navigate } from "../../router";
 
@@ -109,6 +109,71 @@ const envelopeSecurity = `// Every message between the SDK and extension uses a 
 // - Correlation IDs: response spoofing is detected
 // - Protocol version: incompatible versions are rejected early`;
 
+// ---------------------------------------------------------------------------
+// AppId Security
+// ---------------------------------------------------------------------------
+
+const appIdAutoDerivation = `// The SDK auto-derives an appId from the page origin using reverse-domain notation.
+// You don't need to provide one explicitly — it's generated for you.
+
+// Examples:
+// https://myapp.com        → "com.myapp"
+// https://chat.example.org → "org.example.chat"
+// http://localhost:5173    → "localhost"           (dev origin — no prefix required)
+
+// React SDK — auto-derived, no appId needed:
+<BYOMProvider appSuffix="chat">   {/* → "com.myapp.chat" on myapp.com */}
+  <App />
+</BYOMProvider>
+
+// Web SDK — auto-derived:
+const client = new BYOMClient({ transport: window.byom });
+await client.connect({ appSuffix: "chat" }); // → "com.myapp.chat"
+
+// Explicit override (must match your domain):
+await client.connect({ appId: "com.myapp.dashboard" });`;
+
+const appIdValidation = `// The extension validates the appId against the page's actual origin.
+// Production apps MUST use the correct reverse-domain prefix.
+//
+// ✅ On https://myapp.com:
+//    appId: "com.myapp"           → valid
+//    appId: "com.myapp.chat"      → valid (suffix ok)
+//
+// ❌ On https://myapp.com:
+//    appId: "com.otherapp"        → REJECTED (wrong domain)
+//    appId: "com.myappx"          → REJECTED (must be dot-separated)
+//
+// Dev origins (localhost, 127.0.0.1, [::1], *.local) skip this check.
+// Any appId is accepted during local development.`;
+
+const appMetadata = `// Pass app metadata during connect for richer extension UI.
+// The extension shows this info in the connection approval popup.
+
+// React SDK:
+<BYOMProvider
+  appSuffix="chat"
+  appName="My Chat App"
+  appDescription="AI-powered customer support"
+  appIcon="https://myapp.com/icon.png"
+>
+  <App />
+</BYOMProvider>
+
+// Web SDK:
+await client.connect({
+  appSuffix: "chat",
+  appName: "My Chat App",
+  appDescription: "AI-powered customer support",
+  appIcon: "https://myapp.com/icon.png",
+});
+
+// Icon URL rules:
+// ✅ https://... — always accepted
+// ✅ data:image/... — always accepted
+// ✅ http://... — accepted on dev origins only (localhost, etc.)
+// ❌ http://... on production — rejected (must be HTTPS)`;
+
 const safeDefaults = `// The SDK ships with safe defaults that you don't need to configure:
 
 import { BYOMProvider } from "@byom-ai/react";
@@ -187,6 +252,37 @@ export default function SecurityModel() {
       </Text>
       <CodeBlock title="Envelope format" code={envelopeSecurity} />
 
+      <Divider my="xl" />
+
+      <Title order={3}>App identity &amp; validation</Title>
+      <Text>
+        Every app that connects to the extension is identified by an{" "}
+        <code>appId</code> — a reverse-domain string derived from the page
+        origin (e.g. <code>com.myapp.chat</code>). The SDK generates this
+        automatically, and the extension validates it against the actual origin
+        to prevent spoofing.
+      </Text>
+      <CodeBlock title="Auto-derived appId" code={appIdAutoDerivation} />
+
+      <Title order={4}>Origin validation</Title>
+      <Text>
+        On production domains, the extension checks that the appId starts with
+        the correct reverse-domain prefix. A page on{" "}
+        <code>https://myapp.com</code> can only claim an appId starting with{" "}
+        <code>com.myapp</code>. Dev origins (localhost, 127.0.0.1, etc.) are
+        exempt from this check for local development convenience.
+      </Text>
+      <CodeBlock title="Validation rules" code={appIdValidation} />
+
+      <Title order={4}>App metadata</Title>
+      <Text>
+        You can pass optional metadata — name, description, and icon — that the
+        extension displays in its connection approval popup. Icon URLs must use
+        HTTPS or a <code>data:</code> URI on production; HTTP is only allowed on
+        dev origins.
+      </Text>
+      <CodeBlock title="App metadata" code={appMetadata} />
+
       <Title order={3}>Safe defaults</Title>
       <Text>
         The SDK ships with safe defaults: auto-connect, built-in timeouts,
@@ -198,10 +294,11 @@ export default function SecurityModel() {
 
       <Callout type="info" title="Summary">
         BYOM's security is layered: injected transport (no arbitrary
-        connections), origin enforcement (no cross-origin access), credential
-        isolation (SDK never sees keys), envelope security (replay/expiry
-        protection), and safe rendering defaults (no XSS vectors). Your app
-        inherits all of this by using the SDK hooks.
+        connections), origin enforcement (no cross-origin access), app identity
+        validation (reverse-domain appId matching), credential isolation (SDK
+        never sees keys), envelope security (replay/expiry protection), and safe
+        rendering defaults (no XSS vectors). Your app inherits all of this by
+        using the SDK hooks.
       </Callout>
 
       <Callout type="tip" title="Related">

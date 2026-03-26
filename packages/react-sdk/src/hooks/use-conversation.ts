@@ -204,6 +204,12 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                     subsRef.current.notify();
                 } else if (event.type === "tool_result") {
                     subsRef.current.notify();
+                } else if (event.type === "tool_priming_start") {
+                    subsRef.current.notify();
+                } else if (event.type === "tool_priming_match") {
+                    subsRef.current.notify();
+                } else if (event.type === "tool_priming_end") {
+                    subsRef.current.notify();
                 } else if (event.type === "done") {
                     // Stream finished
                 }
@@ -305,7 +311,10 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                 event === "stream" ||
                 event === "error" ||
                 event === "tool_call" ||
-                event === "tool_result"
+                event === "tool_result" ||
+                event === "tool_priming_start" ||
+                event === "tool_priming_match" ||
+                event === "tool_priming_end"
             ) {
                 handler();
             }

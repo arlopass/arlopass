@@ -1,3 +1,4 @@
+export { deriveAppIdPrefix, resolveAppId, isDevOrigin, validateAppIdForOrigin, validateAppIconUrl } from "./app-id.js";
 export * from "./client.js";
 export * from "./conversation.js";
 export * from "./errors.js";

@@ -10,6 +10,10 @@ import type { BYOMProviderProps } from "../types.js";
 
 export function BYOMProvider({
   appId,
+  appSuffix,
+  appName,
+  appDescription,
+  appIcon,
   defaultProvider,
   defaultModel,
   autoConnect = true,
@@ -50,7 +54,13 @@ export function BYOMProvider({
 
     async function connectAndSelect(): Promise<void> {
       try {
-        await store!.client.connect({ appId });
+        await store!.client.connect({
+          ...(appId !== undefined ? { appId } : {}),
+          ...(appSuffix !== undefined ? { appSuffix } : {}),
+          ...(appName !== undefined ? { appName } : {}),
+          ...(appDescription !== undefined ? { appDescription } : {}),
+          ...(appIcon !== undefined ? { appIcon } : {}),
+        });
         store!.refreshSnapshot();
 
         if (!cancelled && defaultProvider !== undefined && defaultModel !== undefined) {
@@ -73,7 +83,7 @@ export function BYOMProvider({
 
     void connectAndSelect();
     return () => { cancelled = true; };
-  }, [appId, autoConnect, defaultModel, defaultProvider, onError, store, transportAvailable]);
+  }, [appId, appSuffix, appName, appDescription, appIcon, autoConnect, defaultModel, defaultProvider, onError, store, transportAvailable]);
 
   useEffect(() => {
     return () => {

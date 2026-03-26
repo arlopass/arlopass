@@ -212,7 +212,7 @@ async function copyProviderIcons() {
     "openai",
     "ollama",
     "gemini-color",
-    "microsoft-color",
+    "azureai-color",
     "githubcopilot",
     "opencode",
     "bedrock-color",

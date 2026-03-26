@@ -38,7 +38,16 @@ export type ChatOperationOptions = Readonly<{
 }>;
 
 export type ConnectOptions = Readonly<{
-  appId: string;
+  /** Full appId (reverse-domain). Auto-derived from origin if omitted. */
+  appId?: string;
+  /** Suffix appended to the auto-derived domain prefix. Ignored if appId is set. */
+  appSuffix?: string;
+  /** Human-readable app name. Defaults to origin hostname. */
+  appName?: string;
+  /** Short app description. */
+  appDescription?: string;
+  /** URL to square icon/logo (https:// or data: URI). */
+  appIcon?: string;
   origin?: string;
   timeoutMs?: number;
 }>;
@@ -79,15 +88,15 @@ export type ChatSendResult = Readonly<{
 
 export type ChatStreamEvent =
   | Readonly<{
-      type: "chunk";
-      delta: string;
-      index: number;
-      correlationId: CorrelationId;
-    }>
+    type: "chunk";
+    delta: string;
+    index: number;
+    correlationId: CorrelationId;
+  }>
   | Readonly<{
-      type: "done";
-      correlationId: CorrelationId;
-    }>;
+    type: "done";
+    correlationId: CorrelationId;
+  }>;
 
 export type ProtocolEnvelopePayload<TPayload = unknown> = CanonicalEnvelope<TPayload>;
 
@@ -108,6 +117,9 @@ export type TransportStream<TPayload = unknown> = AsyncIterable<
 export type ConnectPayload = Readonly<{
   appId: string;
   requestedCapabilities: readonly ProtocolCapability[];
+  appName?: string;
+  appDescription?: string;
+  appIcon?: string;
 }>;
 
 export type ConnectResponsePayload = Readonly<{

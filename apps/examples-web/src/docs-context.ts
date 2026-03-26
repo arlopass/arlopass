@@ -97,8 +97,21 @@ Providers are added through the extension popup's onboarding wizard:
         title: "App Connection Flow",
         content: `When a web app calls client.connect(), the extension checks if the origin has an approved app connection.
 
+App Identity (appId):
+The SDK auto-derives an appId from the page origin using reverse-domain notation:
+- https://myapp.com → "com.myapp"
+- https://chat.example.org → "org.example.chat"
+- http://localhost:5173 → "localhost" (dev origin — no prefix required)
+
+You can set appSuffix for disambiguation: appSuffix: "chat" → "com.myapp.chat"
+Or set an explicit appId: appId: "com.myapp.dashboard"
+The extension validates that the appId matches the page origin on production (non-dev) domains.
+
+App metadata (appName, appDescription, appIcon) is shown in the approval popup.
+Icon URLs must be https:// or data:image/ on production; http:// allowed on dev origins.
+
 If not approved:
-1. Extension opens the popup with a connection request
+1. Extension opens the popup with a connection request showing the app name, icon, and description
 2. User sees "Allow connection" / "Decline" 
 3. If approved, user selects which providers to share
 4. User selects which models to enable (all by default)
@@ -107,7 +120,7 @@ If not approved:
 
 Once connected, the app can only see/use providers and models that were explicitly enabled.
 App connections are stored in chrome.storage.local under byom.wallet.apps.v1.`,
-        keywords: ["connect", "connection", "app", "approve", "permission", "settings", "rules", "limits", "consent"],
+        keywords: ["connect", "connection", "app", "approve", "permission", "settings", "rules", "limits", "consent", "appId", "appSuffix", "appName", "appDescription", "appIcon", "validation", "origin"],
     },
     {
         id: "credentials",

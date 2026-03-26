@@ -79,14 +79,29 @@ function AppCard({ app, onRemove }: { app: ConnectedApp; onRemove: (origin: stri
       <UnstyledButton
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: tokens.spacing.cardPadding, cursor: "pointer" }}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: tokens.spacing.cardPadding, cursor: "pointer", gap: 10 }}
       >
+        {app.iconUrl ? (
+          <img src={app.iconUrl} alt="" width={28} height={28} style={{ borderRadius: 6, flexShrink: 0 }} />
+        ) : (
+          <Box style={{ width: 28, height: 28, borderRadius: 6, background: "var(--mantine-color-blue-1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Text fz={12} fw={700} c="blue">{app.displayName[0]?.toUpperCase() ?? "A"}</Text>
+          </Box>
+        )}
         <Stack gap={0} style={{ overflow: "hidden", minWidth: 0, flex: 1 }}>
           <Group gap={4} wrap="nowrap">
             <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>{app.displayName}</Text>
             <Text fw={400} fz="xs" c={tokens.color.textSecondary}>({extractDomain(app.origin)})</Text>
           </Group>
           <Group gap={tokens.spacing.metadataGap} wrap="nowrap" style={{ overflow: "hidden" }}>
+            {app.description && (
+              <>
+                <Text fw={500} fz="xs" c={tokens.color.textSecondary} truncate style={{ whiteSpace: "nowrap" }}>
+                  {app.description}
+                </Text>
+                <MetadataDivider />
+              </>
+            )}
             <Text fw={500} fz="xs" c={tokens.color.textSecondary} style={{ whiteSpace: "nowrap" }}>
               {app.status === "active" ? "Full permissions" : "Disabled"}
             </Text>

@@ -26,6 +26,12 @@ import type {
     ToolResultEvent as WebSDKToolResultEvent,
 } from "@byom-ai/web-sdk";
 
+import type {
+    ToolPrimingStartEvent as WebSDKToolPrimingStartEvent,
+    ToolPrimingMatchEvent as WebSDKToolPrimingMatchEvent,
+    ToolPrimingEndEvent as WebSDKToolPrimingEndEvent,
+} from "@byom-ai/web-sdk";
+
 // Re-export web-sdk types so developers only need @byom-ai/react
 export type ChatMessage = WebSDKChatMessage;
 export type ChatRole = WebSDKChatRole;
@@ -43,6 +49,9 @@ export type { WebSDKToolCall as ToolCall };
 export type { WebSDKToolResult as ToolResult };
 export type { WebSDKToolCallEvent as ToolCallEvent };
 export type { WebSDKToolResultEvent as ToolResultEvent };
+export type { WebSDKToolPrimingStartEvent as ToolPrimingStartEvent };
+export type { WebSDKToolPrimingMatchEvent as ToolPrimingMatchEvent };
+export type { WebSDKToolPrimingEndEvent as ToolPrimingEndEvent };
 
 // React SDK specific types
 
@@ -71,7 +80,10 @@ export type SubscriptionEvent =
     | "stream"
     | "error"
     | "tool_call"
-    | "tool_result";
+    | "tool_result"
+    | "tool_priming_start"
+    | "tool_priming_match"
+    | "tool_priming_end";
 
 export type ChatSubscribe = {
     (
@@ -132,10 +144,31 @@ export type ChatSubscribe = {
         messageId: MessageId,
         handler: (toolCallId: string, name: string, result: string) => void,
     ): () => void;
+    (
+        event: "tool_priming_start",
+        handler: (message: string) => void,
+    ): () => void;
+    (
+        event: "tool_priming_match",
+        handler: (tools: readonly string[]) => void,
+    ): () => void;
+    (
+        event: "tool_priming_end",
+        handler: () => void,
+    ): () => void;
 };
 
 export type BYOMProviderProps = Readonly<{
-    appId: string;
+    /** Full appId. Auto-derived from origin if omitted. */
+    appId?: string;
+    /** Suffix appended to the auto-derived domain prefix. Ignored if appId is set. */
+    appSuffix?: string;
+    /** Human-readable app name. */
+    appName?: string;
+    /** Short app description. */
+    appDescription?: string;
+    /** URL to square icon/logo (https:// or data: URI). */
+    appIcon?: string;
     defaultProvider?: string;
     defaultModel?: string;
     autoConnect?: boolean;

@@ -184,6 +184,9 @@ export function AppDetailView({ app, rawProviders, onBack, onSettingsClick, head
         >
           {/* App stats bar */}
           <Group gap={tokens.spacing.metadataGap}>
+            {localApp.iconUrl && (
+              <img src={localApp.iconUrl} alt="" width={24} height={24} style={{ borderRadius: 4, flexShrink: 0 }} />
+            )}
             <Text fz="sm" fw={500} c={tokens.color.textPrimary}>
               {formatTokens(appTotalTokens)} tokens used
             </Text>

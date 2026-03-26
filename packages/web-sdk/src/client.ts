@@ -11,6 +11,7 @@ import {
   type TelemetryTracing,
 } from "@byom-ai/telemetry";
 
+import { resolveAppId, validateAppIconUrl } from "./app-id.js";
 import {
   BYOMProtocolBoundaryError,
   BYOMSDKError,
@@ -414,7 +415,8 @@ export class BYOMClient {
 
   async connect(options: ConnectOptions): Promise<ConnectResult> {
     this.#assertState("connect", ["disconnected"]);
-    const appId = assertNonEmptyString(options.appId, "appId");
+    const origin = options.origin ?? this.#config.origin;
+    const appId = resolveAppId(options, origin);
     this.#stateMachine.transition("connecting");
 
     const requestId = createRequestId(this.#config.randomId);
@@ -432,8 +434,13 @@ export class BYOMClient {
       payload: {
         appId,
         requestedCapabilities: this.#config.defaultCapabilities,
+        ...(options.appName !== undefined ? { appName: options.appName } : {}),
+        ...(options.appDescription !== undefined ? { appDescription: options.appDescription } : {}),
+        ...(options.appIcon !== undefined && validateAppIconUrl(options.appIcon, origin)
+          ? { appIcon: options.appIcon }
+          : {}),
       },
-      origin: options.origin ?? this.#config.origin,
+      origin,
     });
 
     const request: TransportRequest<ConnectPayload> = {

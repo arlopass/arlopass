@@ -33,6 +33,9 @@ export type ConnectedApp = {
     id: string;
     origin: string;
     displayName: string;
+    appId?: string;
+    description?: string;
+    iconUrl?: string;
     enabledProviderIds: string[];
     enabledModelIds: string[];
     permissions: AppPermissions;
@@ -152,6 +155,9 @@ function isValidApp(raw: unknown): raw is ConnectedApp {
         typeof obj["rules"] === "object" && obj["rules"] !== null &&
         typeof obj["limits"] === "object" && obj["limits"] !== null &&
         typeof obj["createdAt"] === "number" &&
-        typeof obj["status"] === "string"
+        typeof obj["status"] === "string" &&
+        (obj["appId"] == null || typeof obj["appId"] === "string") &&
+        (obj["description"] == null || typeof obj["description"] === "string") &&
+        (obj["iconUrl"] == null || typeof obj["iconUrl"] === "string")
     );
 }
