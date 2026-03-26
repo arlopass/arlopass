@@ -110,7 +110,12 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
     setChatState("connecting");
     try {
       const client = new BYOMClient({ transport, origin: window.location.origin, timeoutMs: 120_000 });
-      await client.connect({ appId: "com.byom.examples.chat", origin: window.location.origin });
+      await client.connect({
+        appSuffix: "chat",
+        appName: "BYOM AI Chat",
+        appDescription: "Documentation assistant for the examples app",
+        origin: window.location.origin,
+      });
       clientRef.current = client;
       const { providers: provList } = await client.listProviders();
       setProviders(provList);
@@ -505,9 +510,29 @@ function createConversation(
   onNavigateRef: React.RefObject<((pageId: string) => void) | undefined>,
 ): ConversationManager {
   const allPageIds = NAVIGATION.flatMap((cat) => cat.items.map((item) => item.id));
-  const pageList = NAVIGATION.flatMap((cat) =>
-    cat.items.map((item) => `${item.id}: ${item.label} (${cat.label})`),
-  ).join(", ");
+  const allItems = NAVIGATION.flatMap((cat) =>
+    cat.items.map((item) => ({ ...item, category: cat.label })),
+  );
+  const pageList = allItems
+    .map((item) => `${item.id}: ${item.label} (${item.category})`)
+    .join(", ");
+
+  // Fuzzy match: accept both full path IDs and short names
+  function resolvePageId(input: string): string | null {
+    // Exact match
+    if (allPageIds.includes(input)) return input;
+    // Match by last segment (e.g., "welcome" → "getting-started/welcome")
+    const bySegment = allPageIds.find((id) => id.endsWith(`/${input}`));
+    if (bySegment) return bySegment;
+    // Match by label (case-insensitive)
+    const lower = input.toLowerCase();
+    const byLabel = allItems.find((item) => item.label.toLowerCase() === lower);
+    if (byLabel) return byLabel.id;
+    // Partial match on label
+    const byPartial = allItems.find((item) => item.label.toLowerCase().includes(lower));
+    if (byPartial) return byPartial.id;
+    return null;
+  }
 
   return new ConversationManager({
     client,
@@ -543,15 +568,14 @@ function createConversation(
           required: ["page_id"],
         },
         handler: async (args) => {
-          const pageId = typeof args.page_id === "string" ? args.page_id : "";
-          
-          console.log("Navigating to page:", pageId);
-          if (!allPageIds.includes(pageId)) {
-            return JSON.stringify({ success: false, error: `Unknown page: ${pageId}` });
+          const raw = typeof args.page_id === "string" ? args.page_id : "";
+          const pageId = resolvePageId(raw);
+
+          if (!pageId) {
+            return JSON.stringify({ success: false, error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}` });
           }
-          console.log("Navigating to page:", pageId);
           onNavigateRef.current?.(pageId);
-          const label = NAVIGATION.flatMap((c) => c.items).find((i) => i.id === pageId)?.label ?? pageId;
+          const label = allItems.find((i) => i.id === pageId)?.label ?? pageId;
           return JSON.stringify({ success: true, navigated_to: pageId, label });
         },
       },
