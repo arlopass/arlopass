@@ -292,6 +292,95 @@ Multi-Format Parsing (5 strategies):
 5. Parameter-key reverse mapping: {"page_id":"x"} → navigate_to_page`,
         keywords: ["tool", "tools", "function", "calling", "function calling", "handler", "tool_call", "tool_result", "manual", "auto", "rag", "priming", "primeTools", "hideToolCalls", "matchRange", "stripToolCalls", "parsing", "lifecycle"],
     },
+    {
+        id: "react-sdk",
+        title: "React SDK (@byom-ai/react)",
+        content: `The @byom-ai/react package provides React bindings for the BYOM web SDK.
+It wraps @byom-ai/web-sdk in idiomatic React hooks and components.
+
+Setup — wrap your app in BYOMProvider:
+
+import { BYOMProvider, useChat } from "@byom-ai/react";
+
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <ChatUI />
+    </BYOMProvider>
+  );
+}
+
+BYOMProvider detects window.byom (injected by the extension) and auto-connects.
+It accepts optional defaultProvider/defaultModel for auto-selection.
+
+Hooks:
+- useConnection() — connection lifecycle: state, sessionId, isConnected, isConnecting, error, connect(), disconnect(), retry()
+- useProviders() — provider discovery: providers, selectedProvider, isLoading, listProviders(), selectProvider(), retry()
+- useChat() — low-level chat: messages, streamingContent, isStreaming, send(), stream(), stop(), clearMessages(), retry()
+- useConversation() — recommended: wraps ConversationManager with tools, pinning, tokenCount, contextWindow, submitToolResult()
+- useClient() — escape hatch: returns the raw BYOMClient or null
+
+Requirements: React 18+, injected transport only (window.byom from the browser extension).`,
+        keywords: ["react", "hook", "useChat", "useConversation", "useConnection", "useProviders", "useClient", "BYOMProvider", "provider"],
+    },
+    {
+        id: "react-guards",
+        title: "React SDK Guard Components",
+        content: `Guard components from @byom-ai/react/guards provide declarative conditional rendering based on connection/provider/chat state.
+
+3 Positive Gates (show children when condition met, render fallback otherwise):
+- <BYOMConnectionGate fallback={...}> — renders children when connected
+- <BYOMProviderGate fallback={...}> — renders children when a provider is selected
+- <BYOMChatReadyGate connectingFallback={...} notInstalledFallback={...} providerFallback={...} errorFallback={({ error, retry }) => ...}> — all-in-one gate
+
+7 Negative Guards (render function children when condition met):
+- <BYOMNotInstalled>{() => <p>Install extension</p>}</BYOMNotInstalled>
+- <BYOMDisconnected>{() => <p>Not connected</p>}</BYOMDisconnected>
+- <BYOMConnected>{() => <p>Connected!</p>}</BYOMConnected>
+- <BYOMProviderNotReady>{() => <p>Select provider</p>}</BYOMProviderNotReady>
+- <BYOMHasError>{({ error, retry }) => <p>{error.message}</p>}</BYOMHasError>
+- <BYOMChatNotReady>{() => <p>Chat not ready</p>}</BYOMChatNotReady>
+- <BYOMChatReady>{() => <p>Ready to chat!</p>}</BYOMChatReady>
+
+BYOMErrorBoundary catches fatal errors in the React tree:
+<BYOMErrorBoundary fallback={({ error, reset }) => <button onClick={reset}>Retry</button>}>
+  <App />
+</BYOMErrorBoundary>
+
+Import: import { BYOMChatReadyGate, BYOMHasError, ... } from "@byom-ai/react/guards";`,
+        keywords: ["guard", "gate", "BYOMConnectionGate", "BYOMProviderGate", "BYOMChatReadyGate", "BYOMNotInstalled", "BYOMDisconnected", "BYOMConnected", "BYOMHasError", "BYOMChatNotReady", "BYOMChatReady"],
+    },
+    {
+        id: "react-testing",
+        title: "React SDK Testing Utilities",
+        content: `Testing utilities from @byom-ai/react/testing for unit testing React components that use BYOM hooks.
+
+createMockTransport(options?) — creates a mock BYOMTransport:
+  import { createMockTransport } from "@byom-ai/react/testing";
+  const transport = createMockTransport({
+    chatResponse: "Mock reply",
+    streamChunks: ["Hello ", "world!"],
+    providers: [{ providerId: "mock", providerName: "Mock", models: ["mock-model"] }],
+  });
+
+MockBYOMProvider — drop-in test wrapper:
+  import { MockBYOMProvider } from "@byom-ai/react/testing";
+  render(
+    <MockBYOMProvider transport={transport}>
+      <MyComponent />
+    </MockBYOMProvider>
+  );
+
+mockWindowByom(transport) / cleanupWindowByom() — inject/clean window.byom:
+  beforeEach(() => mockWindowByom(transport));
+  afterEach(() => cleanupWindowByom());
+
+waitForChat() / waitForStream() / waitForState(state) — async test helpers:
+  await waitForChat(); // waits until chat response arrives
+  await waitForStream(); // waits until streaming completes
+  await waitForState("connected"); // waits until connection state matches`,
+        keywords: ["testing", "mock", "MockBYOMProvider", "createMockTransport", "test", "vitest", "jest"],
+    },
 ];
 
 // Add scenarios from catalog
@@ -347,7 +436,7 @@ export function buildSystemPrompt(userQuery: string): string {
         `--- ${doc.title} ---\n${doc.content}`
     ).join("\n\n");
 
-    return `You are a helpful assistant for the BYOM AI Wallet documentation website. You answer questions about the BYOM extension, web SDK, providers, app connections, credentials, and how to integrate with BYOM.
+    return `You are a helpful assistant for the BYOM AI Wallet documentation website. You answer questions about the BYOM extension, web SDK, React SDK, providers, app connections, credentials, and how to integrate with BYOM.
 
 Use the following documentation context to answer accurately. If the answer isn't in the context, say so honestly.
 
@@ -357,5 +446,5 @@ Important:
 - Be concise and accurate
 - Include code examples when relevant
 - Reference specific BYOM concepts (providers, models, vault, app connections)
-- If asked about implementation, show @byom-ai/web-sdk TypeScript code`;
+- If asked about implementation, show @byom-ai/web-sdk or @byom-ai/react TypeScript code`;
 }
