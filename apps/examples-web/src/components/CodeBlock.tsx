@@ -82,7 +82,7 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
           language={monacoLang}
           value={displayCode}
           theme="light"
-          options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: "off", folding: false, fontSize: 13, padding: { top: 8, bottom: 8 }, renderLineHighlight: "none", overviewRulerLanes: 0, scrollbar: { vertical: "hidden", horizontal: "auto" } }}
+          options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: "off", folding: false, fontSize: 13, padding: { top: 8, bottom: 8 }, renderLineHighlight: "none", overviewRulerLanes: 0, scrollbar: { vertical: "hidden", horizontal: "auto", handleMouseWheel: false, alwaysConsumeMouseWheel: false } }}
         />
       </Box>
     );
@@ -184,7 +184,7 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
           padding: { top: 12, bottom: 12 },
           renderLineHighlight: "none",
           overviewRulerLanes: 0,
-          scrollbar: { vertical: "hidden", horizontal: "auto" },
+          scrollbar: { vertical: "hidden", horizontal: "auto", handleMouseWheel: false, alwaysConsumeMouseWheel: false },
           contextmenu: false,
           domReadOnly: true,
         }}
