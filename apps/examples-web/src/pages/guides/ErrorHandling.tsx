@@ -375,7 +375,7 @@ export default function ErrorHandling() {
         Key error codes and whether they're retryable:
       </Text>
       <ApiTable
-        rows={errorCodesData.map((row) => ({
+        data={errorCodesData.map((row) => ({
           name: row.name,
           type: row.type,
           description: row.description,
