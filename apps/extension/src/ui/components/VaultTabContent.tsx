@@ -8,6 +8,7 @@ import { loadCredentials, deleteCredential, type StoredCredential } from "./onbo
 import { tokens } from "./theme.js";
 
 function deriveProviderKeyFromConnectorId(connectorId: string): string {
+  if (connectorId === "cli-claude-code") return "claude";
   if (connectorId.includes("anthropic")) return "anthropic";
   if (connectorId.includes("openai")) return "openai";
   if (connectorId.includes("gemini")) return "gemini";

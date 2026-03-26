@@ -157,6 +157,18 @@ export const ONBOARDING_PROVIDERS: readonly ProviderEntry[] = [
         defaultMethodId: "",
         requiredFields: [],
     },
+    {
+        connectorId: "cli-claude-code",
+        label: "Claude Code (CLI)",
+        shortLabel: "Claude Code",
+        providerKey: "claude",
+        type: "cli",
+        defaultName: "Claude Code",
+        secretFieldKey: "nativeHostName",
+        secretFieldLabel: "Native Host Name",
+        defaultMethodId: "",
+        requiredFields: [],
+    },
 ];
 
 /** Build initial field values from a provider's defaultValue entries. */

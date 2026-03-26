@@ -42,6 +42,34 @@ function makeRequest(overrides: Partial<{
   };
 }
 
+function extractPromptArg(spawnFn: unknown): string {
+  return extractPromptArgAt(spawnFn, 0);
+}
+
+function extractPromptArgAt(spawnFn: unknown, callIndex: number): string {
+  const calls = (spawnFn as { mock: { calls: Array<[string, string[]]> } }).mock.calls;
+  const args = calls[callIndex]?.[1] ?? [];
+  // Direct args (non-Windows): find -p flag and return the following argument.
+  const pIndex = args.indexOf("-p");
+  if (pIndex >= 0 && pIndex + 1 < args.length) {
+    return args[pIndex + 1]!;
+  }
+  // Windows cmd.exe wrapper: all args are in a single string with ^^^ escaping.
+  // Join and strip ^^^ escape sequences, then extract the -p value.
+  const joined = args.join(" ").replace(/\^\^\^/g, "");
+  // Find content between -p " and the next " --
+  const dashPMatch = /-p\s+"([\s\S]*?)"\s+--/.exec(joined);
+  if (dashPMatch !== null) {
+    return dashPMatch[1]!.replace(/\s+/g, " ").trim();
+  }
+  // Simpler: just look for -p followed by the prompt text
+  const simpleDashP = /-p\s+"?([\s\S]*?)(?:"\s+--|$)/.exec(joined);
+  if (simpleDashP !== null) {
+    return simpleDashP[1]!.replace(/\s+/g, " ").trim();
+  }
+  return "";
+}
+
 describe("CopilotCliChatExecutor", () => {
   it("executes CLI and returns assistant content from JSONL output", async () => {
     const child = createMockChildProcess();
@@ -269,6 +297,72 @@ describe("CopilotCliChatExecutor", () => {
     await secondExecution;
   });
 
+  it("sends only the last user message as prompt on session continuation", async () => {
+    const firstChild = createMockChildProcess();
+    const secondChild = createMockChildProcess();
+    const spawnFn = vi
+      .fn()
+      .mockReturnValueOnce(firstChild)
+      .mockReturnValueOnce(secondChild) as unknown as typeof spawn;
+    const executor = new CopilotCliChatExecutor({
+      spawnFn,
+      command: "copilot",
+      resolveCommandFromPath: () => undefined,
+    });
+
+    const fullMessages = [
+      { role: "system" as const, content: "You are a helpful assistant.\n\n[TOOL USE INSTRUCTIONS]\nLong tool definitions..." },
+      { role: "user" as const, content: "What is 2+2?" },
+      { role: "assistant" as const, content: "4" },
+      { role: "user" as const, content: "And 3+3?" },
+    ];
+
+    // First request: full conversation (no session established yet)
+    const firstExecution = executor.execute({
+      correlationId: "corr.delta.001",
+      providerId: "provider.cli",
+      modelId: "gpt-5.3-codex",
+      sessionId: "sess.delta.001",
+      messages: fullMessages,
+    });
+    await vi.waitFor(
+      () => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 1,
+    );
+    const firstPromptArg = extractPromptArg(spawnFn);
+    // First request should include the full conversation
+    expect(firstPromptArg).toContain("system:");
+    expect(firstPromptArg).toContain("TOOL USE INSTRUCTIONS");
+
+    firstChild.stdout.emit("data", Buffer.from('{"type":"assistant.message","data":{"content":"done"}}\n'));
+    firstChild.emit("close", 0, null);
+    await firstExecution;
+
+    // Second request: session continuation — should only send last user message
+    const secondExecution = executor.execute({
+      correlationId: "corr.delta.002",
+      providerId: "provider.cli",
+      modelId: "gpt-5.3-codex",
+      sessionId: "sess.delta.001",
+      messages: [
+        ...fullMessages,
+        { role: "assistant" as const, content: "6" },
+        { role: "user" as const, content: "Now multiply them" },
+      ],
+    });
+    await vi.waitFor(
+      () => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 2,
+    );
+    const secondPromptArg = extractPromptArgAt(spawnFn, 1);
+    // Session continuation should NOT include system prompt or history
+    expect(secondPromptArg).not.toContain("system:");
+    expect(secondPromptArg).not.toContain("TOOL USE INSTRUCTIONS");
+    expect(secondPromptArg).toBe("Now multiply them");
+
+    secondChild.stdout.emit("data", Buffer.from('{"type":"assistant.message","data":{"content":"24"}}\n'));
+    secondChild.emit("close", 0, null);
+    await secondExecution;
+  });
+
   it("uses --resume=<sessionId> when session metadata is available", async () => {
     const firstChild = createMockChildProcess();
     const secondChild = createMockChildProcess();
@@ -441,41 +535,35 @@ describe("CopilotCliChatExecutor", () => {
     expect(calls[0]?.[1]?.join(" ")).toContain("C:\\mock-bin\\claude.cmd");
   });
 
-  it("prefers discovered copilot model catalog when available", async () => {
-    const child = createMockChildProcess();
-    const spawnFn = vi.fn(() => child) as unknown as typeof spawn;
+  it("always returns hardcoded fallback for copilot-cli without spawning", async () => {
+    const spawnFn = vi.fn(() => createMockChildProcess()) as unknown as typeof spawn;
     const executor = new CopilotCliChatExecutor({
       spawnFn,
       command: "copilot",
     });
 
-    const listing = executor.listModels({ cliType: "copilot-cli" });
-    await vi.waitFor(() => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 1);
-    child.stdout.emit("data", Buffer.from('{"models":[{"id":"gpt-5.3-codex"},{"id":"gpt-5.2"}]}\n'));
-    child.emit("close", 0, null);
+    const result = await executor.listModels({ cliType: "copilot-cli" });
 
-    const result = await listing;
-    expect(result.source).toBe("discovered");
+    expect(result.source).toBe("fallback");
+    expect(result.cliType).toBe("copilot-cli");
+    expect(result.models.length).toBeGreaterThan(0);
     expect(result.models.some((model) => model.id === "gpt-5.3-codex")).toBe(true);
+    // No process spawned — discovery is skipped entirely for copilot-cli
+    expect(spawnFn).not.toHaveBeenCalled();
   });
 
-  it("lists discovered models for claude profile", async () => {
-    const child = createMockChildProcess();
-    const spawnFn = vi.fn(() => child) as unknown as typeof spawn;
+  it("returns fallback models for claude profile without spawning", async () => {
+    const spawnFn = vi.fn(() => createMockChildProcess()) as unknown as typeof spawn;
     const executor = new CopilotCliChatExecutor({
       spawnFn,
       claudeCommand: "claude",
     });
 
-    const listing = executor.listModels({ cliType: "claude-code" });
-    await vi.waitFor(() => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 1);
-    child.stdout.emit("data", Buffer.from('{"models":[{"id":"claude-sonnet-4-5"}]}\n'));
-    child.emit("close", 0, null);
-
-    const result = await listing;
+    const result = await executor.listModels({ cliType: "claude-code" });
     expect(result.cliType).toBe("claude-code");
-    expect(result.source).toBe("discovered");
-    expect(result.models.some((model) => model.id === "claude-sonnet-4-5")).toBe(true);
+    expect(result.source).toBe("fallback");
+    expect(result.models.some((model) => model.id === "claude-opus-4-6")).toBe(true);
+    expect(spawnFn).not.toHaveBeenCalled();
   });
 
   it("returns thinking levels discovered from CLI help output", async () => {
@@ -502,7 +590,7 @@ describe("CopilotCliChatExecutor", () => {
     expect(result.thinkingLevels).toEqual(["low", "med", "high", "xhigh"]);
   });
 
-  it("falls back to curated model list when discovery fails", async () => {
+  it("always returns hardcoded fallback for claude-code without spawning", async () => {
     const spawnFn = vi.fn(() => {
       const child = createMockChildProcess();
       queueMicrotask(() => {
@@ -514,12 +602,14 @@ describe("CopilotCliChatExecutor", () => {
 
     const executor = new CopilotCliChatExecutor({
       spawnFn,
-      command: "copilot",
+      claudeCommand: "claude",
     });
-    const result = await executor.listModels({ cliType: "copilot-cli" });
+    const result = await executor.listModels({ cliType: "claude-code" });
 
     expect(result.source).toBe("fallback");
-    expect(result.models.some((model) => model.id === "gpt-5.3-codex")).toBe(true);
+    expect(result.cliType).toBe("claude-code");
+    expect(result.models.some((model) => model.id === "claude-opus-4-6")).toBe(true);
+    expect(spawnFn).not.toHaveBeenCalled();
   });
 
   it("returns no thinking levels for unsupported CLI profiles", async () => {

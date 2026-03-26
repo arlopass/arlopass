@@ -126,25 +126,90 @@ const ollamaConnector: ConnectorDefinition = {
   },
 };
 
-/** CLI bridge connector — just validates the native host is reachable */
-const cliConnector: ConnectorDefinition = {
+/** Creates a CLI bridge connector for a specific CLI type. */
+function createCliConnector(options: {
+  id: string;
+  label: string;
+  defaultName: string;
+  defaultCliType: string;
+}): ConnectorDefinition {
+  return {
+    id: options.id,
+    label: options.label,
+    type: "cli",
+    defaultName: options.defaultName,
+    fields: [],
+    async testConnection(config) {
+      const hostName = config["nativeHostName"] ?? "com.byom.bridge";
+      const cliType = config["cliType"] ?? options.defaultCliType;
+
+      // Verify the bridge is reachable via handshake challenge.
+      const challengeResult = await sendNativeMessage(hostName, {
+        type: "handshake.challenge",
+      }, { timeoutMs: 5_000 });
+      if (!challengeResult.ok) {
+        return { ok: false, status: "disconnected", message: formatNativeHostRuntimeError(challengeResult.errorMessage), models: [] };
+      }
+
+      // Fetch models from the bridge.
+      const modelListResult = await sendNativeMessage(hostName, {
+        type: "cli.models.list",
+        cliType,
+      }, { timeoutMs: 10_000 });
+      if (!modelListResult.ok) {
+        return { ok: false, status: "attention", message: `Bridge reachable but model listing failed: ${modelListResult.errorMessage}`, models: [] };
+      }
+
+      const resp = modelListResult.response;
+      if (
+        typeof resp === "object" && resp !== null && !Array.isArray(resp) &&
+        (resp as Record<string, unknown>)["type"] === "cli.models.list" &&
+        Array.isArray((resp as Record<string, unknown>)["models"])
+      ) {
+        const rawModels = (resp as Record<string, unknown>)["models"] as unknown[];
+        const models: { id: string; name: string }[] = [];
+        for (const entry of rawModels) {
+          if (
+            typeof entry === "object" && entry !== null && !Array.isArray(entry) &&
+            typeof (entry as Record<string, unknown>)["id"] === "string" &&
+            typeof (entry as Record<string, unknown>)["name"] === "string"
+          ) {
+            models.push({
+              id: (entry as Record<string, unknown>)["id"] as string,
+              name: (entry as Record<string, unknown>)["name"] as string,
+            });
+          }
+        }
+        return { ok: true, status: "connected", message: "Native bridge is reachable.", models };
+      }
+
+      // Bridge responded but with unexpected payload — still treat as connected with 0 models.
+      return { ok: true, status: "connected", message: "Native bridge is reachable.", models: [] };
+    },
+    sanitizeMetadata(config) {
+      return {
+        nativeHostName: config["nativeHostName"] ?? "com.byom.bridge",
+        cliType: config["cliType"] ?? options.defaultCliType,
+      };
+    },
+  };
+}
+
+const copilotCliConnector = createCliConnector({
   id: "local-cli-bridge",
   label: "Native Bridge Host (CLI)",
-  type: "cli",
   defaultName: "GitHub Copilot CLI",
-  fields: [],
-  async testConnection(config) {
-    const hostName = config["nativeHostName"] ?? "com.byom.bridge";
-    const result = await sendNativeMessage(hostName, { action: "ping" }, { timeoutMs: 10000 });
-    if (result.ok) return { ok: true, status: "connected", message: "Native bridge is reachable.", models: [] };
-    return { ok: false, status: "disconnected", message: formatNativeHostRuntimeError(result.errorMessage), models: [] };
-  },
-  sanitizeMetadata(config) {
-    return { nativeHostName: config["nativeHostName"] ?? "com.byom.bridge" };
-  },
-};
+  defaultCliType: "copilot-cli",
+});
 
-const allConnectors: readonly ConnectorDefinition[] = [...cloudConnectors, ollamaConnector, cliConnector];
+const claudeCodeConnector = createCliConnector({
+  id: "cli-claude-code",
+  label: "Claude Code (CLI)",
+  defaultName: "Claude Code",
+  defaultCliType: "claude-code",
+});
+
+const allConnectors: readonly ConnectorDefinition[] = [...cloudConnectors, ollamaConnector, copilotCliConnector, claudeCodeConnector];
 
 function findConnector(connectorId: string): ConnectorDefinition | undefined {
   return allConnectors.find((c) => c.id === connectorId);

@@ -682,9 +682,9 @@ function resolveWindowsCommandInPath(
   const commandVariants = hasExtension
     ? [command]
     : dedupeStrings([
-        command,
-        ...pathExtensions.map((extension) => `${command}${extension}`),
-      ]);
+      command,
+      ...pathExtensions.map((extension) => `${command}${extension}`),
+    ]);
 
   for (const dir of pathDirs) {
     for (const variant of commandVariants) {
@@ -791,15 +791,15 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
     this.#commands = {
       [CLI_TYPE_COPILOT]: normalizeNonEmpty(
         options.copilotCommand ??
-          options.command ??
-          env[CLI_PROFILES[CLI_TYPE_COPILOT].commandEnvVar] ??
-          CLI_PROFILES[CLI_TYPE_COPILOT].defaultCommand,
+        options.command ??
+        env[CLI_PROFILES[CLI_TYPE_COPILOT].commandEnvVar] ??
+        CLI_PROFILES[CLI_TYPE_COPILOT].defaultCommand,
         CLI_PROFILES[CLI_TYPE_COPILOT].defaultCommand,
       ),
       [CLI_TYPE_CLAUDE]: normalizeNonEmpty(
         options.claudeCommand ??
-          env[CLI_PROFILES[CLI_TYPE_CLAUDE].commandEnvVar] ??
-          CLI_PROFILES[CLI_TYPE_CLAUDE].defaultCommand,
+        env[CLI_PROFILES[CLI_TYPE_CLAUDE].commandEnvVar] ??
+        CLI_PROFILES[CLI_TYPE_CLAUDE].defaultCommand,
         CLI_PROFILES[CLI_TYPE_CLAUDE].defaultCommand,
       ),
     };
@@ -825,14 +825,10 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
 
   async listModels(request: CliModelListRequest = {}): Promise<CliModelListResult> {
     const profile = this.#resolveCliProfile(request.cliType ?? CLI_TYPE_COPILOT);
-    const discoveredModels = await this.#discoverModels(profile);
-    if (discoveredModels.length > 0) {
-      return {
-        cliType: profile.id,
-        source: "discovered",
-        models: discoveredModels,
-      };
-    }
+
+    // Neither CLI provides a reliable programmatic model list.
+    // Return the curated fallback catalog immediately to avoid slow
+    // discovery spawns that can time out during onboarding.
     return {
       cliType: profile.id,
       source: "fallback",
@@ -932,7 +928,6 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
     }
 
     const profile = this.#resolveCliProfile(request.cliType, modelId);
-    const prompt = this.#buildPrompt(request.messages);
     const timeoutMs = this.#resolveTimeout(request.timeoutMs);
     const thinkingLevel = normalizeThinkingLevel(request.thinkingLevel);
     const sessionId = normalizeNonEmpty(request.sessionId ?? "", "");
@@ -942,7 +937,7 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
         : "";
     const continuationKey =
       profile.id === CLI_TYPE_COPILOT &&
-      sessionId.length > 0
+        sessionId.length > 0
         ? `${sessionId}::${providerId}::${modelId}`
         : undefined;
     const resumeSessionId =
@@ -955,6 +950,16 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
       continuationKey !== undefined &&
       resumeSessionId === undefined &&
       this.#copilotContinuationKeys.has(continuationKey);
+
+    // When continuing or resuming a CLI session, the CLI already has the full
+    // conversation context internally. Only send the latest user message as the
+    // prompt to avoid redundantly passing the entire system prompt, tool
+    // definitions, and conversation history on every turn.
+    const isSessionContinuation = continueSession || resumeSessionId !== undefined;
+    const prompt = isSessionContinuation
+      ? this.#buildPromptLastUserMessage(request.messages)
+      : this.#buildPrompt(request.messages);
+
     const commandArgCandidates = this.#buildCommandArgCandidates({
       profile,
       modelId,
@@ -994,9 +999,9 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
 
       if (commandResult === undefined) {
         throw lastError ??
-          new CliChatExecutionError("CLI execution failed with unsupported configuration.", {
-            reasonCode: "provider.unavailable",
-          });
+        new CliChatExecutionError("CLI execution failed with unsupported configuration.", {
+          reasonCode: "provider.unavailable",
+        });
       }
 
       const content = this.#extractAssistantContent(
@@ -1044,17 +1049,17 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
     const discoveryCommands: readonly string[][] =
       profile.id === CLI_TYPE_COPILOT
         ? [
-            ["models", "--output-format", "json"],
-            ["models", "list", "--output-format", "json"],
-            ["model", "list", "--output-format", "json"],
-            ["model", "--output-format", "json"],
-          ]
+          ["models", "--output-format", "json"],
+          ["models", "list", "--output-format", "json"],
+          ["model", "list", "--output-format", "json"],
+          ["model", "--output-format", "json"],
+        ]
         : [
-            ["models", "--output-format", "json"],
-            ["models", "list", "--output-format", "json"],
-            ["model", "list", "--output-format", "json"],
-            ["model", "--output-format", "json"],
-          ];
+          ["models", "--output-format", "json"],
+          ["models", "list", "--output-format", "json"],
+          ["model", "list", "--output-format", "json"],
+          ["model", "--output-format", "json"],
+        ];
 
     for (const args of discoveryCommands) {
       try {
@@ -1098,7 +1103,7 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
           ? { resumeSessionId: sessionOptions.resumeSessionId }
           : {}),
         ...(options.profile.id === CLI_TYPE_COPILOT &&
-        this.#disableCopilotBuiltinMcps
+          this.#disableCopilotBuiltinMcps
           ? { disableBuiltinMcps: true }
           : {}),
       })];
@@ -1276,6 +1281,34 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
     }
 
     return rendered.join("\n");
+  }
+
+  /**
+   * Extract only the last user message from the messages array.
+   * Used for session continuations where the CLI already has the full context.
+   */
+  #buildPromptLastUserMessage(messages: readonly CliChatMessage[]): string {
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new CliChatExecutionError(
+        "CLI chat request requires at least one message.",
+        {
+          reasonCode: "request.invalid",
+        },
+      );
+    }
+
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i]!;
+      if (message.role === "user" && typeof message.content === "string") {
+        const content = message.content.trim();
+        if (content.length > 0) {
+          return content;
+        }
+      }
+    }
+
+    // No user message found — fall back to full prompt to avoid sending empty
+    return this.#buildPrompt(messages);
   }
 
   #extractAssistantContent(stdout: string, stderr: string): string {

@@ -18,6 +18,8 @@ type ModelEntry = {
 function deriveProviderKey(provider: WalletProvider): string {
   const nameLower = provider.name.toLowerCase();
   const methodId = provider.metadata?.["methodId"] ?? "";
+  const cliType = provider.metadata?.["cliType"] ?? "";
+  if (cliType === "claude-code") return "claude";
   if (methodId.startsWith("anthropic.") || nameLower.includes("anthropic") || nameLower.includes("claude")) return "anthropic";
   if (methodId.startsWith("openai.") || nameLower.includes("openai") || nameLower.includes("chatgpt")) return "openai";
   if (methodId.startsWith("gemini.") || nameLower.includes("gemini")) return "gemini";

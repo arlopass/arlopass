@@ -9,6 +9,8 @@ type ModelItem = { id: string; name: string; providerKey: string };
 function deriveProviderKey(provider: WalletProvider): string {
   const nameLower = provider.name.toLowerCase();
   const m = provider.metadata?.["methodId"] ?? "";
+  const cliType = provider.metadata?.["cliType"] ?? "";
+  if (cliType === "claude-code") return "claude";
   if (m.startsWith("anthropic.") || nameLower.includes("anthropic") || nameLower.includes("claude")) return "anthropic";
   if (m.startsWith("openai.") || nameLower.includes("openai")) return "openai";
   if (m.startsWith("gemini.") || nameLower.includes("gemini")) return "gemini";

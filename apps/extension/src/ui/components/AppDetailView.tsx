@@ -24,6 +24,8 @@ function extractDomain(origin: string): string {
 function deriveProviderKey(provider: WalletProvider): string {
   const n = provider.name.toLowerCase();
   const m = provider.metadata?.["methodId"] ?? "";
+  const cliType = provider.metadata?.["cliType"] ?? "";
+  if (cliType === "claude-code") return "claude";
   if (m.startsWith("anthropic.") || n.includes("anthropic") || n.includes("claude")) return "anthropic";
   if (m.startsWith("openai.") || n.includes("openai")) return "openai";
   if (m.startsWith("gemini.") || n.includes("gemini")) return "gemini";
