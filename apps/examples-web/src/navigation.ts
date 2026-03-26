@@ -35,6 +35,17 @@ export const NAVIGATION: NavCategory[] = [
         ],
     },
     {
+        label: "React SDK",
+        items: [
+            { id: "react-quickstart", label: "React Quickstart" },
+            { id: "react-hooks", label: "Hooks" },
+            { id: "react-conversation", label: "Conversation Hook" },
+            { id: "react-guards", label: "Guard Components" },
+            { id: "react-error-handling", label: "Error Handling" },
+            { id: "react-testing", label: "Testing" },
+        ],
+    },
+    {
         label: "Scenarios",
         items: [
             { id: "sdk-happy-path", label: "SDK Happy Path" },
