@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import {
   ActionIcon,
   AppShell,
@@ -28,8 +28,14 @@ function Shell() {
   const [chatOpen, { toggle: toggleChat }] = useDisclosure(true);
   const route = useRoute();
   const { state, injAvail } = useInteractive();
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   const PageComponent = getPageComponent(route);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    scrollViewportRef.current?.scrollTo({ top: 0 });
+  }, [route]);
 
   return (
     <AppShell
@@ -61,7 +67,7 @@ function Shell() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <ScrollArea h="calc(100vh - 52px)" p="lg" type="scroll">
+        <ScrollArea h="calc(100vh - 52px)" p="lg" type="scroll" viewportRef={scrollViewportRef}>
           <Box maw={800} mx="auto">
             <Suspense fallback={<Center h={200}><Loader /></Center>}>
               {PageComponent ? (
