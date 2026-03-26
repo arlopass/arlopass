@@ -191,6 +191,53 @@ describe("renderWalletView", () => {
     expect(html).toContain("Needs Attention");
   });
 
+  it("renders reconnecting status chip with explicit label", () => {
+    const html = renderWalletView({
+      providers: [makeProvider({ status: "reconnecting", type: "cloud" })],
+      activeProvider: null,
+      warnings: [],
+    });
+    expect(html).toContain("status-chip--reconnecting");
+    expect(html).toContain("Reconnecting");
+  });
+
+  it("renders failed status chip with action-required label", () => {
+    const html = renderWalletView({
+      providers: [makeProvider({ status: "failed", type: "cloud" })],
+      activeProvider: null,
+      warnings: [],
+    });
+    expect(html).toContain("status-chip--failed");
+    expect(html).toContain("Action Required");
+  });
+
+  it("renders revoked status chip", () => {
+    const html = renderWalletView({
+      providers: [makeProvider({ status: "revoked", type: "cloud" })],
+      activeProvider: null,
+      warnings: [],
+    });
+    expect(html).toContain("status-chip--revoked");
+    expect(html).toContain("Revoked");
+  });
+
+  it("renders degraded status with fallback details when present", () => {
+    const html = renderWalletView({
+      providers: [
+        makeProvider({
+          status: "degraded",
+          type: "cloud",
+          statusDetail: "Fallback region us-west-2 in use.",
+        }),
+      ],
+      activeProvider: null,
+      warnings: [],
+    });
+    expect(html).toContain("status-chip--degraded");
+    expect(html).toContain("Degraded");
+    expect(html).toContain("Fallback region us-west-2 in use.");
+  });
+
   it("escapes HTML in provider name to prevent XSS", () => {
     const html = renderWalletView({
       providers: [makeProvider({ name: '<script>alert("xss")</script>' })],

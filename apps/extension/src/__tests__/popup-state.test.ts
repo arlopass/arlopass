@@ -174,4 +174,51 @@ describe("normalizeWalletSnapshot", () => {
     });
     expect(result.providers[0]?.lastSyncedAt).toBe(9999);
   });
+
+  it("accepts reconnecting, failed, revoked, and degraded provider statuses", () => {
+    const result = normalizeWalletSnapshot({
+      "byom.wallet.providers.v1": [
+        { id: "p1", name: "P1", type: "cloud", status: "reconnecting", models: [] },
+        { id: "p2", name: "P2", type: "cloud", status: "failed", models: [] },
+        { id: "p3", name: "P3", type: "cloud", status: "revoked", models: [] },
+        {
+          id: "p4",
+          name: "P4",
+          type: "cloud",
+          status: "degraded",
+          models: [],
+          metadata: { statusDetail: "Fallback region us-west-2 in use." },
+        },
+      ],
+    });
+    expect(result.providers).toHaveLength(4);
+    expect(result.providers.map((provider) => provider.status)).toEqual([
+      "reconnecting",
+      "failed",
+      "revoked",
+      "degraded",
+    ]);
+    expect(result.providers[3]?.statusDetail).toContain("Fallback region");
+  });
+
+  it("maps stale/partial cloud discovery metadata to degraded provider status", () => {
+    const result = normalizeWalletSnapshot({
+      "byom.wallet.providers.v1": [
+        {
+          id: "p1",
+          name: "Claude",
+          type: "cloud",
+          status: "connected",
+          models: [],
+          metadata: {
+            discoveryRegionStatus:
+              "us-east-1:stale,us-west-2:healthy,eu-central-1:partial",
+          },
+        },
+      ],
+    });
+    expect(result.providers).toHaveLength(1);
+    expect(result.providers[0]?.status).toBe("degraded");
+    expect(result.providers[0]?.statusDetail).toContain("Fallback region");
+  });
 });

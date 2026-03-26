@@ -27,6 +27,7 @@ import {
   SDK_PROTOCOL_VERSION,
   type ChatInput,
   type ChatMessage,
+  type ChatOperationOptions,
   type ChatSendPayload,
   type ChatSendResponsePayload,
   type ChatSendResult,
@@ -72,10 +73,6 @@ type BYOMClientOptions = Readonly<{
   defaultProviderId?: string;
   defaultModelId?: string;
   tracing?: TelemetryTracing;
-}>;
-
-type ChatOperationOptions = Readonly<{
-  timeoutMs?: number;
 }>;
 
 const DEFAULT_ORIGIN = "https://app.byom.local";
@@ -288,7 +285,16 @@ function parseChatStreamPayload(value: unknown): ChatStreamResponsePayload {
     });
   }
 
-  const delta = assertNonEmptyString(value.delta, "payload.delta");
+  if (typeof value.delta !== "string" || value.delta.length === 0) {
+    throw new BYOMProtocolBoundaryError(
+      `Field "payload.delta" must be a non-empty string.`,
+      {
+        reasonCode: "request.invalid",
+        details: { field: "payload.delta" },
+      },
+    );
+  }
+  const delta = value.delta;
   if (typeof value.index !== "number" || !Number.isInteger(value.index) || value.index < 0) {
     throw new BYOMProtocolBoundaryError("Chat stream chunk index is invalid.", {
       reasonCode: "request.invalid",
@@ -399,9 +405,9 @@ export class BYOMClient {
 
   get selectedProvider():
     | Readonly<{
-        providerId: string;
-        modelId: string;
-      }>
+      providerId: string;
+      modelId: string;
+    }>
     | undefined {
     return this.#selectedProvider;
   }
@@ -647,6 +653,7 @@ export class BYOMClient {
     const correlationId = createCorrelationId(this.#config.randomId);
     const requestId = createRequestId(this.#config.randomId);
     const timeoutMs = options.timeoutMs ?? this.#config.timeoutMs;
+    const signal = options.signal;
 
     const envelope = this.#createEnvelope<ChatSendPayload>({
       requestId,
@@ -663,9 +670,11 @@ export class BYOMClient {
         this.#transport.request<ChatSendPayload, ChatSendResponsePayload>({
           envelope,
           timeoutMs,
+          ...(signal !== undefined ? { signal } : {}),
         }),
         timeoutMs,
         `chat.send timed out after ${timeoutMs}ms.`,
+        signal,
       );
 
       const parsed = this.#parseResponseEnvelope<ChatSendResponsePayload>(response, {
@@ -717,6 +726,7 @@ export class BYOMClient {
     const correlationId = createCorrelationId(this.#config.randomId);
     const requestId = createRequestId(this.#config.randomId);
     const timeoutMs = options.timeoutMs ?? this.#config.timeoutMs;
+    const signal = options.signal;
 
     const requestEnvelope = this.#createEnvelope<ChatStreamPayload>({
       requestId,
@@ -731,6 +741,7 @@ export class BYOMClient {
     const request: TransportRequest<ChatStreamPayload> = {
       envelope: requestEnvelope,
       timeoutMs,
+      ...(signal !== undefined ? { signal } : {}),
     };
 
     const streamFactory = async () => {
@@ -738,12 +749,14 @@ export class BYOMClient {
         this.#transport.stream<ChatStreamPayload, ChatStreamResponsePayload>(request),
         timeoutMs,
         `chat.stream setup timed out after ${timeoutMs}ms.`,
+        signal,
       );
 
       return withStreamTimeout(
         stream,
         timeoutMs,
         `chat.stream timed out after ${timeoutMs}ms.`,
+        signal,
       );
     };
 

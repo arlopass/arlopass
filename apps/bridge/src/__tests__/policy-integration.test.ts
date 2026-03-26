@@ -247,26 +247,27 @@ describe("RuntimeEvaluator — extension/bridge deny parity", () => {
 // ---------------------------------------------------------------------------
 
 describe("RuntimeEvaluator — audit emission", () => {
-  it("emits an audit event on a deny decision", () => {
+  it("emits an audit event on a deny decision", async () => {
     const { exporter, captured } = captureExporter();
-    const auditEmitter = new AuditEmitter();
+    const auditEmitter = new AuditEmitter({ onLog: () => {} });
     auditEmitter.addExporter(exporter);
 
     const evaluator = new RuntimeEvaluator({}, auditEmitter);
     evaluator.evaluate(makeRequest({ correlationId: "cor.audit.deny" }));
+    await auditEmitter.waitForIdle();
 
     expect(captured).toHaveLength(1);
     expect(captured[0]!.decision).toBe("deny");
     expect(captured[0]!.correlationId).toBe("cor.audit.deny");
   });
 
-  it("emits an audit event on an allow decision", () => {
+  it("emits an audit event on an allow decision", async () => {
     const { bundle, publicKeyPem, keyId } = createSignedBundle();
     const keyManager = new InMemoryPolicyKeyManager();
     keyManager.createKey({ keyId, publicKeyPem });
 
     const { exporter, captured } = captureExporter();
-    const auditEmitter = new AuditEmitter();
+    const auditEmitter = new AuditEmitter({ onLog: () => {} });
     auditEmitter.addExporter(exporter);
 
     const evaluator = new RuntimeEvaluator(
@@ -279,6 +280,7 @@ describe("RuntimeEvaluator — audit emission", () => {
     );
 
     evaluator.evaluate(makeRequest({ correlationId: "cor.audit.allow" }));
+    await auditEmitter.waitForIdle();
 
     expect(captured).toHaveLength(1);
     expect(captured[0]!.decision).toBe("allow");
@@ -286,13 +288,14 @@ describe("RuntimeEvaluator — audit emission", () => {
     expect(captured[0]!.policyVersion).toBe("2026.03.23");
   });
 
-  it("audit event contains all required fields", () => {
+  it("audit event contains all required fields", async () => {
     const { exporter, captured } = captureExporter();
-    const auditEmitter = new AuditEmitter();
+    const auditEmitter = new AuditEmitter({ onLog: () => {} });
     auditEmitter.addExporter(exporter);
 
     const evaluator = new RuntimeEvaluator({}, auditEmitter);
     evaluator.evaluate(makeRequest());
+    await auditEmitter.waitForIdle();
 
     const event = captured[0]!;
     expect(typeof event.timestamp).toBe("string");
@@ -313,7 +316,12 @@ describe("RuntimeEvaluator — audit emission", () => {
       }),
     };
 
-    const auditEmitter = new AuditEmitter();
+    const auditEmitter = new AuditEmitter({
+      maxAttempts: 1,
+      retryBaseDelayMs: 0,
+      maxRetryDelayMs: 0,
+      onLog: () => {},
+    });
     auditEmitter.addExporter(faultyExporter);
 
     const evaluator = new RuntimeEvaluator({}, auditEmitter);

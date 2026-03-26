@@ -1,5 +1,7 @@
 import {
+  PROTOCOL_MACHINE_CODES,
   PermissionError,
+  ProtocolError,
   type CanonicalEnvelope,
   type ProtocolErrorDetails,
 } from "@byom-ai/protocol";
@@ -23,7 +25,10 @@ import {
   type GrantPermissionMatch,
   type GrantStoreOptions,
 } from "./permissions/grant-store.js";
-import { registerDefaultTransportMessageListener } from "./transport/runtime.js";
+import {
+  registerDefaultTransportMessageListener,
+  registerDefaultTransportStreamPortListener,
+} from "./transport/runtime.js";
 import type {
   Grant,
   GrantRevocationReason,
@@ -56,18 +61,19 @@ export type MediationDecision = Readonly<{
   grantId?: string;
   grantType?: GrantType;
   reason:
-    | "allow"
-    | "grant-created"
-    | "user-denied"
-    | "bridge-revoked"
-    | "grant-not-found"
-    | "grant-expired"
-    | "grant-consumed";
+  | "allow"
+  | "grant-created"
+  | "user-denied"
+  | "bridge-revoked"
+  | "grant-not-found"
+  | "grant-expired"
+  | "grant-consumed";
 }>;
 
 type InFlightOperation = {
   requestId: string;
   grantId: string;
+  providerId: string;
   mode: "request" | "stream";
   revoked: boolean;
   revokeReason: GrantRevocationReason | undefined;
@@ -78,6 +84,23 @@ function createPermissionDeniedError(
   details: ProtocolErrorDetails,
 ): PermissionError {
   return new PermissionError(message, { details });
+}
+
+function createRevokedOperationError(
+  message: string,
+  details: ProtocolErrorDetails,
+  revokeReason: GrantRevocationReason | undefined,
+): ProtocolError {
+  if (revokeReason === "expired") {
+    return new ProtocolError(message, {
+      machineCode: PROTOCOL_MACHINE_CODES.AUTH_FAILED,
+      reasonCode: "auth.expired",
+      retryable: true,
+      details,
+    });
+  }
+
+  return createPermissionDeniedError(message, details);
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +142,14 @@ type StoredProvider = {
   id: string;
   name: string;
   type: "local" | "cloud" | "cli";
-  status: "connected" | "disconnected" | "attention";
+  status:
+  | "connected"
+  | "disconnected"
+  | "attention"
+  | "reconnecting"
+  | "failed"
+  | "revoked"
+  | "degraded";
   models: Array<{ id: string; name: string }>;
   lastSyncedAt?: number;
 };
@@ -237,8 +267,8 @@ async function walletHandleRevokeProvider(
 
   const updatedProviders = Array.isArray(rawProviders)
     ? (rawProviders as unknown[]).filter(
-        (p) => !(isStoredProvider(p) && p.id === providerId),
-      )
+      (p) => !(isStoredProvider(p) && p.id === providerId),
+    )
     : [];
 
   const currentActive =
@@ -282,6 +312,61 @@ async function walletHandleOpenConnectFlow(
   }
 }
 
+const PENDING_CONNECTION_KEY = "byom.wallet.pendingConnection.v1";
+const CONNECTION_RESULT_KEY = "byom.wallet.connectionResult.v1";
+
+async function walletHandleRequestAppConnection(
+  payload: unknown,
+  storage: WalletStorageAdapter,
+): Promise<WalletActionResponse> {
+  if (!isRecord(payload) || typeof payload["origin"] !== "string" || payload["origin"].length === 0) {
+    return { ok: false, errorCode: "invalid_payload", message: "origin is required" };
+  }
+  const origin = payload["origin"] as string;
+
+  // Write pending connection request
+  await storage.set({ [PENDING_CONNECTION_KEY]: { origin, requestedAt: Date.now() } });
+
+  // Open the popup — the popup reads the pending request on mount
+  try {
+    if (typeof chrome.action?.openPopup === "function") {
+      await chrome.action.openPopup();
+    }
+  } catch {
+    // openPopup may not be available in all contexts
+  }
+
+  // Wait for user decision (poll storage for result, max 120s)
+  const result = await waitForConnectionResult(origin, storage, 120_000);
+
+  // Clear pending state
+  await storage.set({ [PENDING_CONNECTION_KEY]: null });
+  await storage.set({ [CONNECTION_RESULT_KEY]: null });
+
+  if (result !== null && result.approved) {
+    return { ok: true, data: { origin, approved: true } };
+  }
+
+  return { ok: false, errorCode: "user_declined", message: "Connection was declined by the user" };
+}
+
+async function waitForConnectionResult(
+  origin: string,
+  storage: WalletStorageAdapter,
+  timeoutMs: number,
+): Promise<{ approved: boolean } | null> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const data = await storage.get([CONNECTION_RESULT_KEY]);
+    const result = data[CONNECTION_RESULT_KEY];
+    if (result != null && isRecord(result) && result["origin"] === origin) {
+      return { approved: result["approved"] === true };
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  return null;
+}
+
 function isWalletMessageEnvelope(message: unknown): message is WalletMessageEnvelope {
   return (
     isRecord(message) &&
@@ -319,6 +404,7 @@ export function createWalletMessageHandler(
     "wallet.setActiveModel": (p) => walletHandleSetActiveModel(p, storage),
     "wallet.revokeProvider": (p) => walletHandleRevokeProvider(p, storage),
     "wallet.openConnectFlow": () => walletHandleOpenConnectFlow(openOptionsPage),
+    "wallet.requestAppConnection": (p) => walletHandleRequestAppConnection(p, storage),
   };
 
   return async (message: unknown): Promise<WalletActionResponse | null> => {
@@ -432,8 +518,8 @@ export function registerDefaultWalletMessageListener(options: {
   const openOptionsPage =
     typeof runtimeOpenOptionsPage === "function"
       ? () => {
-          runtimeOpenOptionsPage();
-        }
+        runtimeOpenOptionsPage();
+      }
       : undefined;
 
   const handleWalletMessage = createWalletMessageHandler(
@@ -475,6 +561,7 @@ export function registerDefaultWalletMessageListener(options: {
 
 registerDefaultWalletMessageListener();
 registerDefaultTransportMessageListener();
+registerDefaultTransportStreamPortListener();
 
 // ---------------------------------------------------------------------------
 // ExtensionBackgroundService
@@ -610,7 +697,12 @@ export class ExtensionBackgroundService {
     request: MediationRequest<TRequestPayload>,
   ): Promise<TransportResponse<TResponsePayload>> {
     const { grant } = await this.#ensureAuthorizedGrant(request.envelope);
-    const operation = this.#registerInFlight(request.envelope.requestId, grant.id, "request");
+    const operation = this.#registerInFlight(
+      request.envelope.requestId,
+      grant.id,
+      request.envelope.providerId,
+      "request",
+    );
 
     try {
       const response = await this.#transport.request<TRequestPayload, TResponsePayload>({
@@ -639,7 +731,12 @@ export class ExtensionBackgroundService {
     request: MediationRequest<TRequestPayload>,
   ): Promise<AsyncIterable<TransportResponse<TResponsePayload>>> {
     const { grant } = await this.#ensureAuthorizedGrant(request.envelope);
-    const operation = this.#registerInFlight(request.envelope.requestId, grant.id, "stream");
+    const operation = this.#registerInFlight(
+      request.envelope.requestId,
+      grant.id,
+      request.envelope.providerId,
+      "stream",
+    );
 
     let stream: AsyncIterable<TransportResponse<TResponsePayload>>;
     try {
@@ -666,7 +763,7 @@ export class ExtensionBackgroundService {
     const throwIfOperationRevoked = (): void => {
       this.#throwIfOperationRevoked(operation);
     };
-    const createRevokedError = (): PermissionError =>
+    const createRevokedError = (): ProtocolError =>
       this.#createRevokedInFlightError(request.envelope, operation);
     const finalizeInFlight = (): void => {
       this.#finalizeInFlight(requestId);
@@ -790,11 +887,13 @@ export class ExtensionBackgroundService {
   #registerInFlight(
     requestId: string,
     grantId: string,
+    providerId: string,
     mode: "request" | "stream",
   ): InFlightOperation {
     const operation: InFlightOperation = {
       requestId,
       grantId,
+      providerId,
       mode,
       revoked: false,
       revokeReason: undefined,
@@ -839,6 +938,16 @@ export class ExtensionBackgroundService {
 
       operation.revoked = true;
       operation.revokeReason = reason;
+      this.#events.emit("connection-health-changed", {
+        providerId: operation.providerId,
+        state: reason === "expired" ? "reconnecting" : "revoked",
+        reasonCode: reason === "expired" ? "auth.expired" : "permission.denied",
+        detail:
+          reason === "expired"
+            ? "Credential expired while request execution was in-flight."
+            : "Grant was revoked while request execution was in-flight.",
+        updatedAt: this.#now(),
+      });
     }
   }
 
@@ -853,20 +962,22 @@ export class ExtensionBackgroundService {
   #createRevokedInFlightError(
     envelope: CanonicalEnvelope<unknown> | undefined,
     operation: InFlightOperation,
-  ): PermissionError {
-    return createPermissionDeniedError(
-      "Grant was revoked while request execution was in-flight.",
-      {
-        ...(envelope !== undefined ? { requestId: envelope.requestId } : {}),
-        ...(envelope !== undefined ? { origin: envelope.origin } : {}),
-        ...(envelope !== undefined ? { providerId: envelope.providerId } : {}),
-        ...(envelope !== undefined ? { modelId: envelope.modelId } : {}),
-        ...(envelope !== undefined ? { capability: envelope.capability } : {}),
-        grantId: operation.grantId,
-        mode: operation.mode,
-        revokeReason: operation.revokeReason ?? "user",
-      },
-    );
+  ): ProtocolError {
+    const message =
+      operation.revokeReason === "expired"
+        ? "Grant expired while request execution was in-flight."
+        : "Grant was revoked while request execution was in-flight.";
+    const details: ProtocolErrorDetails = {
+      ...(envelope !== undefined ? { requestId: envelope.requestId } : {}),
+      ...(envelope !== undefined ? { origin: envelope.origin } : {}),
+      ...(envelope !== undefined ? { providerId: envelope.providerId } : {}),
+      ...(envelope !== undefined ? { modelId: envelope.modelId } : {}),
+      ...(envelope !== undefined ? { capability: envelope.capability } : {}),
+      grantId: operation.grantId,
+      mode: operation.mode,
+      revokeReason: operation.revokeReason ?? "user",
+    };
+    return createRevokedOperationError(message, details, operation.revokeReason);
   }
 
   async #safelySynchronizeGrant(event: BridgeGrantSynchronizationEvent): Promise<void> {

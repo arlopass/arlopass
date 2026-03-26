@@ -1,0 +1,118 @@
+name: Release Bridge
+
+on:
+  push:
+    tags:
+      - "bridge/v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run mode (draft release, no npm publish)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  parse-tag:
+    name: Parse release tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+      tag: ${{ steps.parse.outputs.tag }}
+    steps:
+      - name: Parse tag
+        id: parse
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "${TAG}" =~ ^bridge/v(.+)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Unrecognized tag format: ${TAG}"
+            exit 1
+          fi
+
+  ci-gate:
+    name: CI Gate
+    uses: ./.github/workflows/_ci-gate.yml
+
+  build-sea:
+    name: Build SEA Binaries
+    needs: [parse-tag, ci-gate]
+    uses: ./.github/workflows/_build-bridge-sea.yml
+    with:
+      version: ${{ needs.parse-tag.outputs.version }}
+
+  collect-binaries:
+    name: Collect all binaries
+    needs: build-sea
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bridge-binary-*
+          path: ./binaries
+          merge-multiple: true
+
+      - name: Upload combined artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-binaries
+          path: ./binaries/
+          retention-days: 5
+
+  sign:
+    name: Sign & Attest
+    needs: collect-binaries
+    uses: ./.github/workflows/_sign-attest.yml
+    with:
+      artifact-name: bridge-binaries
+    permissions:
+      contents: read
+      id-token: write
+
+  release:
+    name: Create GitHub Release
+    needs: [parse-tag, sign]
+    uses: ./.github/workflows/_create-github-release.yml
+    with:
+      tag: ${{ needs.parse-tag.outputs.tag }}
+      version: ${{ needs.parse-tag.outputs.version }}
+      dry-run: ${{ github.event.inputs.dry_run == 'true' || false }}
+    permissions:
+      contents: write
+
+  build-packages:
+    name: Build for npm
+    needs: [parse-tag, ci-gate]
+    uses: ./.github/workflows/_build-packages.yml
+    with:
+      scope: bridge
+
+  publish-npm:
+    name: Publish to npm
+    needs: [parse-tag, build-packages]
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    uses: ./.github/workflows/_publish-npm.yml
+    with:
+      scope: bridge
+      version: ${{ needs.parse-tag.outputs.version }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    permissions:
+      contents: read
+      id-token: write
+
+  upload-installers:
+    name: Upload Installers
+    needs: [parse-tag, release]
+    uses: ./.github/workflows/_generate-installers.yml
+    with:
+      tag: ${{ needs.parse-tag.outputs.tag }}
+      version: ${{ needs.parse-tag.outputs.version }}
+    permissions:
+      contents: write

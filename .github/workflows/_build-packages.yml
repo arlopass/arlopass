@@ -1,0 +1,44 @@
+name: Build Packages
+
+on:
+  workflow_call:
+    inputs:
+      scope:
+        description: "Package scope: 'core' for all core packages, or adapter name like 'adapter-ollama'"
+        required: true
+        type: string
+      node-version:
+        description: "Node.js version"
+        required: false
+        default: "20"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build packages (${{ inputs.scope }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-builds-${{ inputs.scope }}
+          path: |
+            packages/*/dist/
+            adapters/*/dist/
+            apps/bridge/dist/
+          retention-days: 1

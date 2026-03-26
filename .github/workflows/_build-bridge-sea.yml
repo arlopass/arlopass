@@ -1,0 +1,109 @@
+name: Build Bridge SEA Binaries
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Bridge version"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-sea:
+    name: SEA ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: win
+            arch: x64
+            runner: windows-latest
+            binary: byom-bridge-win-x64.exe
+          - os: macos
+            arch: x64
+            runner: macos-13
+            binary: byom-bridge-macos-x64
+          - os: macos
+            arch: arm64
+            runner: macos-latest
+            binary: byom-bridge-macos-arm64
+          - os: linux
+            arch: x64
+            runner: ubuntu-latest
+            binary: byom-bridge-linux-x64
+          - os: linux
+            arch: arm64
+            runner: ubuntu-latest
+            binary: byom-bridge-linux-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Bundle bridge into single CJS file
+        run: |
+          npx esbuild apps/bridge/dist/main.js \
+            --bundle \
+            --platform=node \
+            --target=node20 \
+            --format=cjs \
+            --outfile=apps/bridge/dist/bridge-bundle.cjs
+
+      - name: Create SEA config
+        shell: bash
+        run: |
+          cat > apps/bridge/sea-config.json << 'EOF'
+          {
+            "main": "dist/bridge-bundle.cjs",
+            "output": "sea-prep.blob",
+            "disableExperimentalSEAWarning": true
+          }
+          EOF
+
+      - name: Generate SEA blob
+        working-directory: apps/bridge
+        run: node --experimental-sea-config sea-config.json
+
+      - name: Create SEA binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cp "$(which node)" "${{ matrix.binary }}"
+          npx postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+      - name: Create SEA binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Copy-Item (Get-Command node).Source -Destination "${{ matrix.binary }}"
+          npx postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+      - name: Post-process (macOS ad-hoc re-sign)
+        if: matrix.os == 'macos'
+        run: |
+          codesign --remove-signature "${{ matrix.binary }}"
+          codesign -s - "${{ matrix.binary }}"
+
+      - name: Post-process (Linux chmod)
+        if: matrix.os == 'linux'
+        run: chmod +x "${{ matrix.binary }}"
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-binary-${{ matrix.os }}-${{ matrix.arch }}
+          path: ${{ matrix.binary }}
+          retention-days: 5

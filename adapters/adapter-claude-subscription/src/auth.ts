@@ -2,8 +2,14 @@ import { AuthError } from "@byom-ai/protocol";
 
 export const CLAUDE_API_BASE = "https://api.anthropic.com";
 export const CLAUDE_API_VERSION = "2023-06-01";
+export const CLAUDE_CONNECTION_METHOD_IDS = Object.freeze({
+  OAUTH_SUBSCRIPTION: "anthropic.oauth_subscription",
+  API_KEY: "anthropic.api_key",
+} as const);
 
 export type ClaudeAuthType = "api_key" | "oauth2";
+export type ClaudeConnectionMethodId =
+  (typeof CLAUDE_CONNECTION_METHOD_IDS)[keyof typeof CLAUDE_CONNECTION_METHOD_IDS];
 
 export type ClaudeAuthConfig = Readonly<{
   authType: ClaudeAuthType;
@@ -49,4 +55,8 @@ export function isAuthConfig(value: unknown): value is ClaudeAuthConfig {
   if (v["authType"] === "api_key" && typeof v["apiKey"] !== "string") return false;
   if (v["authType"] === "oauth2" && typeof v["accessToken"] !== "string") return false;
   return true;
+}
+
+export function isClaudeConnectionMethodId(value: string): value is ClaudeConnectionMethodId {
+  return Object.values(CLAUDE_CONNECTION_METHOD_IDS).includes(value as ClaudeConnectionMethodId);
 }

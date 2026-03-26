@@ -19,10 +19,23 @@ export interface KeychainBackend {
 export const KEYCHAIN_ERROR_CODES = {
   STORE_FAILED: "KEYCHAIN_STORE_FAILED",
   DELETE_FAILED: "KEYCHAIN_DELETE_FAILED",
+  INVALID_ACCOUNT: "KEYCHAIN_INVALID_ACCOUNT",
 } as const;
 
 export type KeychainErrorCode =
   (typeof KEYCHAIN_ERROR_CODES)[keyof typeof KEYCHAIN_ERROR_CODES];
+
+const BRIDGE_CLOUD_ACCOUNT_PREFIX = "bridge.cloud.v1";
+const SAFE_ACCOUNT_SEGMENT_PATTERN = /^[A-Za-z0-9._-]+$/;
+
+export type BridgeCloudAccountNamespace = "credential" | "metadata";
+
+export type BridgeCloudAccountNameInput = Readonly<{
+  namespace: BridgeCloudAccountNamespace;
+  providerId: string;
+  methodId: string;
+  recordId: string;
+}>;
 
 export class KeychainError extends Error {
   readonly code: KeychainErrorCode;
@@ -36,6 +49,33 @@ export class KeychainError extends Error {
     this.name = "KeychainError";
     this.code = code;
   }
+}
+
+function requireSafeAccountSegment(value: string, field: string): string {
+  const normalized = value.trim();
+  if (normalized.length === 0 || !SAFE_ACCOUNT_SEGMENT_PATTERN.test(normalized)) {
+    throw new KeychainError(
+      `Invalid keychain account segment "${field}". Only [A-Za-z0-9._-] are allowed.`,
+      KEYCHAIN_ERROR_CODES.INVALID_ACCOUNT,
+    );
+  }
+  return normalized;
+}
+
+/**
+ * Builds a deterministic namespaced account key for bridge cloud records.
+ *
+ * Format:
+ *   bridge.cloud.v1.<namespace>.<providerId>.<methodId>.<recordId>
+ */
+export function buildBridgeCloudAccountName(
+  input: BridgeCloudAccountNameInput,
+): string {
+  const namespace = requireSafeAccountSegment(input.namespace, "namespace");
+  const providerId = requireSafeAccountSegment(input.providerId, "providerId");
+  const methodId = requireSafeAccountSegment(input.methodId, "methodId");
+  const recordId = requireSafeAccountSegment(input.recordId, "recordId");
+  return `${BRIDGE_CLOUD_ACCOUNT_PREFIX}.${namespace}.${providerId}.${methodId}.${recordId}`;
 }
 
 class InMemoryKeychainBackend implements KeychainBackend {

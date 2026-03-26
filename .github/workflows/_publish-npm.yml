@@ -1,0 +1,101 @@
+name: Publish to npm
+
+on:
+  workflow_call:
+    inputs:
+      scope:
+        description: "Package scope: 'core', 'bridge', or adapter name"
+        required: true
+        type: string
+      version:
+        description: "Version to publish (e.g. 0.2.0)"
+        required: true
+        type: string
+      dry-run:
+        description: "If true, only run npm publish --dry-run"
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      NPM_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish ${{ inputs.scope }}@${{ inputs.version }}
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: package-builds-${{ inputs.scope }}
+
+      - name: Determine packages to publish
+        id: packages
+        run: |
+          if [ "${{ inputs.scope }}" = "core" ]; then
+            echo "dirs=packages/protocol packages/audit packages/telemetry packages/policy adapters/runtime adapters/tooling packages/web-sdk" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.scope }}" = "bridge" ]; then
+            echo "dirs=apps/bridge" >> "$GITHUB_OUTPUT"
+          else
+            echo "dirs=adapters/${{ inputs.scope }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish packages in order
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          PUBLISHED=()
+          SKIPPED=()
+
+          for dir in ${{ steps.packages.outputs.dirs }}; do
+            PKG_NAME=$(node -p "require('./${dir}/package.json').name")
+            PKG_VERSION="${{ inputs.version }}"
+
+            # Check if already published (idempotency)
+            if npm view "${PKG_NAME}@${PKG_VERSION}" version 2>/dev/null; then
+              echo "⏭️  ${PKG_NAME}@${PKG_VERSION} already published, skipping"
+              SKIPPED+=("${PKG_NAME}")
+              continue
+            fi
+
+            # Dry-run first (catch packaging issues)
+            echo "🔍 Dry-run: ${PKG_NAME}@${PKG_VERSION}"
+            (cd "${dir}" && npm publish --dry-run)
+
+            if [ "${{ inputs.dry-run }}" = "true" ]; then
+              echo "🏃 Dry-run mode — skipping real publish for ${PKG_NAME}"
+              continue
+            fi
+
+            # Real publish with SLSA provenance
+            echo "📦 Publishing: ${PKG_NAME}@${PKG_VERSION}"
+            (cd "${dir}" && npm publish --provenance --access public)
+            PUBLISHED+=("${PKG_NAME}")
+          done
+
+          echo "## npm Publish Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Package | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          for p in "${PUBLISHED[@]+"${PUBLISHED[@]}"}"; do
+            echo "| ${p} | ✅ Published |" >> "$GITHUB_STEP_SUMMARY"
+          done
+          for s in "${SKIPPED[@]+"${SKIPPED[@]}"}"; do
+            echo "| ${s} | ⏭️ Skipped (exists) |" >> "$GITHUB_STEP_SUMMARY"
+          done

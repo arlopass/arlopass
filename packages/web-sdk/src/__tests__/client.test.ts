@@ -223,4 +223,69 @@ describe("BYOMClient", () => {
       ),
     ).rejects.toBeInstanceOf(BYOMTimeoutError);
   });
+
+  it("propagates abort signal to chat.send and classifies cancellation", async () => {
+    const transport = new MockTransport();
+    transport.streamHandler = createDefaultStreamHandler();
+    transport.requestHandler = async (request) => {
+      if (request.envelope.capability !== "chat.completions") {
+        return createDefaultRequestHandler()(request);
+      }
+
+      const signal = (request as TransportRequest<unknown> & {
+        signal?: AbortSignal;
+      }).signal;
+
+      return await new Promise<TransportResponse<unknown>>((_resolve, reject) => {
+        if (signal?.aborted === true) {
+          reject({
+            message: "chat request cancelled",
+            reasonCode: "transport.cancelled",
+            retryable: true,
+          });
+          return;
+        }
+        signal?.addEventListener(
+          "abort",
+          () => {
+            reject({
+              message: "chat request cancelled",
+              reasonCode: "transport.cancelled",
+              retryable: true,
+            });
+          },
+          { once: true },
+        );
+      });
+    };
+
+    const client = new BYOMClient({
+      transport,
+      timeoutMs: 5_000,
+      now: createDeterministicClock(),
+      randomId: createDeterministicIdGenerator(),
+      origin: "https://example.app",
+    });
+    await connectAndSelectProvider(client);
+
+    const abortController = new AbortController();
+    const execution = client.chat.send(
+      { messages: [{ role: "user", content: "cancel me" }] },
+      { signal: abortController.signal },
+    );
+    abortController.abort();
+
+    await expect(execution).rejects.toMatchObject({
+      reasonCode: "transport.cancelled",
+    });
+
+    const sendCall = transport.calls.find(
+      (entry) =>
+        entry.kind === "request" &&
+        entry.request.envelope.capability === "chat.completions",
+    );
+    expect((sendCall?.request as { signal?: AbortSignal }).signal).toBe(
+      abortController.signal,
+    );
+  });
 });

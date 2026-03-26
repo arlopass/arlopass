@@ -17,7 +17,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { KeychainBackend } from "../secrets/keychain-store.js";
-import { KeychainStore, KeychainError } from "../secrets/keychain-store.js";
+import {
+  KeychainStore,
+  KeychainError,
+  buildBridgeCloudAccountName,
+} from "../secrets/keychain-store.js";
 import { KeyRotationManager } from "../secrets/rotation.js";
 import { RevokeInvalidator } from "../secrets/revoke-invalidator.js";
 
@@ -108,6 +112,49 @@ describe("KeychainStore — store/retrieve/delete lifecycle", () => {
 
     expect(await store1.retrieve("token")).toBe("value-a");
     expect(await store2.retrieve("token")).toBe("value-b");
+  });
+
+  it("builds deterministic bridge-cloud namespaced account keys", async () => {
+    const store = new KeychainStore({ service: "byom.test" });
+    const credentialAccount = buildBridgeCloudAccountName({
+      namespace: "credential",
+      providerId: "provider.claude",
+      methodId: "anthropic.api_key",
+      recordId: "credref.provider.claude.anthropic.api_key.0001",
+    });
+    const metadataAccount = buildBridgeCloudAccountName({
+      namespace: "metadata",
+      providerId: "provider.claude",
+      methodId: "anthropic.api_key",
+      recordId: "credref.provider.claude.anthropic.api_key.0001",
+    });
+
+    expect(credentialAccount).toBe(
+      "bridge.cloud.v1.credential.provider.claude.anthropic.api_key.credref.provider.claude.anthropic.api_key.0001",
+    );
+    expect(metadataAccount).toBe(
+      "bridge.cloud.v1.metadata.provider.claude.anthropic.api_key.credref.provider.claude.anthropic.api_key.0001",
+    );
+    expect(credentialAccount).not.toBe(metadataAccount);
+
+    await store.store(credentialAccount, "credential-secret");
+    await store.store(metadataAccount, '{"refreshedAt":"2026-03-24T00:00:00.000Z"}');
+
+    expect(await store.retrieve(credentialAccount)).toBe("credential-secret");
+    expect(await store.retrieve(metadataAccount)).toBe(
+      '{"refreshedAt":"2026-03-24T00:00:00.000Z"}',
+    );
+  });
+
+  it("rejects unsafe bridge-cloud account namespace segments", () => {
+    expect(() =>
+      buildBridgeCloudAccountName({
+        namespace: "credential",
+        providerId: "provider claude",
+        methodId: "anthropic.api_key",
+        recordId: "credref.provider.claude.anthropic.api_key.0001",
+      }),
+    ).toThrow(KeychainError);
   });
 });
 

@@ -21,6 +21,10 @@ function renderStatusChip(status: WalletProvider["status"]): string {
     connected: "Connected",
     disconnected: "Disconnected",
     attention: "Needs Attention",
+    reconnecting: "Reconnecting",
+    failed: "Action Required",
+    revoked: "Revoked",
+    degraded: "Degraded",
   };
   return `<span class="status-chip status-chip--${escapeHtml(status)}">${labels[status]}</span>`;
 }
@@ -56,12 +60,17 @@ function renderProviderCard(
     ? `<button class="btn btn--secondary btn--small" data-action="setActiveProvider" data-provider-id="${escapeHtml(provider.id)}" aria-label="Set ${escapeHtml(provider.name)} as active">Set Active</button>`
     : "";
   const revokeBtn = `<button class="btn btn--danger btn--small" data-action="revokeProvider" data-provider-id="${escapeHtml(provider.id)}" aria-label="Revoke ${escapeHtml(provider.name)}">Revoke</button>`;
+  const statusDetail =
+    typeof provider.statusDetail === "string" && provider.statusDetail.trim().length > 0
+      ? `<p class="provider-card__status-detail">${escapeHtml(provider.statusDetail.trim())}</p>`
+      : "";
 
   return `<div class="provider-card${isActive ? " provider-card--active" : ""}" data-provider-id="${escapeHtml(provider.id)}">
       <div class="provider-card__header">
         <span class="provider-card__name">${escapeHtml(provider.name)}</span>
         ${renderStatusChip(provider.status)}${activeBadge}
       </div>
+      ${statusDetail}
       ${renderModelSelect(provider, isActive ? activeModelId : undefined)}
       <div class="provider-card__actions">${setActiveBtn}${revokeBtn}</div>
     </div>`;

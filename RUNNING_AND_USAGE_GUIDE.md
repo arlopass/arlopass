@@ -157,6 +157,8 @@ try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
 $env:BYOM_BRIDGE_SHARED_SECRET = ($bytes | ForEach-Object { $_.ToString("x2") }) -join ""
 ```
 
+Bridge startup is fail-closed: it exits if `BYOM_BRIDGE_SHARED_SECRET` is unset or not exactly 64 hexadecimal characters.
+
 Run:
 
 ```powershell
@@ -253,9 +255,75 @@ Register manifest path in registry:
 reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.byom.bridge" /ve /t REG_SZ /d "C:\BYOM\bridge\com.byom.bridge.json" /f
 ```
 
-Also ensure `BYOM_BRIDGE_SHARED_SECRET` is set in the bridge process environment.
+Set `BYOM_BRIDGE_SHARED_SECRET` in the bridge process environment for bootstrap/recovery.
 
-### 5.3 Extension package in production
+Then open extension options and run **Pair Bridge (One Click)**:
+
+1. Click **Pair Bridge**.
+2. If one-click auto-completion succeeds, pairing is done immediately.
+3. If manual fallback is required, read the one-time code from bridge output.
+   - If the bridge is launched as the background native host on Windows dev setup, read it from:
+     `"%LOCALAPPDATA%\BYOM\bridge\logs\pairing-code.log"`
+4. Enter the code in **One-time Pairing Code** and click **Complete Pairing**.
+
+Pairing sessions/handles are persisted by the bridge at:
+`"%LOCALAPPDATA%\BYOM\bridge\state\pairing-state.json"` (dev native-host launcher default).
+
+Handshake challenges are persisted by the bridge at:
+`"%LOCALAPPDATA%\BYOM\bridge\state\handshake-state.json"` (dev native-host launcher default).
+This is required because `sendNativeMessage` can invoke a fresh native host process per request.
+
+Cloud connection-handle epoch state is persisted by the bridge at:
+`"%LOCALAPPDATA%\BYOM\bridge\state\cloud-connection-state.json"` (dev native-host launcher default).
+This keeps cloud chat execution resumable across native host process restarts in development.
+
+The extension stores a pairing handle plus wrapped key material; raw shared secrets are no longer entered manually.
+
+### 5.3 Cloud rollout flags, canary, and rollback controls
+
+Bridge cloud execution is fail-closed by default. Configure rollout through environment variables:
+
+```powershell
+# Global on/off gate (default false)
+$env:BYOM_CLOUD_BROKER_V2_ENABLED = "true"
+
+# Optional per-provider gates (default false)
+$env:BYOM_CLOUD_PROVIDER_ANTHROPIC_API_KEY_ENABLED = "true"
+$env:BYOM_CLOUD_PROVIDER_ANTHROPIC_OAUTH_ENABLED = "true"
+$env:BYOM_CLOUD_PROVIDER_FOUNDRY_ENABLED = "true"
+$env:BYOM_CLOUD_PROVIDER_VERTEX_ENABLED = "true"
+$env:BYOM_CLOUD_PROVIDER_BEDROCK_ENABLED = "true"
+$env:BYOM_CLOUD_PROVIDER_OPENAI_ENABLED = "true"
+$env:BYOM_CLOUD_PROVIDER_PERPLEXITY_ENABLED = "true"
+$env:BYOM_CLOUD_PROVIDER_GEMINI_ENABLED = "true"
+
+# Optional explicit method allowlist CSV (in addition to provider gates)
+$env:BYOM_CLOUD_METHOD_ALLOWLIST = "anthropic.api_key,foundry.api_key,vertex.api_key,vertex.service_account,vertex.workload_identity_federation,bedrock.api_key,bedrock.assume_role,bedrock.aws_access_key,openai.api_key,perplexity.api_key,gemini.api_key,gemini.oauth_access_token"
+
+# Optional canary allowlists (CSV). If either list is non-empty, unknown values are denied.
+$env:BYOM_CLOUD_CANARY_EXTENSION_IDS = "abcdefghijklmnopabcdefghijklmnop"
+$env:BYOM_CLOUD_CANARY_ORIGINS = "https://app.example.com,https://staging.example.com"
+
+# Authenticated-origin policy for signed bridge requests:
+# - loopback origins are trusted by default for local dev
+# - non-loopback origins are denied unless explicitly allowlisted
+$env:BYOM_BRIDGE_AUTHENTICATED_ORIGINS = "https://app.example.com,https://staging.example.com"
+$env:BYOM_BRIDGE_AUTHENTICATED_EXTENSION_IDS = "abcdefghijklmnopabcdefghijklmnop"
+
+# Optional: disable default loopback trust if your environment requires fully explicit origin auth
+$env:BYOM_BRIDGE_ALLOW_LOOPBACK_ORIGINS = "false"
+```
+
+For backward compatibility with older env settings, `foundry.aad_client_credentials` in `BYOM_CLOUD_METHOD_ALLOWLIST` is normalized to `foundry.api_key` at runtime.
+
+Dev note: `scripts\dev\native-host\byom-bridge-native-host.cmd` now defaults these flags to enabled when they are unset, and sets `BYOM_BRIDGE_PREFER_WORKSPACE_ADAPTER_SOURCE=true` by default. This prevents stale workspace `dist` outputs from masking newer adapter source changes during local development.
+
+Rollback order:
+
+1. Disable provider-level flag(s) first (smallest blast radius).
+2. Disable `BYOM_CLOUD_BROKER_V2_ENABLED` for immediate global cloud deny.
+
+### 5.4 Extension package in production
 
 Package from `apps\extension` with built `dist\` and static files:
 
@@ -351,6 +419,11 @@ const transport: BYOMTransport = {
 - Options page now includes a full provider connection flow (test + save + activate + remove).
 - Wallet data shape is enforced by `apps\extension\src\ui\popup-state.ts`.
 - Wallet message handler is auto-registered by background runtime bootstrap.
+- Cloud provider state chips now support:
+  - `connected`, `disconnected`, `attention`
+  - `reconnecting`, `failed`, `revoked`, `degraded`
+- For cloud providers, `metadata.discoveryRegionStatus` containing `stale` / `partial` / `unavailable` now normalizes to `degraded` with fallback detail text in popup rendering.
+- Bridge cloud error responses preserve `reasonCode` while redacting sensitive credential/token material from user-visible messages.
 
 Storage keys used by popup:
 
@@ -380,9 +453,13 @@ chrome.storage.local.set({
       id: "claude-subscription",
       name: "Claude",
       type: "cloud",
-      status: "connected",
+      status: "degraded",
       models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
-      lastSyncedAt: Date.now()
+      lastSyncedAt: Date.now(),
+      metadata: {
+        discoveryRegionStatus: "us-east-1:stale,us-west-2:healthy",
+        statusDetail: "Fallback region us-west-2 in use."
+      }
     }
   ],
   "byom.wallet.activeProvider.v1": {
@@ -440,6 +517,7 @@ Targeted reliability suites:
 
 ```powershell
 npm run test -- .\ops\tests\chaos
+npm run test -- .\ops\tests\release-gates
 npm run test -- .\ops\tests\version-skew
 npm run test -- .\ops\tests\soak
 ```
@@ -470,13 +548,22 @@ Operational docs:
 - Verify native messaging host registration key exists.
 - Verify manifest `name` is exactly `com.byom.bridge`.
 - Verify extension ID is present in `allowed_origins`.
-- Verify `BYOM_BRIDGE_SHARED_SECRET` alignment.
+- Verify the extension has an active pairing handle for the selected bridge host.
 - Run `npm run dev:register-native-host`, then reload the extension.
 
 ### `auth.invalid` during handshake
 
-- Secret mismatch or stale challenge nonce.
-- Regenerate secret and restart bridge + extension.
+- Pairing key mismatch, stale pairing handle, or stale challenge nonce.
+- Re-run **Pair Bridge** and complete with a fresh one-time code.
+- If needed, revoke old handle and rotate pairing in extension options.
+- If the bridge runs as background native host, fetch latest code lines with:
+  `Get-Content "$env:LOCALAPPDATA\BYOM\bridge\logs\pairing-code.log" -Tail 50`
+
+### Bridge warns cloud adapter package `dist/index.js` is missing
+
+- Bridge now falls back to workspace adapter source entries when package `dist` artifacts are absent.
+- If warnings persist after pull/reload, run:
+  `npm run build -w @byom-ai/adapter-openai && npm run build -w @byom-ai/adapter-perplexity && npm run build -w @byom-ai/adapter-gemini`
 
 ### Popup shows no providers
 

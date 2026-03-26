@@ -26,9 +26,17 @@
     "build": "npm run -ws --if-present build",
     "lint": "npm run -ws --if-present lint",
     "typecheck": "npm run -ws --if-present typecheck",
-    "test": "vitest --workspace vitest.workspace.ts --run --passWithNoTests"
+    "test": "vitest --workspace vitest.workspace.ts --run --passWithNoTests",
+    "test:e2e": "npx playwright test",
+    "test:e2e:extension": "npx playwright test --project=extension",
+    "test:e2e:webapp": "npx playwright test --project=webapp",
+    "test:e2e:integration": "npx playwright test --project=integration",
+    "test:e2e:cloud": "npx playwright test --project=extension --grep @cloud-credentials",
+    "test:e2e:live": "npx playwright test --project=live-setup --project=live-providers",
+    "test:e2e:report": "npx playwright show-report e2e/playwright-report"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^22.14.1",
     "@typescript-eslint/eslint-plugin": "^8.30.1",
     "@typescript-eslint/parser": "^8.30.1",

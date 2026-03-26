@@ -17,29 +17,62 @@ export interface BYOMTransport {
   disconnect?(sessionId: string): Promise<void>;
 }
 
+type CancellationError = Error &
+  Readonly<{
+    reasonCode: "transport.cancelled";
+    retryable: true;
+  }>;
+
+function createCancellationError(): CancellationError {
+  return Object.assign(new Error("Operation cancelled."), {
+    reasonCode: "transport.cancelled" as const,
+    retryable: true as const,
+  });
+}
+
 export async function withTimeout<T>(
   operation: Promise<T>,
   timeoutMs: number,
   timeoutMessage: string,
+  signal?: AbortSignal,
 ): Promise<T> {
-  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
-    return operation;
+  if (signal?.aborted === true) {
+    throw createCancellationError();
   }
 
   let timeoutHandle: NodeJS.Timeout | undefined;
+  let abortHandler: (() => void) | undefined;
+  const races: Promise<T>[] = [operation];
 
-  try {
-    return await Promise.race([
-      operation,
+  if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
+    races.push(
       new Promise<T>((_resolve, reject) => {
         timeoutHandle = setTimeout(() => {
           reject(new BYOMTimeoutError(timeoutMessage));
         }, timeoutMs);
       }),
-    ]);
+    );
+  }
+
+  if (signal !== undefined) {
+    races.push(
+      new Promise<T>((_resolve, reject) => {
+        abortHandler = () => {
+          reject(createCancellationError());
+        };
+        signal.addEventListener("abort", abortHandler, { once: true });
+      }),
+    );
+  }
+
+  try {
+    return await Promise.race(races);
   } finally {
     if (timeoutHandle !== undefined) {
       clearTimeout(timeoutHandle);
+    }
+    if (abortHandler !== undefined && signal !== undefined) {
+      signal.removeEventListener("abort", abortHandler);
     }
   }
 }
@@ -48,12 +81,13 @@ export async function* withStreamTimeout<T>(
   stream: TransportStream<T>,
   timeoutMs: number,
   timeoutMessage: string,
+  signal?: AbortSignal,
 ): AsyncIterable<TransportResponse<T>> {
   const iterator = stream[Symbol.asyncIterator]();
 
   try {
     while (true) {
-      const next = await withTimeout(iterator.next(), timeoutMs, timeoutMessage);
+      const next = await withTimeout(iterator.next(), timeoutMs, timeoutMessage, signal);
       if (next.done) {
         return;
       }

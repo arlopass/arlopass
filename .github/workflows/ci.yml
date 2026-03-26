@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main, "release/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: CI Gate
+    uses: ./.github/workflows/_ci-gate.yml

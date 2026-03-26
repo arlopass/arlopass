@@ -17,6 +17,8 @@ describe("reason code normalization", () => {
     expect(normalizeReasonCode("policy_blocked")).toBe("policy.denied");
     expect(normalizeReasonCode("request malformed")).toBe("request.invalid");
     expect(normalizeReasonCode("TIMEOUT")).toBe("transport.timeout");
+    expect(normalizeReasonCode("cancelled")).toBe("transport.cancelled");
+    expect(normalizeReasonCode("aborted")).toBe("transport.cancelled");
   });
 
   it("maps unsupported reason codes to a deterministic fallback", () => {
@@ -28,6 +30,7 @@ describe("reason code normalization", () => {
   it("detects whether a value is a catalog reason code", () => {
     expect(isReasonCode("allow")).toBe(true);
     expect(isReasonCode("policy.denied")).toBe(true);
+    expect(isReasonCode("transport.cancelled")).toBe(true);
     expect(isReasonCode("unknown.reason")).toBe(false);
   });
 });

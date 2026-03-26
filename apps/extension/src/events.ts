@@ -85,6 +85,29 @@ export type BridgeGrantSynchronizationEvent = Readonly<{
   expiresAt?: number;
 }>;
 
+export type ConnectionHealthState =
+  | "reconnecting"
+  | "failed"
+  | "revoked"
+  | "degraded";
+
+export type ConnectionHealthChangedEvent = Readonly<{
+  providerId: string;
+  state: ConnectionHealthState;
+  reasonCode?: string;
+  detail?: string;
+  updatedAt: number;
+}>;
+
+export type ConnectionDiscoveryUpdatedEvent = Readonly<{
+  providerId: string;
+  cacheStatus: "hot" | "stale" | "miss" | "refreshed";
+  degraded: boolean;
+  degradedReason?: "stale" | "partial" | "unavailable";
+  detail?: string;
+  updatedAt: number;
+}>;
+
 export type ExtensionEventMap = {
   "grant-created": GrantCreatedEvent;
   "grant-revoked": GrantRevokedEvent;
@@ -96,6 +119,8 @@ export type ExtensionEventMap = {
   "session-terminated": SessionTerminatedEvent;
   "bridge-grant-synchronization": BridgeGrantSynchronizationEvent;
   "bridge-grant-revocation": BridgeGrantRevocationEvent;
+  "connection-health-changed": ConnectionHealthChangedEvent;
+  "connection-discovery-updated": ConnectionDiscoveryUpdatedEvent;
 };
 
 type EventListener<TPayload> = (payload: TPayload) => void;

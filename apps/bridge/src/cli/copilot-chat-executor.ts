@@ -290,6 +290,73 @@ function parseModelContentFromJson(value: unknown): string | undefined {
   return undefined;
 }
 
+function parseModelErrorFromJson(value: unknown): string | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const nestedError = value["error"];
+  if (typeof nestedError === "string" && nestedError.trim().length > 0) {
+    return nestedError.trim();
+  }
+
+  if (isRecord(nestedError)) {
+    const nestedMessage = parseModelContentFromJson(nestedError);
+    if (nestedMessage !== undefined) {
+      return nestedMessage;
+    }
+  }
+
+  const isExplicitError =
+    value["is_error"] === true ||
+    value["ok"] === false ||
+    value["status"] === "error" ||
+    value["type"] === "error";
+  if (!isExplicitError) {
+    return undefined;
+  }
+
+  const extracted = parseModelContentFromJson(value);
+  if (extracted !== undefined) {
+    return extracted;
+  }
+
+  return undefined;
+}
+
+function extractStructuredCliErrorMessage(stdout: string, stderr: string): string | undefined {
+  for (const source of [stdout, stderr]) {
+    for (const line of source.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (trimmed.length === 0) {
+        continue;
+      }
+
+      let payload: unknown;
+      try {
+        payload = JSON.parse(trimmed);
+      } catch {
+        continue;
+      }
+
+      const parsedError = parseModelErrorFromJson(payload);
+      if (parsedError !== undefined) {
+        const normalized = safeTextExcerpt(parsedError);
+        if (normalized.length > 0) {
+          return normalized;
+        }
+      }
+    }
+  }
+
+  const stderrExcerpt = safeTextExcerpt(stderr);
+  if (stderrExcerpt.length > 0) {
+    return stderrExcerpt;
+  }
+
+  return undefined;
+}
+
 function formatModelDisplayName(modelId: string): string {
   return modelId
     .split(/[._-]/g)
@@ -1215,6 +1282,7 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
     const lines = stdout.split(/\r?\n/);
     let parsedRecords = 0;
     let assistantContent: string | undefined;
+    let structuredErrorMessage: string | undefined;
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -1229,6 +1297,15 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
         continue;
       }
       parsedRecords += 1;
+
+      const parsedError = parseModelErrorFromJson(payload);
+      if (parsedError !== undefined) {
+        const normalizedError = safeTextExcerpt(parsedError);
+        if (normalizedError.length > 0) {
+          structuredErrorMessage = normalizedError;
+        }
+        continue;
+      }
 
       if (isRecord(payload) && payload["type"] === "assistant.message") {
         const data = payload["data"];
@@ -1249,6 +1326,17 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
 
     if (assistantContent !== undefined) {
       return assistantContent;
+    }
+
+    if (structuredErrorMessage !== undefined) {
+      throw new CliChatExecutionError(structuredErrorMessage, {
+        reasonCode: "provider.unavailable",
+        details: {
+          reason: "provider_error_payload",
+          stdout: safeTextExcerpt(stdout),
+          stderr: safeTextExcerpt(stderr),
+        },
+      });
     }
 
     const plainTextStdout = stdout.trim();
@@ -1518,9 +1606,10 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
         const stdout = Buffer.concat(stdoutChunks).toString("utf8");
         const stderr = Buffer.concat(stderrChunks).toString("utf8");
         if (code !== 0) {
+          const providerErrorMessage = extractStructuredCliErrorMessage(stdout, stderr);
           rejectOnce(
             new CliChatExecutionError(
-              `CLI process exited with code ${String(code)}.`,
+              providerErrorMessage ?? `CLI process exited with code ${String(code)}.`,
               {
                 reasonCode: "provider.unavailable",
                 details: {
@@ -1529,6 +1618,9 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
                   spawnCommand: spawnInvocation.command,
                   exitCode: code ?? -1,
                   ...(signal !== null ? { signal } : {}),
+                  ...(providerErrorMessage !== undefined
+                    ? { providerErrorMessage }
+                    : {}),
                   stderr: safeTextExcerpt(stderr),
                   stdout: safeTextExcerpt(stdout),
                 },

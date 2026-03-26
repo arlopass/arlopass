@@ -81,6 +81,47 @@ describe("parseAdapterManifest", () => {
     expect(manifest.metadata).toEqual({ env: "prod", owner: "team-ai" });
   });
 
+  it("accepts additive connectionMethods manifest field", () => {
+    const manifest = parseAdapterManifest({
+      ...validManifestInput(),
+      connectionMethods: [{ id: "anthropic.api_key", authFlow: "api-key" }],
+    });
+    expect(manifest.connectionMethods).toEqual([
+      { id: "anthropic.api_key", authFlow: "api-key" },
+    ]);
+  });
+
+  it("rejects connectionMethods entries with missing required fields", () => {
+    expect(() =>
+      parseAdapterManifest({
+        ...validManifestInput(),
+        connectionMethods: [{ id: "anthropic.api_key" }],
+      }),
+    ).toThrow(ManifestValidationError);
+  });
+
+  it("rejects duplicate connectionMethods ids", () => {
+    try {
+      parseAdapterManifest({
+        ...validManifestInput(),
+        connectionMethods: [
+          { id: "anthropic.api_key", authFlow: "api-key" },
+          { id: "anthropic.api_key", authFlow: "oauth2-device" },
+        ],
+      });
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expectManifestError(error, RUNTIME_ERROR_CODES.MANIFEST_INVALID_FIELD, "connectionMethods");
+      if (error instanceof ManifestValidationError) {
+        expect(error.details).toMatchObject({
+          index: 1,
+          id: "anthropic.api_key",
+          firstIndex: 0,
+        });
+      }
+    }
+  });
+
   it("rejects non-object input", () => {
     expect(() => parseAdapterManifest("not an object")).toThrow(ManifestValidationError);
     expect(() => parseAdapterManifest(null)).toThrow(ManifestValidationError);
@@ -201,12 +242,42 @@ describe("parseAdapterManifest", () => {
     ).toThrow(ManifestValidationError);
   });
 
-  it("deduplicates capabilities and sorts them", () => {
-    const manifest = parseAdapterManifest({
-      ...validManifestInput(),
-      capabilities: ["chat.stream", "provider.list", "chat.stream"],
-    });
-    expect(manifest.capabilities).toEqual(["chat.stream", "provider.list"]);
+  it("rejects duplicate capabilities", () => {
+    try {
+      parseAdapterManifest({
+        ...validManifestInput(),
+        capabilities: ["chat.stream", "provider.list", "chat.stream"],
+      });
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expectManifestError(error, RUNTIME_ERROR_CODES.MANIFEST_INVALID_FIELD, "capabilities");
+      if (error instanceof ManifestValidationError) {
+        expect(error.details).toMatchObject({
+          index: 2,
+          value: "chat.stream",
+          firstIndex: 0,
+        });
+      }
+    }
+  });
+
+  it("rejects duplicate requiredPermissions", () => {
+    try {
+      parseAdapterManifest({
+        ...validManifestInput(),
+        requiredPermissions: ["network.egress", "network.egress"],
+      });
+      expect.fail("Should have thrown");
+    } catch (error) {
+      expectManifestError(error, RUNTIME_ERROR_CODES.MANIFEST_INVALID_FIELD, "requiredPermissions");
+      if (error instanceof ManifestValidationError) {
+        expect(error.details).toMatchObject({
+          index: 1,
+          value: "network.egress",
+          firstIndex: 0,
+        });
+      }
+    }
   });
 
   it("allows wildcard egress host", () => {

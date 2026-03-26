@@ -5,6 +5,10 @@ import {
   RUNTIME_ERROR_CODES,
   type RuntimeErrorDetails,
 } from "./errors.js";
+import {
+  parseConnectionMethods,
+  type ConnectionMethodDescriptor,
+} from "./cloud-contract.js";
 
 export const MANIFEST_SCHEMA_VERSION = "1.0.0";
 
@@ -54,6 +58,7 @@ export type AdapterManifest = Readonly<{
   egressRules: readonly AdapterEgressRule[];
   riskLevel: AdapterRiskLevel;
   signingKeyId: string;
+  connectionMethods?: readonly ConnectionMethodDescriptor[];
   metadata?: Readonly<Record<string, string>>;
 }>;
 
@@ -122,7 +127,8 @@ function parseCapabilityList(
       field,
     });
   }
-  const seen = new Set<ProtocolCapability>();
+  const seen = new Map<ProtocolCapability, number>();
+  const normalizedCapabilities: ProtocolCapability[] = [];
   value.forEach((entry, index) => {
     if (typeof entry !== "string") {
       throw manifestError(`"${field}[${index}]" must be a string.`, {
@@ -139,9 +145,21 @@ function parseCapabilityList(
         details: { index, value: normalized },
       });
     }
-    seen.add(normalized);
+    const firstIndex = seen.get(normalized);
+    if (firstIndex !== undefined) {
+      throw manifestError(
+        `"${field}[${index}]" duplicates capability "${normalized}" first declared at index ${firstIndex}.`,
+        {
+          code: RUNTIME_ERROR_CODES.MANIFEST_INVALID_FIELD,
+          field,
+          details: { index, value: normalized, firstIndex },
+        },
+      );
+    }
+    seen.set(normalized, index);
+    normalizedCapabilities.push(normalized);
   });
-  return Object.freeze(Array.from(seen).sort((a, b) => a.localeCompare(b)));
+  return Object.freeze([...normalizedCapabilities].sort((a, b) => a.localeCompare(b)));
 }
 
 function parsePermissionList(
@@ -155,7 +173,8 @@ function parsePermissionList(
       field,
     });
   }
-  const seen = new Set<string>();
+  const seen = new Map<string, number>();
+  const normalizedPermissions: string[] = [];
   value.forEach((entry, index) => {
     if (typeof entry !== "string") {
       throw manifestError(`"${field}[${index}]" must be a string.`, {
@@ -172,9 +191,21 @@ function parsePermissionList(
         details: { index },
       });
     }
-    seen.add(normalized);
+    const firstIndex = seen.get(normalized);
+    if (firstIndex !== undefined) {
+      throw manifestError(
+        `"${field}[${index}]" duplicates permission "${normalized}" first declared at index ${firstIndex}.`,
+        {
+          code: RUNTIME_ERROR_CODES.MANIFEST_INVALID_FIELD,
+          field,
+          details: { index, value: normalized, firstIndex },
+        },
+      );
+    }
+    seen.set(normalized, index);
+    normalizedPermissions.push(normalized);
   });
-  return Object.freeze(Array.from(seen).sort((a, b) => a.localeCompare(b)));
+  return Object.freeze([...normalizedPermissions].sort((a, b) => a.localeCompare(b)));
 }
 
 const EGRESS_PROTOCOLS = new Set(["https", "http", "tcp"]);
@@ -326,6 +357,11 @@ export function parseAdapterManifest(input: unknown): AdapterManifest {
   }
 
   const signingKeyId = requireString(record, "signingKeyId");
+  const connectionMethodsRaw = record["connectionMethods"];
+  const connectionMethods =
+    connectionMethodsRaw === undefined
+      ? undefined
+      : parseConnectionMethods(connectionMethodsRaw, { field: "connectionMethods" });
   const metadata = parseMetadata(record);
 
   return Object.freeze({
@@ -339,6 +375,7 @@ export function parseAdapterManifest(input: unknown): AdapterManifest {
     egressRules,
     riskLevel: riskLevelRaw,
     signingKeyId,
+    ...(connectionMethods !== undefined ? { connectionMethods } : {}),
     ...(metadata !== undefined ? { metadata } : {}),
   });
 }

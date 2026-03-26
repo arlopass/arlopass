@@ -1,8 +1,21 @@
 {
   "name": "@byom-ai/adapter-ollama",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AltClick/byom-web.git",
+    "directory": "adapters/adapter-ollama"
+  },
+  "homepage": "https://github.com/AltClick/byom-web/tree/main/adapters/adapter-ollama#readme",
+  "bugs": {
+    "url": "https://github.com/AltClick/byom-web/issues"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -15,7 +28,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@byom-ai/adapter-runtime": "file:../runtime",
-    "@byom-ai/protocol": "file:../../packages/protocol"
+    "@byom-ai/adapter-runtime": "0.1.0",
+    "@byom-ai/protocol": "0.1.0"
   }
 }

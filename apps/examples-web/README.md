@@ -1,26 +1,45 @@
-# BYOM Extension + SDK Examples Web App
+# @byom-ai/examples-web
 
-This app demonstrates integration scenarios between `@byom-ai/web-sdk` and the BYOM extension transport.
+Interactive demo app showcasing `@byom-ai/web-sdk` integration patterns with the BYOM AI Wallet extension.
 
-## Run
+Built with React 18, [Mantine](https://mantine.dev/) 7, and Vite.
 
-```powershell
+## Running
+
+```bash
+# From repo root
+npm run dev:examples
+
+# Or directly
 npm run dev -w @byom-ai/examples-web
 ```
 
-or from repo root:
+Opens at `http://127.0.0.1:4172`.
 
-```powershell
-npm run dev:examples
-```
+> [!TIP]
+> Load the BYOM extension in Chrome first for the full experience. The app falls back to a demo transport if the extension is not detected.
 
-Default URL: `http://127.0.0.1:4172`
+## Scenarios
 
-## Scenarios included
+- **Connect/disconnect** — Session lifecycle and state transitions
+- **Provider discovery** — List and select providers and models
+- **Chat send** — Non-streaming `chat.send` with full response
+- **Chat stream** — Real-time `chat.stream` with chunked output
+- **Extension transport** — `window.byom` injected by the extension, with demo fallback
+- **Error handling** — Policy denial, transient failure, and timeout simulation
+- **Integration snippet** — Copy-paste code for embedding BYOM in your own app
 
-- Connect/disconnect and state transitions
-- Provider discovery + provider/model selection
-- `chat.send` and `chat.stream`
-- Injected extension transport (`window.byom`) with fallback to demo transport
-- Error and timeout simulations (policy denial, transient transport failure)
-- Integration snippet for embedding in production apps
+## Tech Stack
+
+- [React](https://react.dev/) 18 + [Mantine](https://mantine.dev/) 7 (UI components)
+- [Vite](https://vite.dev/) 5 (dev server and build)
+- [Tabler Icons](https://tabler.io/icons) (iconography)
+- `@byom-ai/web-sdk` (BYOM client SDK)
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |

@@ -15,11 +15,17 @@ import { PassThrough, Writable } from "node:stream";
 import { describe, expect, it } from "vitest";
 
 import { BridgeHandler } from "../bridge-handler.js";
+import {
+  computeRequestPayloadHash,
+  createRequestProof,
+} from "../cloud/request-proof.js";
 import { HandshakeManager } from "../session/handshake.js";
 import { RequestVerifier } from "../session/request-verifier.js";
+import { SessionKeyRegistry } from "../session/session-key-registry.js";
 import { RuntimeEnforcer } from "../permissions/runtime-enforcer.js";
 import type { RuntimeGrant } from "../permissions/runtime-enforcer.js";
 import { NativeHost } from "../native-host.js";
+import type { CloudFeatureFlags } from "../config/cloud-feature-flags.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -194,7 +200,13 @@ describe("BridgeHandler — handshake", () => {
       sessionToken: SESSION_TOKEN_BYTES.toString("hex"),
       extensionId: TEST_EXTENSION_ID,
       establishedAt: FIXED_NOW.toISOString(),
+      expiresAt: new Date(
+        FIXED_NOW.getTime() + 5 * 60_000,
+      ).toISOString(),
     });
+    expect((response as Record<string, unknown>)["sessionToken"]).toMatch(
+      /^[0-9a-f]{64}$/,
+    );
   });
 
   it("rejects handshake.verify with an incorrect HMAC", async () => {
@@ -563,6 +575,208 @@ describe("NativeHost wire-protocol integration", () => {
     expect(responses[2]).toMatchObject({
       type: "request.denied",
       reasonCode: "permission.denied",
+    });
+  });
+
+  it("routes cloud chat execution through cloud.chat.execute wire messages", async () => {
+    let receivedRequest: Record<string, unknown> | undefined;
+    const cloudChatExecutor = {
+      execute: async (request: Record<string, unknown>) => {
+        receivedRequest = request;
+        return {
+          correlationId: "corr.cloud.wire.001",
+          providerId: "provider.claude",
+          methodId: "anthropic.api_key",
+          modelId: "claude-sonnet-4-5",
+          region: "us-east-1",
+          content: "Cloud bridge response",
+        };
+      },
+    };
+    let handshakeByteCallCount = 0;
+    const handshakeManager = new HandshakeManager({
+      now: () => FIXED_NOW,
+      generateBytes: (length: number) => {
+        handshakeByteCallCount += 1;
+        const source =
+          handshakeByteCallCount === 1
+            ? HANDSHAKE_NONCE_BYTES
+            : SESSION_TOKEN_BYTES;
+        return source.subarray(0, length);
+      },
+    });
+    const modelId = "claude-sonnet-4-5";
+    const requestMessages = [{ role: "user", content: "hello cloud" }] as const;
+    const requestId = "req.cloud.wire.001";
+    const nonce = "nonce-cloud-wire-001";
+    const payloadHash = computeRequestPayloadHash({
+      messages: requestMessages,
+      modelId,
+    });
+    const requestProof = {
+      requestId,
+      nonce,
+      origin: TEST_ORIGIN,
+      connectionHandle:
+        "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+      payloadHash,
+      proof: createRequestProof({
+        requestId,
+        nonce,
+        origin: TEST_ORIGIN,
+        connectionHandle:
+          "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+        payloadHash,
+        sessionKey: SESSION_TOKEN_BYTES,
+      }),
+    };
+    const handler = new BridgeHandler({
+      sharedSecret: TEST_SECRET,
+      handshakeManager,
+      sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
+      cloudChatExecutor,
+      cloudFeatureFlags: {
+        cloudBrokerV2Enabled: true,
+        cloudMethodAllowlist: {
+          "anthropic.api_key": true,
+        },
+      },
+    });
+
+    const responses = await runWireScenario(handler, [
+      {
+        type: "handshake.challenge",
+      },
+      {
+        type: "handshake.verify",
+        nonce: HANDSHAKE_NONCE_HEX,
+        hmac: computeExpectedHmac(HANDSHAKE_NONCE_HEX, TEST_SECRET),
+        extensionId: TEST_EXTENSION_ID,
+      },
+      {
+        type: "cloud.chat.execute",
+        correlationId: "corr.cloud.wire.001",
+        tenantId: "tenant-a",
+        origin: TEST_ORIGIN,
+        providerId: "provider.claude",
+        methodId: "anthropic.api_key",
+        modelId,
+        region: "us-east-1",
+        extensionId: TEST_EXTENSION_ID,
+        handshakeSessionToken: SESSION_TOKEN_BYTES.toString("hex"),
+        requestProof,
+        connectionHandle:
+          "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+        policyVersion: "pol.v2",
+        endpointProfileHash: "sha256:endpoint-profile",
+        messages: requestMessages,
+      },
+    ]);
+
+    expect(receivedRequest).toMatchObject({
+      correlationId: "corr.cloud.wire.001",
+      tenantId: "tenant-a",
+      providerId: "provider.claude",
+      methodId: "anthropic.api_key",
+      modelId: "claude-sonnet-4-5",
+    });
+    expect(responses).toHaveLength(3);
+    expect(responses[0]).toMatchObject({
+      type: "handshake.challenge",
+      nonce: HANDSHAKE_NONCE_HEX,
+    });
+    expect(responses[1]).toMatchObject({
+      type: "handshake.session",
+      extensionId: TEST_EXTENSION_ID,
+      sessionToken: SESSION_TOKEN_BYTES.toString("hex"),
+    });
+    expect(responses[2]).toMatchObject({
+      type: "cloud.chat.result",
+      correlationId: "corr.cloud.wire.001",
+      providerId: "provider.claude",
+      methodId: "anthropic.api_key",
+      modelId: "claude-sonnet-4-5",
+      region: "us-east-1",
+      content: "Cloud bridge response",
+    });
+  });
+
+  it("propagates auth.expired during cloud.connection.validate over wire protocol", async () => {
+    const cloudFeatureFlags: CloudFeatureFlags = {
+      cloudBrokerV2Enabled: true,
+      cloudMethodAllowlist: {
+        "anthropic.api_key": true,
+      },
+    };
+    const cloudConnectionService = {
+      beginConnection: async () => ({ challenge: "unused" }),
+      completeConnection: async () => ({
+        providerId: "provider.claude",
+        methodId: "anthropic.api_key",
+        credentialRef: "cred.001",
+        connectionHandle:
+          "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+        endpointProfileHash: "sha256:endpoint-profile",
+      }),
+      validateConnection: async () => {
+        throw Object.assign(
+          new Error("Credential revoked api_key=sk-secret token=abc"),
+          { reasonCode: "auth.expired" },
+        );
+      },
+      resolveConnectionBinding: async () => ({
+        providerId: "provider.claude",
+        methodId: "anthropic.api_key",
+        connectionHandle:
+          "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+        extensionId: "ext.runtime.transport",
+        origin: "https://app.example.com",
+        policyVersion: "pol.v2",
+        endpointProfileHash: "sha256:endpoint-profile",
+        epoch: 0,
+      }),
+      revokeConnection: async () => ({
+        providerId: "provider.claude",
+        methodId: "anthropic.api_key",
+        revoked: true,
+      }),
+      discoverModels: async () => ({
+        providerId: "provider.claude",
+        models: [],
+        cacheStatus: "hot" as const,
+      }),
+      discoverCapabilities: async () => ({
+        providerId: "provider.claude",
+        capabilities: [],
+        cacheStatus: "hot" as const,
+      }),
+      refreshDiscovery: async () => ({
+        providerId: "provider.claude",
+        models: [],
+        capabilities: [],
+        cacheStatus: "refreshed" as const,
+      }),
+    };
+    const handler = new BridgeHandler({
+      sharedSecret: TEST_SECRET,
+      cloudConnectionService,
+      cloudFeatureFlags,
+    });
+
+    const responses = await runWireScenario(handler, [
+      {
+        type: "cloud.connection.validate",
+        providerId: "provider.claude",
+        methodId: "anthropic.api_key",
+        connectionHandle:
+          "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+      },
+    ]);
+
+    expect(responses).toHaveLength(1);
+    expect(responses[0]).toMatchObject({
+      type: "error",
+      reasonCode: "auth.expired",
     });
   });
 });

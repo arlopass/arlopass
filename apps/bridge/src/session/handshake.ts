@@ -1,8 +1,23 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname } from "node:path";
 
 export const HANDSHAKE_CHALLENGE_NONCE_BYTE_LENGTH = 32;
 export const HANDSHAKE_SESSION_TOKEN_BYTE_LENGTH = 32;
 export const HANDSHAKE_DEFAULT_CHALLENGE_TTL_MS = 60_000;
+export const HANDSHAKE_DEFAULT_SESSION_TTL_MS = 5 * 60_000;
+
+export function isFixedLengthHex(value: string, byteLength: number): boolean {
+  return (
+    value.length === byteLength * 2 && new RegExp(`^[0-9a-f]{${String(byteLength * 2)}}$`, "i").test(value)
+  );
+}
 
 export type HandshakeChallenge = Readonly<{
   /** Hex-encoded random nonce; exactly 64 hex chars for 32-byte nonce. */
@@ -23,6 +38,7 @@ export type HandshakeSession = Readonly<{
   sessionToken: string;
   extensionId: string;
   establishedAt: string;
+  expiresAt: string;
 }>;
 
 export type HandshakeManagerOptions = Readonly<{
@@ -30,6 +46,8 @@ export type HandshakeManagerOptions = Readonly<{
   /** Injectable for deterministic tests; defaults to crypto.randomBytes. */
   generateBytes?: (length: number) => Buffer;
   challengeTtlMs?: number;
+  sessionTtlMs?: number;
+  stateFilePath?: string;
 }>;
 
 export class HandshakeError extends Error {
@@ -46,11 +64,45 @@ export class HandshakeError extends Error {
 }
 
 type PendingChallenge = Readonly<{ expiresAtMs: number }>;
+type PersistedPendingChallenge = Readonly<{
+  nonce: string;
+  expiresAtMs: number;
+}>;
+type PersistedHandshakeState = Readonly<{
+  version: 1;
+  pendingChallenges: readonly PersistedPendingChallenge[];
+}>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isPersistedPendingChallenge(
+  value: unknown,
+): value is PersistedPendingChallenge {
+  if (!isRecord(value)) {
+    return false;
+  }
+  if (
+    typeof value["nonce"] !== "string" ||
+    !isFixedLengthHex(value["nonce"], HANDSHAKE_CHALLENGE_NONCE_BYTE_LENGTH) ||
+    !isFiniteNumber(value["expiresAtMs"])
+  ) {
+    return false;
+  }
+  return true;
+}
 
 export class HandshakeManager {
   readonly #now: () => Date;
   readonly #generateBytes: (length: number) => Buffer;
   readonly #challengeTtlMs: number;
+  readonly #sessionTtlMs: number;
+  readonly #stateFilePath: string | undefined;
   readonly #pendingChallenges = new Map<string, PendingChallenge>();
   readonly #consumedNonces = new Set<string>();
 
@@ -59,6 +111,16 @@ export class HandshakeManager {
     this.#generateBytes = options.generateBytes ?? ((n) => randomBytes(n));
     this.#challengeTtlMs =
       options.challengeTtlMs ?? HANDSHAKE_DEFAULT_CHALLENGE_TTL_MS;
+    this.#sessionTtlMs =
+      options.sessionTtlMs ?? HANDSHAKE_DEFAULT_SESSION_TTL_MS;
+    this.#stateFilePath =
+      typeof options.stateFilePath === "string" &&
+      options.stateFilePath.trim().length > 0
+        ? options.stateFilePath.trim()
+        : undefined;
+    this.#loadStateFromDisk();
+    this.cleanupExpiredChallenges();
+    this.#persistState();
   }
 
   /**
@@ -74,6 +136,7 @@ export class HandshakeManager {
     const expiresAt = new Date(issuedAt.getTime() + this.#challengeTtlMs);
 
     this.#pendingChallenges.set(nonce, { expiresAtMs: expiresAt.getTime() });
+    this.#persistState();
 
     return {
       nonce,
@@ -118,6 +181,7 @@ export class HandshakeManager {
 
     if (pending.expiresAtMs <= nowMs) {
       this.#pendingChallenges.delete(nonce);
+      this.#persistState();
       throw new HandshakeError(
         "Handshake challenge has expired.",
         "auth.expired",
@@ -141,15 +205,18 @@ export class HandshakeManager {
     // Consume the nonce — removes it from pending and adds to consumed set.
     this.#pendingChallenges.delete(nonce);
     this.#consumedNonces.add(nonce);
+    this.#persistState();
 
     const sessionToken = this.#generateBytes(
       HANDSHAKE_SESSION_TOKEN_BYTE_LENGTH,
     ).toString("hex");
+    const expiresAt = new Date(nowMs + this.#sessionTtlMs).toISOString();
 
     return {
       sessionToken,
       extensionId,
       establishedAt: new Date(nowMs).toISOString(),
+      expiresAt,
     };
   }
 
@@ -159,10 +226,70 @@ export class HandshakeManager {
    */
   cleanupExpiredChallenges(): void {
     const nowMs = this.#now().getTime();
+    let changed = false;
     for (const [nonce, pending] of this.#pendingChallenges) {
       if (pending.expiresAtMs <= nowMs) {
         this.#pendingChallenges.delete(nonce);
+        changed = true;
       }
+    }
+    if (changed) {
+      this.#persistState();
+    }
+  }
+
+  #loadStateFromDisk(): void {
+    if (this.#stateFilePath === undefined) {
+      return;
+    }
+    if (!existsSync(this.#stateFilePath)) {
+      return;
+    }
+
+    try {
+      const raw = readFileSync(this.#stateFilePath, "utf8");
+      const parsed = JSON.parse(raw) as unknown;
+      if (!isRecord(parsed) || parsed["version"] !== 1) {
+        return;
+      }
+      const pendingChallenges = Array.isArray(parsed["pendingChallenges"])
+        ? parsed["pendingChallenges"]
+        : [];
+      for (const entry of pendingChallenges) {
+        if (!isPersistedPendingChallenge(entry)) {
+          continue;
+        }
+        this.#pendingChallenges.set(entry.nonce.toLowerCase(), {
+          expiresAtMs: entry.expiresAtMs,
+        });
+      }
+    } catch {
+      // Fail closed to in-memory handshake state if persisted state is unreadable.
+    }
+  }
+
+  #persistState(): void {
+    if (this.#stateFilePath === undefined) {
+      return;
+    }
+    const state: PersistedHandshakeState = {
+      version: 1,
+      pendingChallenges: [...this.#pendingChallenges.entries()].map(
+        ([nonce, pending]) => ({
+          nonce,
+          expiresAtMs: pending.expiresAtMs,
+        }),
+      ),
+    };
+
+    try {
+      const directoryPath = dirname(this.#stateFilePath);
+      mkdirSync(directoryPath, { recursive: true });
+      const tempPath = `${this.#stateFilePath}.tmp`;
+      writeFileSync(tempPath, JSON.stringify(state), { encoding: "utf8" });
+      renameSync(tempPath, this.#stateFilePath);
+    } catch {
+      // Persist failure should not break live handshake flow.
     }
   }
 }

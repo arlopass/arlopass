@@ -3,6 +3,7 @@ export const CAPABILITY_CATALOG = [
   "session.create",
   "chat.completions",
   "chat.stream",
+  "usage.query",
 ] as const;
 
 export type ProtocolCapability = (typeof CAPABILITY_CATALOG)[number];

@@ -1,8 +1,12 @@
 import { createHmac } from "node:crypto";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
   HandshakeError,
+  HANDSHAKE_DEFAULT_SESSION_TTL_MS,
   HandshakeManager,
 } from "../session/handshake.js";
 
@@ -18,6 +22,7 @@ function makeManager(
   opts: {
     nowMs?: number;
     challengeTtlMs?: number;
+    sessionTtlMs?: number;
     nonceBytes?: Buffer;
     sessionBytes?: Buffer;
   } = {},
@@ -40,6 +45,7 @@ function makeManager(
     ...(opts.challengeTtlMs !== undefined
       ? { challengeTtlMs: opts.challengeTtlMs }
       : {}),
+    ...(opts.sessionTtlMs !== undefined ? { sessionTtlMs: opts.sessionTtlMs } : {}),
   });
 
   return { manager, now };
@@ -79,7 +85,10 @@ describe("HandshakeManager.createChallenge", () => {
 
 describe("HandshakeManager.verifyResponse", () => {
   it("returns a session on valid HMAC", () => {
-    const { manager, now } = makeManager({ nowMs: 1_000_000 });
+    const { manager, now } = makeManager({
+      nowMs: 1_000_000,
+      sessionTtlMs: 90_000,
+    });
     const challenge = manager.createChallenge();
     const hmac = computeExpectedHmac(challenge.nonce, SECRET);
 
@@ -91,8 +100,24 @@ describe("HandshakeManager.verifyResponse", () => {
     expect(session.extensionId).toBe(EXTENSION_ID);
     expect(session.sessionToken).toBe(Buffer.alloc(32, 0xbb).toString("hex"));
     expect(session.establishedAt).toBe(new Date(1_000_000).toISOString());
+    expect(session.expiresAt).toBe(new Date(1_000_000 + 90_000).toISOString());
 
     void now;
+  });
+
+  it("defaults session expiry to the handshake session TTL", () => {
+    const { manager } = makeManager({ nowMs: 2_000_000 });
+    const challenge = manager.createChallenge();
+    const hmac = computeExpectedHmac(challenge.nonce, SECRET);
+
+    const session = manager.verifyResponse(
+      { nonce: challenge.nonce, hmac, extensionId: EXTENSION_ID },
+      SECRET,
+    );
+
+    expect(session.expiresAt).toBe(
+      new Date(2_000_000 + HANDSHAKE_DEFAULT_SESSION_TTL_MS).toISOString(),
+    );
   });
 
   it("rejects a response with a wrong HMAC (constant-time path)", () => {
@@ -212,5 +237,38 @@ describe("HandshakeManager.cleanupExpiredChallenges", () => {
         SECRET,
       ),
     ).toThrow(HandshakeError);
+  });
+});
+
+describe("HandshakeManager persisted state", () => {
+  it("allows challenge verify across manager instances when state persistence is enabled", () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), "byom-handshake-"));
+    const stateFilePath = join(tempRoot, "handshake-state.json");
+
+    try {
+      const nowMs = 3_000_000;
+      const managerOne = new HandshakeManager({
+        now: () => new Date(nowMs),
+        generateBytes: (length) => Buffer.alloc(length, 0xaa),
+        stateFilePath,
+      });
+      const challenge = managerOne.createChallenge();
+
+      const managerTwo = new HandshakeManager({
+        now: () => new Date(nowMs),
+        generateBytes: (length) => Buffer.alloc(length, 0xbb),
+        stateFilePath,
+      });
+      const hmac = computeExpectedHmac(challenge.nonce, SECRET);
+      const session = managerTwo.verifyResponse(
+        { nonce: challenge.nonce, hmac, extensionId: EXTENSION_ID },
+        SECRET,
+      );
+
+      expect(session.sessionToken).toBe(Buffer.alloc(32, 0xbb).toString("hex"));
+      expect(session.extensionId).toBe(EXTENSION_ID);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 });

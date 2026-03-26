@@ -1,5 +1,6 @@
 import {
   EnvelopeValidationError,
+  ProtocolError,
   PROTOCOL_MACHINE_CODES,
   ProviderUnavailableError,
   TimeoutError,
@@ -20,17 +21,33 @@ import type {
   SelectProviderPayload,
   SelectProviderResponsePayload,
 } from "@byom-ai/web-sdk";
+import { ensureBridgeHandshakeSession } from "./bridge-handshake.js";
+import {
+  BRIDGE_PAIRING_STATE_STORAGE_KEY,
+  parseBridgePairingState,
+  unwrapPairingKeyMaterial,
+} from "./bridge-pairing.js";
+import {
+  runCloudBridgeCompletion,
+  runCloudBridgeCompletionStream,
+} from "./cloud-native.js";
+import type { UsageReport } from "../usage/token-usage-types.js";
+import { estimateUsageReport } from "../usage/token-estimation.js";
+import { TokenUsageService } from "../usage/token-usage-service.js";
 
 const WALLET_KEY_PROVIDERS = "byom.wallet.providers.v1";
 const WALLET_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
+const WALLET_KEY_BRIDGE_SHARED_SECRET = "byom.wallet.bridgeSharedSecret.v1";
 const RESPONSE_TTL_MS = 60_000;
-const STREAM_CHUNK_SIZE = 96;
+const TRANSPORT_STREAM_CHANNEL = "byom.transport.stream";
+const TRANSPORT_STREAM_PORT_NAME = "byom.transport.stream.v1";
 
 const DEFAULT_CAPABILITIES = [
   "provider.list",
   "session.create",
   "chat.completions",
   "chat.stream",
+  "usage.query",
 ] as const;
 
 type StoredProviderModel = Readonly<{
@@ -38,7 +55,14 @@ type StoredProviderModel = Readonly<{
   name: string;
 }>;
 
-type StoredProviderStatus = "connected" | "disconnected" | "attention";
+type StoredProviderStatus =
+  | "connected"
+  | "disconnected"
+  | "attention"
+  | "reconnecting"
+  | "failed"
+  | "revoked"
+  | "degraded";
 
 type StoredProvider = Readonly<{
   id: string;
@@ -52,9 +76,9 @@ type StoredProvider = Readonly<{
 
 type StoredActiveProvider =
   | Readonly<{
-      providerId: string;
-      modelId?: string;
-    }>
+    providerId: string;
+    modelId?: string;
+  }>
   | null;
 
 type WalletSnapshot = Readonly<{
@@ -94,14 +118,34 @@ export type TransportErrorPayload = Readonly<{
 
 export type TransportActionResponse =
   | Readonly<{
-      ok: true;
-      envelope?: CanonicalEnvelope<unknown>;
-      envelopes?: readonly CanonicalEnvelope<unknown>[];
-    }>
+    ok: true;
+    envelope?: CanonicalEnvelope<unknown>;
+    envelopes?: readonly CanonicalEnvelope<unknown>[];
+  }>
   | Readonly<{
-      ok: false;
-      error: TransportErrorPayload;
-    }>;
+    ok: false;
+    error: TransportErrorPayload;
+  }>;
+
+type SupportedStreamPortAction = "start" | "cancel";
+
+type TransportStreamPortMessage = Readonly<{
+  channel: typeof TRANSPORT_STREAM_CHANNEL;
+  action: SupportedStreamPortAction;
+  requestId: string;
+  request?: Readonly<{
+    envelope: unknown;
+    timeoutMs?: number;
+  }>;
+}>;
+
+type TransportStreamPortEvent = Readonly<{
+  channel: typeof TRANSPORT_STREAM_CHANNEL;
+  requestId: string;
+  event: "start" | "chunk" | "done" | "error" | "cancelled";
+  envelope?: CanonicalEnvelope<ChatStreamResponsePayload>;
+  error?: TransportErrorPayload;
+}>;
 
 type RuntimeDependencies = Readonly<{
   now?: () => Date;
@@ -110,6 +154,25 @@ type RuntimeDependencies = Readonly<{
     hostName: string,
     message: Record<string, unknown>,
   ) => Promise<unknown>;
+  resolveBridgeSharedSecret?: (
+    hostName: string,
+  ) => Promise<string | Uint8Array | undefined | null>;
+  resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
+  extensionId?: string;
+}>;
+
+type ResolvedRuntimeDependencies = Readonly<{
+  now: () => Date;
+  fetchImpl: typeof fetch;
+  sendNativeMessage: (
+    hostName: string,
+    message: Record<string, unknown>,
+  ) => Promise<unknown>;
+  resolveBridgeSharedSecret?: (
+    hostName: string,
+  ) => Promise<string | Uint8Array | undefined | null>;
+  resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
+  extensionId?: string;
 }>;
 
 type TransportMessageHandlerOptions = Readonly<{
@@ -124,6 +187,16 @@ type CompletionProvider = Readonly<{
   modelId: string;
   metadata: Readonly<Record<string, string>>;
 }>;
+
+type CompletionStreamResult = {
+  stream: AsyncIterable<string>;
+  usage: Promise<UsageReport>;
+};
+
+type CompletionResult = {
+  content: string;
+  usage: UsageReport;
+};
 
 type CliSessionCacheEntry = Readonly<{
   cliSessionId: string;
@@ -143,17 +216,29 @@ function normalizeText(value: string, fallback = ""): string {
   return trimmed.length > 0 ? trimmed : fallback;
 }
 
-function chunkText(value: string, chunkSize: number): readonly string[] {
-  const normalized = value.trim();
-  if (normalized.length <= chunkSize) {
-    return [normalized];
+function createSingleDeltaStream(value: string): AsyncIterable<string> {
+  return (async function* (): AsyncIterable<string> {
+    if (value.length > 0) {
+      yield value;
+    }
+  })();
+}
+
+function readOllamaResponseContent(payload: Record<string, unknown>): string | undefined {
+  const messageRecord = isRecord(payload["message"]) ? payload["message"] : undefined;
+  if (
+    isRecord(messageRecord) &&
+    typeof messageRecord["content"] === "string" &&
+    messageRecord["content"].length > 0
+  ) {
+    return messageRecord["content"];
   }
 
-  const chunks: string[] = [];
-  for (let cursor = 0; cursor < normalized.length; cursor += chunkSize) {
-    chunks.push(normalized.slice(cursor, cursor + chunkSize));
+  if (typeof payload["response"] === "string" && payload["response"].length > 0) {
+    return payload["response"];
   }
-  return chunks;
+
+  return undefined;
 }
 
 function createCliSessionCacheKey(options: {
@@ -198,7 +283,11 @@ function parseStoredProvider(value: unknown): StoredProvider | null {
       value["type"] !== "cli") ||
     (value["status"] !== "connected" &&
       value["status"] !== "disconnected" &&
-      value["status"] !== "attention")
+      value["status"] !== "attention" &&
+      value["status"] !== "reconnecting" &&
+      value["status"] !== "failed" &&
+      value["status"] !== "revoked" &&
+      value["status"] !== "degraded")
   ) {
     return null;
   }
@@ -221,10 +310,10 @@ function parseStoredProvider(value: unknown): StoredProvider | null {
   const metadata =
     isRecord(value["metadata"])
       ? Object.fromEntries(
-          Object.entries(value["metadata"]).filter(
-            (entry): entry is [string, string] => typeof entry[1] === "string",
-          ),
-        )
+        Object.entries(value["metadata"]).filter(
+          (entry): entry is [string, string] => typeof entry[1] === "string",
+        ),
+      )
       : {};
 
   return {
@@ -258,8 +347,8 @@ async function readWalletSnapshot(
   const providersRaw = rawState[WALLET_KEY_PROVIDERS];
   const providers = Array.isArray(providersRaw)
     ? providersRaw
-        .map((value) => parseStoredProvider(value))
-        .filter((value): value is StoredProvider => value !== null)
+      .map((value) => parseStoredProvider(value))
+      .filter((value): value is StoredProvider => value !== null)
     : [];
 
   const activeProvider = parseActiveProvider(rawState[WALLET_KEY_ACTIVE]);
@@ -439,10 +528,28 @@ function resolveProviderSelection(
     });
   }
 
-  if (provider.status === "disconnected") {
-    throw new ProviderUnavailableError(`Provider "${provider.name}" is disconnected.`, {
+  if (
+    provider.status === "disconnected" ||
+    provider.status === "failed" ||
+    provider.status === "revoked" ||
+    provider.status === "reconnecting"
+  ) {
+    throw new ProviderUnavailableError(`Provider "${provider.name}" is ${provider.status}.`, {
       details: { providerId: provider.id },
     });
+  }
+
+  if (provider.type === "cloud" && provider.status === "attention") {
+    throw new ProviderUnavailableError(
+      `Provider "${provider.name}" is in validation-only mode. Enable cloud bridge execution, re-test the provider connection, and save again before sending chat messages.`,
+      {
+        details: {
+          providerId: provider.id,
+          status: provider.status,
+          providerType: provider.type,
+        },
+      },
+    );
   }
 
   const modelExists = provider.models.some((model) => model.id === modelId);
@@ -494,7 +601,14 @@ function toProviderDescriptors(
   providers: readonly StoredProvider[],
 ): readonly ProviderDescriptor[] {
   return providers
-    .filter((provider) => provider.status !== "disconnected")
+    .filter(
+      (provider) =>
+        provider.status !== "disconnected" &&
+        provider.status !== "failed" &&
+        provider.status !== "revoked" &&
+        provider.status !== "reconnecting" &&
+        !(provider.type === "cloud" && provider.status === "attention"),
+    )
     .map((provider) => ({
       providerId: provider.id,
       providerName: provider.name,
@@ -531,7 +645,7 @@ async function runOllamaCompletion(options: {
   messages: readonly ChatMessage[];
   timeoutMs: number;
   fetchImpl: typeof fetch;
-}): Promise<string> {
+}): Promise<CompletionResult> {
   const baseUrlCandidates = buildOllamaBaseUrlCandidates(
     normalizeText(options.provider.metadata["baseUrl"] ?? "http://localhost:11434"),
   );
@@ -558,7 +672,7 @@ async function runOllamaCompletion(options: {
       });
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        throw new TransientNetworkError(
+        throw new TimeoutError(
           `Ollama request timed out after ${String(effectiveTimeoutMs)}ms.`,
         );
       }
@@ -650,17 +764,7 @@ async function runOllamaCompletion(options: {
       });
     }
 
-    const messageRecord = isRecord(payload["message"]) ? payload["message"] : undefined;
-    const messageContent =
-      typeof messageRecord?.["content"] === "string"
-        ? messageRecord["content"].trim()
-        : undefined;
-    const fallbackResponse =
-      typeof payload["response"] === "string" ? payload["response"].trim() : undefined;
-    const content =
-      (messageContent !== undefined && messageContent.length > 0
-        ? messageContent
-        : fallbackResponse) ?? "";
+    const content = readOllamaResponseContent(payload)?.trim() ?? "";
 
     if (content.length === 0) {
       throw new ProviderUnavailableError(
@@ -674,7 +778,13 @@ async function runOllamaCompletion(options: {
       );
     }
 
-    return content;
+    const promptEval = typeof payload["prompt_eval_count"] === "number" ? payload["prompt_eval_count"] : undefined;
+    const evalCount = typeof payload["eval_count"] === "number" ? payload["eval_count"] : undefined;
+    const usage: UsageReport =
+      promptEval !== undefined && evalCount !== undefined
+        ? { inputTokens: promptEval, outputTokens: evalCount, source: "reported" }
+        : estimateUsageReport(options.messages, content);
+    return { content, usage };
   }
 
   const summarizedAttempts = networkErrors
@@ -692,6 +802,460 @@ async function runOllamaCompletion(options: {
       },
     },
   );
+}
+
+async function runOllamaCompletionStream(options: {
+  provider: CompletionProvider;
+  messages: readonly ChatMessage[];
+  timeoutMs: number;
+  fetchImpl: typeof fetch;
+  signal?: AbortSignal;
+}): Promise<CompletionStreamResult> {
+  const baseUrlCandidates = buildOllamaBaseUrlCandidates(
+    normalizeText(options.provider.metadata["baseUrl"] ?? "http://localhost:11434"),
+  );
+  const networkErrors: string[] = [];
+  const effectiveTimeoutMs = Math.max(options.timeoutMs, 15_000);
+
+  const runRequest = async (
+    url: string,
+    body: Record<string, unknown>,
+  ): Promise<Response> => {
+    throwIfAborted(options.signal);
+    const controller = new AbortController();
+    let timedOut = false;
+    const abortFromSignal = () => {
+      controller.abort();
+    };
+    if (options.signal !== undefined) {
+      options.signal.addEventListener("abort", abortFromSignal, { once: true });
+    }
+    const timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, effectiveTimeoutMs);
+
+    try {
+      return await options.fetchImpl(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        if (options.signal?.aborted === true && !timedOut) {
+          throw createTransportCancelledError();
+        }
+        throw new TimeoutError(
+          `Ollama request timed out after ${String(effectiveTimeoutMs)}ms.`,
+        );
+      }
+
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new TransientNetworkError(
+        `Unable to reach Ollama runtime at ${url}: ${errorMessage}`,
+        {
+          details: {
+            providerId: options.provider.providerId,
+            endpoint: url,
+          },
+          ...(error instanceof Error ? { cause: error } : {}),
+        },
+      );
+    } finally {
+      clearTimeout(timeoutHandle);
+      if (options.signal !== undefined) {
+        options.signal.removeEventListener("abort", abortFromSignal);
+      }
+    }
+  };
+
+  for (const baseUrl of baseUrlCandidates) {
+    let response: Response;
+    try {
+      response = await runRequest(`${baseUrl}/api/chat`, {
+        model: options.provider.modelId,
+        stream: true,
+        messages: options.messages.map((message) => ({
+          role: message.role,
+          content: message.content,
+        })),
+      });
+    } catch (error) {
+      if (error instanceof TransientNetworkError) {
+        networkErrors.push(error.message);
+        continue;
+      }
+      throw error;
+    }
+
+    if (response.status === 404) {
+      try {
+        response = await runRequest(`${baseUrl}/api/generate`, {
+          model: options.provider.modelId,
+          stream: true,
+          prompt: buildGeneratePrompt(options.messages),
+        });
+      } catch (error) {
+        if (error instanceof TransientNetworkError) {
+          networkErrors.push(error.message);
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (!response.ok) {
+      throw new ProviderUnavailableError(
+        `Ollama responded with HTTP ${String(response.status)}.`,
+        {
+          details: {
+            providerId: options.provider.providerId,
+            status: response.status,
+            endpoint: baseUrl,
+          },
+        },
+      );
+    }
+
+    const responseBody = response.body;
+    if (responseBody === null) {
+      const fallback = await runOllamaCompletion({
+        provider: options.provider,
+        messages: options.messages,
+        timeoutMs: options.timeoutMs,
+        fetchImpl: options.fetchImpl,
+      });
+      return { stream: createSingleDeltaStream(fallback.content), usage: Promise.resolve(fallback.usage) };
+    }
+
+    let resolveUsage!: (report: UsageReport) => void;
+    const usagePromise = new Promise<UsageReport>((resolve) => { resolveUsage = resolve; });
+
+    const stream = async function* (): AsyncIterable<string> {
+      const reader = responseBody.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let hasContent = false;
+      let doneSignalSeen = false;
+      let fullContent = "";
+      let usageResolved = false;
+
+      const processLine = (
+        line: string,
+      ): Readonly<{ delta?: string; done: boolean; usage?: UsageReport }> => {
+        const trimmed = line.trim();
+        if (trimmed.length === 0) {
+          return { done: false };
+        }
+
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(trimmed);
+        } catch (error) {
+          throw new ProviderUnavailableError(
+            "Ollama streaming response contained invalid JSON.",
+            {
+              details: {
+                providerId: options.provider.providerId,
+                endpoint: baseUrl,
+              },
+              ...(error instanceof Error ? { cause: error } : {}),
+            },
+          );
+        }
+
+        if (!isRecord(parsed)) {
+          return { done: false };
+        }
+
+        const delta = readOllamaResponseContent(parsed);
+        const isDone = parsed["done"] === true;
+        let lineUsage: UsageReport | undefined;
+        if (isDone) {
+          const promptEval = typeof parsed["prompt_eval_count"] === "number" ? parsed["prompt_eval_count"] : undefined;
+          const evalCount = typeof parsed["eval_count"] === "number" ? parsed["eval_count"] : undefined;
+          if (promptEval !== undefined && evalCount !== undefined) {
+            lineUsage = { inputTokens: promptEval, outputTokens: evalCount, source: "reported" };
+          }
+        }
+        return {
+          ...(delta !== undefined ? { delta } : {}),
+          done: isDone,
+          ...(lineUsage !== undefined ? { usage: lineUsage } : {}),
+        };
+      };
+
+      try {
+        while (!doneSignalSeen) {
+          throwIfAborted(options.signal);
+          const next = await reader.read();
+          if (next.done) {
+            break;
+          }
+
+          buffer += decoder.decode(next.value, { stream: true });
+          let newlineIndex = buffer.indexOf("\n");
+          while (newlineIndex >= 0) {
+            throwIfAborted(options.signal);
+            const line = buffer.slice(0, newlineIndex);
+            buffer = buffer.slice(newlineIndex + 1);
+            const parsed = processLine(line);
+            if (parsed.delta !== undefined && parsed.delta.length > 0) {
+              hasContent = true;
+              fullContent += parsed.delta;
+              yield parsed.delta;
+            }
+            if (parsed.done) {
+              if (parsed.usage !== undefined) {
+                usageResolved = true;
+                resolveUsage(parsed.usage);
+              }
+              doneSignalSeen = true;
+              break;
+            }
+            newlineIndex = buffer.indexOf("\n");
+          }
+        }
+
+        buffer += decoder.decode();
+        if (!doneSignalSeen && buffer.trim().length > 0) {
+          throwIfAborted(options.signal);
+          const parsed = processLine(buffer);
+          if (parsed.delta !== undefined && parsed.delta.length > 0) {
+            hasContent = true;
+            fullContent += parsed.delta;
+            yield parsed.delta;
+          }
+          if (parsed.done && parsed.usage !== undefined && !usageResolved) {
+            usageResolved = true;
+            resolveUsage(parsed.usage);
+          }
+          doneSignalSeen = parsed.done;
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          throw createTransportCancelledError();
+        }
+        throw error;
+      } finally {
+        reader.releaseLock();
+      }
+
+      if (!usageResolved) {
+        resolveUsage(estimateUsageReport(options.messages, fullContent));
+      }
+
+      if (!hasContent) {
+        throw new ProviderUnavailableError(
+          "Ollama stream did not include assistant content.",
+          {
+            details: {
+              providerId: options.provider.providerId,
+              endpoint: baseUrl,
+            },
+          },
+        );
+      }
+    };
+
+    return { stream: stream(), usage: usagePromise };
+  }
+
+  const summarizedAttempts = networkErrors
+    .slice(0, 3)
+    .map((item) => item.slice(0, 200))
+    .join(" | ");
+  throw new TransientNetworkError(
+    summarizedAttempts.length > 0
+      ? `Unable to reach Ollama runtime at configured endpoint(s): ${summarizedAttempts}`
+      : "Unable to reach Ollama runtime at configured endpoint(s).",
+    {
+      details: {
+        providerId: options.provider.providerId,
+        attempts: networkErrors.join(" | ").slice(0, 1_000),
+      },
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Persistent native messaging port (connectNative)
+// ---------------------------------------------------------------------------
+
+type PendingBridgeRequest = {
+  resolve: (response: unknown) => void;
+  reject: (error: Error) => void;
+  onChunk?: (chunk: string) => void;
+};
+
+/**
+ * Manages a persistent `connectNative` port to the bridge process.
+ * All messages are tagged with `_bridgeRequestId` and the bridge echoes
+ * the tag in every response (including intermediate stream chunks).
+ * This avoids spawning a new bridge process for each `sendNativeMessage`
+ * call and enables real-time streaming through the same pipe.
+ */
+class PersistentBridgePort {
+  #port: chrome.runtime.Port | null = null;
+  #pending = new Map<string, PendingBridgeRequest>();
+  #nextId = 0;
+  #hostName: string;
+
+  constructor(hostName: string) {
+    this.#hostName = hostName;
+  }
+
+  #ensurePort(): chrome.runtime.Port {
+    if (this.#port !== null) {
+      return this.#port;
+    }
+    const port = chrome.runtime.connectNative(this.#hostName);
+    port.onMessage.addListener((msg: unknown) => this.#onMessage(msg));
+    port.onDisconnect.addListener(() => this.#onDisconnect());
+    this.#port = port;
+    return port;
+  }
+
+  #onMessage(response: unknown): void {
+    if (!isRecord(response)) {
+      return;
+    }
+    const requestId = response["_bridgeRequestId"];
+    if (typeof requestId !== "string") {
+      return;
+    }
+
+    const pending = this.#pending.get(requestId);
+    if (pending === undefined) {
+      return;
+    }
+
+    // Intermediate streaming chunk — forward and keep waiting.
+    if (
+      response["type"] === "cloud.chat.stream.chunk" ||
+      response["type"] === "cli.chat.stream.chunk"
+    ) {
+      if (pending.onChunk !== undefined) {
+        const delta =
+          typeof response["delta"] === "string" ? response["delta"] : "";
+        if (delta.length > 0) {
+          pending.onChunk(delta);
+        }
+      }
+      return;
+    }
+
+    // Terminal response — resolve the pending request.
+    this.#pending.delete(requestId);
+    // Strip internal tag before returning to caller.
+    const { _bridgeRequestId: _, ...cleanResponse } = response;
+    pending.resolve(cleanResponse);
+  }
+
+  #onDisconnect(): void {
+    const error = new ProviderUnavailableError(
+      "Native bridge port disconnected.",
+      { details: { hostName: this.#hostName } },
+    );
+    this.#port = null;
+    for (const [, pending] of this.#pending) {
+      pending.reject(error);
+    }
+    this.#pending.clear();
+  }
+
+  /** Send a one-shot request-response message. */
+  send(message: Record<string, unknown>): Promise<unknown> {
+    const port = this.#ensurePort();
+    const requestId = `_brq.${String(++this.#nextId)}.${Date.now().toString(36)}`;
+    return new Promise<unknown>((resolve, reject) => {
+      this.#pending.set(requestId, { resolve, reject });
+      try {
+        port.postMessage({ ...message, _bridgeRequestId: requestId });
+      } catch (error) {
+        this.#pending.delete(requestId);
+        reject(
+          new ProviderUnavailableError("Failed to send message to native bridge.", {
+            ...(error instanceof Error ? { cause: error } : {}),
+            details: { hostName: this.#hostName },
+          }),
+        );
+      }
+    });
+  }
+
+  /**
+   * Send a request that may produce intermediate stream chunks before the
+   * terminal response.  Each chunk is forwarded to `onChunk`.
+   */
+  sendWithChunks(
+    message: Record<string, unknown>,
+    onChunk: (chunk: string) => void,
+  ): Promise<unknown> {
+    const port = this.#ensurePort();
+    const requestId = `_brq.${String(++this.#nextId)}.${Date.now().toString(36)}`;
+    return new Promise<unknown>((resolve, reject) => {
+      this.#pending.set(requestId, { resolve, reject, onChunk });
+      try {
+        port.postMessage({ ...message, _bridgeRequestId: requestId });
+      } catch (error) {
+        this.#pending.delete(requestId);
+        reject(
+          new ProviderUnavailableError(
+            "Failed to send streaming message to native bridge.",
+            {
+              ...(error instanceof Error ? { cause: error } : {}),
+              details: { hostName: this.#hostName },
+            },
+          ),
+        );
+      }
+    });
+  }
+
+  dispose(): void {
+    if (this.#port !== null) {
+      try {
+        this.#port.disconnect();
+      } catch {
+        // best effort
+      }
+      this.#port = null;
+    }
+    for (const [, pending] of this.#pending) {
+      pending.reject(
+        new ProviderUnavailableError("Bridge port disposed.", {
+          details: { hostName: this.#hostName },
+        }),
+      );
+    }
+    this.#pending.clear();
+  }
+}
+
+const BRIDGE_PORT_SINGLETON_KEY = "__byom.bridge.persistent_port.v1";
+const DEFAULT_BRIDGE_HOST_NAME = "com.byom.bridge";
+
+function getSharedBridgePort(): PersistentBridgePort | undefined {
+  if (
+    typeof chrome === "undefined" ||
+    typeof chrome.runtime?.connectNative !== "function"
+  ) {
+    return undefined;
+  }
+  const globalState = globalThis as Record<string, unknown>;
+  let port = globalState[BRIDGE_PORT_SINGLETON_KEY] as
+    | PersistentBridgePort
+    | undefined;
+  if (port === undefined) {
+    port = new PersistentBridgePort(DEFAULT_BRIDGE_HOST_NAME);
+    globalState[BRIDGE_PORT_SINGLETON_KEY] = port;
+  }
+  return port;
 }
 
 function createDefaultNativeMessenger(): (
@@ -746,6 +1310,14 @@ async function runCliBridgeCompletion(options: {
   timeoutMs: number;
   correlationId: string;
   sessionId?: string;
+  bridgeHandshake?: Readonly<{
+    extensionId: string;
+    resolveBridgeSharedSecret: (
+      hostName: string,
+    ) => Promise<string | Uint8Array | undefined | null>;
+    resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
+    now: () => Date;
+  }>;
   sendNativeMessage: (
     hostName: string,
     message: Record<string, unknown>,
@@ -769,15 +1341,28 @@ async function runCliBridgeCompletion(options: {
     });
   }
 
+  if (options.bridgeHandshake !== undefined) {
+    await ensureBridgeHandshakeSession({
+      hostName,
+      extensionId: options.bridgeHandshake.extensionId,
+      sendNativeMessage: options.sendNativeMessage,
+      resolveBridgeSharedSecret: options.bridgeHandshake.resolveBridgeSharedSecret,
+      ...(options.bridgeHandshake.resolveBridgePairingHandle !== undefined
+        ? { resolveBridgePairingHandle: options.bridgeHandshake.resolveBridgePairingHandle }
+        : {}),
+      now: options.bridgeHandshake.now,
+    });
+  }
+
   const sessionId = normalizeText(options.sessionId ?? "", "");
   const cacheKey =
     sessionId.length > 0
       ? createCliSessionCacheKey({
-          hostName,
-          providerId: options.provider.providerId,
-          modelId: options.provider.modelId,
-          sessionId,
-        })
+        hostName,
+        providerId: options.provider.providerId,
+        modelId: options.provider.modelId,
+        sessionId,
+      })
       : undefined;
   const nowMs = Date.now();
   const cachedSession =
@@ -839,6 +1424,15 @@ async function runCliBridgeCompletion(options: {
     };
     if (reasonCode === "transport.timeout") {
       throw new TimeoutError(message, { details });
+    }
+
+    if (reasonCode === "transport.cancelled") {
+      throw new ProtocolError(message, {
+        machineCode: PROTOCOL_MACHINE_CODES.TRANSIENT_NETWORK,
+        reasonCode: "transport.cancelled",
+        retryable: true,
+        details,
+      });
     }
 
     if (reasonCode === "request.invalid") {
@@ -925,18 +1519,237 @@ async function runCliBridgeCompletion(options: {
   return content;
 }
 
-async function resolveCompletion(options: {
+async function runCliBridgeCompletionStream(options: {
   provider: CompletionProvider;
   messages: readonly ChatMessage[];
   timeoutMs: number;
   correlationId: string;
   sessionId?: string;
-  fetchImpl: typeof fetch;
+  bridgeHandshake?: Readonly<{
+    extensionId: string;
+    resolveBridgeSharedSecret: (
+      hostName: string,
+    ) => Promise<string | Uint8Array | undefined | null>;
+    resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
+    now: () => Date;
+  }>;
   sendNativeMessage: (
     hostName: string,
     message: Record<string, unknown>,
   ) => Promise<unknown>;
-}): Promise<string> {
+  sendPortMessage?: (message: Record<string, unknown>) => Promise<unknown>;
+  sendStreamingMessage?: (
+    message: Record<string, unknown>,
+    onChunk: (chunk: string) => void,
+  ) => Promise<unknown>;
+}): Promise<AsyncIterable<string>> {
+  const bridgePort = options.sendStreamingMessage;
+  if (bridgePort === undefined) {
+    const completion = await runCliBridgeCompletion(options);
+    return createSingleDeltaStream(completion);
+  }
+
+  // With a persistent bridge port, perform handshake and then send a
+  // streaming CLI request. Intermediate chunks arrive via onChunk.
+  const hostName = normalizeText(
+    options.provider.metadata["nativeHostName"] ?? "com.byom.bridge",
+    "com.byom.bridge",
+  );
+  const cliType = normalizeText(
+    options.provider.metadata["cliType"] ?? "copilot-cli",
+    "copilot-cli",
+  );
+  const thinkingLevel = normalizeText(
+    options.provider.metadata["thinkingLevel"] ?? "",
+    "",
+  );
+
+  // When a persistent port is available, route handshake through it so the
+  // session lives in the same bridge process as the streaming call.
+  const portMessenger: typeof options.sendNativeMessage =
+    options.sendPortMessage !== undefined
+      ? async (_hostName, message) => options.sendPortMessage!(message)
+      : options.sendNativeMessage;
+
+  if (options.bridgeHandshake !== undefined) {
+    await ensureBridgeHandshakeSession({
+      hostName,
+      extensionId: options.bridgeHandshake.extensionId,
+      sendNativeMessage: portMessenger,
+      resolveBridgeSharedSecret: options.bridgeHandshake.resolveBridgeSharedSecret,
+      ...(options.bridgeHandshake.resolveBridgePairingHandle !== undefined
+        ? { resolveBridgePairingHandle: options.bridgeHandshake.resolveBridgePairingHandle }
+        : {}),
+      now: options.bridgeHandshake.now,
+    });
+  }
+
+  const sessionId = normalizeText(options.sessionId ?? "", "");
+  const cacheKey =
+    sessionId.length > 0
+      ? createCliSessionCacheKey({
+        hostName,
+        providerId: options.provider.providerId,
+        modelId: options.provider.modelId,
+        sessionId,
+      })
+      : undefined;
+  const nowMs = Date.now();
+  const cachedSession =
+    cacheKey !== undefined ? cliSessionCache.get(cacheKey) : undefined;
+  const resumeSessionId =
+    cachedSession !== undefined && cachedSession.expiresAtMs > nowMs
+      ? cachedSession.cliSessionId
+      : undefined;
+  if (
+    cacheKey !== undefined &&
+    cachedSession !== undefined &&
+    cachedSession.expiresAtMs <= nowMs
+  ) {
+    cliSessionCache.delete(cacheKey);
+  }
+
+  return (async function* (): AsyncIterable<string> {
+    const queue: string[] = [];
+    const waiters: Array<(value: string | null) => void> = [];
+    let streamDone = false;
+
+    const onChunk = (delta: string): void => {
+      const waiter = waiters.shift();
+      if (waiter !== undefined) {
+        waiter(delta);
+        return;
+      }
+      queue.push(delta);
+    };
+
+    const streamPromise = bridgePort(
+      {
+        type: "cli.chat.execute",
+        correlationId: options.correlationId,
+        ...(sessionId.length > 0 ? { sessionId } : {}),
+        ...(resumeSessionId !== undefined ? { resumeSessionId } : {}),
+        providerId: options.provider.providerId,
+        modelId: options.provider.modelId,
+        cliType,
+        ...(thinkingLevel.length > 0 ? { thinkingLevel } : {}),
+        messages: options.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        timeoutMs: options.timeoutMs,
+        streamRequested: true,
+      },
+      onChunk,
+    )
+      .then((response) => {
+        streamDone = true;
+        const waiter = waiters.shift();
+        if (waiter !== undefined) {
+          waiter(null);
+        }
+
+        // Cache CLI session ID for continuations.
+        if (isRecord(response) && response["type"] === "cli.chat.result") {
+          const cliSessionId =
+            typeof response["cliSessionId"] === "string"
+              ? response["cliSessionId"]
+              : undefined;
+          if (cacheKey !== undefined && cliSessionId !== undefined) {
+            cliSessionCache.set(cacheKey, {
+              cliSessionId,
+              expiresAtMs: Date.now() + CLI_SESSION_CACHE_TTL_MS,
+            });
+            while (cliSessionCache.size > MAX_CLI_SESSION_CACHE_ENTRIES) {
+              const oldest = cliSessionCache.keys().next().value as string | undefined;
+              if (oldest === undefined) {
+                break;
+              }
+              cliSessionCache.delete(oldest);
+            }
+          }
+        }
+      })
+      .catch((error: unknown) => {
+        streamDone = true;
+        const waiter = waiters.shift();
+        if (waiter !== undefined) {
+          waiter(null);
+        }
+        throw error;
+      });
+
+    while (!streamDone || queue.length > 0) {
+      if (queue.length > 0) {
+        yield queue.shift() as string;
+        continue;
+      }
+      if (streamDone) {
+        break;
+      }
+      const next = await new Promise<string | null>((resolve) => {
+        waiters.push(resolve);
+      });
+      if (next === null) {
+        break;
+      }
+      yield next;
+    }
+
+    await streamPromise;
+  })();
+}
+
+async function withAbortSignal<T>(
+  operation: Promise<T>,
+  signal: AbortSignal | undefined,
+): Promise<T> {
+  if (signal === undefined) {
+    return operation;
+  }
+
+  if (signal.aborted) {
+    throw createTransportCancelledError();
+  }
+
+  let abortHandler: (() => void) | undefined;
+  const abortPromise = new Promise<T>((_resolve, reject) => {
+    abortHandler = () => {
+      reject(createTransportCancelledError());
+    };
+    signal.addEventListener("abort", abortHandler, { once: true });
+  });
+
+  try {
+    return await Promise.race([operation, abortPromise]);
+  } finally {
+    if (abortHandler !== undefined) {
+      signal.removeEventListener("abort", abortHandler);
+    }
+  }
+}
+
+async function resolveCompletion(options: {
+  provider: CompletionProvider;
+  messages: readonly ChatMessage[];
+  timeoutMs: number;
+  correlationId: string;
+  requestId: string;
+  nonce: string;
+  origin: string;
+  sessionId?: string;
+  fetchImpl: typeof fetch;
+  now: () => Date;
+  extensionId?: string;
+  resolveBridgeSharedSecret?: (
+    hostName: string,
+  ) => Promise<string | Uint8Array | undefined | null>;
+  resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
+  sendNativeMessage: (
+    hostName: string,
+    message: Record<string, unknown>,
+  ) => Promise<unknown>;
+}): Promise<CompletionResult> {
   switch (options.provider.providerType) {
     case "local":
       return runOllamaCompletion({
@@ -946,25 +1759,214 @@ async function resolveCompletion(options: {
         fetchImpl: options.fetchImpl,
       });
 
-    case "cloud":
-      throw new ProviderUnavailableError(
-        `Provider "${options.provider.providerName}" requires a secure token broker for runtime chat.`,
-        {
-          details: {
-            providerId: options.provider.providerId,
+    case "cloud": {
+      if (
+        options.extensionId === undefined ||
+        options.resolveBridgeSharedSecret === undefined
+      ) {
+        throw new ProviderUnavailableError(
+          `Provider "${options.provider.providerName}" requires bridge handshake configuration for secure cloud execution.`,
+          {
+            details: {
+              providerId: options.provider.providerId,
+            },
           },
-        },
-      );
+        );
+      }
 
-    case "cli":
-      return runCliBridgeCompletion({
+      const content = await runCloudBridgeCompletion({
+        provider: options.provider,
+        messages: options.messages,
+        correlationId: options.correlationId,
+        timeoutMs: options.timeoutMs,
+        requestId: options.requestId,
+        nonce: options.nonce,
+        origin: options.origin,
+        extensionId: options.extensionId,
+        resolveBridgeSharedSecret: options.resolveBridgeSharedSecret,
+        ...(options.resolveBridgePairingHandle !== undefined
+          ? { resolveBridgePairingHandle: options.resolveBridgePairingHandle }
+          : {}),
+        sendNativeMessage: options.sendNativeMessage,
+        now: options.now,
+      });
+      return { content, usage: estimateUsageReport(options.messages, content) };
+    }
+
+    case "cli": {
+      const content = await runCliBridgeCompletion({
         provider: options.provider,
         messages: options.messages,
         timeoutMs: options.timeoutMs,
         correlationId: options.correlationId,
         ...(options.sessionId !== undefined ? { sessionId: options.sessionId } : {}),
+        ...(options.extensionId !== undefined &&
+          options.resolveBridgeSharedSecret !== undefined
+          ? {
+            bridgeHandshake: {
+              extensionId: options.extensionId,
+              resolveBridgeSharedSecret: options.resolveBridgeSharedSecret,
+              ...(options.resolveBridgePairingHandle !== undefined
+                ? {
+                  resolveBridgePairingHandle:
+                    options.resolveBridgePairingHandle,
+                }
+                : {}),
+              now: options.now,
+            },
+          }
+          : {}),
         sendNativeMessage: options.sendNativeMessage,
       });
+      return { content, usage: estimateUsageReport(options.messages, content) };
+    }
+
+    default:
+      throw new ProviderUnavailableError("Unsupported provider type.", {
+        details: {
+          providerId: options.provider.providerId,
+        },
+      });
+  }
+}
+
+async function resolveCompletionStream(options: {
+  provider: CompletionProvider;
+  messages: readonly ChatMessage[];
+  timeoutMs: number;
+  correlationId: string;
+  requestId: string;
+  nonce: string;
+  origin: string;
+  sessionId?: string;
+  fetchImpl: typeof fetch;
+  now: () => Date;
+  extensionId?: string;
+  resolveBridgeSharedSecret?: (
+    hostName: string,
+  ) => Promise<string | Uint8Array | undefined | null>;
+  resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
+  sendNativeMessage: (
+    hostName: string,
+    message: Record<string, unknown>,
+  ) => Promise<unknown>;
+  signal?: AbortSignal;
+}): Promise<CompletionStreamResult> {
+  switch (options.provider.providerType) {
+    case "local":
+      return runOllamaCompletionStream({
+        provider: options.provider,
+        messages: options.messages,
+        timeoutMs: options.timeoutMs,
+        fetchImpl: options.fetchImpl,
+        ...(options.signal !== undefined ? { signal: options.signal } : {}),
+      });
+
+    case "cloud": {
+      if (
+        options.extensionId === undefined ||
+        options.resolveBridgeSharedSecret === undefined
+      ) {
+        throw new ProviderUnavailableError(
+          `Provider "${options.provider.providerName}" requires bridge handshake configuration for secure cloud execution.`,
+          {
+            details: {
+              providerId: options.provider.providerId,
+            },
+          },
+        );
+      }
+
+      const innerStream = await withAbortSignal(
+        runCloudBridgeCompletionStream({
+          provider: options.provider,
+          messages: options.messages,
+          correlationId: options.correlationId,
+          timeoutMs: options.timeoutMs,
+          requestId: options.requestId,
+          nonce: options.nonce,
+          origin: options.origin,
+          extensionId: options.extensionId,
+          resolveBridgeSharedSecret: options.resolveBridgeSharedSecret,
+          ...(options.resolveBridgePairingHandle !== undefined
+            ? { resolveBridgePairingHandle: options.resolveBridgePairingHandle }
+            : {}),
+          sendNativeMessage: options.sendNativeMessage,
+          ...(() => {
+            const bp = getSharedBridgePort();
+            return bp !== undefined
+              ? {
+                sendPortMessage: (msg: Record<string, unknown>) => bp.send(msg),
+                sendStreamingMessage: (msg: Record<string, unknown>, onChunk: (c: string) => void) => bp.sendWithChunks(msg, onChunk),
+              }
+              : {};
+          })(),
+          now: options.now,
+        }),
+        options.signal,
+      );
+      let fullContent = "";
+      let resolveUsage!: (r: UsageReport) => void;
+      const usagePromise = new Promise<UsageReport>((resolve) => { resolveUsage = resolve; });
+      const wrappedStream = async function* (): AsyncIterable<string> {
+        for await (const delta of innerStream) {
+          fullContent += delta;
+          yield delta;
+        }
+        resolveUsage(estimateUsageReport(options.messages, fullContent));
+      };
+      return { stream: wrappedStream(), usage: usagePromise };
+    }
+
+    case "cli": {
+      const innerStream = await withAbortSignal(
+        runCliBridgeCompletionStream({
+          provider: options.provider,
+          messages: options.messages,
+          timeoutMs: options.timeoutMs,
+          correlationId: options.correlationId,
+          ...(options.sessionId !== undefined ? { sessionId: options.sessionId } : {}),
+          ...(options.extensionId !== undefined &&
+            options.resolveBridgeSharedSecret !== undefined
+            ? {
+              bridgeHandshake: {
+                extensionId: options.extensionId,
+                resolveBridgeSharedSecret: options.resolveBridgeSharedSecret,
+                ...(options.resolveBridgePairingHandle !== undefined
+                  ? {
+                    resolveBridgePairingHandle:
+                      options.resolveBridgePairingHandle,
+                  }
+                  : {}),
+                now: options.now,
+              },
+            }
+            : {}),
+          sendNativeMessage: options.sendNativeMessage,
+          ...(() => {
+            const bp = getSharedBridgePort();
+            return bp !== undefined
+              ? {
+                sendPortMessage: (msg: Record<string, unknown>) => bp.send(msg),
+                sendStreamingMessage: (msg: Record<string, unknown>, onChunk: (c: string) => void) => bp.sendWithChunks(msg, onChunk),
+              }
+              : {};
+          })(),
+        }),
+        options.signal,
+      );
+      let fullContent = "";
+      let resolveUsage!: (r: UsageReport) => void;
+      const usagePromise = new Promise<UsageReport>((resolve) => { resolveUsage = resolve; });
+      const wrappedStream = async function* (): AsyncIterable<string> {
+        for await (const delta of innerStream) {
+          fullContent += delta;
+          yield delta;
+        }
+        resolveUsage(estimateUsageReport(options.messages, fullContent));
+      };
+      return { stream: wrappedStream(), usage: usagePromise };
+    }
 
     default:
       throw new ProviderUnavailableError("Unsupported provider type.", {
@@ -979,7 +1981,8 @@ async function dispatchTransportRequest(options: {
   envelope: CanonicalEnvelope<unknown>;
   requestTimeoutMs?: number;
   storage: WalletStorageAdapter;
-  dependencies: Required<RuntimeDependencies>;
+  dependencies: ResolvedRuntimeDependencies;
+  usageService: TokenUsageService;
 }): Promise<
   | ConnectResponsePayload
   | SelectProviderResponsePayload
@@ -987,6 +1990,19 @@ async function dispatchTransportRequest(options: {
   | ChatSendResponsePayload
 > {
   const snapshot = await readWalletSnapshot(options.storage);
+
+  // Load the connected app for this origin to enforce access controls
+  const appsRaw = await options.storage.get(["byom.wallet.apps.v1"]);
+  const apps = Array.isArray(appsRaw["byom.wallet.apps.v1"]) ? appsRaw["byom.wallet.apps.v1"] as unknown[] : [];
+  const connectedApp = apps.find((a): a is Record<string, unknown> =>
+    isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && a["status"] === "active"
+  ) ?? null;
+  const appProviderIds: ReadonlySet<string> | null = connectedApp !== null && Array.isArray(connectedApp["enabledProviderIds"])
+    ? new Set(connectedApp["enabledProviderIds"] as string[])
+    : null;
+  const appModelIds: ReadonlySet<string> | null = connectedApp !== null && Array.isArray(connectedApp["enabledModelIds"])
+    ? new Set(connectedApp["enabledModelIds"] as string[])
+    : null;
 
   switch (options.envelope.capability) {
     case "session.create": {
@@ -998,6 +2014,19 @@ async function dispatchTransportRequest(options: {
       }
 
       const selection = parseSelectionPayload(options.envelope.payload);
+      // Enforce app-level access control on provider selection
+      if (appProviderIds !== null && !appProviderIds.has(selection.providerId)) {
+        throw new ProviderUnavailableError(
+          `Provider "${selection.providerId}" is not enabled for this app.`,
+          { details: { providerId: selection.providerId } },
+        );
+      }
+      if (appModelIds !== null && !appModelIds.has(selection.modelId)) {
+        throw new ProviderUnavailableError(
+          `Model "${selection.modelId}" is not enabled for this app.`,
+          { details: { providerId: selection.providerId, modelId: selection.modelId } },
+        );
+      }
       resolveProviderSelection(snapshot, selection.providerId, selection.modelId);
       await options.storage.set({
         [WALLET_KEY_ACTIVE]: {
@@ -1013,33 +2042,80 @@ async function dispatchTransportRequest(options: {
     }
 
     case "provider.list": {
-      const response: ProviderListResponsePayload = {
-        providers: toProviderDescriptors(snapshot.providers),
-      };
+      let descriptors = toProviderDescriptors(snapshot.providers);
+      // Scope to app-enabled providers and models
+      if (appProviderIds !== null) {
+        descriptors = descriptors
+          .filter((d) => appProviderIds.has(d.providerId))
+          .map((d) => appModelIds !== null
+            ? { ...d, models: d.models.filter((m) => appModelIds.has(m)) }
+            : d
+          );
+      }
+      const response: ProviderListResponsePayload = { providers: descriptors };
       return response;
     }
 
     case "chat.completions": {
+      // Enforce app-level access control
+      if (appProviderIds !== null && !appProviderIds.has(options.envelope.providerId)) {
+        throw new ProviderUnavailableError(
+          `Provider "${options.envelope.providerId}" is not enabled for this app.`,
+          { details: { providerId: options.envelope.providerId } },
+        );
+      }
+      if (appModelIds !== null && !appModelIds.has(options.envelope.modelId)) {
+        throw new ProviderUnavailableError(
+          `Model "${options.envelope.modelId}" is not enabled for this app.`,
+          { details: { providerId: options.envelope.providerId, modelId: options.envelope.modelId } },
+        );
+      }
       const provider = resolveProviderSelection(
         snapshot,
         options.envelope.providerId,
         options.envelope.modelId,
       );
       const messages = parseChatMessages(options.envelope.payload as ChatSendPayload);
-      const completion = await resolveCompletion({
+      const result = await resolveCompletion({
         provider,
         messages,
         timeoutMs: options.requestTimeoutMs ?? 90_000,
         correlationId: options.envelope.correlationId,
+        requestId: options.envelope.requestId,
+        nonce: options.envelope.nonce,
+        origin: options.envelope.origin,
         sessionId: options.envelope.sessionId,
         fetchImpl: options.dependencies.fetchImpl,
+        now: options.dependencies.now,
+        ...(options.dependencies.extensionId !== undefined
+          ? { extensionId: options.dependencies.extensionId }
+          : {}),
+        ...(options.dependencies.resolveBridgeSharedSecret !== undefined
+          ? {
+            resolveBridgeSharedSecret:
+              options.dependencies.resolveBridgeSharedSecret,
+          }
+          : {}),
+        ...(options.dependencies.resolveBridgePairingHandle !== undefined
+          ? {
+            resolveBridgePairingHandle:
+              options.dependencies.resolveBridgePairingHandle,
+          }
+          : {}),
         sendNativeMessage: options.dependencies.sendNativeMessage,
+      });
+
+      void options.usageService.recordUsage({
+        origin: options.envelope.origin,
+        providerId: options.envelope.providerId,
+        modelId: options.envelope.modelId,
+        report: result.usage,
       });
 
       const response: ChatSendResponsePayload = {
         message: {
           role: "assistant",
-          content: completion,
+          content: result.content,
         },
       };
       return response;
@@ -1054,6 +2130,13 @@ async function dispatchTransportRequest(options: {
         },
       );
 
+    case "usage.query": {
+      const usageSummary = await options.usageService.getUsageByOrigin(
+        options.envelope.origin,
+      );
+      return usageSummary as unknown as ChatSendResponsePayload;
+    }
+
     default:
       throw new EnvelopeValidationError("Capability is not supported by transport runtime.", {
         reasonCode: "protocol.unsupported_capability",
@@ -1062,13 +2145,30 @@ async function dispatchTransportRequest(options: {
   }
 }
 
-async function dispatchTransportStreamRequest(options: {
+function createTransportCancelledError(
+  message = "Transport stream request cancelled.",
+): ProtocolError {
+  return new ProtocolError(message, {
+    machineCode: PROTOCOL_MACHINE_CODES.TRANSIENT_NETWORK,
+    reasonCode: "transport.cancelled",
+    retryable: true,
+  });
+}
+
+function throwIfAborted(signal: AbortSignal | undefined, message?: string): void {
+  if (signal?.aborted === true) {
+    throw createTransportCancelledError(message);
+  }
+}
+
+async function resolveTransportStreamEnvelopeIterable(options: {
   envelope: CanonicalEnvelope<unknown>;
   requestTimeoutMs?: number;
   storage: WalletStorageAdapter;
-  dependencies: Required<RuntimeDependencies>;
+  dependencies: ResolvedRuntimeDependencies;
   now: () => Date;
-}): Promise<readonly CanonicalEnvelope<ChatStreamResponsePayload>[]> {
+  signal?: AbortSignal;
+}): Promise<AsyncIterable<CanonicalEnvelope<ChatStreamResponsePayload>>> {
   if (options.envelope.capability !== "chat.stream") {
     throw new EnvelopeValidationError(
       "request-stream action requires chat.stream capability.",
@@ -1079,48 +2179,132 @@ async function dispatchTransportStreamRequest(options: {
     );
   }
 
+  throwIfAborted(options.signal);
+
   const snapshot = await readWalletSnapshot(options.storage);
+
+  // Enforce app-level access control for streams
+  const streamAppsRaw = await options.storage.get(["byom.wallet.apps.v1"]);
+  const streamApps = Array.isArray(streamAppsRaw["byom.wallet.apps.v1"]) ? streamAppsRaw["byom.wallet.apps.v1"] as unknown[] : [];
+  const streamApp = streamApps.find((a): a is Record<string, unknown> =>
+    isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && a["status"] === "active"
+  ) ?? null;
+  if (streamApp !== null) {
+    const streamAppProviderIds = Array.isArray(streamApp["enabledProviderIds"]) ? new Set(streamApp["enabledProviderIds"] as string[]) : null;
+    const streamAppModelIds = Array.isArray(streamApp["enabledModelIds"]) ? new Set(streamApp["enabledModelIds"] as string[]) : null;
+    if (streamAppProviderIds !== null && !streamAppProviderIds.has(options.envelope.providerId)) {
+      throw new ProviderUnavailableError(
+        `Provider "${options.envelope.providerId}" is not enabled for this app.`,
+        { details: { providerId: options.envelope.providerId } },
+      );
+    }
+    if (streamAppModelIds !== null && !streamAppModelIds.has(options.envelope.modelId)) {
+      throw new ProviderUnavailableError(
+        `Model "${options.envelope.modelId}" is not enabled for this app.`,
+        { details: { providerId: options.envelope.providerId, modelId: options.envelope.modelId } },
+      );
+    }
+  }
+
   const provider = resolveProviderSelection(
     snapshot,
     options.envelope.providerId,
     options.envelope.modelId,
   );
   const messages = parseChatMessages(options.envelope.payload as ChatSendPayload);
-  const completion = await resolveCompletion({
+  const completionResult = await resolveCompletionStream({
     provider,
     messages,
     timeoutMs: options.requestTimeoutMs ?? 90_000,
     correlationId: options.envelope.correlationId,
+    requestId: options.envelope.requestId,
+    nonce: options.envelope.nonce,
+    origin: options.envelope.origin,
     sessionId: options.envelope.sessionId,
     fetchImpl: options.dependencies.fetchImpl,
+    now: options.dependencies.now,
+    ...(options.dependencies.extensionId !== undefined
+      ? { extensionId: options.dependencies.extensionId }
+      : {}),
+    ...(options.dependencies.resolveBridgeSharedSecret !== undefined
+      ? {
+        resolveBridgeSharedSecret:
+          options.dependencies.resolveBridgeSharedSecret,
+      }
+      : {}),
+    ...(options.dependencies.resolveBridgePairingHandle !== undefined
+      ? {
+        resolveBridgePairingHandle:
+          options.dependencies.resolveBridgePairingHandle,
+      }
+      : {}),
     sendNativeMessage: options.dependencies.sendNativeMessage,
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
   });
 
-  const now = options.now();
-  const chunks = chunkText(completion, STREAM_CHUNK_SIZE);
-  const envelopes: CanonicalEnvelope<ChatStreamResponsePayload>[] = [];
-  for (let index = 0; index < chunks.length; index += 1) {
-    envelopes.push(
-      createResponseEnvelope(
+  const { stream: completionStream, usage: usagePromise } = completionResult;
+
+  const usageService = new TokenUsageService(options.storage);
+
+  const stream = async function* (): AsyncIterable<
+    CanonicalEnvelope<ChatStreamResponsePayload>
+  > {
+    let index = 0;
+    for await (const delta of completionStream) {
+      throwIfAborted(options.signal);
+      if (delta.length === 0) {
+        continue;
+      }
+
+      yield createResponseEnvelope(
         options.envelope,
         {
           type: "chunk",
-          delta: chunks[index] ?? "",
+          delta,
           index,
         },
-        now,
-      ) as CanonicalEnvelope<ChatStreamResponsePayload>,
-    );
-  }
+        options.now(),
+      ) as CanonicalEnvelope<ChatStreamResponsePayload>;
+      index += 1;
+    }
 
-  envelopes.push(
-    createResponseEnvelope(
+    // Record usage after stream completes, before signaling done.
+    try {
+      const usageReport = await usagePromise;
+      void usageService.recordUsage({
+        origin: options.envelope.origin,
+        providerId: options.envelope.providerId,
+        modelId: options.envelope.modelId,
+        report: usageReport,
+      });
+    } catch {
+      // Best effort — don't fail the stream on usage recording errors.
+    }
+
+    throwIfAborted(options.signal);
+    yield createResponseEnvelope(
       options.envelope,
       { type: "done" },
-      now,
-    ) as CanonicalEnvelope<ChatStreamResponsePayload>,
-  );
+      options.now(),
+    ) as CanonicalEnvelope<ChatStreamResponsePayload>;
+  };
 
+  return stream();
+}
+
+async function dispatchTransportStreamRequest(options: {
+  envelope: CanonicalEnvelope<unknown>;
+  requestTimeoutMs?: number;
+  storage: WalletStorageAdapter;
+  dependencies: ResolvedRuntimeDependencies;
+  now: () => Date;
+  signal?: AbortSignal;
+}): Promise<readonly CanonicalEnvelope<ChatStreamResponsePayload>[]> {
+  const stream = await resolveTransportStreamEnvelopeIterable(options);
+  const envelopes: CanonicalEnvelope<ChatStreamResponsePayload>[] = [];
+  for await (const envelope of stream) {
+    envelopes.push(envelope);
+  }
   return envelopes;
 }
 
@@ -1136,6 +2320,29 @@ function isTransportMessageEnvelope(
   );
 }
 
+function isTransportStreamPortMessage(
+  message: unknown,
+): message is TransportStreamPortMessage {
+  return (
+    isRecord(message) &&
+    message["channel"] === TRANSPORT_STREAM_CHANNEL &&
+    typeof message["requestId"] === "string" &&
+    (message["action"] === "start" || message["action"] === "cancel")
+  );
+}
+
+function isTransportStreamPort(port: unknown): port is ChromeRuntimePortLike {
+  return (
+    isRecord(port) &&
+    port["name"] === TRANSPORT_STREAM_PORT_NAME &&
+    isRecord(port["onMessage"]) &&
+    typeof port["onMessage"]["addListener"] === "function" &&
+    isRecord(port["onDisconnect"]) &&
+    typeof port["onDisconnect"]["addListener"] === "function" &&
+    typeof port["postMessage"] === "function"
+  );
+}
+
 export function createTransportMessageHandler(
   options: TransportMessageHandlerOptions,
 ): (message: unknown) => Promise<TransportActionResponse | null> {
@@ -1145,6 +2352,10 @@ export function createTransportMessageHandler(
     ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
   const sendNativeMessage =
     options.dependencies?.sendNativeMessage ?? createDefaultNativeMessenger();
+  const resolveBridgeSharedSecret = options.dependencies?.resolveBridgeSharedSecret;
+  const resolveBridgePairingHandle = options.dependencies?.resolveBridgePairingHandle;
+  const extensionId = options.dependencies?.extensionId;
+  const usageService = new TokenUsageService(options.storage);
 
   return async (message: unknown): Promise<TransportActionResponse | null> => {
     if (!isTransportMessageEnvelope(message)) {
@@ -1153,7 +2364,7 @@ export function createTransportMessageHandler(
 
     const correlationId =
       isRecord(message.request?.envelope) &&
-      typeof message.request?.envelope["correlationId"] === "string"
+        typeof message.request?.envelope["correlationId"] === "string"
         ? message.request?.envelope["correlationId"]
         : undefined;
 
@@ -1173,6 +2384,15 @@ export function createTransportMessageHandler(
             now,
             fetchImpl,
             sendNativeMessage,
+            ...(resolveBridgeSharedSecret !== undefined
+              ? { resolveBridgeSharedSecret }
+              : {}),
+            ...(resolveBridgePairingHandle !== undefined
+              ? { resolveBridgePairingHandle }
+              : {}),
+            ...(typeof extensionId === "string" && extensionId.trim().length > 0
+              ? { extensionId: extensionId.trim() }
+              : {}),
           },
           now,
           ...(parsedRequest.timeoutMs !== undefined
@@ -1189,10 +2409,20 @@ export function createTransportMessageHandler(
       const responsePayload = await dispatchTransportRequest({
         envelope,
         storage: options.storage,
+        usageService,
         dependencies: {
           now,
           fetchImpl,
           sendNativeMessage,
+          ...(resolveBridgeSharedSecret !== undefined
+            ? { resolveBridgeSharedSecret }
+            : {}),
+          ...(resolveBridgePairingHandle !== undefined
+            ? { resolveBridgePairingHandle }
+            : {}),
+          ...(typeof extensionId === "string" && extensionId.trim().length > 0
+            ? { extensionId: extensionId.trim() }
+            : {}),
         },
         ...(parsedRequest.timeoutMs !== undefined
           ? { requestTimeoutMs: parsedRequest.timeoutMs }
@@ -1213,6 +2443,10 @@ export function createTransportMessageHandler(
 }
 
 type ChromeRuntimeLike = Readonly<{
+  id?: string;
+  onConnect?: Readonly<{
+    addListener(listener: (port: ChromeRuntimePortLike) => void): void;
+  }>;
   onMessage: Readonly<{
     addListener(
       listener: (
@@ -1223,6 +2457,18 @@ type ChromeRuntimeLike = Readonly<{
     ): void;
   }>;
   lastError?: Readonly<{ message?: string }>;
+}>;
+
+type ChromeRuntimePortLike = Readonly<{
+  name: string;
+  onMessage: Readonly<{
+    addListener(listener: (message: unknown) => void): void;
+  }>;
+  onDisconnect: Readonly<{
+    addListener(listener: () => void): void;
+  }>;
+  postMessage(message: unknown): void;
+  disconnect?: () => void;
 }>;
 
 type ChromeStorageAreaLike = Readonly<{
@@ -1272,8 +2518,69 @@ function createChromeStorageAdapter(
   };
 }
 
+function createDefaultTransportRuntimeDependencies(options: {
+  runtime: ChromeRuntimeLike;
+  storage: WalletStorageAdapter;
+}): RuntimeDependencies {
+  const extensionId =
+    typeof options.runtime.id === "string" && options.runtime.id.trim().length > 0
+      ? options.runtime.id.trim()
+      : undefined;
+
+  return {
+    ...(extensionId !== undefined ? { extensionId } : {}),
+    resolveBridgeSharedSecret: async (hostName: string) => {
+      const state = await options.storage.get([
+        WALLET_KEY_BRIDGE_SHARED_SECRET,
+        BRIDGE_PAIRING_STATE_STORAGE_KEY,
+      ]);
+      if (extensionId !== undefined) {
+        const pairingState = parseBridgePairingState(
+          state[BRIDGE_PAIRING_STATE_STORAGE_KEY],
+        );
+        if (
+          pairingState !== undefined &&
+          pairingState.extensionId === extensionId &&
+          pairingState.hostName === hostName
+        ) {
+          const unwrapped = await unwrapPairingKeyMaterial({
+            pairingState,
+            runtimeId: extensionId,
+          });
+          if (unwrapped !== undefined) {
+            return unwrapped.pairingKeyHex;
+          }
+        }
+      }
+      const rawSecret = state[WALLET_KEY_BRIDGE_SHARED_SECRET];
+      return typeof rawSecret === "string" && rawSecret.trim().length > 0
+        ? rawSecret.trim()
+        : undefined;
+    },
+    resolveBridgePairingHandle: async (hostName: string) => {
+      if (extensionId === undefined) {
+        return undefined;
+      }
+      const state = await options.storage.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+      const pairingState = parseBridgePairingState(
+        state[BRIDGE_PAIRING_STATE_STORAGE_KEY],
+      );
+      if (
+        pairingState === undefined ||
+        pairingState.extensionId !== extensionId ||
+        pairingState.hostName !== hostName
+      ) {
+        return undefined;
+      }
+      return pairingState.pairingHandle;
+    },
+  };
+}
+
 type ExtensionGlobalState = typeof globalThis & Record<string, unknown>;
 const TRANSPORT_MESSAGE_LISTENER_FLAG = "__byom.transport.listener.registered.v1";
+const TRANSPORT_STREAM_PORT_LISTENER_FLAG =
+  "__byom.transport.stream-port.listener.registered.v1";
 
 export function registerDefaultTransportMessageListener(options: {
   reportError?: (error: Error) => void;
@@ -1302,7 +2609,14 @@ export function registerDefaultTransportMessageListener(options: {
   }
 
   const storage = createChromeStorageAdapter(runtime, storageLocal);
-  const handleTransportMessage = createTransportMessageHandler({ storage });
+  const dependencies = createDefaultTransportRuntimeDependencies({
+    runtime,
+    storage,
+  });
+  const handleTransportMessage = createTransportMessageHandler({
+    storage,
+    dependencies,
+  });
 
   runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!isTransportMessageEnvelope(message)) {
@@ -1341,4 +2655,229 @@ export function registerDefaultTransportMessageListener(options: {
   });
 
   globalState[TRANSPORT_MESSAGE_LISTENER_FLAG] = true;
+}
+
+export function registerDefaultTransportStreamPortListener(options: {
+  reportError?: (error: Error) => void;
+} = {}): void {
+  const reportError =
+    options.reportError ??
+    ((error: Error) => {
+      console.error("BYOM transport stream port handler failed", error);
+    });
+
+  if (typeof chrome === "undefined") {
+    return;
+  }
+
+  const runtime = chrome.runtime as unknown as ChromeRuntimeLike | undefined;
+  const storageLocal = chrome.storage?.local as unknown as
+    | ChromeStorageAreaLike
+    | undefined;
+  if (
+    runtime === undefined ||
+    storageLocal === undefined ||
+    runtime.onConnect === undefined
+  ) {
+    return;
+  }
+
+  const globalState = globalThis as ExtensionGlobalState;
+  if (globalState[TRANSPORT_STREAM_PORT_LISTENER_FLAG] === true) {
+    return;
+  }
+
+  const storage = createChromeStorageAdapter(runtime, storageLocal);
+  const dependencies = createDefaultTransportRuntimeDependencies({
+    runtime,
+    storage,
+  });
+  const now = dependencies.now ?? (() => new Date());
+  const fetchImpl =
+    dependencies.fetchImpl ??
+    ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
+  const sendNativeMessage =
+    dependencies.sendNativeMessage ?? createDefaultNativeMessenger();
+  const extensionId = dependencies.extensionId;
+  const resolveBridgeSharedSecret = dependencies.resolveBridgeSharedSecret;
+  const resolveBridgePairingHandle = dependencies.resolveBridgePairingHandle;
+
+  runtime.onConnect.addListener((port) => {
+    if (!isTransportStreamPort(port)) {
+      return;
+    }
+
+    let portDisconnected = false;
+    const inFlight = new Map<string, AbortController>();
+
+    const postToPort = (event: TransportStreamPortEvent): boolean => {
+      if (portDisconnected) {
+        return false;
+      }
+      try {
+        port.postMessage(event);
+        return true;
+      } catch (error) {
+        const errorObject = error instanceof Error ? error : new Error(String(error));
+        reportError(errorObject);
+        return false;
+      }
+    };
+
+    const cancelRequest = (requestId: string): void => {
+      const controller = inFlight.get(requestId);
+      if (controller === undefined) {
+        void postToPort({
+          channel: TRANSPORT_STREAM_CHANNEL,
+          requestId,
+          event: "cancelled",
+        });
+        return;
+      }
+      controller.abort();
+    };
+
+    const startRequest = async (message: TransportStreamPortMessage): Promise<void> => {
+      if (portDisconnected) {
+        return;
+      }
+
+      if (inFlight.has(message.requestId)) {
+        void postToPort({
+          channel: TRANSPORT_STREAM_CHANNEL,
+          requestId: message.requestId,
+          event: "error",
+          error: toTransportErrorPayload(
+            new EnvelopeValidationError("Stream requestId is already active.", {
+              reasonCode: "request.invalid",
+              details: { requestId: message.requestId },
+            }),
+            undefined,
+          ),
+        });
+        return;
+      }
+
+      const requestCorrelationId =
+        isRecord(message.request?.envelope) &&
+          typeof message.request?.envelope["correlationId"] === "string"
+          ? message.request?.envelope["correlationId"]
+          : undefined;
+
+      let parsedRequest: Readonly<{ envelope: unknown; timeoutMs?: number }>;
+      let envelope: CanonicalEnvelope<unknown>;
+      try {
+        parsedRequest = assertTransportRequestPayload(message.request);
+        envelope = parseEnvelope(parsedRequest.envelope);
+      } catch (error) {
+        void postToPort({
+          channel: TRANSPORT_STREAM_CHANNEL,
+          requestId: message.requestId,
+          event: "error",
+          error: toTransportErrorPayload(error, requestCorrelationId),
+        });
+        return;
+      }
+
+      const abortController = new AbortController();
+      inFlight.set(message.requestId, abortController);
+
+      if (
+        !postToPort({
+          channel: TRANSPORT_STREAM_CHANNEL,
+          requestId: message.requestId,
+          event: "start",
+        })
+      ) {
+        abortController.abort();
+        inFlight.delete(message.requestId);
+        return;
+      }
+
+      try {
+        const stream = await resolveTransportStreamEnvelopeIterable({
+          envelope,
+          storage,
+          dependencies: {
+            now,
+            fetchImpl,
+            sendNativeMessage,
+            ...(resolveBridgeSharedSecret !== undefined
+              ? { resolveBridgeSharedSecret }
+              : {}),
+            ...(resolveBridgePairingHandle !== undefined
+              ? { resolveBridgePairingHandle }
+              : {}),
+            ...(typeof extensionId === "string" && extensionId.trim().length > 0
+              ? { extensionId: extensionId.trim() }
+              : {}),
+          },
+          now,
+          ...(parsedRequest.timeoutMs !== undefined
+            ? { requestTimeoutMs: parsedRequest.timeoutMs }
+            : {}),
+          signal: abortController.signal,
+        });
+
+        for await (const streamEnvelope of stream) {
+          const payloadType = streamEnvelope.payload.type;
+          const delivered = postToPort({
+            channel: TRANSPORT_STREAM_CHANNEL,
+            requestId: message.requestId,
+            event: payloadType === "done" ? "done" : "chunk",
+            envelope: streamEnvelope,
+          });
+          if (!delivered) {
+            abortController.abort();
+            return;
+          }
+        }
+      } catch (error) {
+        if (portDisconnected) {
+          return;
+        }
+        const errorPayload = toTransportErrorPayload(error, envelope.correlationId);
+        void postToPort({
+          channel: TRANSPORT_STREAM_CHANNEL,
+          requestId: message.requestId,
+          event:
+            errorPayload.reasonCode === "transport.cancelled"
+              ? "cancelled"
+              : "error",
+          ...(errorPayload.reasonCode === "transport.cancelled"
+            ? {}
+            : { error: errorPayload }),
+        });
+      } finally {
+        inFlight.delete(message.requestId);
+      }
+    };
+
+    port.onMessage.addListener((message: unknown) => {
+      if (portDisconnected) {
+        return;
+      }
+
+      if (!isTransportStreamPortMessage(message)) {
+        return;
+      }
+
+      if (message.action === "cancel") {
+        cancelRequest(message.requestId);
+        return;
+      }
+
+      void startRequest(message);
+    });
+
+    port.onDisconnect.addListener(() => {
+      portDisconnected = true;
+      for (const controller of inFlight.values()) {
+        controller.abort();
+      }
+      inFlight.clear();
+    });
+  });
+
+  globalState[TRANSPORT_STREAM_PORT_LISTENER_FLAG] = true;
 }

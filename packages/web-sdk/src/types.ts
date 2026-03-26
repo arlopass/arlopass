@@ -32,6 +32,11 @@ export type ChatInput = Readonly<{
   messages: readonly ChatMessage[];
 }>;
 
+export type ChatOperationOptions = Readonly<{
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}>;
+
 export type ConnectOptions = Readonly<{
   appId: string;
   origin?: string;
@@ -89,6 +94,7 @@ export type ProtocolEnvelopePayload<TPayload = unknown> = CanonicalEnvelope<TPay
 export type TransportRequest<TPayload = unknown> = Readonly<{
   envelope: ProtocolEnvelopePayload<TPayload>;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }>;
 
 export type TransportResponse<TPayload = unknown> = Readonly<{

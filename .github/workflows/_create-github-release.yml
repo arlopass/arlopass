@@ -1,0 +1,98 @@
+name: Create GitHub Release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag (e.g. bridge/v0.3.0)"
+        required: true
+        type: string
+      version:
+        description: "Version string (e.g. 0.3.0)"
+        required: true
+        type: string
+      dry-run:
+        description: "Create as draft release"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    environment: github-releases
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all bridge binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bridge-binary-*
+          path: ./release-assets
+          merge-multiple: true
+
+      - name: Download signed checksums
+        uses: actions/download-artifact@v4
+        with:
+          name: bridge-binaries-signed
+          path: ./release-assets
+
+      - name: List release assets
+        run: ls -la ./release-assets/
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          PREV_TAG=$(git tag --list 'bridge/v*' --sort=-version:refname | sed -n '2p' || echo "")
+          if [ -n "${PREV_TAG}" ]; then
+            NOTES=$(git log --pretty=format:"- %s (%h)" "${PREV_TAG}..HEAD" -- apps/bridge/ packages/ adapters/)
+          else
+            NOTES="Initial release"
+          fi
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "${NOTES}" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: "BYOM Bridge v${{ inputs.version }}"
+          body: |
+            ## BYOM Bridge v${{ inputs.version }}
+
+            ### Install
+
+            **One-liner (recommended):**
+            ```bash
+            # macOS / Linux
+            curl -fsSL https://byomai.com/install.sh | sh
+
+            # Windows (PowerShell)
+            irm https://byomai.com/install.ps1 | iex
+            ```
+
+            **npm (requires Node.js):**
+            ```bash
+            npm install -g @byom-ai/bridge@${{ inputs.version }}
+            ```
+
+            **Manual download:** Download the binary for your platform below.
+
+            ### Verify
+            ```bash
+            sha256sum -c SHA256SUMS.txt
+            cosign verify-blob --bundle SHA256SUMS.txt.bundle SHA256SUMS.txt
+            ```
+
+            ### Changes
+            ${{ steps.notes.outputs.notes }}
+          files: ./release-assets/*
+          draft: ${{ inputs.dry-run }}
+          prerelease: ${{ contains(inputs.version, '-') }}

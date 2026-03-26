@@ -78,6 +78,55 @@ describe("CopilotCliChatExecutor", () => {
     });
   });
 
+  it("surfaces structured provider error when CLI exits with non-zero status", async () => {
+    const child = createMockChildProcess();
+    const spawnFn = vi.fn(() => child) as unknown as typeof spawn;
+    const executor = new CopilotCliChatExecutor({ spawnFn, claudeCommand: "claude" });
+
+    const execution = executor.execute(
+      makeRequest({
+        cliType: "claude-code",
+        modelId: "claude-opus-4-6",
+      }),
+    );
+    child.stdout.emit(
+      "data",
+      Buffer.from('{"type":"result","is_error":true,"result":"Credit balance is too low"}\n'),
+    );
+    child.emit("close", 1, null);
+
+    await expect(execution).rejects.toMatchObject({
+      reasonCode: "provider.unavailable",
+      message: "Credit balance is too low",
+      details: expect.objectContaining({
+        providerErrorMessage: "Credit balance is too low",
+      }),
+    });
+  });
+
+  it("treats structured error payload as execution failure", async () => {
+    const child = createMockChildProcess();
+    const spawnFn = vi.fn(() => child) as unknown as typeof spawn;
+    const executor = new CopilotCliChatExecutor({ spawnFn, claudeCommand: "claude" });
+
+    const execution = executor.execute(
+      makeRequest({
+        cliType: "claude-code",
+        modelId: "claude-opus-4-6",
+      }),
+    );
+    child.stdout.emit(
+      "data",
+      Buffer.from('{"type":"result","is_error":true,"result":"Credit balance is too low"}\n'),
+    );
+    child.emit("close", 0, null);
+
+    await expect(execution).rejects.toMatchObject({
+      reasonCode: "provider.unavailable",
+      message: "Credit balance is too low",
+    });
+  });
+
   it("returns transport.timeout when CLI execution exceeds timeout", async () => {
     vi.useFakeTimers();
     try {

@@ -22,10 +22,18 @@
     "@byom-ai/audit": "file:../../packages/audit",
     "@byom-ai/policy": "file:../../packages/policy",
     "@byom-ai/protocol": "file:../../packages/protocol",
-    "@byom-ai/web-sdk": "file:../../packages/web-sdk"
+    "@byom-ai/web-sdk": "file:../../packages/web-sdk",
+    "@lobehub/icons-static-svg": "^1.82.0",
+    "@mantine/core": "^8.3.18",
+    "@mantine/hooks": "^8.3.18",
+    "@tabler/icons-react": "^3.40.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.38",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "esbuild": "^0.25.12"
   }
 }

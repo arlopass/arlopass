@@ -12,6 +12,7 @@ export const REASON_CODE_CATALOG = [
   "protocol.unsupported_capability",
   "protocol.invalid_envelope",
   "transport.timeout",
+  "transport.cancelled",
   "transport.transient_failure",
 ] as const;
 
@@ -47,6 +48,11 @@ const REASON_CODE_ALIASES: Readonly<Record<string, ProtocolReasonCode>> = {
   "protocol.invalid_envelope": "protocol.invalid_envelope",
   "transport.timeout": "transport.timeout",
   timeout: "transport.timeout",
+  "transport.cancelled": "transport.cancelled",
+  cancelled: "transport.cancelled",
+  canceled: "transport.cancelled",
+  aborted: "transport.cancelled",
+  abort: "transport.cancelled",
   "transport.transient_failure": "transport.transient_failure",
   transient: "transport.transient_failure",
 };

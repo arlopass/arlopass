@@ -124,6 +124,11 @@ export class RuntimeEvaluator {
       return;
     }
 
+    const correlationId =
+      request.correlationId !== undefined && request.correlationId.trim().length > 0
+        ? request.correlationId
+        : "unknown";
+
     const fields: AuditEventFields = {
       timestamp: this.#now().toISOString(),
       origin: request.origin,
@@ -132,14 +137,10 @@ export class RuntimeEvaluator {
       capability: request.capability,
       decision: decision.decision === "allow" ? "allow" : "deny",
       reasonCode: decision.reasonCode,
-      correlationId: request.correlationId ?? "",
+      correlationId,
       policyVersion: decision.policyVersion,
     };
 
-    try {
-      this.#auditEmitter.emit(fields);
-    } catch {
-      // Audit failure must never interrupt the enforcement decision path.
-    }
+    this.#auditEmitter.emit(fields);
   }
 }

@@ -24,17 +24,17 @@ export type ConsentPromptRequest = Readonly<{
 
 export type ConsentPromptResponse =
   | Readonly<{
-      granted: true;
-      grantType: GrantType;
-    }>
+    granted: true;
+    grantType: GrantType;
+  }>
   | Readonly<{
-      granted: false;
-      denialReason?:
-        | "user-denied"
-        | "dismissed"
-        | "unsupported-request"
-        | "transport-error";
-    }>;
+    granted: false;
+    denialReason?:
+    | "user-denied"
+    | "dismissed"
+    | "unsupported-request"
+    | "transport-error";
+  }>;
 
 export type ConsentPromptAdapter = Readonly<{
   showConsentPrompt(request: ConsentPromptRequest): Promise<ConsentPromptResponse>;
@@ -65,10 +65,10 @@ export type ConsentDecision = Readonly<{
   capabilities: readonly ProtocolCapability[];
   grantType?: GrantType;
   denialReason?:
-    | "user-denied"
-    | "dismissed"
-    | "unsupported-request"
-    | "transport-error";
+  | "user-denied"
+  | "dismissed"
+  | "unsupported-request"
+  | "transport-error";
 }>;
 
 export type ConsentControllerOptions = Readonly<{
@@ -104,6 +104,7 @@ const CAPABILITY_LABELS: Readonly<Record<ProtocolCapability, string>> = {
   "session.create": "Create provider sessions",
   "chat.completions": "Send chat completion requests",
   "chat.stream": "Stream chat responses",
+  "usage.query": "Query token usage statistics",
 };
 
 function normalizeGrantTypeOptions(

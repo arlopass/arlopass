@@ -1,0 +1,35 @@
+{
+  "name": "@byom-ai/adapter-perplexity",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AltClick/byom-web.git",
+    "directory": "adapters/adapter-perplexity"
+  },
+  "homepage": "https://github.com/AltClick/byom-web/tree/main/adapters/adapter-perplexity#readme",
+  "bugs": {
+    "url": "https://github.com/AltClick/byom-web/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@byom-ai/adapter-runtime": "0.1.0",
+    "@byom-ai/protocol": "0.1.0"
+  }
+}
+

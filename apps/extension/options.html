@@ -9,6 +9,7 @@
     />
     <title>BYOM AI Wallet &mdash; Connect Provider</title>
     <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="legacy.css" />
   </head>
   <body class="byom-wallet-options">
     <div class="options-page">
@@ -57,6 +58,14 @@
 
               <div id="provider-connector-fields" class="connector-fields"></div>
 
+              <p
+                id="provider-model-discovery-state"
+                class="options-form__model-discovery-state"
+                role="status"
+                aria-live="polite"
+                hidden
+              ></p>
+
               <div class="options-form__actions">
                 <button id="btn-test-connection" class="btn btn--secondary" type="button">
                   Test Connection
@@ -66,9 +75,99 @@
                 </button>
               </div>
 
+              <div class="options-form__actions options-form__actions--single">
+                <button
+                  id="btn-cancel-edit-provider"
+                  class="btn btn--secondary"
+                  type="button"
+                  hidden
+                >
+                  Cancel Edit
+                </button>
+              </div>
+
+              <p
+                id="provider-edit-state"
+                class="options-form__edit-state"
+                role="status"
+                aria-live="polite"
+                hidden
+              ></p>
+
               <p class="options-form__security-note">
                 Secrets entered for tests are used in-memory and are not persisted in extension storage.
               </p>
+
+              <div class="options-form__divider" role="presentation"></div>
+
+              <div class="form-row">
+                <label for="bridge-pair-host-name">Bridge Host Name</label>
+                <input
+                  id="bridge-pair-host-name"
+                  name="bridgePairHostName"
+                  type="text"
+                  maxlength="120"
+                  autocomplete="off"
+                  value="com.byom.bridge"
+                  placeholder="com.byom.bridge"
+                />
+                <p class="field-help">
+                  Pairing and handshake keys are scoped to this native host.
+                </p>
+              </div>
+
+              <div class="options-form__actions">
+                <button id="btn-begin-bridge-pairing" class="btn btn--secondary" type="button">
+                  Pair Bridge (One Click)
+                </button>
+                <button id="btn-refresh-bridge-pairings" class="btn btn--secondary" type="button">
+                  Refresh Pairings
+                </button>
+              </div>
+
+              <div class="form-row">
+                <label for="bridge-pairing-code">One-time Pairing Code</label>
+                <input
+                  id="bridge-pairing-code"
+                  name="bridgePairingCode"
+                  type="password"
+                  maxlength="8"
+                  autocomplete="off"
+                  placeholder="Enter 8-character code"
+                />
+                <p class="field-help">
+                  One-click pairing is automatic when available. If fallback is needed, enter the
+                  one-time code displayed by the bridge process (or pairing code log) after clicking
+                  <strong>Pair Bridge</strong>.
+                </p>
+              </div>
+
+              <div class="options-form__actions">
+                <button id="btn-complete-bridge-pairing" class="btn btn--secondary" type="button">
+                  Complete Pairing
+                </button>
+                <button id="btn-rotate-bridge-pairing" class="btn btn--secondary" type="button">
+                  Rotate Pairing
+                </button>
+              </div>
+
+              <div class="form-row">
+                <label for="bridge-pairing-handle-select">Known Pairings</label>
+                <select id="bridge-pairing-handle-select" name="bridgePairingHandle">
+                  <option value="">No pairings found</option>
+                </select>
+                <p class="field-help">
+                  Revoke a handle to immediately disable cloud handshake for that pairing.
+                </p>
+              </div>
+
+              <div class="options-form__actions">
+                <button id="btn-revoke-bridge-pairing" class="btn btn--secondary" type="button">
+                  Revoke Pairing
+                </button>
+              </div>
+
+              <div id="bridge-security-feedback" class="options-feedback" role="status" aria-live="polite"></div>
             </form>
 
             <div id="provider-connect-feedback" class="options-feedback" role="status" aria-live="polite"></div>
@@ -77,7 +176,7 @@
           <article class="options-card options-card--providers">
             <h2 class="options-card__title">Connected Providers</h2>
             <p class="options-card__subtitle">
-              Manage active provider selection and remove stale connections.
+              Manage active provider selection, edit saved settings, and remove stale connections.
             </p>
             <div id="connected-providers-list" class="connected-providers-list"></div>
           </article>

@@ -1,0 +1,66 @@
+name: Deploy to Edge Add-ons
+
+on:
+  workflow_call:
+    secrets:
+      EDGE_CLIENT_ID:
+        required: true
+      EDGE_CLIENT_SECRET:
+        required: true
+      EDGE_ACCESS_TOKEN_URL:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Edge Add-ons
+    runs-on: ubuntu-latest
+    environment: edge-add-ons
+    steps:
+      - name: Download Chromium extension zip
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-chromium
+
+      - name: Get Edge access token
+        id: token
+        env:
+          CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.EDGE_CLIENT_SECRET }}
+          TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
+        run: |
+          TOKEN=$(curl -fsSL -X POST "${TOKEN_URL}" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "client_id=${CLIENT_ID}&scope=https://api.addons.microsoftedge.microsoft.com/.default&client_secret=${CLIENT_SECRET}&grant_type=client_credentials" \
+            | jq -r '.access_token')
+          echo "::add-mask::${TOKEN}"
+          echo "token=${TOKEN}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to Edge Add-ons
+        env:
+          PRODUCT_ID: ${{ vars.EDGE_PRODUCT_ID }}
+          TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          set -euo pipefail
+          RETRY=0
+          MAX_RETRIES=3
+          until [ $RETRY -ge $MAX_RETRIES ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST "https://api.addons.microsoftedge.microsoft.com/v1/products/${PRODUCT_ID}/submissions/draft/package" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/zip" \
+              --data-binary @byom-extension-chromium.zip)
+            if [ "${HTTP_CODE}" = "202" ] || [ "${HTTP_CODE}" = "200" ]; then
+              echo "✅ Upload succeeded (HTTP ${HTTP_CODE})"
+              break
+            fi
+            RETRY=$((RETRY + 1))
+            echo "⚠️  Upload attempt ${RETRY}/${MAX_RETRIES} failed (HTTP ${HTTP_CODE}), retrying..."
+            sleep $((RETRY * 15))
+          done
+          if [ $RETRY -ge $MAX_RETRIES ]; then
+            echo "::error::Edge Add-ons upload failed after ${MAX_RETRIES} attempts"
+            exit 1
+          fi

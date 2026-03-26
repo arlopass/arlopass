@@ -33,6 +33,28 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 WATCH_PIDS=()
 
+resolve_bridge_state_dir() {
+  if [[ -n "${LOCALAPPDATA:-}" ]]; then
+    printf "%s\n" "${LOCALAPPDATA}/BYOM/bridge/state"
+    return
+  fi
+  if [[ -n "${XDG_STATE_HOME:-}" ]]; then
+    printf "%s\n" "${XDG_STATE_HOME}/BYOM/bridge/state"
+    return
+  fi
+  if [[ -n "${HOME:-}" ]]; then
+    printf "%s\n" "${HOME}/.local/state/BYOM/bridge/state"
+    return
+  fi
+  printf "%s\n" "${TMPDIR:-/tmp}/BYOM/bridge/state"
+}
+
+resolve_shared_secret_path() {
+  local bridge_state_dir
+  bridge_state_dir="$(resolve_bridge_state_dir)"
+  printf "%s\n" "${bridge_state_dir}/shared-secret.txt"
+}
+
 cleanup_watchers() {
   for pid in "${WATCH_PIDS[@]:-}"; do
     if kill -0 "$pid" >/dev/null 2>&1; then
@@ -47,9 +69,20 @@ trap cleanup_watchers EXIT
 
 ensure_shared_secret() {
   local explicit_secret="${1:-}"
+  local shared_secret_path
 
   if [[ -n "$explicit_secret" ]]; then
     SHARED_SECRET="$explicit_secret"
+  fi
+
+  shared_secret_path="$(resolve_shared_secret_path)"
+  if [[ -z "${SHARED_SECRET:-}" && -f "$shared_secret_path" ]]; then
+    SHARED_SECRET="$(tr -d '\r\n' < "$shared_secret_path")"
+    if [[ "$SHARED_SECRET" =~ ^[0-9a-fA-F]{64}$ ]]; then
+      echo "Loaded persisted BYOM_BRIDGE_SHARED_SECRET from native host state."
+    else
+      SHARED_SECRET=""
+    fi
   fi
 
   if [[ -z "${SHARED_SECRET:-}" ]]; then
@@ -67,6 +100,8 @@ ensure_shared_secret() {
   fi
 
   export BYOM_BRIDGE_SHARED_SECRET="$SHARED_SECRET"
+  mkdir -p "$(dirname "$shared_secret_path")"
+  printf "%s" "$SHARED_SECRET" > "$shared_secret_path"
 }
 
 run_setup() {

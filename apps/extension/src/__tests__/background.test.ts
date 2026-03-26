@@ -540,6 +540,48 @@ describe("ExtensionBackgroundService — in-flight revocation", () => {
     const permErr = caught as PermissionError;
     expect(String(permErr.message)).toContain("in-flight");
   });
+
+  it("propagates auth.expired and reconnecting state when the in-flight grant expires", async () => {
+    const adapter = makeGrantingAdapter("persistent");
+    const { transport, resolve } = makeControllableTransport();
+    const { service, events } = buildHarness(adapter, transport);
+    const healthEvents: Array<{
+      providerId: string;
+      state: "reconnecting" | "failed" | "revoked" | "degraded";
+      reasonCode?: string;
+    }> = [];
+    events.on("connection-health-changed", (event) => {
+      healthEvents.push(event);
+    });
+
+    service.grantStore.grantPermission({
+      origin: "https://app.example.com",
+      providerId: "provider.a",
+      modelId: "model.a",
+      capabilities: ["chat.completions"],
+      grantType: "persistent",
+    });
+
+    const [grant] = service.grantStore.listGrants();
+    const requestPromise = service.forwardRequest<null, unknown>({
+      envelope: makeEnvelope("chat.completions", "req.inflight.003"),
+    });
+
+    await Promise.resolve();
+    service.revokeGrant(grant!.id, "expired");
+    resolve({ envelope: makeFakeResponseEnvelope() });
+
+    await expect(requestPromise).rejects.toMatchObject({
+      reasonCode: "auth.expired",
+    });
+    expect(healthEvents).toContainEqual(
+      expect.objectContaining({
+        providerId: "provider.a",
+        state: "reconnecting",
+        reasonCode: "auth.expired",
+      }),
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

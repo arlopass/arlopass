@@ -87,6 +87,42 @@ function New-RandomHexSecret {
   return -join ($bytes | ForEach-Object { $_.ToString("x2") })
 }
 
+function Resolve-BridgeStateDirectory {
+  $baseDirectory = $env:LOCALAPPDATA
+  if ([string]::IsNullOrWhiteSpace($baseDirectory)) {
+    $baseDirectory = $env:TEMP
+  }
+  if ([string]::IsNullOrWhiteSpace($baseDirectory)) {
+    $baseDirectory = [System.IO.Path]::GetTempPath()
+  }
+
+  return Join-Path $baseDirectory "BYOM\bridge\state"
+}
+
+function Resolve-SharedSecretPath {
+  $bridgeStateDirectory = Resolve-BridgeStateDirectory
+  return Join-Path $bridgeStateDirectory "shared-secret.txt"
+}
+
+function Persist-SharedSecretForNativeHost {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$SharedSecretValue
+  )
+
+  $bridgeStateDirectory = Resolve-BridgeStateDirectory
+  $null = New-Item -Path $bridgeStateDirectory -ItemType Directory -Force
+
+  $sharedSecretPath = Resolve-SharedSecretPath
+  [System.IO.File]::WriteAllText(
+    $sharedSecretPath,
+    $SharedSecretValue,
+    [System.Text.UTF8Encoding]::new($false)
+  )
+
+  Write-Host "Persisted BYOM_BRIDGE_SHARED_SECRET for native host launcher at: $sharedSecretPath" -ForegroundColor DarkGray
+}
+
 function Ensure-SharedSecret {
   param(
     [string]$ExplicitSecret
@@ -97,6 +133,25 @@ function Ensure-SharedSecret {
   }
 
   if ([string]::IsNullOrWhiteSpace($env:BYOM_BRIDGE_SHARED_SECRET)) {
+    $sharedSecretPath = Resolve-SharedSecretPath
+    if (Test-Path -LiteralPath $sharedSecretPath) {
+      try {
+        $persistedSharedSecret = [System.IO.File]::ReadAllText(
+          $sharedSecretPath,
+          [System.Text.UTF8Encoding]::new($false)
+        ).Trim()
+        if ($persistedSharedSecret.Length -eq 64 -and ($persistedSharedSecret -match "^[0-9a-fA-F]{64}$")) {
+          $env:BYOM_BRIDGE_SHARED_SECRET = $persistedSharedSecret
+          Write-Host "Loaded persisted BYOM_BRIDGE_SHARED_SECRET from native host state." -ForegroundColor DarkGray
+        }
+      }
+      catch {
+        # Fall back to generating a new secret when persisted state is unreadable.
+      }
+    }
+  }
+
+  if ([string]::IsNullOrWhiteSpace($env:BYOM_BRIDGE_SHARED_SECRET)) {
     $env:BYOM_BRIDGE_SHARED_SECRET = New-RandomHexSecret -ByteCount 32
     Write-Host "Generated ephemeral BYOM_BRIDGE_SHARED_SECRET for this shell session." -ForegroundColor Yellow
   }
@@ -104,6 +159,8 @@ function Ensure-SharedSecret {
   if ($env:BYOM_BRIDGE_SHARED_SECRET.Length -ne 64 -or ($env:BYOM_BRIDGE_SHARED_SECRET -notmatch "^[0-9a-fA-F]{64}$")) {
     throw "BYOM_BRIDGE_SHARED_SECRET must be exactly 64 hexadecimal characters (32 bytes)."
   }
+
+  Persist-SharedSecretForNativeHost -SharedSecretValue $env:BYOM_BRIDGE_SHARED_SECRET
 }
 
 function Start-WatcherWindow {

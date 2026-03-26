@@ -2,9 +2,21 @@ import type { Readable, Writable } from "node:stream";
 
 export type NativeMessage = Readonly<Record<string, unknown>>;
 
+export type NativeStreamWriter = (message: NativeMessage) => Promise<void>;
+
 export type NativeMessageHandler = (
   message: NativeMessage,
+  writer: NativeStreamWriter,
 ) => Promise<NativeMessage | undefined>;
+
+const DEFAULT_MAX_FRAME_BYTES = 1_048_576;
+
+function toError(value: unknown): Error {
+  if (value instanceof Error) {
+    return value;
+  }
+  return new Error(String(value));
+}
 
 export class NativeHostError extends Error {
   constructor(message: string, options?: { cause?: Error }) {
@@ -24,17 +36,26 @@ export class NativeHost {
   readonly #input: Readable;
   readonly #output: Writable;
   readonly #handler: NativeMessageHandler;
+  readonly #maxFrameBytes: number;
   #buffer: Buffer = Buffer.alloc(0);
   #running = false;
+  #drainQueue: Promise<void> = Promise.resolve();
 
   constructor(options: {
     input: Readable;
     output: Writable;
     handler: NativeMessageHandler;
+    maxFrameBytes?: number;
   }) {
     this.#input = options.input;
     this.#output = options.output;
     this.#handler = options.handler;
+    this.#maxFrameBytes = options.maxFrameBytes ?? DEFAULT_MAX_FRAME_BYTES;
+    if (!Number.isSafeInteger(this.#maxFrameBytes) || this.#maxFrameBytes <= 0) {
+      throw new NativeHostError(
+        "NativeHost maxFrameBytes must be a positive safe integer.",
+      );
+    }
   }
 
   /**
@@ -50,13 +71,49 @@ export class NativeHost {
     this.#running = true;
 
     return new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const settleReject = (error: Error): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        reject(error);
+      };
+      const settleResolve = (): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        resolve();
+      };
+
       this.#input.on("data", (chunk: Buffer) => {
         this.#buffer = Buffer.concat([this.#buffer, chunk]);
-        this.#drainBuffer().catch(reject);
+        this.#drainQueue = this.#drainQueue.then(() => this.#drainBuffer());
+        this.#drainQueue.catch((error) => {
+          settleReject(toError(error));
+        });
       });
 
-      this.#input.once("end", () => resolve());
-      this.#input.once("error", (error: Error) => reject(error));
+      this.#input.once("end", () => {
+        this.#drainQueue
+          .then(() => {
+            if (this.#buffer.length !== 0) {
+              settleReject(
+                new NativeHostError(
+                  "Native message stream ended with an incomplete frame.",
+                ),
+              );
+              return;
+            }
+            settleResolve();
+          })
+          .catch((error) => {
+            settleReject(toError(error));
+          });
+      });
+
+      this.#input.once("error", (error: Error) => settleReject(error));
     });
   }
 
@@ -70,6 +127,12 @@ export class NativeHost {
         return;
       }
 
+      if (messageLength > this.#maxFrameBytes) {
+        throw new NativeHostError(
+          `Native message frame length ${String(messageLength)} exceeds maxFrameBytes ${String(this.#maxFrameBytes)}.`,
+        );
+      }
+
       const totalNeeded = 4 + messageLength;
       if (this.#buffer.length < totalNeeded) {
         // Wait for more data.
@@ -80,10 +143,20 @@ export class NativeHost {
       this.#buffer = this.#buffer.subarray(totalNeeded);
 
       const message = this.#parseFrame(frame);
-      const response = await this.#handler(message);
+      const bridgeRequestId =
+        typeof message["_bridgeRequestId"] === "string"
+          ? message["_bridgeRequestId"]
+          : undefined;
+      const tagResponse = (msg: NativeMessage): NativeMessage =>
+        bridgeRequestId !== undefined
+          ? { ...msg, _bridgeRequestId: bridgeRequestId }
+          : msg;
+      const writer: NativeStreamWriter = (msg) =>
+        this.#writeMessage(tagResponse(msg));
+      const response = await this.#handler(message, writer);
 
       if (response !== undefined) {
-        await this.#writeMessage(response);
+        await this.#writeMessage(tagResponse(response));
       }
     }
   }

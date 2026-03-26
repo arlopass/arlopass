@@ -1,0 +1,54 @@
+name: Deploy to Firefox Add-ons
+
+on:
+  workflow_call:
+    secrets:
+      AMO_JWT_ISSUER:
+        required: true
+      AMO_JWT_SECRET:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Firefox Add-ons (AMO)
+    runs-on: ubuntu-latest
+    environment: firefox-add-ons
+    steps:
+      - name: Download Firefox extension zip
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-firefox
+
+      - name: Install web-ext
+        run: npm install -g web-ext
+
+      - name: Upload to AMO
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          set -euo pipefail
+          RETRY=0
+          MAX_RETRIES=3
+          until [ $RETRY -ge $MAX_RETRIES ]; do
+            if web-ext sign \
+              --source-dir . \
+              --artifacts-dir ./signed \
+              --api-key "${WEB_EXT_API_KEY}" \
+              --api-secret "${WEB_EXT_API_SECRET}" \
+              --channel listed \
+              --upload-source-map byom-extension-firefox.zip 2>&1; then
+              echo "✅ AMO upload succeeded"
+              break
+            fi
+            RETRY=$((RETRY + 1))
+            echo "⚠️  Upload attempt ${RETRY}/${MAX_RETRIES} failed, retrying..."
+            sleep $((RETRY * 20))
+          done
+          if [ $RETRY -ge $MAX_RETRIES ]; then
+            echo "::error::Firefox AMO upload failed after ${MAX_RETRIES} attempts"
+            exit 1
+          fi

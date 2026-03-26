@@ -4,9 +4,9 @@
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
-    "types": ["node", "chrome"]
+    "types": ["node", "chrome"],
+    "jsx": "react-jsx"
   },
-  "include": ["src/**/*.ts", "manifest.json"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "manifest.json"],
   "exclude": ["dist", "node_modules", "__tests__"]
 }
-

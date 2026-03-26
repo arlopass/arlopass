@@ -4,4 +4,4 @@ export * from "./artifact-signature.js";
 export * from "./sandbox.js";
 export * from "./adapter-loader.js";
 export * from "./adapter-host.js";
-
+export * from "./cloud-contract.js";

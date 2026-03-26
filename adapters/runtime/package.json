@@ -1,13 +1,26 @@
 {
   "name": "@byom-ai/adapter-runtime",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AltClick/byom-web.git",
+    "directory": "adapters/runtime"
+  },
+  "homepage": "https://github.com/AltClick/byom-web/tree/main/adapters/runtime#readme",
+  "bugs": {
+    "url": "https://github.com/AltClick/byom-web/issues"
+  },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "main": "dist/index.js",
@@ -22,8 +35,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@byom-ai/policy": "file:../../packages/policy",
-    "@byom-ai/protocol": "file:../../packages/protocol",
-    "@byom-ai/telemetry": "file:../../packages/telemetry"
+    "@byom-ai/policy": "0.1.0",
+    "@byom-ai/protocol": "0.1.0",
+    "@byom-ai/telemetry": "0.1.0"
   }
 }

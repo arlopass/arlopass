@@ -15,7 +15,11 @@
     "@mantine/core": "^7.17.8",
     "@mantine/hooks": "^7.17.8",
     "@mantine/notifications": "^7.17.8",
+    "@monaco-editor/react": "^4.7.0",
     "@tabler/icons-react": "^3.40.0",
+    "@types/dompurify": "^3.0.5",
+    "dompurify": "^3.3.3",
+    "marked": "^17.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

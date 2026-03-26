@@ -1,0 +1,76 @@
+name: Build Extension
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Extension version (from tag)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build extension (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [chromium, firefox]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build all workspace dependencies
+        run: npm run build
+
+      - name: Patch manifest version
+        run: |
+          cd apps/extension
+          jq '.version = "${{ inputs.version }}"' manifest.json > manifest.tmp.json
+          mv manifest.tmp.json manifest.json
+
+      - name: Build extension (${{ matrix.target }})
+        run: cd apps/extension && node scripts/build.mjs --target=${{ matrix.target }}
+
+      - name: Validate extension
+        run: |
+          DIST="apps/extension/dist/${{ matrix.target }}"
+          # Size check (5MB max)
+          SIZE=$(du -sb "${DIST}" | cut -f1)
+          if [ "${SIZE}" -gt 5242880 ]; then
+            echo "::error::Extension build exceeds 5MB (${SIZE} bytes)"
+            exit 1
+          fi
+          # CSP validation
+          CSP=$(jq -r '.content_security_policy.extension_pages // empty' "${DIST}/manifest.json")
+          if echo "${CSP}" | grep -qE "unsafe-eval|unsafe-inline"; then
+            echo "::error::CSP contains unsafe directives: ${CSP}"
+            exit 1
+          fi
+          # Version check
+          MANIFEST_VER=$(jq -r '.version' "${DIST}/manifest.json")
+          if [ "${MANIFEST_VER}" != "${{ inputs.version }}" ]; then
+            echo "::error::Manifest version (${MANIFEST_VER}) does not match tag (${{ inputs.version }})"
+            exit 1
+          fi
+          echo "✅ Extension validation passed (size=${SIZE}, version=${MANIFEST_VER})"
+
+      - name: Zip extension
+        run: |
+          cd "apps/extension/dist/${{ matrix.target }}"
+          zip -r "../../../../byom-extension-${{ matrix.target }}.zip" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ matrix.target }}
+          path: byom-extension-${{ matrix.target }}.zip
+          retention-days: 5

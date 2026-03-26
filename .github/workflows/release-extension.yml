@@ -1,0 +1,74 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - "extension/v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run mode (build only, no store deploy)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  parse-tag:
+    name: Parse release tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+    steps:
+      - name: Parse tag
+        id: parse
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "${TAG}" =~ ^extension/v(.+)$ ]]; then
+            echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Unrecognized tag format: ${TAG}"
+            exit 1
+          fi
+
+  ci-gate:
+    name: CI Gate
+    uses: ./.github/workflows/_ci-gate.yml
+
+  build:
+    name: Build Extension
+    needs: [parse-tag, ci-gate]
+    uses: ./.github/workflows/_build-extension.yml
+    with:
+      version: ${{ needs.parse-tag.outputs.version }}
+
+  deploy-chrome:
+    name: Deploy to Chrome
+    needs: build
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    uses: ./.github/workflows/_deploy-chrome-store.yml
+    secrets:
+      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+  deploy-edge:
+    name: Deploy to Edge
+    needs: build
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    uses: ./.github/workflows/_deploy-edge-store.yml
+    secrets:
+      EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+      EDGE_CLIENT_SECRET: ${{ secrets.EDGE_CLIENT_SECRET }}
+      EDGE_ACCESS_TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
+
+  deploy-firefox:
+    name: Deploy to Firefox
+    needs: build
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    uses: ./.github/workflows/_deploy-firefox-store.yml
+    secrets:
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}

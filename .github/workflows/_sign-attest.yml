@@ -1,0 +1,53 @@
+name: Sign & Attest
+
+on:
+  workflow_call:
+    inputs:
+      artifact-name:
+        description: "Name of the artifact to download and sign"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sign:
+    name: Sigstore attestation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ./artifacts
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Generate SHA256 checksums
+        working-directory: ./artifacts
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Sign checksums with Sigstore (keyless OIDC)
+        working-directory: ./artifacts
+        run: |
+          cosign sign-blob --yes \
+            --output-signature SHA256SUMS.txt.sig \
+            --output-certificate SHA256SUMS.txt.pem \
+            --bundle SHA256SUMS.txt.bundle \
+            SHA256SUMS.txt
+
+      - name: Upload signed artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}-signed
+          path: |
+            ./artifacts/SHA256SUMS.txt
+            ./artifacts/SHA256SUMS.txt.sig
+            ./artifacts/SHA256SUMS.txt.pem
+            ./artifacts/SHA256SUMS.txt.bundle
+          retention-days: 5

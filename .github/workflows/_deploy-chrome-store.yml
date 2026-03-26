@@ -1,0 +1,71 @@
+name: Deploy to Chrome Web Store
+
+on:
+  workflow_call:
+    secrets:
+      CHROME_CLIENT_ID:
+        required: true
+      CHROME_CLIENT_SECRET:
+        required: true
+      CHROME_REFRESH_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Chrome Web Store
+    runs-on: ubuntu-latest
+    environment: chrome-web-store
+    steps:
+      - name: Download Chromium extension zip
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-chromium
+
+      - name: Install chrome-webstore-upload-cli
+        run: npm install -g chrome-webstore-upload-cli
+
+      - name: Upload to Chrome Web Store
+        env:
+          EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+          RETRY=0
+          MAX_RETRIES=3
+          until [ $RETRY -ge $MAX_RETRIES ]; do
+            if chrome-webstore-upload upload \
+              --source byom-extension-chromium.zip \
+              --extension-id "${EXTENSION_ID}" \
+              --client-id "${CLIENT_ID}" \
+              --client-secret "${CLIENT_SECRET}" \
+              --refresh-token "${REFRESH_TOKEN}"; then
+              echo "✅ Upload succeeded"
+              break
+            fi
+            RETRY=$((RETRY + 1))
+            echo "⚠️  Upload attempt ${RETRY}/${MAX_RETRIES} failed, retrying in $((RETRY * 15))s..."
+            sleep $((RETRY * 15))
+          done
+          if [ $RETRY -ge $MAX_RETRIES ]; then
+            echo "::error::Chrome Web Store upload failed after ${MAX_RETRIES} attempts"
+            exit 1
+          fi
+
+      - name: Publish to trusted testers
+        env:
+          EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          chrome-webstore-upload publish \
+            --extension-id "${EXTENSION_ID}" \
+            --client-id "${CLIENT_ID}" \
+            --client-secret "${CLIENT_SECRET}" \
+            --refresh-token "${REFRESH_TOKEN}" \
+            --trusted-testers

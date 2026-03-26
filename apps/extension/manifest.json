@@ -5,10 +5,17 @@
   "version": "0.1.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApUsPm+XQsp//jMrkm2EEF3F74+RmO+fTaLOm8yhO1L9lTXvO7c5LZHEWem7/c8sD3/SFY4Zn5eFTp5vkBJH6upDCv4dI+mZMc/+IX5CgEteHGQpz6hgp1KWI/eX9S0lY5Q7bAXvh7FDkllW6a2FJBebXVl8ZKGhq6X57xFdl4ZIIEweFkHr6J+EYHJh/g6kQX5oyIft5FClp3Uc1dCy0b31AYclMX9GAl1uEh3DuFzuzGQjmEKuEctfOQkXuxG0uLhLhBRDGI+jwSWt/aEDcJpsyhUOeb0BXT/3QqiE8zTQtafVdZy+f47mpDFK/kTsQRkboPVaBWCcYo1FDfwZgLQIDAQAB",
   "minimum_chrome_version": "120",
-  "permissions": ["storage", "nativeMessaging"],
-  "host_permissions": ["http://*/*", "https://*/*"],
+  "permissions": [
+    "storage",
+    "nativeMessaging",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http: https:"
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http: https:"
   },
   "background": {
     "service_worker": "dist/background.js",
@@ -16,15 +23,25 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["dist/content-script.js"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "dist/content-script.js"
+      ],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["dist/inpage-provider.js"],
-      "matches": ["http://*/*", "https://*/*"]
+      "resources": [
+        "dist/inpage-provider.js"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
     }
   ],
   "action": {

@@ -7,6 +7,7 @@ import {
 } from "./errors.js";
 import { verifyArtifactSignature, type ArtifactKeyResolver, type SignedArtifact } from "./artifact-signature.js";
 import { parseAdapterManifest, type AdapterManifest } from "./manifest-schema.js";
+import { validateCloudAdapterContractV2Strict } from "./cloud-contract.js";
 
 export interface AdapterContract {
   readonly manifest: AdapterManifest;
@@ -126,6 +127,26 @@ export async function loadAdapter(
       RUNTIME_ERROR_CODES.LOADER_CONTRACT_VIOLATION,
       { providerId: manifest.providerId },
     );
+  }
+
+  if (manifest.connectionMethods !== undefined && manifest.connectionMethods.length > 0) {
+    const validation = validateCloudAdapterContractV2Strict(contractInstance, {
+      expectedConnectionMethods: manifest.connectionMethods,
+    });
+    if (!validation.ok) {
+      const details: Record<string, string | number | boolean | null> = {
+        providerId: manifest.providerId,
+        requiredContract: "CloudAdapterContractV2",
+        connectionMethodCount: manifest.connectionMethods.length,
+        ...(validation.details ?? {}),
+      };
+      throw loaderError(
+        `Adapter "${manifest.providerId}" declares "connectionMethods" but fails CloudAdapterContractV2 strict validation: ${validation.message}`,
+        RUNTIME_ERROR_CODES.LOADER_CONTRACT_VIOLATION,
+        details,
+        validation.cause,
+      );
+    }
   }
 
   return Object.freeze({

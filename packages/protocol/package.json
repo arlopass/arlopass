@@ -1,13 +1,26 @@
 {
   "name": "@byom-ai/protocol",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AltClick/byom-web.git",
+    "directory": "packages/protocol"
+  },
+  "homepage": "https://github.com/AltClick/byom-web/tree/main/packages/protocol#readme",
+  "bugs": {
+    "url": "https://github.com/AltClick/byom-web/issues"
+  },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "main": "dist/index.js",

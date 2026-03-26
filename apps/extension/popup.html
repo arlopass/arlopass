@@ -3,63 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http: https:" />
     <title>BYOM AI Wallet</title>
+    <link rel="stylesheet" href="dist/popup.css" />
     <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="legacy.css" />
   </head>
-  <body class="byom-wallet-popup">
-    <div class="popup">
-      <header class="popup-header">
-        <div class="popup-header__brand">
-          <span class="popup-header__logo" aria-hidden="true">
-            <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <path
-                d="M12 22v-5M9 8V2M15 8V2M18 8h1a2 2 0 0 1 2 2v1a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5v-1a2 2 0 0 1 2-2h1"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </span>
-          <h1 class="popup-header__title">BYOM Wallet</h1>
-        </div>
-        <span class="popup-header__status-chip" id="wallet-status" aria-label="Wallet status">READY</span>
-      </header>
-
-      <main class="popup-main" role="main">
-        <div id="wallet-content" class="wallet-content" aria-live="polite" aria-label="Wallet state">
-          <div class="loading-state" role="status" aria-label="Loading wallet state">
-            <span class="loading-state__text">Loading&#8230;</span>
-          </div>
-        </div>
-      </main>
-
-      <footer class="popup-footer">
-        <div class="quick-actions" role="group" aria-label="Wallet actions">
-          <button
-            class="btn btn--primary"
-            id="btn-connect-provider"
-            type="button"
-            aria-label="Connect a new AI provider"
-          >
-            Connect Provider
-          </button>
-          <button
-            class="btn btn--secondary"
-            id="btn-open-dashboard"
-            type="button"
-            aria-label="Open full dashboard"
-          >
-            Open Dashboard
-          </button>
-        </div>
-        <p class="security-footer">
-          Origin-scoped approvals &mdash; credentials stored locally.
-        </p>
-      </footer>
-    </div>
+  <body>
+    <div id="popup-root"></div>
     <script type="module" src="dist/popup.js"></script>
   </body>
 </html>
