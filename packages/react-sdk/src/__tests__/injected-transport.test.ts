@@ -8,17 +8,17 @@ describe("getInjectedTransport", () => {
     if (originalByom !== undefined) {
       window.byom = originalByom;
     } else {
-      delete (window as Record<string, unknown>).byom;
+      delete (window as unknown as Record<string, unknown>).byom;
     }
   });
 
   it("returns null when window.byom is not defined", () => {
-    delete (window as Record<string, unknown>).byom;
+    delete (window as unknown as Record<string, unknown>).byom;
     expect(getInjectedTransport()).toBeNull();
   });
 
   it("returns null when window.byom.request is not a function", () => {
-    (window as Record<string, unknown>).byom = { notRequest: true };
+    (window as unknown as Record<string, unknown>).byom = { notRequest: true };
     expect(getInjectedTransport()).toBeNull();
   });
 
@@ -27,7 +27,7 @@ describe("getInjectedTransport", () => {
       request: async () => ({ envelope: {} }),
       stream: async () => (async function* () {})(),
     };
-    (window as Record<string, unknown>).byom = mockTransport;
+    (window as unknown as Record<string, unknown>).byom = mockTransport;
     const result = getInjectedTransport();
     expect(result).toBe(mockTransport);
   });

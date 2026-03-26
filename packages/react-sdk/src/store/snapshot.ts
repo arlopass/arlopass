@@ -17,7 +17,7 @@ export type SnapshotInput = {
   error?: BYOMSDKError | null;
 };
 
-const EMPTY_PROVIDERS: readonly ProviderDescriptor[] = Object.freeze([]);
+export const EMPTY_PROVIDERS: readonly ProviderDescriptor[] = Object.freeze([]);
 
 export function createInitialSnapshot(): ClientSnapshot {
   return {
