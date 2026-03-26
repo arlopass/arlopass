@@ -18,12 +18,15 @@ function loadConfig(): Config {
   const configPath = join(process.cwd(), "byom-ui.json");
   if (existsSync(configPath)) {
     const userConfig = JSON.parse(readFileSync(configPath, "utf-8")) as Partial<Config>;
-    return { ...DEFAULT_CONFIG, ...userConfig };
+    return {
+      outDir: userConfig.outDir ?? DEFAULT_CONFIG.outDir,
+      overwrite: userConfig.overwrite ?? DEFAULT_CONFIG.overwrite,
+    };
   }
   return { ...DEFAULT_CONFIG };
 }
 
-function parseFlags(args: string[]): { ids: string[]; outDir?: string; force: boolean; dryRun: boolean } {
+function parseFlags(args: string[]): { ids: string[]; outDir: string | undefined; force: boolean; dryRun: boolean } {
   const ids: string[] = [];
   let outDir: string | undefined;
   let force = false;
