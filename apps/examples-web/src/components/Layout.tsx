@@ -18,7 +18,7 @@ export function Layout({ pageId, children }: LayoutProps) {
       {/* Breadcrumb */}
       {category && page && (
         <Group gap={4}>
-          <Text fz="xs" c="dimmed">{category.icon} {category.label}</Text>
+          <Text fz="xs" c="dimmed">{category.label}</Text>
           <Text fz="xs" c="dimmed">/</Text>
           <Text fz="xs" c="dimmed" fw={500}>{page.label}</Text>
         </Group>
