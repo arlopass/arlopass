@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "blocks": [
+    {
+      "id": "chat",
+      "name": "Chat",
+      "description": "Complete chat interface with messages, streaming, and input",
+      "dependencies": [],
+      "peerDependencies": ["@byom-ai/react-ui", "@byom-ai/react"],
+      "files": ["chat.tsx"]
+    },
+    {
+      "id": "chatbot",
+      "name": "Chatbot Widget",
+      "description": "Floating chatbot bubble with expandable chat panel",
+      "dependencies": ["chat"],
+      "peerDependencies": ["@byom-ai/react-ui", "@byom-ai/react"],
+      "files": ["chatbot.tsx"]
+    },
+    {
+      "id": "provider-picker",
+      "name": "Provider Picker",
+      "description": "Styled provider and model selection dropdowns",
+      "dependencies": [],
+      "peerDependencies": ["@byom-ai/react-ui", "@byom-ai/react"],
+      "files": ["provider-picker.tsx"]
+    },
+    {
+      "id": "connection-banner",
+      "name": "Connection Banner",
+      "description": "Connection status banner with install prompt",
+      "dependencies": [],
+      "peerDependencies": ["@byom-ai/react-ui", "@byom-ai/react"],
+      "files": ["connection-banner.tsx"]
+    }
+  ]
+}
