@@ -74,15 +74,16 @@ export function useConversation(options?: UseConversationOptions): UseConversati
 
   const managerRef = useRef<ConversationManager | null>(null);
   if (managerRef.current === null) {
-    managerRef.current = new ConversationManager({
+    const managerOpts: ConstructorParameters<typeof ConversationManager>[0] = {
       client: store.client,
-      systemPrompt: options?.systemPrompt,
-      tools: options?.tools,
-      maxTokens: options?.maxTokens,
-      maxToolRounds: options?.maxToolRounds,
-      primeTools: options?.primeTools,
-      hideToolCalls: options?.hideToolCalls,
-    });
+    };
+    if (options?.systemPrompt !== undefined) managerOpts.systemPrompt = options.systemPrompt;
+    if (options?.tools !== undefined) managerOpts.tools = options.tools;
+    if (options?.maxTokens !== undefined) managerOpts.maxTokens = options.maxTokens;
+    if (options?.maxToolRounds !== undefined) managerOpts.maxToolRounds = options.maxToolRounds;
+    if (options?.primeTools !== undefined) managerOpts.primeTools = options.primeTools;
+    if (options?.hideToolCalls !== undefined) managerOpts.hideToolCalls = options.hideToolCalls;
+    managerRef.current = new ConversationManager(managerOpts);
   }
 
   const appendMessage = useCallback((msg: TrackedChatMessage) => {
@@ -109,7 +110,9 @@ export function useConversation(options?: UseConversationOptions): UseConversati
       throw new Error("A chat operation is already in progress. Wait for it to complete or call stop().");
     }
     busyRef.current = true;
-    lastRequestRef.current = { type: "send", content, pinned: opts?.pinned };
+    lastRequestRef.current = opts?.pinned !== undefined
+      ? { type: "send", content, pinned: opts.pinned }
+      : { type: "send", content };
     setError(null);
     setIsSending(true);
 
@@ -124,7 +127,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     appendMessage(userMsg);
 
     try {
-      const result = await managerRef.current!.send(content, { pinned: opts?.pinned });
+      const result = await managerRef.current!.send(content, opts?.pinned !== undefined ? { pinned: opts.pinned } : undefined);
 
       const assistantMsgId = generateMessageId();
       const assistantMsg: TrackedChatMessage = {
@@ -154,7 +157,9 @@ export function useConversation(options?: UseConversationOptions): UseConversati
       throw new Error("A chat operation is already in progress. Wait for it to complete or call stop().");
     }
     busyRef.current = true;
-    lastRequestRef.current = { type: "stream", content, pinned: opts?.pinned };
+    lastRequestRef.current = opts?.pinned !== undefined
+      ? { type: "stream", content, pinned: opts.pinned }
+      : { type: "stream", content };
     setError(null);
     setIsStreaming(true);
 
@@ -178,7 +183,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     let accumulated = "";
 
     try {
-      const iterable = managerRef.current!.stream(content, { pinned: opts?.pinned });
+      const iterable = managerRef.current!.stream(content, opts?.pinned !== undefined ? { pinned: opts.pinned } : undefined);
 
       for await (const event of iterable) {
         if (controller.signal.aborted) break;
@@ -284,9 +289,9 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         setError(null);
         const req = lastRequestRef.current!;
         if (req.type === "send") {
-          await send(req.content, { pinned: req.pinned });
+          await send(req.content, req.pinned !== undefined ? { pinned: req.pinned } : undefined);
         } else {
-          await stream(req.content, { pinned: req.pinned });
+          await stream(req.content, req.pinned !== undefined ? { pinned: req.pinned } : undefined);
         }
       }
     : null;
