@@ -829,6 +829,1268 @@ const reply = await conv.send("${prompt}");`}
               </Stack>
             )}
 
+            {/* ─── React SDK Pages ─────────────────────────────────────── */}
+
+            {page === "react-quickstart" && (
+              <Stack gap="lg">
+                <Title order={2}>React Quickstart</Title>
+                <Text c="dimmed">
+                  The <InlineCode>@byom-ai/react</InlineCode> package provides idiomatic React hooks and components
+                  for the BYOM web SDK. It handles connection lifecycle, provider selection, and chat state automatically.
+                </Text>
+
+                <Callout type="info" title="Install">
+                  <CodeBlock title="Terminal" code={`npm install @byom-ai/react`} language="bash" compact />
+                </Callout>
+
+                <Callout type="warning" title="Extension required">
+                  The React SDK detects <InlineCode>window.byom</InlineCode> automatically. You need the BYOM browser extension installed
+                  and at least one provider configured.
+                </Callout>
+
+                <Title order={3}>Minimal Chat App</Title>
+                <Text c="dimmed" fz="sm">
+                  Wrap your app in <InlineCode>{"<BYOMProvider>"}</InlineCode>, use a gate for loading states, and call <InlineCode>useChat()</InlineCode> to send messages.
+                </Text>
+
+                <CodeBlock
+                  title="react-quickstart.tsx"
+                  code={`import { BYOMProvider, useChat } from '@byom-ai/react';
+import { BYOMChatReadyGate } from '@byom-ai/react/guards';
+
+function App() {
+  return (
+    <BYOMProvider appId="my-app" defaultProvider="provider.ollama" defaultModel="model.llama3">
+      <BYOMChatReadyGate
+        connectingFallback={<p>Connecting...</p>}
+        notInstalledFallback={<p>Install the BYOM browser extension</p>}
+        providerFallback={<p>Select a provider</p>}
+        errorFallback={({ error, retry }) => (
+          <div>
+            <p>Error: {error.message}</p>
+            {retry && <button onClick={retry}>Retry</button>}
+          </div>
+        )}
+      >
+        <ChatUI />
+      </BYOMChatReadyGate>
+    </BYOMProvider>
+  );
+}
+
+function ChatUI() {
+  const { messages, streamingContent, stream, isStreaming } = useChat({
+    systemPrompt: "You are a helpful assistant.",
+  });
+
+  return (
+    <div>
+      {messages.map((m) => (
+        <div key={m.id}>{m.role}: {m.content}</div>
+      ))}
+      {streamingContent && <div>assistant: {streamingContent}</div>}
+      <input
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            stream(e.currentTarget.value);
+            e.currentTarget.value = "";
+          }
+        }}
+        disabled={isStreaming}
+      />
+    </div>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Web SDK vs React SDK</Title>
+                <Text c="dimmed" fz="sm">Compare the manual lifecycle approach with the hook-based approach.</Text>
+
+                <TabGroup
+                  tabs={[
+                    {
+                      id: "web-sdk",
+                      label: "Web SDK",
+                      content: (
+                        <CodeBlock
+                          title="web-sdk-approach.ts"
+                          code={`import { BYOMClient } from "@byom-ai/web-sdk";
+
+// Manual lifecycle management
+const client = new BYOMClient({
+  transport: window.byom,
+  origin: window.location.origin,
+});
+
+await client.connect({ appId: "my-app" });
+const { providers } = await client.listProviders();
+await client.selectProvider({
+  providerId: providers[0].providerId,
+  modelId: providers[0].models[0],
+});
+
+// Manual state tracking
+let messages = [];
+let streaming = "";
+
+const stream = await client.chat.stream({
+  messages: [{ role: "user", content: "Hello!" }],
+});
+for await (const chunk of stream) {
+  if (chunk.type === "chunk") streaming += chunk.delta;
+}
+messages.push({ role: "assistant", content: streaming });
+
+// Manual cleanup
+await client.disconnect();`}
+                        />
+                      ),
+                    },
+                    {
+                      id: "react-sdk",
+                      label: "React SDK",
+                      content: (
+                        <CodeBlock
+                          title="react-sdk-approach.tsx"
+                          code={`import { BYOMProvider, useChat } from "@byom-ai/react";
+
+// Declarative — lifecycle handled by provider
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <ChatUI />
+    </BYOMProvider>
+  );
+}
+
+function ChatUI() {
+  // All state managed by the hook
+  const { messages, streamingContent, stream, isStreaming } = useChat();
+
+  return (
+    <div>
+      {messages.map((m) => (
+        <div key={m.id}>{m.role}: {m.content}</div>
+      ))}
+      {streamingContent && <div>assistant: {streamingContent}</div>}
+      <input
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            stream(e.currentTarget.value);
+            e.currentTarget.value = "";
+          }
+        }}
+        disabled={isStreaming}
+      />
+    </div>
+  );
+}
+// No manual cleanup — provider handles disconnect on unmount`}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              </Stack>
+            )}
+
+            {page === "react-hooks" && (
+              <Stack gap="lg">
+                <Title order={2}>React Hooks</Title>
+                <Text c="dimmed">
+                  The React SDK exposes five hooks. Each hook replaces a chunk of manual web-sdk boilerplate
+                  with reactive state that updates automatically.
+                </Text>
+
+                <Title order={3}>useConnection()</Title>
+                <Text c="dimmed" fz="sm">Manages connection lifecycle. Auto-connects when <InlineCode>BYOMProvider</InlineCode> mounts.</Text>
+                <CodeBlock
+                  title="use-connection-return-type.ts"
+                  code={`type UseConnectionReturn = Readonly<{
+  state: ClientState;       // "disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed"
+  sessionId: string | null;
+  isConnected: boolean;     // true when "connected" or "degraded"
+  isConnecting: boolean;    // true when "connecting" or "reconnecting"
+  error: BYOMSDKError | null;
+  connect: () => Promise<void>;
+  disconnect: () => Promise<void>;
+  retry: (() => Promise<void>) | null;  // non-null when error is retryable
+}>;`}
+                />
+                <TabGroup
+                  tabs={[
+                    {
+                      id: "react",
+                      label: "React SDK",
+                      content: (
+                        <CodeBlock
+                          title="use-connection.tsx"
+                          code={`import { useConnection } from "@byom-ai/react";
+
+function ConnectionStatus() {
+  const { state, isConnected, error, retry } = useConnection();
+
+  if (error) return (
+    <div>
+      <p>Error: {error.message}</p>
+      {retry && <button onClick={retry}>Retry</button>}
+    </div>
+  );
+
+  return <p>Status: {state} {isConnected ? "✓" : "…"}</p>;
+}`}
+                        />
+                      ),
+                    },
+                    {
+                      id: "web-sdk",
+                      label: "Web SDK equivalent",
+                      content: (
+                        <CodeBlock
+                          title="web-sdk-connection.ts"
+                          code={`// Manual state tracking with web-sdk
+const client = new BYOMClient({ transport: window.byom, origin: location.origin });
+let state = "disconnected";
+let error = null;
+
+try {
+  state = "connecting";
+  await client.connect({ appId: "my-app" });
+  state = "connected";
+} catch (e) {
+  state = "failed";
+  error = e;
+  if (e.retryable) {
+    // manual retry logic...
+  }
+}`}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+
+                <Title order={3} mt="md">useProviders()</Title>
+                <Text c="dimmed" fz="sm">Discovers and selects providers. Auto-lists providers when connected.</Text>
+                <CodeBlock
+                  title="use-providers-return-type.ts"
+                  code={`type UseProvidersReturn = Readonly<{
+  providers: readonly ProviderDescriptor[];
+  selectedProvider: Readonly<{ providerId: string; modelId: string }> | null;
+  isLoading: boolean;
+  error: BYOMSDKError | null;
+  listProviders: () => Promise<void>;
+  selectProvider: (input: { providerId: string; modelId: string }) => Promise<void>;
+  retry: (() => Promise<void>) | null;
+}>;`}
+                />
+                <TabGroup
+                  tabs={[
+                    {
+                      id: "react",
+                      label: "React SDK",
+                      content: (
+                        <CodeBlock
+                          title="use-providers.tsx"
+                          code={`import { useProviders } from "@byom-ai/react";
+
+function ProviderPicker() {
+  const { providers, selectedProvider, selectProvider, isLoading } = useProviders();
+
+  if (isLoading) return <p>Loading providers...</p>;
+
+  return (
+    <select
+      value={selectedProvider?.providerId ?? ""}
+      onChange={(e) => {
+        const p = providers.find((p) => p.providerId === e.target.value);
+        if (p) selectProvider({ providerId: p.providerId, modelId: p.models[0] });
+      }}
+    >
+      {providers.map((p) => (
+        <option key={p.providerId} value={p.providerId}>{p.providerName}</option>
+      ))}
+    </select>
+  );
+}`}
+                        />
+                      ),
+                    },
+                    {
+                      id: "web-sdk",
+                      label: "Web SDK equivalent",
+                      content: (
+                        <CodeBlock
+                          title="web-sdk-providers.ts"
+                          code={`// Manual provider management with web-sdk
+const { providers } = await client.listProviders();
+let selectedProvider = null;
+
+// Must manually track loading/error state
+await client.selectProvider({
+  providerId: providers[0].providerId,
+  modelId: providers[0].models[0],
+});
+selectedProvider = { providerId: providers[0].providerId, modelId: providers[0].models[0] };`}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+
+                <Title order={3} mt="md">useChat()</Title>
+                <Text c="dimmed" fz="sm">
+                  Low-level chat hook — wraps <InlineCode>client.chat.send()</InlineCode> and <InlineCode>client.chat.stream()</InlineCode> with
+                  automatic message tracking and streaming state.
+                </Text>
+                <CodeBlock
+                  title="use-chat-return-type.ts"
+                  code={`type UseChatReturn = Readonly<{
+  messages: readonly TrackedChatMessage[];
+  streamingContent: string;
+  streamingMessageId: MessageId | null;
+  isStreaming: boolean;
+  isSending: boolean;
+  error: BYOMSDKError | null;
+  send: (content: string) => Promise<MessageId>;
+  stream: (content: string) => Promise<MessageId>;
+  stop: () => void;
+  clearMessages: () => void;
+  retry: (() => Promise<void>) | null;
+  subscribe: ChatSubscribeNoTools;
+}>;`}
+                />
+                <CodeBlock
+                  title="use-chat-example.tsx"
+                  code={`import { useChat } from "@byom-ai/react";
+
+function Chat() {
+  const { messages, streamingContent, stream, isStreaming, stop } = useChat({
+    systemPrompt: "You are a helpful assistant.",
+  });
+
+  return (
+    <div>
+      {messages.map((m) => <p key={m.id}><b>{m.role}:</b> {m.content}</p>)}
+      {streamingContent && <p><b>assistant:</b> {streamingContent}</p>}
+      {isStreaming && <button onClick={stop}>Stop</button>}
+    </div>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">useConversation()</Title>
+                <Text c="dimmed" fz="sm">
+                  Recommended hook — wraps <InlineCode>ConversationManager</InlineCode> with tool calling, context window management, and message pinning.
+                  See the dedicated <InlineCode>Conversation Hook</InlineCode> page for a deep-dive.
+                </Text>
+                <CodeBlock
+                  title="use-conversation-return-type.ts"
+                  code={`type UseConversationReturn = Readonly<{
+  messages: readonly TrackedChatMessage[];
+  streamingContent: string;
+  streamingMessageId: MessageId | null;
+  isStreaming: boolean;
+  isSending: boolean;
+  error: BYOMSDKError | null;
+  tokenCount: number;
+  contextWindow: readonly ChatMessage[];
+  send: (content: string, options?: { pinned?: boolean }) => Promise<MessageId>;
+  stream: (content: string, options?: { pinned?: boolean }) => Promise<MessageId>;
+  stop: () => void;
+  clearMessages: () => void;
+  pinMessage: (messageId: MessageId, pinned: boolean) => void;
+  submitToolResult: (toolCallId: string, result: string) => void;
+  retry: (() => Promise<void>) | null;
+  subscribe: ChatSubscribe;
+}>;`}
+                />
+
+                <Title order={3} mt="md">useClient()</Title>
+                <Text c="dimmed" fz="sm">
+                  Escape hatch — returns the raw <InlineCode>BYOMClient</InlineCode> instance or <InlineCode>null</InlineCode> if
+                  the transport isn't available or the client isn't connected.
+                </Text>
+                <CodeBlock
+                  title="use-client-example.tsx"
+                  code={`import { useClient } from "@byom-ai/react";
+
+function AdvancedFeature() {
+  const client = useClient();
+
+  if (!client) return <p>Not connected</p>;
+
+  const handleRaw = async () => {
+    // Direct access to the underlying BYOMClient
+    const result = await client.chat.send({
+      messages: [{ role: "user", content: "Hello" }],
+    });
+    console.log(result);
+  };
+
+  return <button onClick={handleRaw}>Send Raw</button>;
+}`}
+                />
+              </Stack>
+            )}
+
+            {page === "react-conversation" && (
+              <Stack gap="lg">
+                <Title order={2}>Conversation Hook</Title>
+                <Text c="dimmed">
+                  Deep-dive into <InlineCode>useConversation()</InlineCode> — the recommended hook for production chat UIs.
+                  It wraps <InlineCode>ConversationManager</InlineCode> from the web SDK with reactive state.
+                </Text>
+
+                <Title order={3}>Basic Usage</Title>
+                <CodeBlock
+                  title="conversation-basic.tsx"
+                  code={`import { BYOMProvider, useConversation } from "@byom-ai/react";
+import { BYOMChatReadyGate } from "@byom-ai/react/guards";
+
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <BYOMChatReadyGate
+        connectingFallback={<p>Connecting...</p>}
+        notInstalledFallback={<p>Install BYOM extension</p>}
+        providerFallback={<p>Select a provider</p>}
+      >
+        <ChatWithConversation />
+      </BYOMChatReadyGate>
+    </BYOMProvider>
+  );
+}
+
+function ChatWithConversation() {
+  const {
+    messages,
+    streamingContent,
+    stream,
+    isStreaming,
+    tokenCount,
+  } = useConversation({
+    systemPrompt: "You are a senior React developer.",
+    maxTokens: 8192,
+  });
+
+  return (
+    <div>
+      <p>Tokens used: {tokenCount}</p>
+      {messages.map((m) => (
+        <div key={m.id}>{m.role}: {m.content}</div>
+      ))}
+      {streamingContent && <div>assistant: {streamingContent}</div>}
+      <input
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            stream(e.currentTarget.value);
+            e.currentTarget.value = "";
+          }
+        }}
+        disabled={isStreaming}
+      />
+    </div>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Context Window Management</Title>
+                <Text c="dimmed" fz="sm">
+                  The hook exposes <InlineCode>tokenCount</InlineCode>, <InlineCode>contextWindow</InlineCode>,
+                  and <InlineCode>pinMessage()</InlineCode> for managing what gets sent to the model.
+                </Text>
+                <CodeBlock
+                  title="context-window.tsx"
+                  code={`function ContextAwareChat() {
+  const {
+    messages,
+    tokenCount,
+    contextWindow,
+    pinMessage,
+    stream,
+  } = useConversation({ maxTokens: 4096 });
+
+  return (
+    <div>
+      <p>
+        {tokenCount} tokens |{" "}
+        {contextWindow.length} messages in context window
+      </p>
+      {messages.map((m) => (
+        <div key={m.id}>
+          <span>{m.role}: {m.content}</span>
+          <button onClick={() => pinMessage(m.id, !m.pinned)}>
+            {m.pinned ? "📌 Unpin" : "Pin"}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Tool Calling</Title>
+                <Text c="dimmed" fz="sm">
+                  Pass tool definitions to <InlineCode>useConversation</InlineCode>. Handlers auto-execute;
+                  tools without handlers use <InlineCode>submitToolResult()</InlineCode> for manual control.
+                </Text>
+                <CodeBlock
+                  title="conversation-tools.tsx"
+                  code={`function ChatWithTools() {
+  const {
+    messages,
+    streamingContent,
+    stream,
+    isStreaming,
+    subscribe,
+  } = useConversation({
+    systemPrompt: "You are a helpful assistant with tools.",
+    tools: [
+      {
+        name: "search_docs",
+        description: "Search documentation",
+        parameters: {
+          type: "object",
+          properties: { query: { type: "string" } },
+          required: ["query"],
+        },
+        handler: async (args) => {
+          const results = await fetch(\`/api/search?q=\${args.query}\`);
+          return JSON.stringify(await results.json());
+        },
+      },
+      {
+        name: "get_time",
+        description: "Get current time",
+        handler: async () => new Date().toISOString(),
+      },
+    ],
+    maxToolRounds: 5,
+    primeTools: true,
+    hideToolCalls: true,
+  });
+
+  // Subscribe to tool events for rich UI
+  useEffect(() => {
+    return subscribe((event) => {
+      if (event.type === "tool_call") console.log("Tool called:", event.name);
+      if (event.type === "tool_result") console.log("Tool result:", event.result);
+    });
+  }, [subscribe]);
+
+  return (
+    <div>
+      {messages.map((m) => <p key={m.id}>{m.role}: {m.content}</p>)}
+      {streamingContent && <p>assistant: {streamingContent}</p>}
+    </div>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Web SDK Comparison</Title>
+                <TabGroup
+                  tabs={[
+                    {
+                      id: "react",
+                      label: "React SDK",
+                      content: (
+                        <CodeBlock
+                          title="react-conversation.tsx"
+                          code={`// useConversation handles everything reactively
+const { messages, stream, tokenCount, pinMessage } = useConversation({
+  systemPrompt: "...",
+  tools: [...],
+  maxTokens: 8192,
+});
+
+await stream("Hello!");
+// messages, tokenCount auto-update via React state`}
+                        />
+                      ),
+                    },
+                    {
+                      id: "web-sdk",
+                      label: "Web SDK equivalent",
+                      content: (
+                        <CodeBlock
+                          title="web-sdk-conversation.ts"
+                          code={`// Manual ConversationManager lifecycle
+import { ConversationManager } from "@byom-ai/web-sdk";
+
+const conv = new ConversationManager({
+  client,
+  systemPrompt: "...",
+  tools: [...],
+  maxTokens: 8192,
+});
+
+// Must manually track state
+let messages = [];
+for await (const event of conv.stream("Hello!")) {
+  if (event.type === "chunk") /* update UI */ ;
+}
+messages = conv.getMessages();
+const tokens = conv.getTokenCount();`}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              </Stack>
+            )}
+
+            {page === "react-guards" && (
+              <Stack gap="lg">
+                <Title order={2}>Guard Components</Title>
+                <Text c="dimmed">
+                  Declarative components for conditional rendering based on BYOM connection, provider, and chat state.
+                  Import from <InlineCode>@byom-ai/react/guards</InlineCode>.
+                </Text>
+
+                <Title order={3}>All Guards</Title>
+                <Card withBorder>
+                  <Stack gap="xs">
+                    <Text fw={600} fz="sm">Positive Gates (render children when condition is met)</Text>
+                    <List spacing="xs" fz="sm">
+                      <List.Item><InlineCode>BYOMConnectionGate</InlineCode> — renders children when connected; shows <InlineCode>fallback</InlineCode> otherwise</List.Item>
+                      <List.Item><InlineCode>BYOMProviderGate</InlineCode> — renders children when a provider is selected; shows <InlineCode>fallback</InlineCode> otherwise</List.Item>
+                      <List.Item><InlineCode>BYOMChatReadyGate</InlineCode> — all-in-one gate with <InlineCode>connectingFallback</InlineCode>, <InlineCode>notInstalledFallback</InlineCode>, <InlineCode>providerFallback</InlineCode>, <InlineCode>errorFallback</InlineCode></List.Item>
+                    </List>
+                    <Text fw={600} fz="sm" mt="sm">Negative Guards (render function children when condition is met)</Text>
+                    <List spacing="xs" fz="sm">
+                      <List.Item><InlineCode>BYOMNotInstalled</InlineCode> — renders when extension not detected</List.Item>
+                      <List.Item><InlineCode>BYOMDisconnected</InlineCode> — renders when disconnected</List.Item>
+                      <List.Item><InlineCode>BYOMConnected</InlineCode> — renders when connected</List.Item>
+                      <List.Item><InlineCode>BYOMProviderNotReady</InlineCode> — renders when no provider selected</List.Item>
+                      <List.Item><InlineCode>BYOMHasError</InlineCode> — renders when an error exists (receives error + retry)</List.Item>
+                      <List.Item><InlineCode>BYOMChatNotReady</InlineCode> — renders when chat is not ready</List.Item>
+                      <List.Item><InlineCode>BYOMChatReady</InlineCode> — renders when chat is fully ready</List.Item>
+                    </List>
+                    <Text fw={600} fz="sm" mt="sm">Error Boundary</Text>
+                    <List spacing="xs" fz="sm">
+                      <List.Item><InlineCode>BYOMErrorBoundary</InlineCode> — catches fatal errors in the React tree</List.Item>
+                    </List>
+                  </Stack>
+                </Card>
+
+                <Title order={3} mt="md">Positive Gate Examples</Title>
+                <CodeBlock
+                  title="connection-gate.tsx"
+                  code={`import { BYOMConnectionGate, BYOMProviderGate } from "@byom-ai/react/guards";
+
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <BYOMConnectionGate fallback={<p>Connecting to BYOM wallet...</p>}>
+        <BYOMProviderGate fallback={<ProviderPicker />}>
+          <ChatUI />
+        </BYOMProviderGate>
+      </BYOMConnectionGate>
+    </BYOMProvider>
+  );
+}`}
+                />
+
+                <CodeBlock
+                  title="chat-ready-gate.tsx"
+                  code={`import { BYOMChatReadyGate } from "@byom-ai/react/guards";
+
+// BYOMChatReadyGate combines all checks into one component
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <BYOMChatReadyGate
+        connectingFallback={<Spinner label="Connecting..." />}
+        notInstalledFallback={
+          <div>
+            <h3>BYOM Extension Required</h3>
+            <p>Install the BYOM browser extension to continue.</p>
+            <a href="https://chrome.google.com/webstore/...">Install</a>
+          </div>
+        }
+        providerFallback={<ProviderSetup />}
+        errorFallback={({ error, retry }) => (
+          <div>
+            <p>Something went wrong: {error.message}</p>
+            {retry && <button onClick={retry}>Try Again</button>}
+          </div>
+        )}
+      >
+        <ChatUI />
+      </BYOMChatReadyGate>
+    </BYOMProvider>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Negative Guard Examples</Title>
+                <CodeBlock
+                  title="negative-guards.tsx"
+                  code={`import {
+  BYOMNotInstalled,
+  BYOMDisconnected,
+  BYOMConnected,
+  BYOMHasError,
+  BYOMChatReady,
+} from "@byom-ai/react/guards";
+
+function StatusBar() {
+  return (
+    <div>
+      <BYOMNotInstalled>
+        {() => <Banner type="warning">Extension not installed</Banner>}
+      </BYOMNotInstalled>
+
+      <BYOMDisconnected>
+        {() => <Badge color="red">Disconnected</Badge>}
+      </BYOMDisconnected>
+
+      <BYOMConnected>
+        {() => <Badge color="green">Connected</Badge>}
+      </BYOMConnected>
+
+      <BYOMHasError>
+        {({ error, retry }) => (
+          <Alert color="red">
+            {error.message}
+            {retry && <button onClick={retry}>Retry</button>}
+          </Alert>
+        )}
+      </BYOMHasError>
+
+      <BYOMChatReady>
+        {() => <Badge color="teal">Chat Ready</Badge>}
+      </BYOMChatReady>
+    </div>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Error Boundary</Title>
+                <CodeBlock
+                  title="error-boundary.tsx"
+                  code={`import { BYOMErrorBoundary } from "@byom-ai/react/guards";
+
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <BYOMErrorBoundary
+        fallback={({ error, reset }) => (
+          <div>
+            <h3>Fatal Error</h3>
+            <p>{error.message}</p>
+            <button onClick={reset}>Reset</button>
+          </div>
+        )}
+      >
+        <ChatUI />
+      </BYOMErrorBoundary>
+    </BYOMProvider>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Web SDK Comparison</Title>
+                <TabGroup
+                  tabs={[
+                    {
+                      id: "react",
+                      label: "React SDK (guards)",
+                      content: (
+                        <CodeBlock
+                          title="guards-approach.tsx"
+                          code={`// Declarative — guards handle all state checks
+<BYOMChatReadyGate
+  connectingFallback={<Spinner />}
+  notInstalledFallback={<InstallBanner />}
+  errorFallback={({ error, retry }) => <ErrorUI error={error} retry={retry} />}
+>
+  <ChatUI />
+</BYOMChatReadyGate>`}
+                        />
+                      ),
+                    },
+                    {
+                      id: "web-sdk",
+                      label: "Web SDK (manual checks)",
+                      content: (
+                        <CodeBlock
+                          title="manual-checks.ts"
+                          code={`// Imperative — manual if/else for every state
+if (!window.byom) {
+  showInstallBanner();
+} else if (client.state === "connecting") {
+  showSpinner();
+} else if (client.state === "failed") {
+  showError(lastError);
+  if (lastError.retryable) showRetryButton();
+} else if (!selectedProvider) {
+  showProviderPicker();
+} else {
+  showChatUI();
+}`}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              </Stack>
+            )}
+
+            {page === "react-error-handling" && (
+              <Stack gap="lg">
+                <Title order={2}>Error Handling</Title>
+                <Text c="dimmed">
+                  How errors flow through the React SDK — retryable vs non-retryable errors, hook-level retry,
+                  error boundaries, and callbacks.
+                </Text>
+
+                <Title order={3}>Retryable vs Non-Retryable</Title>
+                <Text fz="sm">
+                  Every <InlineCode>BYOMSDKError</InlineCode> has a <InlineCode>retryable</InlineCode> boolean.
+                  When an error is retryable, hooks expose a <InlineCode>retry()</InlineCode> function that re-attempts the last operation.
+                </Text>
+                <CodeBlock
+                  title="retry-pattern.tsx"
+                  code={`import { useConnection } from "@byom-ai/react";
+
+function ConnectionManager() {
+  const { state, error, retry } = useConnection();
+
+  if (error) {
+    return (
+      <div>
+        <p>Connection error: {error.message}</p>
+        <p>Code: {error.machineCode} | Retryable: {String(error.retryable)}</p>
+        {retry ? (
+          <button onClick={retry}>Retry Connection</button>
+        ) : (
+          <p>This error cannot be retried automatically.</p>
+        )}
+      </div>
+    );
+  }
+
+  return <p>State: {state}</p>;
+}`}
+                />
+
+                <Title order={3} mt="md">Hook-Level Error Handling</Title>
+                <Text fz="sm">
+                  All hooks (<InlineCode>useConnection</InlineCode>, <InlineCode>useProviders</InlineCode>,{" "}
+                  <InlineCode>useChat</InlineCode>, <InlineCode>useConversation</InlineCode>) expose <InlineCode>error</InlineCode> and <InlineCode>retry</InlineCode>.
+                </Text>
+                <CodeBlock
+                  title="chat-error.tsx"
+                  code={`import { useChat } from "@byom-ai/react";
+
+function Chat() {
+  const { messages, stream, error, retry, isStreaming } = useChat();
+
+  return (
+    <div>
+      {error && (
+        <div className="error-banner">
+          <p>{error.message}</p>
+          {retry && <button onClick={retry}>Retry last message</button>}
+        </div>
+      )}
+      {messages.map((m) => (
+        <p key={m.id} className={m.status === "error" ? "msg-error" : ""}>
+          {m.role}: {m.content}
+        </p>
+      ))}
+    </div>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">BYOMErrorBoundary</Title>
+                <Text fz="sm">
+                  Catches fatal rendering errors in the BYOM component tree. Use as a top-level wrapper.
+                </Text>
+                <CodeBlock
+                  title="error-boundary-usage.tsx"
+                  code={`import { BYOMErrorBoundary } from "@byom-ai/react/guards";
+
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <BYOMErrorBoundary
+        fallback={({ error, reset }) => (
+          <div>
+            <h2>Something went wrong</h2>
+            <pre>{error.message}</pre>
+            <button onClick={reset}>Reset App</button>
+          </div>
+        )}
+      >
+        <MainContent />
+      </BYOMErrorBoundary>
+    </BYOMProvider>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">BYOMHasError Guard</Title>
+                <Text fz="sm">
+                  For inline error UI without boundaries — renders only when an error is present.
+                </Text>
+                <CodeBlock
+                  title="has-error-guard.tsx"
+                  code={`import { BYOMHasError } from "@byom-ai/react/guards";
+
+function App() {
+  return (
+    <BYOMProvider appId="my-app">
+      <BYOMHasError>
+        {({ error, retry }) => (
+          <div className="global-error-bar">
+            <span>⚠ {error.message}</span>
+            {retry && <button onClick={retry}>Retry</button>}
+          </div>
+        )}
+      </BYOMHasError>
+      <MainContent />
+    </BYOMProvider>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">onError Callback</Title>
+                <Text fz="sm">
+                  <InlineCode>BYOMProvider</InlineCode> accepts an <InlineCode>onError</InlineCode> callback for global error logging.
+                </Text>
+                <CodeBlock
+                  title="on-error-callback.tsx"
+                  code={`function App() {
+  return (
+    <BYOMProvider
+      appId="my-app"
+      onError={(error) => {
+        // Log to your error tracking service
+        console.error("[BYOM]", error.machineCode, error.message);
+        analytics.track("byom_error", {
+          code: error.machineCode,
+          reason: error.reasonCode,
+          retryable: error.retryable,
+        });
+      }}
+    >
+      <MainContent />
+    </BYOMProvider>
+  );
+}`}
+                />
+
+                <Title order={3} mt="md">Web SDK Comparison</Title>
+                <TabGroup
+                  tabs={[
+                    {
+                      id: "react",
+                      label: "React SDK",
+                      content: (
+                        <CodeBlock
+                          title="react-errors.tsx"
+                          code={`// Structured error state on every hook
+const { error, retry } = useConnection();
+const { error: chatError, retry: chatRetry } = useChat();
+
+// Guard components for declarative error UI
+<BYOMHasError>{({ error, retry }) => <ErrorBanner />}</BYOMHasError>
+
+// Error boundary for fatal errors
+<BYOMErrorBoundary fallback={...}>...</BYOMErrorBoundary>
+
+// Global callback
+<BYOMProvider onError={(e) => logError(e)}>...</BYOMProvider>`}
+                        />
+                      ),
+                    },
+                    {
+                      id: "web-sdk",
+                      label: "Web SDK equivalent",
+                      content: (
+                        <CodeBlock
+                          title="web-sdk-errors.ts"
+                          code={`// Manual try/catch on every operation
+try {
+  await client.connect({ appId: "my-app" });
+} catch (e) {
+  if (e instanceof BYOMSDKError) {
+    console.error(e.machineCode, e.reasonCode);
+    if (e.retryable) {
+      // manual retry logic
+      await client.connect({ appId: "my-app" });
+    }
+  }
+}
+
+try {
+  const reply = await client.chat.send({ messages });
+} catch (e) {
+  // repeat error handling for every call...
+}`}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              </Stack>
+            )}
+
+            {page === "react-testing" && (
+              <Stack gap="lg">
+                <Title order={2}>Testing</Title>
+                <Text c="dimmed">
+                  Testing utilities from <InlineCode>@byom-ai/react/testing</InlineCode> for unit testing
+                  components that use BYOM hooks.
+                </Text>
+
+                <Title order={3}>createMockTransport()</Title>
+                <Text fz="sm">
+                  Creates a configurable mock transport that simulates extension responses.
+                </Text>
+                <CodeBlock
+                  title="create-mock-transport.ts"
+                  code={`import { createMockTransport } from "@byom-ai/react/testing";
+
+// Default — responds with "Hello from mock!"
+const transport = createMockTransport();
+
+// Custom responses
+const transport = createMockTransport({
+  chatResponse: "Custom reply",
+  streamChunks: ["Hello ", "world ", "!"],
+  providers: [
+    { providerId: "test-provider", providerName: "Test", models: ["test-model"] },
+  ],
+  latency: 100, // simulate network delay
+});
+
+// Simulate errors
+const transport = createMockTransport({
+  chatError: new Error("Model unavailable"),
+  failOn: "chat.completions",
+});`}
+                />
+
+                <Title order={3} mt="md">MockBYOMProvider</Title>
+                <Text fz="sm">
+                  Drop-in test wrapper — injects the mock transport into <InlineCode>window.byom</InlineCode> and wraps children in <InlineCode>BYOMProvider</InlineCode>.
+                </Text>
+                <CodeBlock
+                  title="mock-provider.tsx"
+                  code={`import { MockBYOMProvider, createMockTransport } from "@byom-ai/react/testing";
+import { render, screen } from "@testing-library/react";
+
+const transport = createMockTransport({ chatResponse: "Test reply" });
+
+render(
+  <MockBYOMProvider transport={transport}>
+    <MyChat />
+  </MockBYOMProvider>
+);
+
+// appId defaults to "test" — override if needed
+render(
+  <MockBYOMProvider transport={transport} appId="com.test.app">
+    <MyChat />
+  </MockBYOMProvider>
+);`}
+                />
+
+                <Title order={3} mt="md">Window Mocks</Title>
+                <Text fz="sm">
+                  For lower-level control, use <InlineCode>mockWindowByom()</InlineCode> / <InlineCode>cleanupWindowByom()</InlineCode> directly.
+                </Text>
+                <CodeBlock
+                  title="window-mock.ts"
+                  code={`import {
+  mockWindowByom,
+  cleanupWindowByom,
+  createMockTransport,
+} from "@byom-ai/react/testing";
+
+describe("MyComponent", () => {
+  const transport = createMockTransport();
+
+  beforeEach(() => {
+    mockWindowByom(transport);
+  });
+
+  afterEach(() => {
+    cleanupWindowByom();
+  });
+
+  it("detects the extension", () => {
+    expect(window.byom).toBeDefined();
+  });
+});`}
+                />
+
+                <Title order={3} mt="md">Async Test Helpers</Title>
+                <Text fz="sm">
+                  Utility functions that wait for specific BYOM states in tests.
+                </Text>
+                <CodeBlock
+                  title="test-helpers.ts"
+                  code={`import {
+  waitForChat,
+  waitForStream,
+  waitForState,
+  waitForSnapshot,
+} from "@byom-ai/react/testing";
+
+it("sends a message", async () => {
+  render(
+    <MockBYOMProvider transport={transport}>
+      <MyChat />
+    </MockBYOMProvider>
+  );
+
+  // Wait for connection
+  await waitForState("connected");
+
+  // Trigger a message
+  fireEvent.click(screen.getByText("Send"));
+
+  // Wait for response
+  await waitForChat();
+
+  expect(screen.getByText("Hello from mock!")).toBeInTheDocument();
+});
+
+it("streams a response", async () => {
+  const transport = createMockTransport({
+    streamChunks: ["Hello ", "world!"],
+  });
+
+  render(
+    <MockBYOMProvider transport={transport}>
+      <MyStreamChat />
+    </MockBYOMProvider>
+  );
+
+  await waitForState("connected");
+  fireEvent.click(screen.getByText("Stream"));
+  await waitForStream();
+
+  expect(screen.getByText("Hello world!")).toBeInTheDocument();
+});`}
+                />
+
+                <Title order={3} mt="md">Full Test Example</Title>
+                <CodeBlock
+                  title="chat-component.test.tsx"
+                  code={`import { describe, it, expect } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import {
+  MockBYOMProvider,
+  createMockTransport,
+  waitForState,
+  waitForChat,
+  cleanupWindowByom,
+} from "@byom-ai/react/testing";
+import { ChatWidget } from "./ChatWidget";
+
+describe("ChatWidget", () => {
+  afterEach(() => {
+    cleanupWindowByom();
+  });
+
+  it("renders messages after send", async () => {
+    const transport = createMockTransport({
+      chatResponse: "Hi there!",
+    });
+
+    render(
+      <MockBYOMProvider transport={transport}>
+        <ChatWidget />
+      </MockBYOMProvider>
+    );
+
+    await waitForState("connected");
+
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "Hello" } });
+    fireEvent.click(screen.getByText("Send"));
+
+    await waitForChat();
+
+    expect(screen.getByText("Hi there!")).toBeInTheDocument();
+  });
+
+  it("shows error on failure", async () => {
+    const transport = createMockTransport({
+      chatError: new Error("Provider unavailable"),
+      failOn: "chat.completions",
+    });
+
+    render(
+      <MockBYOMProvider transport={transport}>
+        <ChatWidget />
+      </MockBYOMProvider>
+    );
+
+    await waitForState("connected");
+    fireEvent.click(screen.getByText("Send"));
+    await waitForChat();
+
+    expect(screen.getByText(/Provider unavailable/)).toBeInTheDocument();
+  });
+});`}
+                />
+
+                <Title order={3} mt="md">Web SDK Comparison</Title>
+                <TabGroup
+                  tabs={[
+                    {
+                      id: "react",
+                      label: "React SDK",
+                      content: (
+                        <CodeBlock
+                          title="react-testing.tsx"
+                          code={`// Purpose-built test utilities
+import { MockBYOMProvider, createMockTransport, waitForChat } from "@byom-ai/react/testing";
+
+const transport = createMockTransport({ chatResponse: "test" });
+render(<MockBYOMProvider transport={transport}><App /></MockBYOMProvider>);
+await waitForChat();`}
+                        />
+                      ),
+                    },
+                    {
+                      id: "web-sdk",
+                      label: "Web SDK equivalent",
+                      content: (
+                        <CodeBlock
+                          title="web-sdk-testing.ts"
+                          code={`// Manual mock setup with web-sdk
+import { BYOMClient } from "@byom-ai/web-sdk";
+
+// Create a mock transport manually
+const mockTransport = {
+  request: async (envelope) => {
+    if (envelope.capability === "chat.completions") {
+      return { payload: { message: { role: "assistant", content: "test" } } };
+    }
+    // ... handle every capability manually
+  },
+};
+
+const client = new BYOMClient({ transport: mockTransport, origin: "test" });
+await client.connect({ appId: "test" });
+// ... manually drive the full lifecycle in tests`}
+                        />
+                      ),
+                    },
+                  ]}
+                />
+              </Stack>
+            )}
+
             {SCENARIO_CATALOG.filter((s) => s.id === page).map((s) => (
               <Stack key={s.id} gap="lg">
                 <Title order={2}>{s.title}</Title>
