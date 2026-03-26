@@ -6,6 +6,10 @@ const installReact = `npm install @byom-ai/react`;
 
 const installWeb = `npm install @byom-ai/web-sdk`;
 
+const installUI = `npm install @byom-ai/react-ui`;
+
+const registryCmd = `npx @byom-ai/ui add chat`;
+
 const verifyReact = `import { BYOMProvider, useConversation } from "@byom-ai/react";
 
 console.log("React SDK loaded ✓");`;
@@ -78,6 +82,25 @@ export default function Installation() {
       </Text>
       <CodeBlock title="React SDK" code={verifyReact} />
       <CodeBlock title="Web SDK" code={verifyWeb} />
+
+      <Title order={3}>Components Library</Title>
+      <Text>
+        The optional components library provides headless React primitives for
+        building chat interfaces.
+      </Text>
+      <CodeBlock title="Terminal" code={installUI} language="bash" />
+
+      <Callout type="info" title="Optional">
+        The components library is optional — you can build everything with the
+        React SDK hooks alone. The primitives package adds ready-made compound
+        components that save time on common UI patterns.
+      </Callout>
+
+      <Text>
+        You can also use the block registry CLI to copy pre-styled Tailwind
+        blocks into your project:
+      </Text>
+      <CodeBlock title="Terminal" code={registryCmd} language="bash" />
 
       <Title order={3}>TypeScript</Title>
       <Text>
