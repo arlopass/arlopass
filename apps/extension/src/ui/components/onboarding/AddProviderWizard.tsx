@@ -17,7 +17,10 @@ import { onboardingReducer, INITIAL_STATE } from "./onboarding-state.js";
 import { usePersistedReducer } from "../../hooks/usePersistedReducer.js";
 import { tokens } from "../theme.js";
 import { createCloudConnectors } from "../../../options/connectors/index.js";
-import { ensureBridgeHandshakeSession, clearBridgeHandshakeSessionCache } from "../../../transport/bridge-handshake.js";
+import {
+  ensureBridgeHandshakeSession,
+  clearBridgeHandshakeSessionCache,
+} from "../../../transport/bridge-handshake.js";
 import {
   parseBridgePairingState,
   unwrapPairingKeyMaterial,
@@ -101,25 +104,54 @@ async function resolvePairingHandle(): Promise<string | undefined> {
   return pairingState?.pairingHandle;
 }
 
-/** Low-level one-shot native message (no auth). Used by handshake itself. */
+/**
+ * Persistent native messaging port for the wizard.
+ * Using connectNative (not sendNativeMessage) ensures all messages go to the
+ * SAME bridge process — critical for cloud.connection.complete → cloud.models.discover
+ * flow where the connection handle must persist across calls.
+ */
+let persistentPort: chrome.runtime.Port | null = null;
+let portRequestId = 0;
+const pendingRequests = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+
+function getPersistentPort(hostName: string): chrome.runtime.Port {
+  if (persistentPort !== null) return persistentPort;
+
+  const port = chrome.runtime.connectNative(hostName);
+  port.onMessage.addListener((response: unknown) => {
+    if (typeof response === "object" && response !== null) {
+      const id = (response as Record<string, unknown>)["_bridgeRequestId"];
+      if (typeof id === "string") {
+        const pending = pendingRequests.get(id);
+        if (pending !== undefined) {
+          pendingRequests.delete(id);
+          pending.resolve(response);
+        }
+      }
+    }
+  });
+  port.onDisconnect.addListener(() => {
+    persistentPort = null;
+    for (const [, pending] of pendingRequests) {
+      pending.reject(new Error("Bridge port disconnected."));
+    }
+    pendingRequests.clear();
+  });
+  persistentPort = port;
+  return port;
+}
+
+/** Send a native message via the persistent port. Tags with _bridgeRequestId for routing. */
 function rawSendNativeMessage(
   hostName: string,
   message: Record<string, unknown>,
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
     try {
-      chrome.runtime.sendNativeMessage(
-        hostName,
-        message,
-        (response: unknown) => {
-          const err = chrome.runtime.lastError;
-          if (err !== undefined) {
-            reject(new Error(err.message ?? "Native messaging error"));
-            return;
-          }
-          resolve(response);
-        },
-      );
+      const id = `wizard.${String(++portRequestId)}.${Date.now().toString(36)}`;
+      const port = getPersistentPort(hostName);
+      pendingRequests.set(id, { resolve, reject });
+      port.postMessage({ ...message, _bridgeRequestId: id });
     } catch (error) {
       reject(error instanceof Error ? error : new Error(String(error)));
     }
