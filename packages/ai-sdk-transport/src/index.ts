@@ -1,3 +1,4 @@
-// @byom-ai/ai-sdk-transport
-// Vercel AI SDK ChatTransport for the BYOM browser extension.
-export {};
+export { BYOMChatTransport } from "./byom-chat-transport.js";
+export type { BYOMChatTransportOptions } from "./byom-chat-transport.js";
+export { convertMessages } from "./convert-messages.js";
+export { convertStream } from "./convert-stream.js";

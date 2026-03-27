@@ -109,10 +109,11 @@ export class BYOMChatTransport {
     }
 
     const timeoutMs = this.#options.timeoutMs ?? 120_000;
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : undefined;
     const client = new BYOMClient({
       transport,
-      origin:
-        typeof window !== "undefined" ? window.location.origin : undefined,
+      ...(origin !== undefined ? { origin } : {}),
       timeoutMs,
     });
 
