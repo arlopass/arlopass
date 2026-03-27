@@ -40,14 +40,14 @@ export type ProviderAvatarProps = {
 export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
   const slug = slugMap[providerKey];
   if (slug != null) {
-    const useLightBg = needsLightBg.has(providerKey);
+    const invertToWhite = needsLightBg.has(providerKey);
     return (
       <div
         style={{
           width: size,
           height: size,
           borderRadius: tokens.radius.button,
-          background: useLightBg ? "rgba(250, 250, 249, 0.12)" : "transparent",
+          background: invertToWhite ? "transparent" : "rgba(250, 250, 249, 0.1)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -57,12 +57,12 @@ export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
         <Image
           src={`icons/${slug}.svg`}
           alt=""
-          w={Math.round(size * 0.75)}
-          h={Math.round(size * 0.75)}
+          w={invertToWhite ? size : Math.round(size * 0.75)}
+          h={invertToWhite ? size : Math.round(size * 0.75)}
           fit="contain"
           style={{
             flexShrink: 0,
-            ...(useLightBg ? { filter: "brightness(0) invert(1) opacity(0.9)" } : {}),
+            ...(invertToWhite ? { filter: "brightness(0) invert(1) opacity(0.9)" } : {}),
           }}
         />
       </div>
