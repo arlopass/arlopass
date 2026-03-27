@@ -12,9 +12,9 @@ import {
   getDefaultFieldValues,
   getDefaultCredentialName,
 } from "./provider-registry.js";
-import { saveCredential, touchCredential } from "./credential-storage.js";
 import { onboardingReducer, INITIAL_STATE } from "./onboarding-state.js";
 import { usePersistedReducer } from "../../hooks/usePersistedReducer.js";
+import { useVaultContext } from "../../hooks/VaultContext.js";
 import { tokens } from "../theme.js";
 import { createCloudConnectors } from "../../../options/connectors/index.js";
 import {
@@ -440,6 +440,8 @@ export function AddProviderWizard({
     INITIAL_STATE,
   );
 
+  const { sendVaultMessage } = useVaultContext();
+
   const selectedProvider =
     state.selectedConnectorId !== null
       ? (ONBOARDING_PROVIDERS.find(
@@ -529,92 +531,59 @@ export function AddProviderWizard({
 
     const sanitized = connector.sanitizeMetadata(config);
 
-    // Persist credential with full config including secrets.
-    // chrome.storage.local is extension-private and encrypted at rest.
+    // Determine credential ID — reuse existing or save new via vault
+    let credentialId: string;
     if (
       state.selectedCredentialId != null &&
       state.selectedCredentialId.length > 0
     ) {
-      await touchCredential(state.selectedCredentialId);
+      credentialId = state.selectedCredentialId;
     } else {
-      await saveCredential(
-        selectedProvider.connectorId,
-        state.credentialName || `${selectedProvider.shortLabel} Key`,
-        config,
-      );
+      credentialId =
+        "cred." +
+        Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) =>
+          b.toString(16).padStart(2, "0"),
+        ).join("");
+      await sendVaultMessage({
+        type: "vault.credentials.save",
+        id: credentialId,
+        connectorId: selectedProvider.connectorId,
+        name: state.credentialName || `${selectedProvider.shortLabel} Key`,
+        fields: config,
+      });
     }
 
     const providerName =
       state.providerName.trim() || selectedProvider.defaultName;
-    const newProvider: {
-      id: string;
-      name: string;
-      type: "local" | "cloud" | "cli";
-      status: string;
-      models: { id: string; name: string }[];
-      lastSyncedAt: number;
-      metadata: Readonly<Record<string, string>>;
-    } = {
-      id: createProviderId(selectedProvider.connectorId),
-      name: providerName,
-      type: selectedProvider.type,
-      status: "connected",
-      models: [],
-      lastSyncedAt: Date.now(),
-      metadata: sanitized,
-    };
+    const providerId = createProviderId(selectedProvider.connectorId);
 
     // Re-run test to get models for storage
+    let modelIds: string[] = [];
+    let providerStatus = "connected";
+    let providerMetadata: Readonly<Record<string, string>> = sanitized;
     try {
       const testResult = await connector.testConnection(config);
       if (testResult.ok) {
-        newProvider.models = testResult.models.map((m) => ({
-          id: m.id,
-          name: m.name,
-        }));
-        newProvider.status = testResult.status;
+        modelIds = testResult.models.map((m) => m.id);
+        providerStatus = testResult.status;
         if (testResult.metadata !== undefined) {
-          newProvider.metadata = { ...sanitized, ...testResult.metadata };
+          providerMetadata = { ...sanitized, ...testResult.metadata };
         }
       }
     } catch {
       // Use existing test result if re-test fails
     }
 
-    // Read existing providers, merge, and save
-    const storageData = await new Promise<Record<string, unknown>>(
-      (resolve) => {
-        chrome.storage.local.get(
-          ["arlopass.wallet.providers.v1", "arlopass.wallet.activeProvider.v1"],
-          (result) => resolve(result as Record<string, unknown>),
-        );
-      },
-    );
-
-    const existingProviders = Array.isArray(
-      storageData["arlopass.wallet.providers.v1"],
-    )
-      ? (storageData["arlopass.wallet.providers.v1"] as unknown[])
-      : [];
-
-    const providers = [...existingProviders, newProvider];
-
-    // Auto-activate if no active provider
-    const existingActive = storageData["arlopass.wallet.activeProvider.v1"];
-    const activeProvider =
-      existingActive != null
-        ? existingActive
-        : { providerId: newProvider.id, modelId: newProvider.models[0]?.id };
-
-    await new Promise<void>((resolve) => {
-      chrome.storage.local.set(
-        {
-          "arlopass.wallet.providers.v1": providers,
-          "arlopass.wallet.activeProvider.v1": activeProvider,
-          "arlopass.wallet.ui.lastError.v1": null,
-        },
-        () => resolve(),
-      );
+    await sendVaultMessage({
+      type: "vault.providers.save",
+      id: providerId,
+      name: providerName,
+      providerType: selectedProvider.type,
+      connectorId: selectedProvider.connectorId,
+      credentialId,
+      metadata: providerMetadata,
+      models: modelIds,
+      status: providerStatus,
     });
 
     dispatch({ type: "SAVE_COMPLETE" });
@@ -630,6 +599,7 @@ export function AddProviderWizard({
     onSaved,
     clearPersistedState,
     embedded,
+    sendVaultMessage,
   ]);
 
   const content = (
