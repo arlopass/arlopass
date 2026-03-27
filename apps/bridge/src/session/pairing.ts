@@ -95,6 +95,19 @@ export type CompletePairingResult = Readonly<{
   rotatedFromPairingHandle?: string;
 }>;
 
+export type CreateAutoPairingInput = Readonly<{
+  extensionId: string;
+  hostName: string;
+}>;
+
+export type CreateAutoPairingResult = Readonly<{
+  pairingHandle: string;
+  pairingKeyHex: string;
+  extensionId: string;
+  hostName: string;
+  createdAt: string;
+}>;
+
 export type RevokePairingInput = Readonly<{
   pairingHandle: string;
   extensionId?: string;
@@ -680,6 +693,55 @@ export class PairingManager {
       hostName,
       supersedesPairingHandle: pairingHandle,
     });
+  }
+
+  createAutoPairing(input: CreateAutoPairingInput): CreateAutoPairingResult {
+    const extensionId = normalizeNonEmpty(input.extensionId, "extensionId");
+    const hostName = normalizeNonEmpty(input.hostName, "hostName");
+
+    // Check if this extensionId + hostName already has an active pairing
+    for (const record of this.#recordsByHandle.values()) {
+      if (record.extensionId === extensionId && record.hostName === hostName) {
+        // Verify the record is still resolvable before returning it
+        const resolved = this.resolvePairingSecret({
+          pairingHandle: record.pairingHandle,
+          extensionId,
+          hostName,
+        });
+        if (resolved !== undefined) {
+          return {
+            pairingHandle: record.pairingHandle,
+            pairingKeyHex: record.pairingKey.toString("hex"),
+            extensionId: record.extensionId,
+            hostName: record.hostName,
+            createdAt: encodeIso(record.createdAtMs),
+          };
+        }
+      }
+    }
+
+    // Generate random 32-byte secret
+    const pairingSecret = this.#generateBytes(PAIRING_KEY_BYTE_LENGTH);
+    const pairingKeyHex = pairingSecret.toString("hex");
+
+    // Generate pairing handle
+    const handleBytes = this.#generateBytes(PAIRING_HANDLE_ID_BYTE_LENGTH);
+    const pairingHandle = `pairh.${handleBytes.toString("hex")}`;
+
+    // Register the pairing in the same structure completePairing uses
+    const nowMs = this.#now().getTime();
+    const record: PairingRecord = {
+      pairingHandle,
+      extensionId,
+      hostName,
+      pairingKey: pairingSecret,
+      createdAtMs: nowMs,
+    };
+    this.#recordsByHandle.set(pairingHandle, record);
+    this.#persistState();
+
+    const createdAt = encodeIso(nowMs);
+    return { pairingHandle, pairingKeyHex, extensionId, hostName, createdAt };
   }
 
   resolvePairingSecret(input: Readonly<{

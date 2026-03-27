@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { BridgeHandler } from "../bridge-handler.js";
 import { PairingManager } from "../session/pairing.js";
+import { obtainSessionToken } from "./test-session-helper.js";
 
 function buildTranscript(input: Readonly<{
   pairingSessionId: string;
@@ -33,10 +34,12 @@ describe("BridgeHandler pairing dispatch", () => {
       generateBytes: (length: number) =>
         length === 8 ? Buffer.from(pairingCodeBytes) : Buffer.alloc(length, 0x44),
     });
+    const sharedSecret = Buffer.alloc(32, 0x01);
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 0x01),
+      sharedSecret,
       pairingManager,
     });
+    const sessionToken = await obtainSessionToken(handler, sharedSecret);
 
     const begin = await handler.handle({
       type: "pairing.begin",
@@ -88,6 +91,7 @@ describe("BridgeHandler pairing dispatch", () => {
 
     const listed = await handler.handle({
       type: "pairing.list",
+      sessionToken,
       extensionId: "ext.runtime.transport",
       hostName: "com.byom.bridge",
     });
@@ -102,6 +106,7 @@ describe("BridgeHandler pairing dispatch", () => {
 
     const revoked = await handler.handle({
       type: "pairing.revoke",
+      sessionToken,
       pairingHandle,
       extensionId: "ext.runtime.transport",
       hostName: "com.byom.bridge",
@@ -229,6 +234,188 @@ describe("BridgeHandler pairing dispatch", () => {
     expect(verify).toMatchObject({
       type: "handshake.session",
       extensionId: "ext.runtime.transport",
+    });
+  });
+});
+
+describe("PairingManager.createAutoPairing", () => {
+  it("returns a valid pairing handle and key hex", () => {
+    const pairingManager = new PairingManager({
+      generateBytes: (length: number) => Buffer.alloc(length, 0xab),
+    });
+
+    const result = pairingManager.createAutoPairing({
+      extensionId: "ext.auto.test",
+      hostName: "com.byom.bridge",
+    });
+
+    expect(result.pairingHandle).toMatch(/^pairh\.[0-9a-f]{32}$/);
+    expect(result.pairingKeyHex).toHaveLength(64);
+    expect(result.extensionId).toBe("ext.auto.test");
+    expect(result.hostName).toBe("com.byom.bridge");
+    expect(result.createdAt).toBeDefined();
+  });
+
+  it("works with resolvePairingSecret", () => {
+    const pairingManager = new PairingManager({
+      generateBytes: (length: number) => Buffer.alloc(length, 0xcd),
+    });
+
+    const result = pairingManager.createAutoPairing({
+      extensionId: "ext.resolve.test",
+      hostName: "com.byom.bridge",
+    });
+
+    const resolved = pairingManager.resolvePairingSecret({
+      pairingHandle: result.pairingHandle,
+      extensionId: "ext.resolve.test",
+      hostName: "com.byom.bridge",
+    });
+
+    expect(resolved).toBeDefined();
+    expect(resolved!.toString("hex")).toBe(result.pairingKeyHex);
+  });
+
+  it("is idempotent — second call with same extensionId+hostName returns same pairing", () => {
+    let callCount = 0;
+    const pairingManager = new PairingManager({
+      generateBytes: (length: number) => {
+        callCount += 1;
+        return Buffer.alloc(length, callCount);
+      },
+    });
+
+    const first = pairingManager.createAutoPairing({
+      extensionId: "ext.idempotent",
+      hostName: "com.byom.bridge",
+    });
+    const second = pairingManager.createAutoPairing({
+      extensionId: "ext.idempotent",
+      hostName: "com.byom.bridge",
+    });
+
+    expect(second.pairingHandle).toBe(first.pairingHandle);
+    expect(second.pairingKeyHex).toBe(first.pairingKeyHex);
+    expect(second.createdAt).toBe(first.createdAt);
+  });
+
+  it("returns a different pairing for a different extensionId", () => {
+    const pairingManager = new PairingManager({
+      generateBytes: (length: number) =>
+        Buffer.from(Array.from({ length }, (_, i) => Math.floor(Math.random() * 256))),
+    });
+
+    const first = pairingManager.createAutoPairing({
+      extensionId: "ext.alpha",
+      hostName: "com.byom.bridge",
+    });
+    const second = pairingManager.createAutoPairing({
+      extensionId: "ext.beta",
+      hostName: "com.byom.bridge",
+    });
+
+    expect(second.pairingHandle).not.toBe(first.pairingHandle);
+    expect(second.pairingKeyHex).not.toBe(first.pairingKeyHex);
+  });
+});
+
+describe("BridgeHandler pairing.auto dispatch", () => {
+  it("returns a valid pairing.auto response", async () => {
+    const sharedSecret = Buffer.alloc(32, 0x01);
+    const pairingManager = new PairingManager({
+      generateBytes: (length: number) => Buffer.alloc(length, 0xee),
+    });
+    const handler = new BridgeHandler({
+      sharedSecret,
+      pairingManager,
+    });
+
+    const response = await handler.handle({
+      type: "pairing.auto",
+      extensionId: "ext.auto.dispatch",
+      hostName: "com.byom.bridge",
+    });
+
+    expect(response).toMatchObject({
+      type: "pairing.auto",
+      extensionId: "ext.auto.dispatch",
+      hostName: "com.byom.bridge",
+    });
+    const payload = response as Record<string, string>;
+    expect(payload["pairingHandle"]).toMatch(/^pairh\.[0-9a-f]{32}$/);
+    expect(payload["pairingKeyHex"]).toHaveLength(64);
+    expect(payload["createdAt"]).toBeDefined();
+  });
+
+  it("returns error when extensionId is missing", async () => {
+    const handler = new BridgeHandler({
+      sharedSecret: Buffer.alloc(32, 0x01),
+    });
+
+    const response = await handler.handle({
+      type: "pairing.auto",
+      hostName: "com.byom.bridge",
+    });
+
+    expect(response).toMatchObject({
+      type: "error",
+      reasonCode: "request.invalid",
+    });
+  });
+
+  it("returns error when hostName is missing", async () => {
+    const handler = new BridgeHandler({
+      sharedSecret: Buffer.alloc(32, 0x01),
+    });
+
+    const response = await handler.handle({
+      type: "pairing.auto",
+      extensionId: "ext.auto.dispatch",
+    });
+
+    expect(response).toMatchObject({
+      type: "error",
+      reasonCode: "request.invalid",
+    });
+  });
+
+  it("subsequent handshake.verify with auto-pairing secret succeeds", async () => {
+    const pairingManager = new PairingManager({
+      generateBytes: (length: number) => Buffer.alloc(length, 0xdd),
+    });
+    const handler = new BridgeHandler({
+      sharedSecret: Buffer.alloc(32, 0x7f),
+      pairingManager,
+    });
+
+    // Create auto-pairing
+    const autoPairing = await handler.handle({
+      type: "pairing.auto",
+      extensionId: "ext.handshake.auto",
+      hostName: "com.byom.bridge",
+    });
+    const autoPayload = autoPairing as Record<string, string>;
+    const pairingHandle = autoPayload["pairingHandle"] ?? "";
+    const pairingKeyHex = autoPayload["pairingKeyHex"] ?? "";
+
+    // Perform handshake with pairing secret
+    const challenge = await handler.handle({ type: "handshake.challenge" });
+    const nonce = (challenge as Record<string, string>)["nonce"] ?? "";
+    const hmac = createHmac("sha256", Buffer.from(pairingKeyHex, "hex"))
+      .update(nonce)
+      .digest("hex");
+    const verify = await handler.handle({
+      type: "handshake.verify",
+      nonce,
+      hmac,
+      extensionId: "ext.handshake.auto",
+      hostName: "com.byom.bridge",
+      pairingHandle,
+    });
+
+    expect(verify).toMatchObject({
+      type: "handshake.session",
+      extensionId: "ext.handshake.auto",
     });
   });
 });
