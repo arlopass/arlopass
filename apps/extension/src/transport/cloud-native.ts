@@ -356,17 +356,8 @@ export async function runCloudBridgeCompletion(
   }
   const tenantId = normalizeText(input.provider.metadata["tenantId"], "default");
   const region = normalizeText(input.provider.metadata["region"], "global");
-  const bindingMetadata = await resolveCloudExecutionBindingMetadata({
-    metadata: input.provider.metadata,
-    hostName,
-    providerId: bridgeProviderId,
-    methodId,
-    connectionHandle,
-    extensionId: input.extensionId,
-    origin: input.origin,
-    sendNativeMessage: input.sendNativeMessage,
-  });
 
+  // Perform handshake FIRST so all subsequent calls can include the session token.
   const handshakeOptions = {
     hostName,
     extensionId: input.extensionId,
@@ -377,6 +368,24 @@ export async function runCloudBridgeCompletion(
       : {}),
     now: input.now,
   } satisfies Parameters<typeof ensureBridgeHandshakeSession>[0];
+
+  let handshake = await ensureBridgeHandshakeSession(handshakeOptions);
+
+  // Create an auth-aware messenger that attaches the session token so
+  // intermediate calls (cloud.connection.validate) pass the session gate.
+  const authedMessenger: typeof input.sendNativeMessage = async (h, msg) =>
+    input.sendNativeMessage(h, { ...msg, sessionToken: handshake.sessionToken });
+
+  const bindingMetadata = await resolveCloudExecutionBindingMetadata({
+    metadata: input.provider.metadata,
+    hostName,
+    providerId: bridgeProviderId,
+    methodId,
+    connectionHandle,
+    extensionId: input.extensionId,
+    origin: input.origin,
+    sendNativeMessage: authedMessenger,
+  });
 
   const payloadHash = await computeCloudRequestPayloadHash({
     messages: input.messages.map((message) => ({
@@ -420,7 +429,6 @@ export async function runCloudBridgeCompletion(
     });
   };
 
-  let handshake = await ensureBridgeHandshakeSession(handshakeOptions);
   let response = await executeWithHandshake(handshake);
 
   if (isRecord(response) && response["type"] === "error") {
@@ -568,6 +576,23 @@ export async function runCloudBridgeCompletionStream(
   const tenantId = normalizeText(input.provider.metadata["tenantId"], "default");
   const region = normalizeText(input.provider.metadata["region"], "global");
 
+  // Handshake goes through the same persistent port (same bridge process).
+  // Must happen BEFORE resolveCloudExecutionBindingMetadata so we can
+  // attach the session token to intermediate calls (cloud.connection.validate).
+  const handshake = await ensureBridgeHandshakeSession({
+    hostName,
+    extensionId: input.extensionId,
+    sendNativeMessage: portMessenger,
+    resolveBridgeSharedSecret: input.resolveBridgeSharedSecret,
+    ...(input.resolveBridgePairingHandle !== undefined
+      ? { resolveBridgePairingHandle: input.resolveBridgePairingHandle }
+      : {}),
+    now: input.now,
+  });
+
+  const authedPortMessenger: NativeMessenger = async (h, msg) =>
+    portMessenger(h, { ...msg, sessionToken: handshake.sessionToken });
+
   // Binding metadata typically comes from stored provider metadata; only
   // calls the bridge if missing.
   const bindingMetadata = await resolveCloudExecutionBindingMetadata({
@@ -578,19 +603,7 @@ export async function runCloudBridgeCompletionStream(
     connectionHandle,
     extensionId: input.extensionId,
     origin: input.origin,
-    sendNativeMessage: portMessenger,
-  });
-
-  // Handshake goes through the same persistent port (same bridge process).
-  const handshake = await ensureBridgeHandshakeSession({
-    hostName,
-    extensionId: input.extensionId,
-    sendNativeMessage: portMessenger,
-    resolveBridgeSharedSecret: input.resolveBridgeSharedSecret,
-    ...(input.resolveBridgePairingHandle !== undefined
-      ? { resolveBridgePairingHandle: input.resolveBridgePairingHandle }
-      : {}),
-    now: input.now,
+    sendNativeMessage: authedPortMessenger,
   });
 
   const payloadHash = await computeCloudRequestPayloadHash({

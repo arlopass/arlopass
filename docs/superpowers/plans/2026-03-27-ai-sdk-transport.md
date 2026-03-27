@@ -31,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/arlopass.git",
+    "url": "https://github.com/AltClick/arlopass-web.git",
     "directory": "packages/ai-sdk-transport"
   },
   "exports": {
@@ -85,7 +85,7 @@ export {};
 
 - [ ] **Step 4: Install dependencies**
 
-Run: `cd d:\Projects\arlopass && npm install`
+Run: `cd d:\Projects\arlopass-web && npm install`
 Expected: Lock file updates, workspace linked.
 
 - [ ] **Step 5: Verify build**
@@ -743,7 +743,7 @@ export class ArlopassChatTransport {
     const transport = getInjectedTransport();
     if (transport === undefined) {
       throw new Error(
-        "Arlopass extension not detected. Install it from https://arlopassai.com to use AI models.",
+        "Arlopass extension not detected. Install it from https://arlopass.com to use AI models.",
       );
     }
 

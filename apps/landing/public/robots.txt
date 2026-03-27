@@ -1,0 +1,27 @@
+# Allow all bots including AI search crawlers
+User-agent: *
+Allow: /
+
+# Explicitly allow AI search bots
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+Sitemap: https://arlopass.com/sitemap.xml

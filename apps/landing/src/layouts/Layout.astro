@@ -1,0 +1,127 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+}
+
+const {
+  title = "Arlopass — Open-Source AI Access Management | Use Any AI Model, Keep Your Keys",
+  description = "Arlopass is a free, open-source browser extension and developer SDK that lets web apps use your AI providers — Ollama, Claude, GPT, Gemini, Bedrock — without exposing your API keys. 10-line integration, zero key management, MIT licensed.",
+  ogImage = "https://arlopass.com/og-image.png",
+  canonicalUrl = "https://arlopass.com",
+} = Astro.props;
+
+const jsonLdOrg = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Arlopass",
+  url: "https://arlopass.com",
+  logo: "https://arlopass.com/logo.svg",
+  description: "Open-source AI access management for the web.",
+  sameAs: [
+    "https://github.com/arlopass",
+    "https://x.com/arlopass",
+    "https://discord.gg/arlopass",
+  ],
+};
+
+const jsonLdSoftware = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Arlopass",
+  applicationCategory: "BrowserApplication",
+  applicationSubCategory: "AI Access Management",
+  operatingSystem: "Windows, macOS, Linux",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  description:
+    "Open-source browser extension and developer SDK for AI access management. Connect your own AI providers — Ollama, Claude, GPT, Gemini, Bedrock — to any web app without exposing API keys.",
+  softwareVersion: "1.0",
+  license: "https://opensource.org/licenses/MIT",
+  downloadUrl: "https://chrome.google.com/webstore",
+  featureList:
+    "AI access management, API key protection, per-request consent, provider switching, local model support, enterprise governance, zero-trust architecture, 10-line SDK integration",
+  screenshot: "https://arlopass.com/og-image.png",
+};
+
+const jsonLdWebPage = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: title,
+  description,
+  url: canonicalUrl,
+  publisher: {
+    "@type": "Organization",
+    name: "Arlopass",
+  },
+};
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Primary -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/ArlopassIcon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:site_name" content="Arlopass" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:site" content="@arlopass" />
+
+    <!-- AI/SEO: allow all AI bots to crawl -->
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta
+      name="keywords"
+      content="AI access management, API key security, browser extension AI, open-source AI SDK, Ollama web app, Claude API key, GPT API key, AI provider switching, local AI models, AI governance, zero-trust AI, developer SDK AI, Arlopass"
+    />
+    <meta name="author" content="Arlopass" />
+    <meta name="theme-color" content="#1C1917" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLdOrg)} />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(jsonLdSoftware)}
+    />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(jsonLdWebPage)}
+    />
+
+    <!-- Preconnect for external resources -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+    <link rel="dns-prefetch" href="https://unpkg.com" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

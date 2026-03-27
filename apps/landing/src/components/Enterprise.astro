@@ -1,0 +1,263 @@
+---
+
+---
+
+<section class="enterprise" aria-labelledby="enterprise-heading">
+  <div class="container enterprise-inner">
+    <div class="enterprise-visual">
+      <div class="policy-card">
+        <div class="policy-header">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--ap-brand)"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            ><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg
+          >
+          <span class="policy-title">Organization Policy</span>
+          <span class="policy-badge">Signed</span>
+        </div>
+        <div class="policy-body">
+          <div class="policy-line">
+            <span class="policy-key">providers</span>
+            <span class="policy-val">[claude, bedrock, vertex-ai]</span>
+          </div>
+          <div class="policy-line">
+            <span class="policy-key">models</span>
+            <span class="policy-val">claude-3.5-sonnet, claude-3-opus</span>
+          </div>
+          <div class="policy-line">
+            <span class="policy-key">audit</span>
+            <span class="policy-val">jsonl + otlp → splunk</span>
+          </div>
+          <div class="policy-line">
+            <span class="policy-key">data_handling</span>
+            <span class="policy-val">no-pii, redact-emails</span>
+          </div>
+          <div class="policy-line">
+            <span class="policy-key">signature</span>
+            <span class="policy-val signature">ed25519:a7c3...f9e1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="enterprise-content">
+      <span class="section-label">For teams</span>
+      <h2 id="enterprise-heading" class="section-title">
+        AI governance without the headaches.
+      </h2>
+      <p class="enterprise-desc">
+        Deploy org-wide AI policies at the browser level — approved providers,
+        model restrictions, audit trails — without changing a single line of
+        application code.
+      </p>
+
+      <ul class="enterprise-features">
+        <li>
+          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+          <div>
+            <strong>Zero-trust architecture</strong>
+            <span
+              >HMAC handshake, ephemeral session keys, anti-replay nonces at
+              every trust boundary.</span
+            >
+          </div>
+        </li>
+        <li>
+          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>
+          <div>
+            <strong>Signed policy bundles</strong>
+            <span
+              >Ed25519-signed org policies: provider allowlists, model
+              restrictions, data-handling rules.</span
+            >
+          </div>
+        </li>
+        <li>
+          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+          <div>
+            <strong>Audit trails</strong>
+            <span
+              >JSONL and OTLP export to Splunk, Elastic, Datadog. Every grant,
+              revoke, and request logged.</span
+            >
+          </div>
+        </li>
+        <li>
+          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <div>
+            <strong>Compliance-ready</strong>
+            <span
+              >Pre-mapped controls for SOC 2, ISO 27001, NIST 800-53, GDPR, and
+              HIPAA.</span
+            >
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .enterprise {
+    padding: var(--ap-space-24) 0;
+    border-top: none;
+  }
+
+  .enterprise-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ap-space-12);
+    align-items: center;
+  }
+
+  @media (min-width: 1024px) {
+    .enterprise-inner {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--ap-space-16);
+    }
+  }
+
+  .section-label {
+    display: inline-block;
+    font-size: var(--ap-text-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ap-brand);
+    margin-bottom: var(--ap-space-4);
+  }
+
+  .section-title {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--ap-space-6);
+  }
+
+  .enterprise-desc {
+    font-size: var(--ap-text-base);
+    color: var(--ap-text-secondary);
+    line-height: 1.7;
+    margin-bottom: var(--ap-space-8);
+    max-width: 520px;
+  }
+
+  .enterprise-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ap-space-5);
+  }
+
+  .enterprise-features li {
+    display: flex;
+    gap: var(--ap-space-3);
+    align-items: flex-start;
+  }
+
+  .ef-icon {
+    flex-shrink: 0;
+    color: var(--ap-text-tertiary);
+    margin-top: 2px;
+    display: flex;
+  }
+
+  .enterprise-features strong {
+    display: block;
+    font-size: var(--ap-text-sm);
+    font-weight: 600;
+    color: var(--ap-text-primary);
+    margin-bottom: 2px;
+  }
+
+  .enterprise-features span {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-text-secondary);
+    line-height: 1.5;
+  }
+
+  /* Policy card visual */
+  .enterprise-visual {
+    display: flex;
+    justify-content: center;
+  }
+
+  .policy-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--ap-bg-code);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-md);
+    overflow: hidden;
+  }
+
+  .policy-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ap-border);
+    background: color-mix(in oklch, var(--ap-bg-code) 100%, #000 5%);
+  }
+
+  .policy-title {
+    flex: 1;
+    font-size: var(--ap-text-sm);
+    font-weight: 500;
+    color: var(--ap-text-primary);
+  }
+
+  .policy-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ap-success);
+    background: var(--ap-success-subtle);
+    padding: 2px 8px;
+    border-radius: var(--ap-radius-full);
+  }
+
+  .policy-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .policy-line {
+    display: flex;
+    gap: var(--ap-space-3);
+    font-family: var(--ap-font-code);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .policy-key {
+    color: var(--ap-brand);
+    flex-shrink: 0;
+    min-width: 120px;
+  }
+
+  .policy-val {
+    color: var(--ap-amber);
+  }
+
+  .policy-val.signature {
+    color: var(--ap-text-tertiary);
+    font-size: 11px;
+  }
+
+  @media (max-width: 1023px) {
+    .enterprise-visual {
+      order: -1;
+    }
+  }
+</style>

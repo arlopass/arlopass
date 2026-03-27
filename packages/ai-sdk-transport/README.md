@@ -9,7 +9,7 @@ npm install @arlopass/ai-sdk-transport ai @arlopass/web-sdk
 ```
 
 > [!IMPORTANT]
-> The [Arlopass browser extension](https://arlopassai.com) must be installed for the transport to work. It provides the AI model that powers your app.
+> The [Arlopass browser extension](https://arlopass.com) must be installed for the transport to work. It provides the AI model that powers your app.
 
 ## Quick Start
 
@@ -80,5 +80,5 @@ The transport detects the Arlopass browser extension (`window.arlopass`), auto-c
 
 ## Links
 
-- [Arlopass website](https://arlopassai.com)
-- [GitHub](https://github.com/AltClick/arlopass/tree/main/packages/ai-sdk-transport)
+- [Arlopass website](https://arlopass.com)
+- [GitHub](https://github.com/AltClick/arlopass-web/tree/main/packages/ai-sdk-transport)

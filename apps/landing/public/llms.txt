@@ -1,0 +1,39 @@
+# Arlopass
+
+> Open-source AI access management for the web.
+
+Arlopass is a free, open-source browser extension and developer SDK that lets web applications use a user's own AI providers — Ollama, Claude, GPT, Gemini, Bedrock — without the application ever seeing, touching, or storing the user's API keys.
+
+## Key Facts
+
+- **Category:** AI Access Management — the user-controlled layer between web apps and AI providers
+- **License:** MIT (fully open source)
+- **Price:** Free (users bring their own AI subscriptions)
+- **Platforms:** Chrome browser extension, npm SDK (@arlopass/web-sdk)
+- **Supported Providers:** Ollama, Anthropic Claude, OpenAI GPT, Google Gemini, Amazon Bedrock, Google Vertex AI, Perplexity, Microsoft Foundry, LM Studio, Mistral
+- **Developer Integration:** ~10 lines of code with connect(), createChat(), chat.stream()
+- **Key Security Feature:** API keys stored in OS keychain (Windows Credential Manager, macOS Keychain, Linux Secret Service), never in the browser or on servers
+- **Enterprise Features:** Zero-trust architecture, Ed25519-signed policy bundles, JSONL + OTLP audit trails, SOC 2 / ISO 27001 / NIST 800-53 / GDPR / HIPAA control alignment
+
+## How It Works
+
+1. User installs the Arlopass browser extension (30 seconds, no account needed)
+2. User connects their AI providers (keys stored in OS keychain)
+3. When a web app wants to use AI, the user sees what it needs, picks a model, and approves the connection. The app then uses their AI seamlessly.
+
+## For Developers
+
+Developers install @arlopass/web-sdk and use three functions:
+- connect() — establish session with user's extension
+- createChat() — create a conversation
+- chat.stream() or chat.send() — exchange messages
+
+The user's Arlopass handles provider selection, authentication, and routing. Developers never see, store, or manage API keys.
+
+## Links
+
+- Homepage: https://arlopass.com
+- Documentation: https://docs.arlopass.com
+- GitHub: https://github.com/arlopass
+- npm: https://www.npmjs.com/org/arlopass
+- Chrome Web Store: https://chrome.google.com/webstore

@@ -43,6 +43,7 @@ const HANDSHAKE_NONCE_HEX = HANDSHAKE_NONCE_BYTES.toString("hex");
 
 // Token bytes used for the session token after the nonce is consumed.
 const SESSION_TOKEN_BYTES = Buffer.from("bb".repeat(32), "hex");
+const SESSION_TOKEN_HEX = SESSION_TOKEN_BYTES.toString("hex");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -374,7 +375,7 @@ describe("BridgeHandler â€” handshake", () => {
       pairingManager,
       extensionIdAllowlist: [
         { extensionId: TEST_EXTENSION_ID, browser: "chrome" },
-        { extensionId: "arlopass-wallet@arlopassai.com", browser: "firefox" },
+        { extensionId: "arlopass-wallet@arlopass.com", browser: "firefox" },
       ],
     });
 
@@ -412,13 +413,13 @@ describe("BridgeHandler â€” handshake", () => {
       sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
       pairingManager,
       extensionIdAllowlist: [
-        { extensionId: "arlopass-wallet@arlopassai.com", browser: "firefox" },
+        { extensionId: "arlopass-wallet@arlopass.com", browser: "firefox" },
       ],
     });
 
     const pairResp = await handler.handle({
       type: "pairing.auto",
-      extensionId: "arlopass-wallet@arlopassai.com",
+      extensionId: "arlopass-wallet@arlopass.com",
       hostName: TEST_HOST_NAME,
     });
     const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
@@ -431,14 +432,14 @@ describe("BridgeHandler â€” handshake", () => {
       type: "handshake.verify",
       nonce: HANDSHAKE_NONCE_HEX,
       hmac,
-      extensionId: "arlopass-wallet@arlopassai.com",
+      extensionId: "arlopass-wallet@arlopass.com",
       hostName: TEST_HOST_NAME,
       pairingHandle,
     });
 
     expect(response).toMatchObject({
       type: "handshake.session",
-      extensionId: "arlopass-wallet@arlopassai.com",
+      extensionId: "arlopass-wallet@arlopass.com",
     });
   });
 

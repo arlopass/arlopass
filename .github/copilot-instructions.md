@@ -1,0 +1,67 @@
+## Design Context
+
+### Users
+
+**Primary (45%): End users** — People who use AI-powered web apps and want control over which model powers them. They install the Arlopass browser extension, connect their providers (Ollama, Claude, GPT, Bedrock), and approve each AI request with a click. They care about privacy, choice, and not handing API keys to apps they don't fully trust. Context: browser-based, often developer-adjacent but not necessarily developers themselves.
+
+**Secondary (25%): Developers** — Web developers integrating AI into their apps. They want Stripe-level DX: 10 lines to streaming AI chat, zero key management, type-safe, async iterators. They evaluate tools by docs quality, API surface elegance, and time-to-working-demo.
+
+**Supporting (10%): Privacy-conscious users** — People who run local models (Ollama, LM Studio) and want zero-cloud AI. They value transparency, local-first architecture, and auditable data flows.
+
+**Enterprise (8%): IT & Security teams** — Need zero-trust architecture, signed policy bundles, audit trails, and compliance-ready governance at the browser level without changing app code.
+
+**Community (2%): Open-source contributors** — Care about MIT licensing, open adapter contracts, RFC governance, and no vendor lock-in.
+
+### Brand Personality
+
+**Three words:** Warm, Capable, Trustworthy.
+
+**Voice:** "Arlo's voice" — friendly, clear, competent. The user is the hero; Arlopass is the helpful companion. Active voice. Short sentences. Every claim backed by a code example, diagram, or spec citation.
+
+**Emotional goal:** Friendly warmth wins when emotional registers conflict. The interface should evoke calm confidence — the feeling of a trusted friend who's good with technology. Never cold, never clinical, never intimidating.
+
+**Tagline:** "Your AI. Your pass."
+
+### Aesthetic Direction
+
+**Visual tone:** Clean, minimal, modern — warm where others are cold. Dark-first design with brown-black surfaces (#1C1917), never cool blue-blacks. Inspired by Vercel's precision, Supabase's clarity, Cursor's warmth, and Tailwind's density. Every pixel earns its place — no decoration without function.
+
+**Signature color:** Terracotta (#C2410C) — appears in every branded asset. The visual constant that makes Arlopass immediately recognizable against the sea of blue/purple developer tools.
+
+**Palette philosophy:** Warm stone neutrals throughout. Success is earthy sage green (#4D7C0F), not neon. Text is never pure white on dark — Warm Stone (#D6D3D1) for body, pure white reserved for headlines only. Light mode uses stone-tinted whites (#FAFAF9), never clinical white.
+
+**Typography:** Geist Sans + Geist Mono (Vercel's matched pair). Hierarchy through weight and size only — no font switching, no italic text in UI. One sans-serif, one monospace. That's it.
+
+**UI framework:** Mantine v8 + Tailwind CSS 4. Tabler Icons. All surfaces converging on the same token system.
+
+**Theme:** Dark mode is primary. Light mode supported. Follow system preference by default, user-overridable.
+
+**Anti-references:**
+
+- No cool/blue grays anywhere — always warm stone tones
+- No AI slop aesthetics: no cyan-on-dark, no purple-to-blue gradients, no neon accents on dark backgrounds, no gradient text on headings, no glassmorphism-everywhere, no identical card grids with icon + heading + text
+- No stock photography — only diagrams, code, illustrations, and real UI screenshots
+- No fear-based marketing, no superlatives, no enterprise-complexity theater
+- No monospace-as-lazy-technical-shorthand for non-code content
+- No bounce/elastic easing — deceleration only
+
+### Design Principles
+
+1. **Warmth in the darkness.** Every neutral is stone-tinted. Dark surfaces are brown-black, never blue-black. The palette says "someone cared" — not "a computer generated this."
+
+2. **Code is content.** Code blocks are first-class citizens with careful typographic treatment. Always on dark backgrounds, even in light mode. SDK examples front and center — if it can be shown in code, show it in code.
+
+3. **Earned pixels.** No decoration without function. Generous whitespace. Typography-driven hierarchy — size, weight, and color do the work, not borders, shadows, or background fills. No nested cards.
+
+4. **Purposeful motion.** Animate state changes, not decoration. 150ms for micro-interactions, 200ms for dropdowns, 300ms for panels. Respect `prefers-reduced-motion`. No bounce, no elastic — real objects decelerate smoothly.
+
+5. **The pass metaphor.** The approval flow is the signature visual. Permission prompts, provider selectors, connection status indicators — the pass being tapped/approved is the hero interaction. Before/after contrasts (insecure API key pasting vs. Arlopass approval) are the go-to storytelling device.
+
+### Technical Constraints
+
+- **Accessibility:** WCAG AA compliance. 4.5:1 contrast for body text, 3:1 for large text. Focus indicators: 2px solid terracotta with 2px offset. Skip navigation on every page. Color never the sole indicator.
+- **Motion:** Respect `prefers-reduced-motion: reduce`. Only animate opacity, transform, background-color, border-color. Never animate width, height, padding, margin.
+- **Extension popup:** 360px fixed width, 600px max height, compressed spacing. Same color tokens as all other surfaces.
+- **Fonts:** Self-hosted Geist Sans + Geist Mono (variable woff2). No CDN dependencies.
+- **CSS architecture:** Prefer Mantine theme tokens and Tailwind utilities. CSS Modules for custom styles. Design tokens as CSS custom properties on `:root` with `[data-mantine-color-scheme]` toggles.
+- **Max reading width:** 65ch for body text. Page max-width: 1200px marketing, 1080px docs, 768px articles.

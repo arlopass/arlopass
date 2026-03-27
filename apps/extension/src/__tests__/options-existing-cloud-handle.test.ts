@@ -10,11 +10,23 @@ function createChromeStub(
     lastError?: { message?: string };
     sendNativeMessage: typeof sendNativeMessage;
   };
+  storage: {
+    local: {
+      get: (keys: string[], callback: (result: Record<string, unknown>) => void) => void;
+    };
+  };
 } {
   return {
     runtime: {
       id: "ext.test.arlopass",
       sendNativeMessage,
+    },
+    storage: {
+      local: {
+        get: (_keys: string[], callback: (result: Record<string, unknown>) => void) => {
+          callback({});
+        },
+      },
     },
   };
 }

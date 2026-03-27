@@ -51,24 +51,49 @@ function Shell() {
       }}
       padding={0}
       styles={{
-        header: { background: "var(--ap-bg-surface)", borderBottom: "1px solid var(--ap-border)" },
-        navbar: { background: "var(--ap-bg-base)", borderRight: "1px solid var(--ap-border)" },
+        header: {
+          background: "var(--ap-bg-surface)",
+          borderBottom: "1px solid var(--ap-border)",
+        },
+        navbar: {
+          background: "var(--ap-bg-base)",
+          borderRight: "1px solid var(--ap-border)",
+        },
         main: { background: "var(--ap-bg-base)" },
-        aside: { background: "var(--ap-bg-surface)", borderLeft: "1px solid var(--ap-border)" },
+        aside: {
+          background: "var(--ap-bg-surface)",
+          borderLeft: "1px solid var(--ap-border)",
+        },
       }}
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
-            <Burger opened={navOpen} onClick={toggleNav} size="sm" color="var(--ap-text-secondary)" />
-            <img src="/ArlopassLogo-Light.svg" height={24} alt="Arlopass" />
+            <Burger
+              opened={navOpen}
+              onClick={toggleNav}
+              size="sm"
+              color="var(--ap-text-secondary)"
+            />
+            <img
+              src="/ArlopassLogo-Dark.svg"
+              height={24}
+              style={{ height: 24 }}
+              alt="Arlopass"
+            />
             <Badge
               size="sm"
               variant="light"
               styles={{
                 root: {
-                  background: state === "connected" ? "var(--ap-success-subtle)" : "var(--ap-bg-surface)",
-                  color: state === "connected" ? "var(--ap-success)" : "var(--ap-text-secondary)",
+                  background:
+                    state === "connected"
+                      ? "var(--ap-success-subtle)"
+                      : "var(--ap-bg-surface)",
+                  color:
+                    state === "connected"
+                      ? "var(--ap-success)"
+                      : "var(--ap-text-secondary)",
                   border: "none",
                 },
               }}
@@ -82,14 +107,22 @@ function Shell() {
                 size="xs"
                 variant="dot"
                 styles={{
-                  root: { color: "var(--ap-brand)", "--badge-dot-color": "var(--ap-brand)" },
+                  root: {
+                    color: "var(--ap-brand)",
+                    "--badge-dot-color": "var(--ap-brand)",
+                  },
                 }}
               >
                 Extension
               </Badge>
             )}
             <Tooltip label={chatOpen ? "Close chat" : "Open AI chat"}>
-              <ActionIcon variant="subtle" onClick={toggleChat} size="lg" style={{ color: "var(--ap-text-secondary)" }}>
+              <ActionIcon
+                variant="subtle"
+                onClick={toggleChat}
+                size="lg"
+                style={{ color: "var(--ap-text-secondary)" }}
+              >
                 <IconMessage size={20} />
               </ActionIcon>
             </Tooltip>

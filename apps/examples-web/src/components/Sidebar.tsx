@@ -1,4 +1,10 @@
-import { Box, ScrollArea, Text, TextInput, UnstyledButton } from "@mantine/core";
+import {
+  Box,
+  ScrollArea,
+  Text,
+  TextInput,
+  UnstyledButton,
+} from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { NAVIGATION } from "../navigation";
@@ -46,7 +52,10 @@ export function Sidebar() {
               tt="uppercase"
               lts={0.5}
               mb={6}
-              style={{ color: "var(--ap-text-tertiary)", letterSpacing: "0.05em" }}
+              style={{
+                color: "var(--ap-text-tertiary)",
+                letterSpacing: "0.05em",
+              }}
             >
               {cat.label}
             </Text>
@@ -76,19 +85,24 @@ export function Sidebar() {
                         : "var(--ap-text-secondary)",
                       fontWeight: isActive ? 500 : 400,
                       lineHeight: 1.5,
-                      background: isActive ? "var(--ap-brand-subtle-dark)" : "transparent",
-                      borderRadius: "0 var(--ap-radius-sm) var(--ap-radius-sm) 0",
+                      background: isActive
+                        ? "var(--ap-brand-subtle-dark)"
+                        : "transparent",
+                      borderRadius:
+                        "0 var(--ap-radius-sm) var(--ap-radius-sm) 0",
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.background = "var(--ap-bg-surface)";
+                        e.currentTarget.style.background =
+                          "var(--ap-bg-surface)";
                         e.currentTarget.style.color = "var(--ap-text-primary)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
                         e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "var(--ap-text-secondary)";
+                        e.currentTarget.style.color =
+                          "var(--ap-text-secondary)";
                       }
                     }}
                   >

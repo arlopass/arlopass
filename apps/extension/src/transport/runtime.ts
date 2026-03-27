@@ -1391,8 +1391,10 @@ async function runCliBridgeCompletion(options: {
     });
   }
 
+  let cliHandshakeSessionToken: string | undefined;
+
   if (options.bridgeHandshake !== undefined) {
-    await ensureBridgeHandshakeSession({
+    const handshakeSession = await ensureBridgeHandshakeSession({
       hostName,
       extensionId: options.bridgeHandshake.extensionId,
       sendNativeMessage: options.sendNativeMessage,
@@ -1402,6 +1404,7 @@ async function runCliBridgeCompletion(options: {
         : {}),
       now: options.bridgeHandshake.now,
     });
+    cliHandshakeSessionToken = handshakeSession.sessionToken;
   }
 
   const sessionId = normalizeText(options.sessionId ?? "", "");
@@ -1433,6 +1436,7 @@ async function runCliBridgeCompletion(options: {
     correlationId: options.correlationId,
     ...(sessionId.length > 0 ? { sessionId } : {}),
     ...(resumeSessionId !== undefined ? { resumeSessionId } : {}),
+    ...(cliHandshakeSessionToken !== undefined ? { sessionToken: cliHandshakeSessionToken } : {}),
     providerId: options.provider.providerId,
     modelId: options.provider.modelId,
     cliType,
@@ -1621,8 +1625,10 @@ async function runCliBridgeCompletionStream(options: {
       ? async (_hostName, message) => options.sendPortMessage!(message)
       : options.sendNativeMessage;
 
+  let cliStreamSessionToken: string | undefined;
+
   if (options.bridgeHandshake !== undefined) {
-    await ensureBridgeHandshakeSession({
+    const handshakeSession = await ensureBridgeHandshakeSession({
       hostName,
       extensionId: options.bridgeHandshake.extensionId,
       sendNativeMessage: portMessenger,
@@ -1632,6 +1638,7 @@ async function runCliBridgeCompletionStream(options: {
         : {}),
       now: options.bridgeHandshake.now,
     });
+    cliStreamSessionToken = handshakeSession.sessionToken;
   }
 
   const sessionId = normalizeText(options.sessionId ?? "", "");
@@ -1679,6 +1686,7 @@ async function runCliBridgeCompletionStream(options: {
         correlationId: options.correlationId,
         ...(sessionId.length > 0 ? { sessionId } : {}),
         ...(resumeSessionId !== undefined ? { resumeSessionId } : {}),
+        ...(cliStreamSessionToken !== undefined ? { sessionToken: cliStreamSessionToken } : {}),
         providerId: options.provider.providerId,
         modelId: options.provider.modelId,
         cliType,

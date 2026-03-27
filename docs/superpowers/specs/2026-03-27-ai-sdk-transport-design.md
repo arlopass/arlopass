@@ -99,7 +99,7 @@ Always returns `null`. No persistent server-side stream exists.
 
 | Scenario | Behavior |
 |---|---|
-| Extension not installed | Throw: "Arlopass extension not detected. Install it from https://arlopassai.com" |
+| Extension not installed | Throw: "Arlopass extension not detected. Install it from https://arlopass.com" |
 | Connection fails | Throw the `ArlopassSDKError` from `connect()` |
 | No provider selected | Throw: "No provider selected. Open the Arlopass extension and choose a model." |
 | Stream error mid-response | Emit `{ type: "error", errorText }` chunk, close stream |

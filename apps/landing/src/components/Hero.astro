@@ -1,0 +1,544 @@
+---
+
+---
+
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="container hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Free &middot; Open Source &middot; MIT Licensed
+      </div>
+
+      <h1 id="hero-heading" class="hero-title">
+        Your AI, your models,<br />your rules.
+      </h1>
+
+      <p class="hero-subtitle">
+        Arlopass is an open-source browser extension that lets web apps use
+        <em>your</em> AI providers — Ollama, Claude, GPT, Gemini, or Bedrock — without
+        ever seeing your API keys. You choose which apps to trust, pick your model,
+        and stay in control.
+      </p>
+
+      <div class="hero-actions">
+        <a
+          href="https://chrome.google.com/webstore"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-primary"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Install for Chrome
+        </a>
+        <a
+          href="https://github.com/arlopass"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-secondary"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"
+            ></path>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-value">10 lines</span>
+          <span class="stat-label">to integrate</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">0 keys</span>
+          <span class="stat-label">on your server</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">Any model</span>
+          <span class="stat-label">user's choice</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <!-- Stylized extension approval prompt mockup -->
+      <div class="mockup-window">
+        <div class="mockup-titlebar">
+          <div class="mockup-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <span class="mockup-title">demo-app.com</span>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-prompt">
+            <div class="prompt-header">
+              <img
+                src="/ArlopassIcon.svg"
+                alt=""
+                width="20"
+                height="20"
+                aria-hidden="true"
+              />
+              <span class="prompt-brand">Arlopass</span>
+            </div>
+            <p class="prompt-title">AI access requested</p>
+            <p class="prompt-desc">demo-app.com wants to use AI chat.</p>
+
+            <div class="prompt-provider">
+              <span class="provider-label">Choose provider</span>
+              <div class="provider-options">
+                <button class="provider-option" aria-pressed="false">
+                  <img
+                    class="provider-icon"
+                    src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/ollama.svg"
+                    alt=""
+                    width="16"
+                    height="16"
+                  /> Ollama
+                </button>
+                <button class="provider-option selected" aria-pressed="true">
+                  <img
+                    class="provider-icon"
+                    src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/claude.svg"
+                    alt=""
+                    width="16"
+                    height="16"
+                  /> Claude
+                </button>
+                <button class="provider-option" aria-pressed="false">
+                  <img
+                    class="provider-icon"
+                    src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/openai.svg"
+                    alt=""
+                    width="16"
+                    height="16"
+                  /> GPT-4
+                </button>
+              </div>
+            </div>
+
+            <div class="prompt-actions">
+              <button class="prompt-deny">Deny</button>
+              <button class="prompt-approve">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  ><polyline points="20 6 9 17 4 12"></polyline></svg
+                >
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-glow"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-top: calc(64px + var(--ap-space-20));
+    padding-bottom: var(--ap-space-24);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--ap-space-16);
+    align-items: center;
+  }
+
+  @media (min-width: 1024px) {
+    .hero-inner {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--ap-space-16);
+    }
+  }
+
+  /* Content */
+  .hero-content {
+    animation: fade-in-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    font-size: var(--ap-text-xs);
+    font-weight: 500;
+    color: var(--ap-text-secondary);
+    background: var(--ap-bg-surface);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-full);
+    padding: 6px 14px;
+    margin-bottom: var(--ap-space-8);
+  }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ap-success);
+    flex-shrink: 0;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 6vw, 4.25rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: var(--ap-space-6);
+    color: var(--ap-text-primary);
+  }
+
+  .hero-title em {
+    font-style: normal;
+    color: var(--ap-brand);
+  }
+
+  .hero-definition {
+    font-size: var(--ap-text-sm);
+    line-height: 1.6;
+    color: var(--ap-text-tertiary);
+    max-width: 520px;
+    margin-bottom: var(--ap-space-4);
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 1.5vw, 1.175rem);
+    line-height: 1.7;
+    color: var(--ap-text-secondary);
+    max-width: 520px;
+    margin-bottom: var(--ap-space-10);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ap-space-3);
+    margin-bottom: var(--ap-space-12);
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    font-size: var(--ap-text-sm);
+    font-weight: 500;
+    color: #fafaf9;
+    background: var(--ap-brand);
+    padding: 12px 28px;
+    border-radius: var(--ap-radius-full);
+    text-decoration: none;
+    transition:
+      background var(--ap-ease-micro),
+      transform var(--ap-ease-micro);
+  }
+  .btn-primary:hover {
+    background: var(--ap-brand-hover);
+    color: #fafaf9;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    font-size: var(--ap-text-sm);
+    font-weight: 500;
+    color: var(--ap-text-body);
+    background: transparent;
+    border: 1px solid var(--ap-border);
+    padding: 12px 28px;
+    border-radius: var(--ap-radius-full);
+    text-decoration: none;
+    transition:
+      border-color var(--ap-ease-micro),
+      background var(--ap-ease-micro);
+  }
+  .btn-secondary:hover {
+    border-color: var(--ap-border-strong);
+    background: var(--ap-bg-surface);
+    color: var(--ap-text-body);
+  }
+
+  .hero-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-6);
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-size: var(--ap-text-sm);
+    font-weight: 600;
+    color: var(--ap-text-primary);
+    font-family: var(--ap-font-code);
+  }
+
+  .stat-label {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-text-tertiary);
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--ap-border);
+  }
+
+  /* Visual — Extension Mockup */
+  .hero-visual {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    animation: fade-in-up 600ms cubic-bezier(0.16, 1, 0.3, 1) 150ms both;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(
+      circle,
+      color-mix(in oklch, var(--ap-brand) 15%, transparent) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+
+  .mockup-window {
+    width: 100%;
+    max-width: 380px;
+    background: var(--ap-bg-surface);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-lg);
+    overflow: hidden;
+    box-shadow:
+      0 24px 48px -12px rgba(0, 0, 0, 0.35),
+      0 0 0 1px color-mix(in oklch, var(--ap-brand) 8%, transparent);
+  }
+
+  .mockup-titlebar {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-3);
+    padding: 12px 16px;
+    background: var(--ap-bg-elevated);
+    border-bottom: 1px solid var(--ap-border);
+  }
+
+  .mockup-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .dot-red {
+    background: #ef4444;
+  }
+  .dot-yellow {
+    background: #eab308;
+  }
+  .dot-green {
+    background: #22c55e;
+  }
+
+  .mockup-title {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-text-tertiary);
+    font-family: var(--ap-font-code);
+  }
+
+  .mockup-body {
+    padding: 20px;
+  }
+
+  .mockup-prompt {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ap-space-4);
+  }
+
+  .prompt-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+  }
+
+  .prompt-brand {
+    font-size: var(--ap-text-sm);
+    font-weight: 600;
+    color: var(--ap-text-primary);
+  }
+
+  .prompt-title {
+    font-size: var(--ap-text-lg);
+    font-weight: 600;
+    color: var(--ap-text-primary);
+    line-height: 1.3;
+  }
+
+  .prompt-desc {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-text-secondary);
+    line-height: 1.5;
+  }
+
+  .prompt-provider {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ap-space-2);
+  }
+
+  .provider-label {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  .provider-options {
+    display: flex;
+    gap: var(--ap-space-2);
+  }
+
+  .provider-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: var(--ap-text-xs);
+    font-weight: 500;
+    font-family: var(--ap-font-body);
+    color: var(--ap-text-secondary);
+    background: var(--ap-bg-base);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    cursor: pointer;
+    transition: all var(--ap-ease-micro);
+  }
+
+  .provider-option.selected {
+    color: var(--ap-brand);
+    border-color: var(--ap-brand);
+    background: var(--ap-brand-subtle-dark);
+  }
+
+  .provider-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    filter: brightness(0) invert(0.7);
+  }
+
+  .provider-option.selected .provider-icon {
+    filter: brightness(0) invert(0.9);
+  }
+
+  .prompt-actions {
+    display: flex;
+    gap: var(--ap-space-2);
+    margin-top: var(--ap-space-2);
+  }
+
+  .prompt-deny {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: var(--ap-text-sm);
+    font-weight: 500;
+    font-family: var(--ap-font-body);
+    color: var(--ap-text-secondary);
+    background: transparent;
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    cursor: pointer;
+  }
+
+  .prompt-approve {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    font-size: var(--ap-text-sm);
+    font-weight: 500;
+    font-family: var(--ap-font-body);
+    color: #fafaf9;
+    background: var(--ap-brand);
+    border: none;
+    border-radius: var(--ap-radius-sm);
+    cursor: pointer;
+  }
+
+  @media (max-width: 1023px) {
+    .hero {
+      padding-top: calc(64px + var(--ap-space-12));
+      padding-bottom: var(--ap-space-16);
+      text-align: center;
+    }
+    .hero-subtitle {
+      margin-inline: auto;
+    }
+    .hero-actions {
+      justify-content: center;
+    }
+    .hero-stats {
+      justify-content: center;
+    }
+  }
+</style>

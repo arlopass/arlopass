@@ -1,0 +1,221 @@
+---
+const comparisonRows = [
+  {
+    capability: "User chooses the model",
+    arlopass: true,
+    pasteKey: "Depends",
+    gateway: false,
+    vendorSdk: false,
+  },
+  {
+    capability: "Keys never leave user's device",
+    arlopass: true,
+    pasteKey: false,
+    gateway: false,
+    vendorSdk: false,
+  },
+  {
+    capability: "Works with local models",
+    arlopass: true,
+    pasteKey: "Rarely",
+    gateway: "Sometimes",
+    vendorSdk: false,
+  },
+  {
+    capability: "Zero server infrastructure",
+    arlopass: true,
+    pasteKey: false,
+    gateway: false,
+    vendorSdk: false,
+  },
+  {
+    capability: "Integration effort",
+    arlopass: "~10 lines",
+    pasteKey: "~40+ lines",
+    gateway: "~30 lines",
+    vendorSdk: "~15 lines",
+  },
+  {
+    capability: "Provider switching",
+    arlopass: "0 code changes",
+    pasteKey: "Full rewrite",
+    gateway: "Config change",
+    vendorSdk: "Moderate",
+  },
+  {
+    capability: "Enterprise policy & audit",
+    arlopass: true,
+    pasteKey: false,
+    gateway: true,
+    vendorSdk: false,
+  },
+  {
+    capability: "User approves app connection",
+    arlopass: true,
+    pasteKey: false,
+    gateway: false,
+    vendorSdk: false,
+  },
+  {
+    capability: "Open source",
+    arlopass: true,
+    pasteKey: "Varies",
+    gateway: "Some",
+    vendorSdk: "Some",
+  },
+];
+
+const checkSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const dashSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+function renderCell(value: boolean | string) {
+  if (value === true) return { html: checkSvg, cls: "cell-yes" };
+  if (value === false) return { html: dashSvg, cls: "cell-no" };
+  return { html: String(value), cls: "cell-text" };
+}
+---
+
+<section class="comparison" aria-labelledby="comparison-heading">
+  <div class="container">
+    <div class="comparison-header">
+      <span class="section-label">Why Arlopass</span>
+      <h2 id="comparison-heading" class="section-title">
+        Other tools ask you to trust them with your keys.<br />
+        Arlopass lets you keep them.
+      </h2>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="comparison-table" role="table">
+        <thead>
+          <tr>
+            <th scope="col">Capability</th>
+            <th scope="col" class="col-arlopass">Arlopass</th>
+            <th scope="col">Paste API Key</th>
+            <th scope="col">AI Gateways</th>
+            <th scope="col">Vendor SDKs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            comparisonRows.map((row) => (
+              <tr>
+                <td class="cap-cell">{row.capability}</td>
+                <td class={`${renderCell(row.arlopass).cls} col-arlopass`} set:html={renderCell(row.arlopass).html} />
+                <td class={renderCell(row.pasteKey).cls} set:html={renderCell(row.pasteKey).html} />
+                <td class={renderCell(row.gateway).cls} set:html={renderCell(row.gateway).html} />
+                <td class={renderCell(row.vendorSdk).cls} set:html={renderCell(row.vendorSdk).html} />
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<style>
+  .comparison {
+    padding: var(--ap-space-24) 0;
+    border-top: none;
+    background: var(--ap-bg-surface);
+  }
+
+  .comparison-header {
+    text-align: center;
+    max-width: 700px;
+    margin-inline: auto;
+    margin-bottom: var(--ap-space-12);
+  }
+
+  .section-label {
+    display: inline-block;
+    font-size: var(--ap-text-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ap-brand);
+    margin-bottom: var(--ap-space-4);
+  }
+
+  .section-title {
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-md);
+  }
+
+  .comparison-table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    font-size: var(--ap-text-sm);
+  }
+
+  thead {
+    background: var(--ap-bg-elevated);
+  }
+
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: var(--ap-text-xs);
+    font-weight: 500;
+    color: var(--ap-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid var(--ap-border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ap-border);
+    color: var(--ap-text-secondary);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  .cap-cell {
+    color: var(--ap-text-body);
+    font-weight: 500;
+  }
+
+  .col-arlopass {
+    background: var(--ap-brand-subtle-dark);
+  }
+
+  th.col-arlopass {
+    color: var(--ap-brand);
+    font-weight: 600;
+  }
+
+  .cell-yes {
+    color: var(--ap-success);
+    font-weight: 600;
+  }
+
+  .cell-no {
+    color: var(--ap-text-tertiary);
+  }
+
+  .cell-text {
+    color: var(--ap-text-secondary);
+    font-family: var(--ap-font-code);
+    font-size: var(--ap-text-xs);
+  }
+
+  td.col-arlopass.cell-text {
+    color: var(--ap-brand);
+    font-weight: 500;
+  }
+</style>

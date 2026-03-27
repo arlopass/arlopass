@@ -1,0 +1,314 @@
+/* ============================================
+   Arlopass Design Tokens
+   Source of truth: docs/DESIGN_SYSTEM.md
+   ============================================ */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@font-face {
+  font-family: "Geist Sans Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/GeistSansVariable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Geist Mono Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/GeistMonoVariable.woff2") format("woff2");
+}
+
+:root {
+  /* Brand (constant across themes) */
+  --ap-brand: #c2410c;
+  --ap-brand-hover: #9a3412;
+  --ap-brand-subtle: #fff7ed;
+  --ap-brand-subtle-dark: #2c1a0e;
+  --ap-amber: #d97706;
+  --ap-amber-hover: #b45309;
+  --ap-success: #4d7c0f;
+  --ap-success-subtle: #f7fee7;
+  --ap-warning: #ca8a04;
+  --ap-danger: #b91c1c;
+
+  /* Typography */
+  --ap-font-body:
+    "Geist Sans Variable", "Geist Sans", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", system-ui, sans-serif;
+  --ap-font-code:
+    "Geist Mono Variable", "Geist Mono", ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+  --ap-font-display: var(--ap-font-body);
+
+  /* Type scale */
+  --ap-text-xs: 0.75rem;
+  --ap-text-sm: 0.875rem;
+  --ap-text-base: 1rem;
+  --ap-text-lg: 1.125rem;
+  --ap-text-xl: 1.25rem;
+  --ap-text-2xl: 1.5rem;
+  --ap-text-3xl: 1.875rem;
+  --ap-text-4xl: 2.25rem;
+  --ap-text-5xl: 3rem;
+  --ap-text-6xl: 3.75rem;
+
+  /* Spacing */
+  --ap-space-0: 0;
+  --ap-space-1: 4px;
+  --ap-space-2: 8px;
+  --ap-space-3: 12px;
+  --ap-space-4: 16px;
+  --ap-space-5: 20px;
+  --ap-space-6: 24px;
+  --ap-space-8: 32px;
+  --ap-space-10: 40px;
+  --ap-space-12: 48px;
+  --ap-space-16: 64px;
+  --ap-space-20: 80px;
+  --ap-space-24: 96px;
+
+  /* Border radius */
+  --ap-radius-sm: 4px;
+  --ap-radius-md: 8px;
+  --ap-radius-lg: 12px;
+  --ap-radius-full: 9999px;
+
+  /* Motion */
+  --ap-ease-micro: 150ms ease;
+  --ap-ease-small: 200ms ease-out;
+  --ap-ease-medium: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  --ap-ease-large: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Breakpoints (used via media queries) */
+  --ap-breakpoint-sm: 640px;
+  --ap-breakpoint-md: 768px;
+  --ap-breakpoint-lg: 1024px;
+  --ap-breakpoint-xl: 1280px;
+}
+
+/* ============================================
+   Dark Theme (Primary / Default)
+   ============================================ */
+:root {
+  --ap-bg-base: #1c1917;
+  --ap-bg-surface: #292524;
+  --ap-bg-elevated: #3d3835;
+  --ap-bg-code: #1a1412;
+
+  --ap-border: #44403c;
+  --ap-border-strong: #57534e;
+
+  --ap-text-primary: #fafaf9;
+  --ap-text-body: #d6d3d1;
+  --ap-text-secondary: #a8a29e;
+  --ap-text-tertiary: #78716c;
+
+  --ap-text-link: #c2410c;
+  --ap-text-link-hover: #d97706;
+
+  --ap-success-subtle: #1a2e05;
+  --ap-warning-subtle: #2e2204;
+  --ap-danger-subtle: #2e0505;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --ap-bg-base: #fafaf9;
+  --ap-bg-surface: #ffffff;
+  --ap-bg-elevated: #ffffff;
+  --ap-bg-code: #1c1917;
+
+  --ap-border: #e7e5e4;
+  --ap-border-strong: #d6d3d1;
+
+  --ap-text-primary: #1c1917;
+  --ap-text-body: #292524;
+  --ap-text-secondary: #78716c;
+  --ap-text-tertiary: #a8a29e;
+
+  --ap-text-link: #c2410c;
+  --ap-text-link-hover: #9a3412;
+
+  --ap-success-subtle: #f7fee7;
+  --ap-warning-subtle: #fefce8;
+  --ap-danger-subtle: #fef2f2;
+}
+
+/* ============================================
+   Global Reset & Base
+   ============================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--ap-font-body);
+  font-size: var(--ap-text-base);
+  line-height: 1.625;
+  color: var(--ap-text-body);
+  background-color: var(--ap-bg-base);
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--ap-font-display);
+  color: var(--ap-text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--ap-text-link);
+  text-decoration: none;
+  transition: color var(--ap-ease-micro);
+}
+a:hover {
+  color: var(--ap-text-link-hover);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+code {
+  font-family: var(--ap-font-code);
+  font-size: 0.875em;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: var(--ap-space-4);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-inline: var(--ap-space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-inline: var(--ap-space-8);
+  }
+}
+
+/* ============================================
+   Animation keyframes
+   ============================================ */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes typing-cursor {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

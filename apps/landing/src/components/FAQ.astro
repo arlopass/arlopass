@@ -1,0 +1,175 @@
+---
+const faqs = [
+  {
+    question: "What is Arlopass?",
+    answer:
+      "Arlopass is an open-source browser extension and developer SDK that lets web applications use a user's own AI providers — like Ollama, Claude, GPT, or Bedrock — without the application ever seeing, touching, or storing the user's API keys. According to security researchers, over 80% of API key leaks occur through client-side code or misconfigured servers (GitGuardian, 2025). Arlopass eliminates this entire attack surface.",
+  },
+  {
+    question: "How does Arlopass keep my API keys safe?",
+    answer:
+      "Your API keys are stored in your operating system's native keychain — Windows Credential Manager, macOS Keychain, or Linux Secret Service. They never enter browser storage (like localStorage) and never leave your device. When a web app requests AI access, the request routes through the Arlopass extension on your machine, where keys are injected at the last moment. The app receives only the AI response, never your credentials.",
+  },
+  {
+    question: "Which AI providers does Arlopass support?",
+    answer:
+      "Arlopass supports Ollama (local models), Anthropic Claude (including subscription-based access), OpenAI GPT models, Google Gemini, Amazon Bedrock, Google Vertex AI, Perplexity, and Microsoft Foundry. The adapter system is open — any provider with an API can be supported by writing a single TypeScript adapter file.",
+  },
+  {
+    question: "How do developers integrate Arlopass into their apps?",
+    answer:
+      "Developers add the @arlopass/web-sdk package and use three main functions: connect() to establish a session with the user's extension, createChat() to create a conversation, and chat.stream() or chat.send() to exchange messages. The entire integration is approximately 10 lines of code with full TypeScript support, Zod-validated schemas, and async iterator streaming.",
+  },
+  {
+    question: "Is Arlopass free?",
+    answer:
+      "Yes. Arlopass is 100% free and open source under the MIT license. The browser extension, SDK, protocol, and all provider adapters are free to use, modify, and distribute. Users bring their own AI provider subscriptions — Arlopass itself has no pricing tiers, no premium features, and no cloud infrastructure costs.",
+  },
+  {
+    question: "Can I use Arlopass with local AI models?",
+    answer:
+      "Absolutely. Arlopass has first-class support for Ollama and LM Studio, enabling fully local, zero-cloud AI in any web application. When using local models, your prompts and responses never leave your machine — achieving true zero-exposure AI access with no internet dependency.",
+  },
+  {
+    question: "Does Arlopass work for enterprise teams?",
+    answer:
+      "Yes. Arlopass Enterprise provides zero-trust AI governance with signed policy bundles (Ed25519), org-wide provider allowlists, model restrictions, data-handling rules, and cryptographic audit trails (JSONL + OTLP export). It deploys via MDM (Intune, Jamf) with pre-mapped control alignment for SOC 2, ISO 27001, NIST 800-53, GDPR, and HIPAA compliance frameworks.",
+  },
+];
+
+// Generate FAQ Schema for SEO
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: f.answer,
+    },
+  })),
+};
+---
+
+<section class="faq" id="faq" aria-labelledby="faq-heading">
+  <div class="container">
+    <div class="faq-header">
+      <span class="section-label">FAQ</span>
+      <h2 id="faq-heading" class="section-title">Frequently asked questions</h2>
+    </div>
+
+    <div class="faq-list">
+      {
+        faqs.map((faq) => (
+          <details class="faq-item" name="faq">
+            <summary class="faq-question">
+              <span>{faq.question}</span>
+              <svg
+                class="faq-chevron"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </summary>
+            <div class="faq-answer">
+              <p>{faq.answer}</p>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- FAQ Schema for AI & traditional SEO -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+</section>
+
+<style>
+  .faq {
+    padding: var(--ap-space-24) 0;
+    border-top: none;
+    background: var(--ap-bg-surface);
+  }
+
+  .faq-header {
+    text-align: center;
+    max-width: 600px;
+    margin-inline: auto;
+    margin-bottom: var(--ap-space-12);
+  }
+
+  .section-label {
+    display: inline-block;
+    font-size: var(--ap-text-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ap-brand);
+    margin-bottom: var(--ap-space-4);
+  }
+
+  .section-title {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .faq-list {
+    max-width: 720px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid var(--ap-border);
+  }
+
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ap-space-4);
+    padding: var(--ap-space-5) 0;
+    cursor: pointer;
+    font-size: var(--ap-text-base);
+    font-weight: 500;
+    color: var(--ap-text-primary);
+    list-style: none;
+    user-select: none;
+  }
+
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-chevron {
+    flex-shrink: 0;
+    color: var(--ap-text-tertiary);
+    transition: transform var(--ap-ease-small);
+  }
+
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
+  }
+
+  .faq-answer {
+    padding-bottom: var(--ap-space-6);
+  }
+
+  .faq-answer p {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-text-secondary);
+    line-height: 1.7;
+    max-width: 65ch;
+  }
+</style>
