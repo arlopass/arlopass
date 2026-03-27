@@ -60,16 +60,12 @@ export function VaultTabContent() {
 
   const reload = () =>
     void sendVaultMessage({ type: "vault.credentials.list" }).then((resp) =>
-      setCredentials(
-        (resp.credentials ?? []) as VaultCredential[],
-      ),
+      setCredentials((resp.credentials ?? []) as VaultCredential[]),
     );
 
   useEffect(() => {
     void sendVaultMessage({ type: "vault.credentials.list" }).then((resp) => {
-      setCredentials(
-        (resp.credentials ?? []) as VaultCredential[],
-      );
+      setCredentials((resp.credentials ?? []) as VaultCredential[]);
       setLoading(false);
     });
   }, [sendVaultMessage]);
@@ -99,7 +95,10 @@ export function VaultTabContent() {
                 key={cred.id}
                 credential={cred}
                 onDelete={(id) => {
-                  void sendVaultMessage({ type: "vault.credentials.delete", credentialId: id }).then(() => reload());
+                  void sendVaultMessage({
+                    type: "vault.credentials.delete",
+                    credentialId: id,
+                  }).then(() => reload());
                 }}
               />
             ))}
@@ -220,4 +219,3 @@ function CredentialCard({
     </Box>
   );
 }
-

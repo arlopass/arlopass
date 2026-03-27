@@ -11,7 +11,6 @@ import {
 } from "./transport/bridge-pairing.js";
 import {
   ensureBridgeHandshakeSession,
-  clearBridgeHandshakeSessionCache,
 } from "./transport/bridge-handshake.js";
 
 async function sendVaultMessage(message: Record<string, unknown>): Promise<Record<string, unknown>> {

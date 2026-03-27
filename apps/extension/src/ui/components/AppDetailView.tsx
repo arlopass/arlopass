@@ -124,31 +124,40 @@ export function AppDetailView({
   }
 
   const handleSaveSettings = useCallback(async () => {
-    await saveApp({
-      origin: localApp.origin,
-      displayName: localApp.displayName,
-      enabledProviderIds: localApp.enabledProviderIds,
-      enabledModelIds: localApp.enabledModelIds,
-      permissions: localApp.permissions,
-      rules: localApp.rules,
-      limits: localApp.limits,
-      status: localApp.status,
-    }, sendVaultMessage);
+    await saveApp(
+      {
+        origin: localApp.origin,
+        displayName: localApp.displayName,
+        enabledProviderIds: localApp.enabledProviderIds,
+        enabledModelIds: localApp.enabledModelIds,
+        permissions: localApp.permissions,
+        rules: localApp.rules,
+        limits: localApp.limits,
+        status: localApp.status,
+      },
+      sendVaultMessage,
+    );
   }, [localApp, sendVaultMessage]);
 
-  const persistApp = useCallback(async (updated: ConnectedApp) => {
-    setLocalApp(updated);
-    await saveApp({
-      origin: updated.origin,
-      displayName: updated.displayName,
-      enabledProviderIds: updated.enabledProviderIds,
-      enabledModelIds: updated.enabledModelIds,
-      permissions: updated.permissions,
-      rules: updated.rules,
-      limits: updated.limits,
-      status: updated.status,
-    }, sendVaultMessage);
-  }, [sendVaultMessage]);
+  const persistApp = useCallback(
+    async (updated: ConnectedApp) => {
+      setLocalApp(updated);
+      await saveApp(
+        {
+          origin: updated.origin,
+          displayName: updated.displayName,
+          enabledProviderIds: updated.enabledProviderIds,
+          enabledModelIds: updated.enabledModelIds,
+          permissions: updated.permissions,
+          rules: updated.rules,
+          limits: updated.limits,
+          status: updated.status,
+        },
+        sendVaultMessage,
+      );
+    },
+    [sendVaultMessage],
+  );
 
   // Providers NOT yet enabled for this app
   const availableProviders = rawProviders.filter(
@@ -1009,4 +1018,3 @@ function AppModelCard({
     </Box>
   );
 }
-

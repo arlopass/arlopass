@@ -143,31 +143,7 @@ export type WalletHandlerOptions = Readonly<{
 // Storage key constants (spec: Storage Contract v1).
 const WALLET_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 
-type StoredProvider = {
-  id: string;
-  name: string;
-  type: "local" | "cloud" | "cli";
-  status:
-  | "connected"
-  | "disconnected"
-  | "attention"
-  | "reconnecting"
-  | "failed"
-  | "revoked"
-  | "degraded";
-  models: Array<{ id: string; name: string }>;
-  lastSyncedAt?: number;
-};
-
 type StoredActiveProvider = { providerId: string; modelId?: string } | null;
-
-function isStoredProvider(v: unknown): v is StoredProvider {
-  if (typeof v !== "object" || v === null) {
-    return false;
-  }
-  const rec = v as Record<string, unknown>;
-  return typeof rec["id"] === "string" && typeof rec["name"] === "string";
-}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);

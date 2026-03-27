@@ -651,7 +651,10 @@ export function AddProviderWizard({
           selectedCredentialId={state.selectedCredentialId}
           onSelectCredential={(cred) => {
             void (async () => {
-              const resp = await sendVaultMessage({ type: "vault.credentials.get", credentialId: cred.id });
+              const resp = await sendVaultMessage({
+                type: "vault.credentials.get",
+                credentialId: cred.id,
+              });
               const fields = (resp.fields ?? {}) as Record<string, string>;
               dispatch({
                 type: "SELECT_CREDENTIAL",

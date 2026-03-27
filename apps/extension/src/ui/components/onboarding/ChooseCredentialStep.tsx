@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Button, Group, ScrollArea, Stack, Text, UnstyledButton } from "@mantine/core";
+import {
+  Button,
+  Group,
+  ScrollArea,
+  Stack,
+  Text,
+  UnstyledButton,
+} from "@mantine/core";
 import { ProviderAvatar } from "../ProviderAvatar.js";
 import { MetadataDivider } from "../MetadataDivider.js";
 import type { ProviderEntry } from "./provider-registry.js";
@@ -37,14 +44,24 @@ export function ChooseCredentialStep({
     let cancelled = false;
     void (async () => {
       const resp = await sendVaultMessage({ type: "vault.credentials.list" });
-      const allCreds = (resp.credentials ?? []) as Array<{ id: string; connectorId: string; name: string; createdAt: string; lastUsedAt: string }>;
-      const filtered = allCreds.filter(c => c.connectorId === provider.connectorId);
+      const allCreds = (resp.credentials ?? []) as Array<{
+        id: string;
+        connectorId: string;
+        name: string;
+        createdAt: string;
+        lastUsedAt: string;
+      }>;
+      const filtered = allCreds.filter(
+        (c) => c.connectorId === provider.connectorId,
+      );
       if (!cancelled) {
         setCredentials(filtered);
         setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [provider.connectorId, sendVaultMessage]);
 
   return (
@@ -67,14 +84,19 @@ export function ChooseCredentialStep({
             borderBottom: `1px solid ${tokens.color.border}`,
           }}
         >
-          <ProviderAvatar providerKey={provider.providerKey} size={tokens.size.providerIcon} />
+          <ProviderAvatar
+            providerKey={provider.providerKey}
+            size={tokens.size.providerIcon}
+          />
           <Stack gap={0} style={{ overflow: "hidden", minWidth: 0 }}>
             <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>
               {provider.shortLabel}
             </Text>
             <Group gap={8} wrap="nowrap">
               <Text fw={500} fz="xs" c={tokens.color.textSecondary}>
-                {credentials.length} {credentials.length === 1 ? "credential" : "credentials"} available
+                {credentials.length}{" "}
+                {credentials.length === 1 ? "credential" : "credentials"}{" "}
+                available
               </Text>
               <MetadataDivider />
             </Group>
@@ -87,7 +109,9 @@ export function ChooseCredentialStep({
         </Text>
 
         {loading && (
-          <Text fz="xs" c={tokens.color.textSecondary}>Loading…</Text>
+          <Text fz="xs" c={tokens.color.textSecondary}>
+            Loading…
+          </Text>
         )}
 
         {!loading && credentials.length === 0 && (
@@ -97,7 +121,12 @@ export function ChooseCredentialStep({
         )}
 
         {!loading && credentials.length > 0 && (
-          <ScrollArea style={{ maxHeight: 200 }} type="scroll" offsetScrollbars scrollbarSize={6}>
+          <ScrollArea
+            style={{ maxHeight: 200 }}
+            type="scroll"
+            offsetScrollbars
+            scrollbarSize={6}
+          >
             <Stack gap={8}>
               {credentials.map((cred) => (
                 <CredentialCard
@@ -185,10 +214,20 @@ function CredentialCard({
       }}
     >
       <ProviderAvatar providerKey={providerKey} size={16} />
-      <Text fw={600} fz="sm" c={tokens.color.textPrimary} style={{ whiteSpace: "nowrap" }}>
+      <Text
+        fw={600}
+        fz="sm"
+        c={tokens.color.textPrimary}
+        style={{ whiteSpace: "nowrap" }}
+      >
         {credential.name}
       </Text>
-      <Text fw={400} fz={8} c={tokens.color.textSecondary} style={{ whiteSpace: "nowrap" }}>
+      <Text
+        fw={400}
+        fz={8}
+        c={tokens.color.textSecondary}
+        style={{ whiteSpace: "nowrap" }}
+      >
         ({age})
       </Text>
     </UnstyledButton>

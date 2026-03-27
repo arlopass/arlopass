@@ -87,7 +87,7 @@ export function useTokenUsage() {
         // vault doesn't support reset — no-op
     }, []);
 
-    const resetOrigin = useCallback(async (_origin: string) => {
+    const resetOrigin = useCallback(async (_origin: string) => { // eslint-disable-line @typescript-eslint/no-unused-vars
         // vault doesn't support per-origin reset — no-op
     }, []);
 

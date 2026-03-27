@@ -634,19 +634,6 @@ function makeFakeStorage(initial: FakeStorageState = {}): {
   return { storage, state };
 }
 
-function makeProvider(
-  id: string,
-  models: Array<{ id: string; name: string }> = [],
-) {
-  return {
-    id,
-    name: id,
-    type: "local" as const,
-    status: "connected" as const,
-    models,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Vault mock infrastructure for wallet handler tests
 // ---------------------------------------------------------------------------

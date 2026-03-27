@@ -287,4 +287,3 @@ function AppCard({
     </Box>
   );
 }
-

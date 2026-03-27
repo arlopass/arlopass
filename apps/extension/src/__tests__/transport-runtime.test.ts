@@ -118,40 +118,40 @@ describe("createTransportMessageHandler", () => {
 
   it("returns provider.list results from wallet storage", async () => {
     const vaultProviders = [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          metadata: {},
-          models: ["llama3.2"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "provider.offline",
-          name: "Offline",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          metadata: {},
-          models: ["mistral"],
-          status: "disconnected",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "provider.cloud-validation-only",
-          name: "Cloud Validation Only",
-          type: "cloud",
-          connectorId: "claude",
-          credentialId: "",
-          metadata: {},
-          models: ["claude-opus-4-6"],
-          status: "attention",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        metadata: {},
+        models: ["llama3.2"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: "provider.offline",
+        name: "Offline",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        metadata: {},
+        models: ["mistral"],
+        status: "disconnected",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: "provider.cloud-validation-only",
+        name: "Cloud Validation Only",
+        type: "cloud",
+        connectorId: "claude",
+        credentialId: "",
+        metadata: {},
+        models: ["claude-opus-4-6"],
+        status: "attention",
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storage = makeStorageAdapter({});
     const sendVaultMessage = createVaultMock(vaultProviders);
 
@@ -178,18 +178,18 @@ describe("createTransportMessageHandler", () => {
 
   it("rejects session.create for cloud validation-only providers", async () => {
     const vaultProviders = [
-        {
-          id: "provider.cloud-validation-only",
-          name: "Cloud Validation Only",
-          type: "cloud",
-          connectorId: "claude",
-          credentialId: "",
-          metadata: {},
-          models: ["claude-opus-4-6"],
-          status: "attention",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      {
+        id: "provider.cloud-validation-only",
+        name: "Cloud Validation Only",
+        type: "cloud",
+        connectorId: "claude",
+        credentialId: "",
+        metadata: {},
+        models: ["claude-opus-4-6"],
+        status: "attention",
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storage = makeStorageAdapter({
       [WALLET_KEY_ACTIVE]: null,
     });
@@ -217,18 +217,18 @@ describe("createTransportMessageHandler", () => {
 
   it("handles session.create provider selection and persists active provider", async () => {
     const vaultProviders = [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          metadata: {},
-          models: ["llama3.2"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        metadata: {},
+        models: ["llama3.2"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storage = makeStorageAdapter({
       [WALLET_KEY_ACTIVE]: null,
     });
@@ -267,18 +267,18 @@ describe("createTransportMessageHandler", () => {
 
   it("routes local chat.completions through Ollama metadata endpoint", async () => {
     const vaultProviders = [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          metadata: { baseUrl: "http://localhost:11434" },
-          models: ["llama3.2"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        metadata: { baseUrl: "http://localhost:11434" },
+        models: ["llama3.2"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const fetchImpl = vi.fn(async () => {
@@ -322,18 +322,18 @@ describe("createTransportMessageHandler", () => {
 
   it("falls back from localhost to 127.0.0.1 for Ollama chat connectivity", async () => {
     const vaultProviders = [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          metadata: { baseUrl: "http://localhost:11434" },
-          models: ["llama3.2"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        metadata: { baseUrl: "http://localhost:11434" },
+        models: ["llama3.2"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
@@ -378,28 +378,28 @@ describe("createTransportMessageHandler", () => {
   it("routes cloud chat completion through native cloud.chat.execute", async () => {
     const storedProviderId = "provider.arlopass-cloud-anthropic.test-1";
     const vaultProviders = [
-        {
-          id: storedProviderId,
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-test-1",
-            providerId: "claude-subscription",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
-            tenantId: "tenant-cloud-1",
-            region: "us-east-1",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-test-1",
-          },
+      {
+        id: storedProviderId,
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-test-1",
+          providerId: "claude-subscription",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+          tenantId: "tenant-cloud-1",
+          region: "us-east-1",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-test-1",
         },
-      ];
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -497,28 +497,28 @@ describe("createTransportMessageHandler", () => {
   it("forwards request timeout budget to cloud.chat.execute", async () => {
     const storedProviderId = "provider.arlopass-cloud-anthropic.timeout";
     const vaultProviders = [
-        {
-          id: storedProviderId,
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-timeout",
-            providerId: "claude-subscription",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
-            tenantId: "tenant-cloud-timeout",
-            region: "us-east-1",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-timeout",
-          },
+      {
+        id: storedProviderId,
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-timeout",
+          providerId: "claude-subscription",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+          tenantId: "tenant-cloud-timeout",
+          region: "us-east-1",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-timeout",
         },
-      ];
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -588,26 +588,26 @@ describe("createTransportMessageHandler", () => {
   it("hydrates missing cloud binding metadata via cloud.connection.validate before cloud.chat.execute", async () => {
     const storedProviderId = "provider.arlopass-cloud-anthropic.no-policy";
     const vaultProviders = [
-        {
-          id: storedProviderId,
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-no-policy",
-            providerId: "claude-subscription",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000010.0.sig",
-            tenantId: "tenant-cloud-no-policy",
-            region: "us-east-1",
-          },
+      {
+        id: storedProviderId,
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-no-policy",
+          providerId: "claude-subscription",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000010.0.sig",
+          tenantId: "tenant-cloud-no-policy",
+          region: "us-east-1",
         },
-      ];
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -694,26 +694,26 @@ describe("createTransportMessageHandler", () => {
 
   it("surfaces policy.denied from bridge cloud execution", async () => {
     const vaultProviders = [
-        {
-          id: "provider.claude",
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-test-2",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
-            tenantId: "tenant-cloud-2",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-test-2",
-          },
+      {
+        id: "provider.claude",
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-test-2",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+          tenantId: "tenant-cloud-2",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-test-2",
         },
-      ];
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -778,26 +778,26 @@ describe("createTransportMessageHandler", () => {
 
   it("surfaces auth.expired from bridge cloud execution", async () => {
     const vaultProviders = [
-        {
-          id: "provider.claude",
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-test-auth-expired",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
-            tenantId: "tenant-cloud-auth-expired",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-test-auth-expired",
-          },
+      {
+        id: "provider.claude",
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-test-auth-expired",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+          tenantId: "tenant-cloud-auth-expired",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-test-auth-expired",
         },
-      ];
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -862,27 +862,27 @@ describe("createTransportMessageHandler", () => {
 
   it("renegotiates handshake once when cloud execution reports unknown or expired handshake token", async () => {
     const vaultProviders = [
-        {
-          id: "provider.claude.rehandshake",
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-test-rehandshake",
-            providerId: "claude-subscription",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000099.0.sig",
-            tenantId: "tenant-cloud-rehandshake",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-rehandshake",
-          },
+      {
+        id: "provider.claude.rehandshake",
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-test-rehandshake",
+          providerId: "claude-subscription",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000099.0.sig",
+          tenantId: "tenant-cloud-rehandshake",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-rehandshake",
         },
-      ];
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     let verifyCallCount = 0;
@@ -977,18 +977,18 @@ describe("createTransportMessageHandler", () => {
 
   it("uses bound global fetch when dependencies.fetchImpl is not provided", async () => {
     const vaultProviders = [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          models: ["llama3.2"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: { baseUrl: "http://localhost:11434" },
-        },
-      ];
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        models: ["llama3.2"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: { baseUrl: "http://localhost:11434" },
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const originalFetch = globalThis.fetch;
@@ -1033,18 +1033,18 @@ describe("createTransportMessageHandler", () => {
 
   it("routes CLI chat.completions through native bridge execution", async () => {
     const vaultProviders = [
-        {
-          id: "provider.cli",
-          name: "Local CLI Bridge",
-          type: "cli",
-          connectorId: "copilot-cli",
-          credentialId: "",
-          models: ["gpt-5.3-codex"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: { nativeHostName: "com.arlopass.bridge.cli-1", cliType: "copilot-cli" },
-        },
-      ];
+      {
+        id: "provider.cli",
+        name: "Local CLI Bridge",
+        type: "cli",
+        connectorId: "copilot-cli",
+        credentialId: "",
+        models: ["gpt-5.3-codex"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: { nativeHostName: "com.arlopass.bridge.cli-1", cliType: "copilot-cli" },
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -1100,18 +1100,18 @@ describe("createTransportMessageHandler", () => {
 
   it("maps native CLI execution timeout error to transport.timeout", async () => {
     const vaultProviders = [
-        {
-          id: "provider.cli",
-          name: "Local CLI Bridge",
-          type: "cli",
-          connectorId: "copilot-cli",
-          credentialId: "",
-          models: ["gpt-5.3-codex"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: { nativeHostName: "com.arlopass.bridge.cli-2" },
-        },
-      ];
+      {
+        id: "provider.cli",
+        name: "Local CLI Bridge",
+        type: "cli",
+        connectorId: "copilot-cli",
+        credentialId: "",
+        models: ["gpt-5.3-codex"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: { nativeHostName: "com.arlopass.bridge.cli-2" },
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -1157,26 +1157,26 @@ describe("createTransportMessageHandler", () => {
 
   it("maps native cloud execution cancellation to transport.cancelled", async () => {
     const vaultProviders = [
-        {
-          id: "provider.claude.cancelled",
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-cancelled",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
-            tenantId: "tenant-cloud-cancelled",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-cancelled",
-          },
+      {
+        id: "provider.claude.cancelled",
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-cancelled",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+          tenantId: "tenant-cloud-cancelled",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-cancelled",
         },
-      ];
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
@@ -1242,18 +1242,18 @@ describe("createTransportMessageHandler", () => {
 
   it("issues one native execute call per CLI request", async () => {
     const vaultProviders = [
-        {
-          id: "provider.cli",
-          name: "Local CLI Bridge",
-          type: "cli",
-          connectorId: "copilot-cli",
-          credentialId: "",
-          models: ["gpt-5.3-codex"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: { nativeHostName: "com.arlopass.bridge.cli-cache", cliType: "copilot-cli" },
-        },
-      ];
+      {
+        id: "provider.cli",
+        name: "Local CLI Bridge",
+        type: "cli",
+        connectorId: "copilot-cli",
+        credentialId: "",
+        models: ["gpt-5.3-codex"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: { nativeHostName: "com.arlopass.bridge.cli-cache", cliType: "copilot-cli" },
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     let responseIndex = 0;
@@ -1312,18 +1312,18 @@ describe("createTransportMessageHandler", () => {
 
   it("sends cached resumeSessionId for subsequent CLI requests", async () => {
     const vaultProviders = [
-        {
-          id: "provider.cli",
-          name: "Local CLI Bridge",
-          type: "cli",
-          connectorId: "copilot-cli",
-          credentialId: "",
-          models: ["gpt-5.3-codex"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: { nativeHostName: "com.arlopass.bridge.cli-resume", cliType: "copilot-cli" },
-        },
-      ];
+      {
+        id: "provider.cli",
+        name: "Local CLI Bridge",
+        type: "cli",
+        connectorId: "copilot-cli",
+        credentialId: "",
+        models: ["gpt-5.3-codex"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: { nativeHostName: "com.arlopass.bridge.cli-resume", cliType: "copilot-cli" },
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     let responseIndex = 0;
@@ -1387,18 +1387,18 @@ describe("createTransportMessageHandler", () => {
 
   it("returns one chunk plus done for non-incremental request-stream chat.stream responses", async () => {
     const vaultProviders = [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          models: ["llama3.2"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: { baseUrl: "http://localhost:11434" },
-        },
-      ];
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        models: ["llama3.2"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: { baseUrl: "http://localhost:11434" },
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const longResponse =
@@ -1461,18 +1461,18 @@ describe("createTransportMessageHandler", () => {
 
   it("returns provider-driven incremental deltas for request-stream chat.stream action", async () => {
     const vaultProviders = [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          connectorId: "ollama",
-          credentialId: "",
-          models: ["llama3.2"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: { baseUrl: "http://localhost:11434" },
-        },
-      ];
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        models: ["llama3.2"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: { baseUrl: "http://localhost:11434" },
+      },
+    ];
     const storage = makeStorageAdapter({});
 
     const encoder = new TextEncoder();
@@ -1613,27 +1613,27 @@ describe("createTransportMessageHandler", () => {
     );
 
     const vaultProviders = [
-        {
-          id: "provider.claude",
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-default",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
-            tenantId: "tenant-cloud-default",
-            region: "us-east-1",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-default",
-          },
+      {
+        id: "provider.claude",
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-default",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+          tenantId: "tenant-cloud-default",
+          region: "us-east-1",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-default",
         },
-      ];
+      },
+    ];
 
     const storageState: Record<string, unknown> = {
       [WALLET_KEY_ACTIVE]: { providerId: "provider.claude", modelId: "claude-sonnet-4-5" },
@@ -1766,27 +1766,27 @@ describe("createTransportMessageHandler", () => {
     );
 
     const vaultProviders = [
-        {
-          id: "provider.claude",
-          name: "Claude Subscription",
-          type: "cloud",
-          connectorId: "claude-subscription",
-          credentialId: "",
-          models: ["claude-sonnet-4-5"],
-          status: "connected",
-          createdAt: new Date().toISOString(),
-          metadata: {
-            nativeHostName: "com.arlopass.bridge.cloud-default",
-            methodId: "anthropic.api_key",
-            connectionHandle:
-              "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
-            tenantId: "tenant-cloud-default",
-            region: "us-east-1",
-            policyVersion: "policy.2026.03.24",
-            endpointProfileHash: "sha256:endpoint-profile-cloud-default",
-          },
+      {
+        id: "provider.claude",
+        name: "Claude Subscription",
+        type: "cloud",
+        connectorId: "claude-subscription",
+        credentialId: "",
+        models: ["claude-sonnet-4-5"],
+        status: "connected",
+        createdAt: new Date().toISOString(),
+        metadata: {
+          nativeHostName: "com.arlopass.bridge.cloud-default",
+          methodId: "anthropic.api_key",
+          connectionHandle:
+            "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
+          tenantId: "tenant-cloud-default",
+          region: "us-east-1",
+          policyVersion: "policy.2026.03.24",
+          endpointProfileHash: "sha256:endpoint-profile-cloud-default",
         },
-      ];
+      },
+    ];
 
     const storageState: Record<string, unknown> = {
       [WALLET_KEY_ACTIVE]: { providerId: "provider.claude", modelId: "claude-sonnet-4-5" },

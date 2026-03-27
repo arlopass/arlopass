@@ -73,16 +73,19 @@ export function AppConnectWizard({
 
   const handleSave = useCallback(async () => {
     dispatch({ type: "START_SAVE" });
-    await saveApp({
-      origin: state.origin,
-      displayName: state.displayName,
-      enabledProviderIds: state.enabledProviderIds,
-      enabledModelIds: state.enabledModelIds,
-      permissions: state.permissions,
-      rules: state.rules,
-      limits: state.limits,
-      status: "active",
-    }, sendVaultMessage);
+    await saveApp(
+      {
+        origin: state.origin,
+        displayName: state.displayName,
+        enabledProviderIds: state.enabledProviderIds,
+        enabledModelIds: state.enabledModelIds,
+        permissions: state.permissions,
+        rules: state.rules,
+        limits: state.limits,
+        status: "active",
+      },
+      sendVaultMessage,
+    );
     dispatch({ type: "SAVE_COMPLETE" });
     clearPersistedState();
     onComplete(true);
