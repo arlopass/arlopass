@@ -25,7 +25,7 @@ const arlopassTheme = createTheme({
       "#FB923C",
       "#F97316",
       "#EA580C",
-      "#C2410C",
+      "#DB4D12",
       "#9A3412",
       "#7C2D12",
     ],

@@ -8,7 +8,11 @@ export type VaultUnlockProps = {
   secondsRemaining?: number;
 };
 
-export function VaultUnlock({ onUnlock, lockedOut, secondsRemaining: initialSeconds }: VaultUnlockProps) {
+export function VaultUnlock({
+  onUnlock,
+  lockedOut,
+  secondsRemaining: initialSeconds,
+}: VaultUnlockProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +46,8 @@ export function VaultUnlock({ onUnlock, lockedOut, secondsRemaining: initialSeco
     }
   }, [password, onUnlock, lockedOut, countdown]);
 
-  const isDisabled = password.length === 0 || (lockedOut === true && countdown > 0);
+  const isDisabled =
+    password.length === 0 || (lockedOut === true && countdown > 0);
 
   return (
     <Box
@@ -61,14 +66,21 @@ export function VaultUnlock({ onUnlock, lockedOut, secondsRemaining: initialSeco
       </Text>
       <Text
         size="sm"
-        style={{ color: tokens.color.textSecondary, textAlign: "center", maxWidth: 280 }}
+        style={{
+          color: tokens.color.textSecondary,
+          textAlign: "center",
+          maxWidth: 280,
+        }}
       >
         Enter your master password to access your providers and credentials.
       </Text>
 
       <Stack gap="sm" style={{ width: "100%", maxWidth: 280, marginTop: 8 }}>
         {lockedOut === true && countdown > 0 ? (
-          <Text size="sm" style={{ color: tokens.color.warning, textAlign: "center" }}>
+          <Text
+            size="sm"
+            style={{ color: tokens.color.warning, textAlign: "center" }}
+          >
             Too many failed attempts. Try again in {countdown} seconds.
           </Text>
         ) : (
@@ -77,7 +89,9 @@ export function VaultUnlock({ onUnlock, lockedOut, secondsRemaining: initialSeco
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.currentTarget.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleSubmit();
+            }}
             autoFocus
           />
         )}

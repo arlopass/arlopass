@@ -13,12 +13,16 @@ import {
 import { IconChevronDown } from "@tabler/icons-react";
 import { ProviderAvatar } from "./ProviderAvatar.js";
 import { PrimaryButton } from "./PrimaryButton.js";
-import {
-  loadCredentials,
-  deleteCredential,
-  type StoredCredential,
-} from "./onboarding/credential-storage.js";
+import { useVaultContext } from "../hooks/VaultContext.js";
 import { tokens } from "./theme.js";
+
+type VaultCredential = {
+  id: string;
+  connectorId: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string;
+};
 
 function deriveProviderKeyFromConnectorId(connectorId: string): string {
   if (connectorId === "cli-claude-code") return "claude";
@@ -34,8 +38,8 @@ function deriveProviderKeyFromConnectorId(connectorId: string): string {
   return "openai";
 }
 
-function formatAge(timestamp: number): string {
-  const diffMs = Date.now() - timestamp;
+function formatAge(timestamp: string): string {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
   const mins = Math.floor(diffMs / 60_000);
   if (mins < 1) return "Last refreshed just now";
   if (mins < 60) return `Last refreshed ${String(mins)}m ago`;
@@ -50,28 +54,25 @@ function formatAge(timestamp: number): string {
 }
 
 export function VaultTabContent() {
-  const [credentials, setCredentials] = useState<StoredCredential[]>([]);
+  const [credentials, setCredentials] = useState<VaultCredential[]>([]);
   const [loading, setLoading] = useState(true);
+  const { sendVaultMessage } = useVaultContext();
 
-  const reload = () => void loadCredentials().then(setCredentials);
+  const reload = () =>
+    void sendVaultMessage({ type: "vault.credentials.list" }).then((resp) =>
+      setCredentials(
+        (resp.credentials ?? []) as VaultCredential[],
+      ),
+    );
 
   useEffect(() => {
-    void loadCredentials().then((creds) => {
-      setCredentials(creds);
+    void sendVaultMessage({ type: "vault.credentials.list" }).then((resp) => {
+      setCredentials(
+        (resp.credentials ?? []) as VaultCredential[],
+      );
       setLoading(false);
     });
-
-    const listener = (
-      changes: Record<string, chrome.storage.StorageChange>,
-      area: string,
-    ) => {
-      if (area === "local" && "arlopass.wallet.credentials.v1" in changes) {
-        reload();
-      }
-    };
-    chrome.storage.onChanged.addListener(listener);
-    return () => chrome.storage.onChanged.removeListener(listener);
-  }, []);
+  }, [sendVaultMessage]);
 
   return (
     <>
@@ -97,7 +98,9 @@ export function VaultTabContent() {
               <CredentialCard
                 key={cred.id}
                 credential={cred}
-                onDelete={(id) => void deleteCredential(id)}
+                onDelete={(id) => {
+                  void sendVaultMessage({ type: "vault.credentials.delete", credentialId: id }).then(() => reload());
+                }}
               />
             ))}
           </Stack>
@@ -112,7 +115,7 @@ function CredentialCard({
   credential,
   onDelete,
 }: {
-  credential: StoredCredential;
+  credential: VaultCredential;
   onDelete: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);

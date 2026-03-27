@@ -37,7 +37,7 @@ html {
 
 :root {
   /* Brand (constant across themes) */
-  --ap-brand: #c2410c;
+  --ap-brand: #db4d12;
   --ap-brand-hover: #9a3412;
   --ap-brand-subtle: #fff7ed;
   --ap-brand-subtle-dark: #2c1a0e;
@@ -120,7 +120,7 @@ html {
   --ap-text-secondary: #a8a29e;
   --ap-text-tertiary: #78716c;
 
-  --ap-text-link: #c2410c;
+  --ap-text-link: #db4d12;
   --ap-text-link-hover: #d97706;
 
   --ap-success-subtle: #1a2e05;
@@ -143,7 +143,7 @@ html {
   --ap-text-secondary: #78716c;
   --ap-text-tertiary: #a8a29e;
 
-  --ap-text-link: #c2410c;
+  --ap-text-link: #db4d12;
   --ap-text-link-hover: #9a3412;
 
   --ap-success-subtle: #f7fee7;

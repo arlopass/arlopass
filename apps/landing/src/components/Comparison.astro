@@ -103,18 +103,22 @@ function renderCell(value: boolean | string) {
             comparisonRows.map((row) => (
               <tr>
                 <td class="cap-cell">{row.capability}</td>
-                <td class={`${renderCell(row.arlopass).cls} col-arlopass`}>
-                  {renderCell(row.arlopass).text}
-                </td>
-                <td class={renderCell(row.pasteKey).cls}>
-                  {renderCell(row.pasteKey).text}
-                </td>
-                <td class={renderCell(row.gateway).cls}>
-                  {renderCell(row.gateway).text}
-                </td>
-                <td class={renderCell(row.vendorSdk).cls}>
-                  {renderCell(row.vendorSdk).text}
-                </td>
+                <td
+                  class={`${renderCell(row.arlopass).cls} col-arlopass`}
+                  set:html={renderCell(row.arlopass).html}
+                />
+                <td
+                  class={renderCell(row.pasteKey).cls}
+                  set:html={renderCell(row.pasteKey).html}
+                />
+                <td
+                  class={renderCell(row.gateway).cls}
+                  set:html={renderCell(row.gateway).html}
+                />
+                <td
+                  class={renderCell(row.vendorSdk).cls}
+                  set:html={renderCell(row.vendorSdk).html}
+                />
               </tr>
             ))
           }

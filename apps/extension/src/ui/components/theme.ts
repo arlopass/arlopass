@@ -20,7 +20,7 @@ export const arlopassTheme: MantineThemeOverride = createTheme({
             "#FB923C", // 4
             "#F97316", // 5
             "#EA580C", // 6
-            "#C2410C", // 7 - primary (terracotta)
+            "#DB4D12", // 7 - primary (terracotta)
             "#9A3412", // 8 - hover
             "#7C2D12", // 9 - active
         ],
@@ -59,7 +59,7 @@ export const tokens = {
         borderStrong: "#57534E",     // Stronger — active states
 
         // Brand
-        brand: "#C2410C",            // Terracotta — primary accent
+        brand: "#DB4D12",            // Terracotta — primary accent
         brandHover: "#9A3412",       // Terracotta dark — hover
         brandSubtle: "#2C1A0E",      // Terracotta at 8% on dark
 
@@ -72,7 +72,7 @@ export const tokens = {
         dangerSubtle: "#2E0505",     // Crimson on dark
 
         // Buttons (primary uses brand terracotta)
-        btnPrimaryBg: "#C2410C",
+        btnPrimaryBg: "#DB4D12",
         btnPrimaryText: "#FAFAF9",
         btnPrimaryHover: "#9A3412",
     },

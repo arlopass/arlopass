@@ -3,13 +3,21 @@ import { Button, Group, ScrollArea, Stack, Text, UnstyledButton } from "@mantine
 import { ProviderAvatar } from "../ProviderAvatar.js";
 import { MetadataDivider } from "../MetadataDivider.js";
 import type { ProviderEntry } from "./provider-registry.js";
-import { loadCredentialsForConnector, type StoredCredential } from "./credential-storage.js";
+import { useVaultContext } from "../../hooks/VaultContext.js";
 import { tokens } from "../theme.js";
+
+type VaultCredential = {
+  id: string;
+  connectorId: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string;
+};
 
 export type ChooseCredentialStepProps = {
   provider: ProviderEntry;
   selectedCredentialId: string | null;
-  onSelectCredential: (credential: StoredCredential) => void;
+  onSelectCredential: (credential: VaultCredential) => void;
   onCreateNew: () => void;
   onUseSelected: () => void;
 };
@@ -21,19 +29,23 @@ export function ChooseCredentialStep({
   onCreateNew,
   onUseSelected,
 }: ChooseCredentialStepProps) {
-  const [credentials, setCredentials] = useState<StoredCredential[]>([]);
+  const [credentials, setCredentials] = useState<VaultCredential[]>([]);
   const [loading, setLoading] = useState(true);
+  const { sendVaultMessage } = useVaultContext();
 
   useEffect(() => {
     let cancelled = false;
-    void loadCredentialsForConnector(provider.connectorId).then((creds) => {
+    void (async () => {
+      const resp = await sendVaultMessage({ type: "vault.credentials.list" });
+      const allCreds = (resp.credentials ?? []) as Array<{ id: string; connectorId: string; name: string; createdAt: string; lastUsedAt: string }>;
+      const filtered = allCreds.filter(c => c.connectorId === provider.connectorId);
       if (!cancelled) {
-        setCredentials(creds);
+        setCredentials(filtered);
         setLoading(false);
       }
-    });
+    })();
     return () => { cancelled = true; };
-  }, [provider.connectorId]);
+  }, [provider.connectorId, sendVaultMessage]);
 
   return (
     <>
@@ -149,7 +161,7 @@ function CredentialCard({
   selected,
   onSelect,
 }: {
-  credential: StoredCredential;
+  credential: VaultCredential;
   providerKey: string;
   selected: boolean;
   onSelect: () => void;
@@ -183,8 +195,8 @@ function CredentialCard({
   );
 }
 
-function formatAge(timestamp: number): string {
-  const diffMs = Date.now() - timestamp;
+function formatAge(timestamp: string): string {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
   const minutes = Math.floor(diffMs / 60_000);
   if (minutes < 1) return "Last used just now";
   if (minutes < 60) return `Last used ${String(minutes)}m ago`;

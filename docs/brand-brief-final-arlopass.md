@@ -73,7 +73,7 @@ A warm, distinctive palette built on dark neutral foundations with terracotta/am
 
 | Role | Color | Hex | Usage |
 |------|-------|-----|-------|
-| **Primary / Brand** | Terracotta | `#C2410C` | Brand anchor — logo mark, primary buttons, links, key interactive elements. The signature color. |
+| **Primary / Brand** | Terracotta | `#DB4D12` | Brand anchor — logo mark, primary buttons, links, key interactive elements. The signature color. |
 | **Accent / Hover** | Warm Amber | `#D97706` | Hover states, secondary highlights, active nav items, emphasis text |
 | **Connected / Success** | Sage Green | `#4D7C0F` | Pass approved, connected, build passed, adapter healthy |
 | **Warning** | Gold | `#CA8A04` | Permission prompts, attention states, policy advisories |
@@ -88,7 +88,7 @@ A warm, distinctive palette built on dark neutral foundations with terracotta/am
 | **Subtle Tint** | Terracotta Wash | `#FFF7ED` | Light-mode highlight surfaces, callout backgrounds — terracotta at 5% |
 
 **Design rules:**
-- **Terracotta (`#C2410C`) is the constant.** It appears in every branded asset — logo, buttons, links, accent elements. It is the visual signature of Arlopass.
+- **Terracotta (`#DB4D12`) is the constant.** It appears in every branded asset — logo, buttons, links, accent elements. It is the visual signature of Arlopass.
 - **Dark surfaces are warm, not cool.** The background is brown-black (`#1C1917`), not blue-black. This is the Cursor-inspired distinction: warmth in the darkness.
 - **Text is never pure white on dark.** Use Warm Stone (`#D6D3D1`) for body text. Pure white (`#FFFFFF`) is reserved for headlines and high-emphasis elements only.
 - **Success is earthy green, not neon.** Sage Green (`#4D7C0F`) signals approval/connection without breaking the warm palette.
@@ -469,7 +469,7 @@ Arlopass's audiences feed each other in a self-reinforcing cycle. The flywheel's
 
 | Element | Specification |
 |---------|---------------|
-| Primary color | Terracotta `#C2410C` — must appear in every branded asset as the signature accent |
+| Primary color | Terracotta `#DB4D12` — must appear in every branded asset as the signature accent |
 | Accent color | Warm Amber `#D97706` — hover states, secondary highlights |
 | Success state | Sage Green `#4D7C0F` — reserved for connected/approved states, never decorative |
 | Dark surfaces | Deep Brown-Black `#1C1917` — warm dark, never blue-black or pure black |

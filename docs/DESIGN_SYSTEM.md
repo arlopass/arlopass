@@ -37,7 +37,7 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
 ```css
 :root {
   /* Brand signature */
-  --ap-brand: #C2410C;           /* Terracotta — primary accent */
+  --ap-brand: #DB4D12;           /* Terracotta — primary accent */
   --ap-brand-hover: #9A3412;     /* Terracotta darkened — hover state */
   --ap-brand-subtle: #FFF7ED;    /* Terracotta at 5% — light tint for highlights */
   --ap-brand-subtle-dark: #2C1A0E; /* Terracotta at 8% on dark — dark tint for highlights */
@@ -73,7 +73,7 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
   --ap-text-secondary: #A8A29E;  /* Muted stone — labels, metadata, placeholders */
   --ap-text-tertiary: #78716C;   /* Dim stone — disabled, decorative text */
 
-  --ap-text-link: #C2410C;       /* Terracotta — links */
+  --ap-text-link: #DB4D12;       /* Terracotta — links */
   --ap-text-link-hover: #D97706; /* Amber — link hover */
 
   --ap-success-subtle: #1A2E05;  /* Sage on dark */
@@ -99,7 +99,7 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
   --ap-text-secondary: #78716C;  /* Muted — labels, metadata */
   --ap-text-tertiary: #A8A29E;   /* Dim — disabled, decorative */
 
-  --ap-text-link: #C2410C;       /* Terracotta — links */
+  --ap-text-link: #DB4D12;       /* Terracotta — links */
   --ap-text-link-hover: #9A3412; /* Terracotta dark — link hover */
 }
 ```
@@ -117,14 +117,14 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
 | Primary buttons | `--ap-brand` bg, `#FAFAF9` text | `--ap-brand` bg, `#FAFAF9` text |
 | Links | `--ap-brand` | `--ap-brand` |
 | Code blocks | `--ap-bg-code` (`#1A1412`) — **always dark, both themes** | `--ap-bg-code` (`#1C1917`) |
-| Inline code (light) | N/A | `#F5F5F4` bg, `#C2410C` text |
+| Inline code (light) | N/A | `#F5F5F4` bg, `#DB4D12` text |
 | Inline code (dark) | `#292524` bg, `#D97706` text | N/A |
 
 **Hard rules:**
 - Never use pure black (`#000000`) or pure white (`#FFFFFF`) for text. Use `--ap-text-primary` and `--ap-text-body`.
 - Never use cool grays (blue-tinted: `#64748B`, `#94A3B8`, `#0F172A`). Stone tones only.
 - Code blocks are **always** on a dark background, even in light mode. The code surface is sacred.
-- The brand terracotta (`#C2410C`) is the only saturated color that appears in both themes unchanged.
+- The brand terracotta (`#DB4D12`) is the only saturated color that appears in both themes unchanged.
 
 ---
 
@@ -217,7 +217,7 @@ Based on a 4px base unit. Use these tokens, not arbitrary values.
 
 #### Primary Button
 ```
-Background: var(--ap-brand)           (#C2410C)
+Background: var(--ap-brand)           (#DB4D12)
 Text:       #FAFAF9
 Hover:      var(--ap-brand-hover)     (#9A3412)
 Active:     #7C2D12
@@ -311,7 +311,7 @@ Overflow:      overflow-x: auto; scrollbar-width: thin
 | Token Type | Color | Hex |
 |-----------|-------|-----|
 | Default text | Warm stone | `#D6D3D1` |
-| Keywords | Terracotta | `#C2410C` |
+| Keywords | Terracotta | `#DB4D12` |
 | Strings | Amber | `#D97706` |
 | Functions | Warm white | `#FAFAF9` |
 | Comments | Dim stone | `#78716C` |
@@ -458,7 +458,7 @@ const arlopassTheme = createTheme({
       '#FB923C', // 4
       '#F97316', // 5
       '#EA580C', // 6
-      '#C2410C', // 7 - primary (terracotta)
+      '#DB4D12', // 7 - primary (terracotta)
       '#9A3412', // 8 - hover
       '#7C2D12', // 9 - active/pressed
     ],
@@ -530,7 +530,7 @@ src/
 Connected:  bg #1A2E05 / text #4D7C0F (dark)    bg #F7FEE7 / text #4D7C0F (light)
 Warning:    bg #2E2204 / text #CA8A04 (dark)    bg #FEFCE8 / text #CA8A04 (light)
 Error:      bg #2E0505 / text #B91C1C (dark)    bg #FEF2F2 / text #B91C1C (light)
-Brand:      bg #2C1A0E / text #C2410C (dark)    bg #FFF7ED / text #C2410C (light)
+Brand:      bg #2C1A0E / text #DB4D12 (dark)    bg #FFF7ED / text #DB4D12 (light)
 ```
 
 ---
@@ -580,7 +580,7 @@ Small caps label above major headings — used by Tailwind ("INSTALLATION"), Sup
 Font:           var(--ap-font-body)
 Size:           11px
 Weight:         600
-Color:          var(--ap-brand) (#C2410C)
+Color:          var(--ap-brand) (#DB4D12)
 Transform:      uppercase
 Letter-spacing: 0.08em
 Margin-bottom:  8px

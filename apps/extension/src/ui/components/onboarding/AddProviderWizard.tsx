@@ -650,12 +650,16 @@ export function AddProviderWizard({
           provider={selectedProvider}
           selectedCredentialId={state.selectedCredentialId}
           onSelectCredential={(cred) => {
-            dispatch({
-              type: "SELECT_CREDENTIAL",
-              credentialId: cred.id,
-              credentialName: cred.name,
-              fieldValues: { ...cred.fields },
-            });
+            void (async () => {
+              const resp = await sendVaultMessage({ type: "vault.credentials.get", credentialId: cred.id });
+              const fields = (resp.fields ?? {}) as Record<string, string>;
+              dispatch({
+                type: "SELECT_CREDENTIAL",
+                credentialId: cred.id,
+                credentialName: cred.name,
+                fieldValues: { ...fields },
+              });
+            })();
           }}
           onCreateNew={() => {
             const entry = selectedProvider;

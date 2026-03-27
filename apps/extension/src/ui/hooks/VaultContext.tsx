@@ -1,7 +1,9 @@
 import { createContext, useContext, type ReactNode } from "react";
 
 export type VaultContextValue = {
-  sendVaultMessage: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  sendVaultMessage: (
+    message: Record<string, unknown>,
+  ) => Promise<Record<string, unknown>>;
 };
 
 const VaultContext = createContext<VaultContextValue | null>(null);

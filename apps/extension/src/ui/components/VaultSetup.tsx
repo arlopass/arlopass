@@ -46,9 +46,14 @@ export function VaultSetup({ onSetup }: VaultSetupProps) {
       </Text>
       <Text
         size="sm"
-        style={{ color: tokens.color.textSecondary, textAlign: "center", maxWidth: 280 }}
+        style={{
+          color: tokens.color.textSecondary,
+          textAlign: "center",
+          maxWidth: 280,
+        }}
       >
-        Your credentials are encrypted with a master password. Choose something strong — the bridge never sees your password in plaintext.
+        Your credentials are encrypted with a master password. Choose something
+        strong — the bridge never sees your password in plaintext.
       </Text>
 
       <Stack gap="sm" style={{ width: "100%", maxWidth: 280, marginTop: 8 }}>
@@ -65,7 +70,11 @@ export function VaultSetup({ onSetup }: VaultSetupProps) {
           placeholder="Re-enter your password"
           value={confirm}
           onChange={(e) => setConfirm(e.currentTarget.value)}
-          error={confirm.length > 0 && !passwordsMatch ? "Passwords don't match" : undefined}
+          error={
+            confirm.length > 0 && !passwordsMatch
+              ? "Passwords don't match"
+              : undefined
+          }
         />
         {error !== null && (
           <Text size="xs" style={{ color: tokens.color.danger }}>
@@ -85,9 +94,16 @@ export function VaultSetup({ onSetup }: VaultSetupProps) {
 
       <Text
         size="xs"
-        style={{ color: tokens.color.textTertiary, textAlign: "center", maxWidth: 280, marginTop: "auto", paddingBottom: 16 }}
+        style={{
+          color: tokens.color.textTertiary,
+          textAlign: "center",
+          maxWidth: 280,
+          marginTop: "auto",
+          paddingBottom: 16,
+        }}
       >
-        If you forget this password, you'll need to reset the vault and re-add your providers.
+        If you forget this password, you'll need to reset the vault and re-add
+        your providers.
       </Text>
     </Box>
   );

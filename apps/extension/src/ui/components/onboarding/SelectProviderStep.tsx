@@ -16,7 +16,7 @@ import {
   type ProviderCategory,
   type ProviderEntry,
 } from "./provider-registry.js";
-import { loadCredentials } from "./credential-storage.js";
+import { useVaultContext } from "../../hooks/VaultContext.js";
 import { tokens } from "../theme.js";
 
 export type SelectProviderStepProps = {
@@ -36,16 +36,19 @@ export function SelectProviderStep({
   const categoryLabel =
     PROVIDER_CATEGORIES.find((c) => c.id === category)?.label ??
     "All Providers";
+  const { sendVaultMessage } = useVaultContext();
 
   useEffect(() => {
-    void loadCredentials().then((creds) => {
+    void (async () => {
+      const resp = await sendVaultMessage({ type: "vault.credentials.list" });
+      const creds = (resp.credentials ?? []) as Array<{ connectorId: string }>;
       const counts: Record<string, number> = {};
       for (const c of creds) {
         counts[c.connectorId] = (counts[c.connectorId] ?? 0) + 1;
       }
       setCredCounts(counts);
-    });
-  }, []);
+    })();
+  }, [sendVaultMessage]);
 
   return (
     <>
