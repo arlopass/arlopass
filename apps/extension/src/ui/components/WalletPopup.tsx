@@ -49,20 +49,36 @@ export function WalletPopup({
   const tokenUsageByProvider: Record<string, number> = {};
   for (const s of usageSummaries) {
     for (const p of s.byProvider) {
-      tokenUsageByProvider[p.providerId] = (tokenUsageByProvider[p.providerId] ?? 0) + p.inputTokens + p.outputTokens;
+      tokenUsageByProvider[p.providerId] =
+        (tokenUsageByProvider[p.providerId] ?? 0) +
+        p.inputTokens +
+        p.outputTokens;
     }
   }
 
   return (
     <PopupShell>
       <WalletHeader
-        title="Synapse Wallet"
+        title="Arlopass Wallet"
         collapsed={!opened}
-        onToggleCollapse={headerMenuItems != null && headerMenuItems.length > 0 ? undefined : toggle}
+        onToggleCollapse={
+          headerMenuItems != null && headerMenuItems.length > 0
+            ? undefined
+            : toggle
+        }
         onSettingsClick={onSettingsClick}
         menuItems={headerMenuItems}
       />
-      <Collapse in={opened} transitionDuration={200} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <Collapse
+        in={opened}
+        transitionDuration={200}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <Box
           style={{
             flex: 1,
@@ -98,16 +114,20 @@ export function WalletPopup({
                 )}
                 {error != null && (
                   <Center py="xl">
-                    <Text fz="sm" c="red" ta="center">{error}</Text>
-                  </Center>
-                )}
-                {loading !== true && error == null && providers.length === 0 && (
-                  <Center py="xl">
-                    <Text fz="sm" c={tokens.color.textSecondary} ta="center">
-                      No providers connected.{"\n"}Connect one to get started.
+                    <Text fz="sm" c="red" ta="center">
+                      {error}
                     </Text>
                   </Center>
                 )}
+                {loading !== true &&
+                  error == null &&
+                  providers.length === 0 && (
+                    <Center py="xl">
+                      <Text fz="sm" c={tokens.color.textSecondary} ta="center">
+                        No providers connected.{"\n"}Connect one to get started.
+                      </Text>
+                    </Center>
+                  )}
                 {loading !== true && error == null && providers.length > 0 && (
                   <ProviderList
                     providers={providers}
@@ -121,7 +141,9 @@ export function WalletPopup({
 
               {/* Bottom button — always visible */}
               <PrimaryButton onClick={onManageProviders}>
-                {providers.length === 0 ? "Connect provider" : "Manage providers"}
+                {providers.length === 0
+                  ? "Connect provider"
+                  : "Manage providers"}
               </PrimaryButton>
             </>
           )}
@@ -130,17 +152,11 @@ export function WalletPopup({
             <ModelsTabContent providers={rawProviders ?? []} />
           )}
 
-          {activeTab === "apps" && (
-            <AppsTabContent />
-          )}
+          {activeTab === "apps" && <AppsTabContent />}
 
-          {activeTab === "vault" && (
-            <VaultTabContent />
-          )}
+          {activeTab === "vault" && <VaultTabContent />}
 
-          {activeTab === "usage" && (
-            <UsageTabContent />
-          )}
+          {activeTab === "usage" && <UsageTabContent />}
         </Box>
       </Collapse>
     </PopupShell>

@@ -83,7 +83,7 @@ export function SelectModelsStep({ rawProviders, selectedProviderIds, selectedMo
                   gap: tokens.spacing.iconTextGap,
                   width: "100%",
                   padding: tokens.spacing.cardPadding,
-                  background: tokens.color.bgCard,
+                  background: tokens.color.bgSurface,
                   border: selectedModelIds.includes(model.id) ? "2px solid #2f70ff" : `1px solid ${tokens.color.border}`,
                   borderRadius: tokens.radius.card,
                   cursor: "pointer",
@@ -106,3 +106,4 @@ export function SelectModelsStep({ rawProviders, selectedProviderIds, selectedMo
     </>
   );
 }
+

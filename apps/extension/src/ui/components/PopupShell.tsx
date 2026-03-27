@@ -15,7 +15,7 @@ export function PopupShell({ children }: PopupShellProps) {
         maxWidth: tokens.size.popupWidth,
         height: "100vh",
         maxHeight: "100vh",
-        background: tokens.color.bgSurface,
+        background: tokens.color.bgBase,
         padding: tokens.spacing.outerPadding,
         boxSizing: "border-box",
         overflow: "hidden",
@@ -29,6 +29,8 @@ export function PopupShell({ children }: PopupShellProps) {
           display: "flex",
           flexDirection: "column",
           height: "100%",
+          background: tokens.color.bgSurface,
+          border: `1px solid ${tokens.color.border}`,
         }}
       >
         {children}

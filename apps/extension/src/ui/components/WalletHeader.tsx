@@ -63,7 +63,7 @@ export function WalletHeader({
       justify="space-between"
       style={{
         padding: tokens.spacing.headerPadding,
-        background: tokens.color.bgCard,
+        background: tokens.color.bgSurface,
         borderBottom: `1px solid ${tokens.color.bgSurface}`,
       }}
     >
@@ -111,3 +111,4 @@ export function WalletHeader({
     </Group>
   );
 }
+

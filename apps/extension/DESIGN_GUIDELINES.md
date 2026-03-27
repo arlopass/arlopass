@@ -51,7 +51,7 @@
 
 | Element | Font | Weight | Size | Color |
 |---|---|---|---|---|
-| Header title ("Synapse Wallet") | Inter | 600 (Semi Bold) | 16px | `#202225` |
+| Header title ("Arlopass Wallet") | Inter | 600 (Semi Bold) | 16px | `#202225` |
 | Tab labels | Inter | 500 (Medium) | 12px | Active: `#202225`, Inactive: `#808796` |
 | Category selector ("All Providers") | Inter | 500 (Medium) | 12px | `#202225` |
 | Provider name | Inter | 600 (Semi Bold) | 12px | `#202225` |
@@ -74,7 +74,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│ ▼  Synapse Wallet              ⚙   │
+│ ▼  Arlopass Wallet              ⚙   │
 └─────────────────────────────────────┘
 ```
 

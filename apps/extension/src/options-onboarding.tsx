@@ -154,7 +154,7 @@ if (route !== null) {
   }
 
   createRoot(mountEl).render(
-    <MantineProvider theme={arlopassTheme} forceColorScheme="light">
+    <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
       <OptionsOnboarding />
     </MantineProvider>,
   );

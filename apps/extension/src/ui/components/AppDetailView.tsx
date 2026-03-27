@@ -395,7 +395,7 @@ export function AppDetailView({
                         gap: tokens.spacing.iconTextGap,
                         width: "100%",
                         padding: tokens.spacing.cardPadding,
-                        background: tokens.color.bgCard,
+                        background: tokens.color.bgSurface,
                         border: `1px solid ${tokens.color.border}`,
                         borderRadius: tokens.radius.card,
                         cursor: "pointer",
@@ -473,7 +473,7 @@ export function AppDetailView({
                         gap: tokens.spacing.iconTextGap,
                         width: "100%",
                         padding: tokens.spacing.cardPadding,
-                        background: tokens.color.bgCard,
+                        background: tokens.color.bgSurface,
                         border: pickedModelIds.includes(m.id)
                           ? "2px solid #2f70ff"
                           : `1px solid ${tokens.color.border}`,
@@ -569,7 +569,7 @@ export function AppDetailView({
                         gap: tokens.spacing.iconTextGap,
                         width: "100%",
                         padding: tokens.spacing.cardPadding,
-                        background: tokens.color.bgCard,
+                        background: tokens.color.bgSurface,
                         border: pickedModelIds.includes(m.id)
                           ? "2px solid #2f70ff"
                           : `1px solid ${tokens.color.border}`,
@@ -780,7 +780,7 @@ function AppProviderCard({
     <Box
       style={{
         width: "100%",
-        background: tokens.color.bgCard,
+        background: tokens.color.bgSurface,
         border: `1px solid ${tokens.color.border}`,
         borderRadius: tokens.radius.card,
         overflow: "hidden",
@@ -901,7 +901,7 @@ function AppModelCard({
     <Box
       style={{
         width: "100%",
-        background: tokens.color.bgCard,
+        background: tokens.color.bgSurface,
         border: `1px solid ${tokens.color.border}`,
         borderRadius: tokens.radius.card,
         overflow: "hidden",
@@ -1007,3 +1007,4 @@ function AppModelCard({
     </Box>
   );
 }
+

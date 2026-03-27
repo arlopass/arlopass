@@ -151,7 +151,7 @@ function App() {
 
   if (view.type === "onboarding") {
     return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
         <OnboardingController
           hasProviders={providers.length > 0}
           onComplete={() => {
@@ -170,7 +170,7 @@ function App() {
 
   if (view.type === "add-provider") {
     return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
         <AddProviderWizard
           onClose={() => updateView({ type: "main" })}
           onSaved={refresh}
@@ -181,7 +181,7 @@ function App() {
 
   if (view.type === "connect-app") {
     return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
         <AppConnectWizard
           origin={view.origin}
           providers={providers}
@@ -217,7 +217,7 @@ function App() {
       onClick: () => updateView({ type: "main" }),
     });
     headerMenuItems.push({
-      label: "Synapse Wallet",
+      label: "Arlopass Wallet",
       active: !isAppView,
       onClick: () => updateView({ type: "wallet" }),
     });
@@ -226,7 +226,7 @@ function App() {
   // Show app-specific view when the active tab has a connected app
   if (view.type === "main" && activeApp !== null) {
     return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
         <AppDetailView
           app={activeApp.app}
           rawProviders={rawProviders}
@@ -241,7 +241,7 @@ function App() {
   }
 
   return (
-    <MantineProvider theme={arlopassTheme} forceColorScheme="light">
+    <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
       <WalletPopup
         providers={providers}
         rawProviders={rawProviders}

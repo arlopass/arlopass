@@ -152,7 +152,7 @@ function ModelCard({
     <Box
       style={{
         width: "100%",
-        background: tokens.color.bgCard,
+        background: tokens.color.bgSurface,
         border: `1px solid ${tokens.color.border}`,
         borderRadius: tokens.radius.card,
         overflow: "hidden",
@@ -273,3 +273,4 @@ function ModelCard({
     </Box>
   );
 }
+

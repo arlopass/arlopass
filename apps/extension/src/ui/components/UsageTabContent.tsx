@@ -68,7 +68,7 @@ export function UsageTabContent() {
             <Box
               key={summary.origin}
               style={{
-                background: tokens.color.bgCard,
+                background: tokens.color.bgSurface,
                 borderRadius: tokens.radius.card,
                 padding: "8px 10px",
               }}
@@ -111,3 +111,4 @@ export function UsageTabContent() {
     </Stack>
   );
 }
+

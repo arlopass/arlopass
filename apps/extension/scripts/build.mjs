@@ -136,6 +136,7 @@ async function runOneShotBuild() {
   ]);
   await processManifest();
   await copyStaticAssets();
+  await copyExtensionIcons();
   await copyProviderIcons();
   await syncLegacyDistRuntimeAssets();
 }
@@ -196,6 +197,22 @@ async function copyStaticAssets() {
   await copyFile(
     path.join(packageRoot, "popup.css"),
     path.join(distRoot, "legacy.css"),
+  );
+}
+
+async function copyExtensionIcons() {
+  const assetsDir = path.join(packageRoot, "assets");
+  const iconsDir = path.join(distRoot, "icons");
+  await mkdir(iconsDir, { recursive: true });
+
+  const sizes = ["16", "24", "48", "128"];
+  await Promise.all(
+    sizes.map((size) =>
+      copyFile(
+        path.join(assetsDir, `icon-${size}.png`),
+        path.join(iconsDir, `icon-${size}.png`),
+      ),
+    ),
   );
 }
 
@@ -267,6 +284,7 @@ async function runWatchBuild() {
   // extension directory is complete before esbuild starts watching.
   await processManifest();
   await copyStaticAssets();
+  await copyExtensionIcons();
   await copyProviderIcons();
 
   const moduleContext = await context(createModuleBundleConfig());

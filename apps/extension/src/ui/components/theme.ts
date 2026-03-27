@@ -1,14 +1,29 @@
 import { createTheme, type MantineThemeOverride } from "@mantine/core";
 
 export const arlopassTheme: MantineThemeOverride = createTheme({
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    primaryColor: "dark",
+    fontFamily: "'Geist Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+    fontFamilyMonospace: "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+    primaryColor: "brand",
     defaultRadius: "sm",
     fontSizes: {
         xs: "10px",
         sm: "12px",
         md: "14px",
         lg: "16px",
+    },
+    colors: {
+        brand: [
+            "#FFF7ED", // 0 - subtle light
+            "#FFEDD5", // 1
+            "#FED7AA", // 2
+            "#FDBA74", // 3
+            "#FB923C", // 4
+            "#F97316", // 5
+            "#EA580C", // 6
+            "#C2410C", // 7 - primary (terracotta)
+            "#9A3412", // 8 - hover
+            "#7C2D12", // 9 - active
+        ],
     },
     components: {
         Button: {
@@ -19,21 +34,52 @@ export const arlopassTheme: MantineThemeOverride = createTheme({
     },
 });
 
-/** Design tokens extracted from the Figma design */
+/**
+ * Arlopass design tokens for the extension popup.
+ *
+ * Dark mode with warm stone tones, following the Arlopass design system.
+ * All components reference these tokens — change here to cascade everywhere.
+ */
 export const tokens = {
     color: {
-        textPrimary: "#202225",
-        textSecondary: "#808796",
-        border: "#dfe1e8",
-        bgSurface: "#f3f3f3",
-        bgCard: "#ffffff",
-        btnPrimaryBg: "#202225",
-        btnPrimaryText: "#ffffff",
+        // Text
+        textPrimary: "#FAFAF9",      // Warm white — headings, emphasis
+        textBody: "#D6D3D1",         // Warm stone — body text
+        textSecondary: "#A8A29E",    // Muted stone — labels, metadata
+        textTertiary: "#78716C",     // Dim stone — disabled, decorative
+
+        // Surfaces
+        bgBase: "#1C1917",           // Deep brown-black — popup body
+        bgSurface: "#292524",        // Stone dark — cards, container
+        bgElevated: "#3D3835",       // Stone mid — hover, modals, dropdowns
+        bgCode: "#1A1412",           // Espresso — code blocks
+
+        // Borders
+        border: "#44403C",           // Warm border — dividers
+        borderStrong: "#57534E",     // Stronger — active states
+
+        // Brand
+        brand: "#C2410C",            // Terracotta — primary accent
+        brandHover: "#9A3412",       // Terracotta dark — hover
+        brandSubtle: "#2C1A0E",      // Terracotta at 8% on dark
+
+        // Semantic
+        success: "#4D7C0F",          // Sage green — connected, approved
+        successSubtle: "#1A2E05",    // Sage on dark
+        warning: "#CA8A04",          // Gold — caution
+        warningSubtle: "#2E2204",    // Gold on dark
+        danger: "#B91C1C",           // Crimson — error, denied
+        dangerSubtle: "#2E0505",     // Crimson on dark
+
+        // Buttons (primary uses brand terracotta)
+        btnPrimaryBg: "#C2410C",
+        btnPrimaryText: "#FAFAF9",
+        btnPrimaryHover: "#9A3412",
     },
     radius: {
-        container: 4,
+        container: 8,
         card: 8,
-        button: 8,
+        button: 4,
     },
     spacing: {
         outerPadding: 10,

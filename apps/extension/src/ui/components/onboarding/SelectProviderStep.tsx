@@ -128,7 +128,7 @@ function ProviderSelectCard({
         gap: tokens.spacing.iconTextGap,
         width: "100%",
         padding: tokens.spacing.cardPadding,
-        background: tokens.color.bgCard,
+        background: tokens.color.bgSurface,
         border: selected
           ? "2px solid #2f70ff"
           : `1px solid ${tokens.color.border}`,
@@ -154,3 +154,4 @@ function ProviderSelectCard({
     </UnstyledButton>
   );
 }
+
