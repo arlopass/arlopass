@@ -17,11 +17,12 @@ import { onboardingReducer, INITIAL_STATE } from "./onboarding-state.js";
 import { usePersistedReducer } from "../../hooks/usePersistedReducer.js";
 import { tokens } from "../theme.js";
 import { createCloudConnectors } from "../../../options/connectors/index.js";
-import { ensureBridgeHandshakeSession } from "../../../transport/bridge-handshake.js";
+import { ensureBridgeHandshakeSession, clearBridgeHandshakeSessionCache } from "../../../transport/bridge-handshake.js";
 import {
   parseBridgePairingState,
   unwrapPairingKeyMaterial,
 } from "../../../transport/bridge-pairing.js";
+import { autoPair } from "./setup-state.js";
 import type {
   CloudConnectorDependencies,
   ConnectorDefinition,
@@ -144,6 +145,21 @@ async function sendNativeMessage(
   | Readonly<{ ok: false; errorMessage: string }>
 > {
   try {
+    // Ensure pairing exists — auto-pair if needed
+    const secret = await resolvePairingSecret();
+    if (secret === undefined) {
+      // No pairing state — attempt auto-pair with bridge
+      const pairResult = await autoPair();
+      if (!pairResult.success) {
+        return {
+          ok: false,
+          errorMessage: `Bridge pairing failed: ${pairResult.error ?? "unknown error"}. Try restarting the bridge.`,
+        };
+      }
+      // Clear any cached handshake sessions so the new pairing key is picked up
+      clearBridgeHandshakeSessionCache();
+    }
+
     // Ensure handshake session (cached across calls, re-handshakes on expiry)
     const session = await ensureBridgeHandshakeSession({
       hostName,
