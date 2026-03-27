@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { MantineProvider, Stack, Text, Loader, Button, Group } from "@mantine/core";
+import { MantineProvider, Stack, Text, Loader, Button, Group, Box, Paper, Title } from "@mantine/core";
 import "@mantine/core/styles.css";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { byomTheme } from "./ui/components/theme.js";
 import { BridgeInstallGuide } from "./ui/components/onboarding/BridgeInstallGuide.js";
 import { OnboardingBanner } from "./ui/components/onboarding/OnboardingBanner.js";
@@ -50,48 +51,61 @@ function OptionsOnboarding() {
   if (route === "add-provider-onboarding") {
     if (providerSaved) {
       return (
-        <Stack align="center" justify="center" py={40} gap={12}>
-          <Text size="lg" fw={600} c={tokens.color.textPrimary}>
-            Provider added!
-          </Text>
-          <Text size="sm" c={tokens.color.textSecondary}>
-            Heading back…
-          </Text>
-          <Loader size="sm" color={tokens.color.btnPrimaryBg} />
-        </Stack>
+        <Box style={{ minHeight: "100vh", background: "#f3f3f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Paper radius={8} p={40} style={{ textAlign: "center", maxWidth: 400 }}>
+            <Text size="lg" fw={600} c={tokens.color.textPrimary}>
+              Provider added!
+            </Text>
+            <Text size="sm" c={tokens.color.textSecondary} mt={8}>
+              Heading back to the extension…
+            </Text>
+            <Loader size="sm" color={tokens.color.btnPrimaryBg} mt={16} />
+          </Paper>
+        </Box>
       );
     }
 
     return (
-      <Stack gap={0}>
+      <Box style={{ minHeight: "100vh", background: "#f3f3f3" }}>
         <OnboardingBanner
           step={2}
           totalSteps={3}
           label="Add a provider"
           bridgeConnected
         />
-        <Group justify="space-between" px={16} py={8}>
-          <Button
-            variant="subtle"
-            size="xs"
-            onClick={() => { window.location.hash = "bridge-install"; }}
-          >
-            ← Back
-          </Button>
-          <Button
-            variant="subtle"
-            size="xs"
-            c={tokens.color.textSecondary}
-            onClick={() => window.close()}
-          >
-            Skip for now
-          </Button>
-        </Group>
-        <AddProviderWizard
-          onClose={() => window.close()}
-          onSaved={() => setProviderSaved(true)}
-        />
-      </Stack>
+        <Box style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px" }}>
+          <Group justify="space-between" mb={16}>
+            <Button
+              variant="subtle"
+              size="xs"
+              leftSection={<IconArrowLeft size={14} />}
+              c={tokens.color.textSecondary}
+              onClick={() => { window.location.hash = "bridge-install"; }}
+            >
+              Back
+            </Button>
+            <Button
+              variant="subtle"
+              size="xs"
+              c={tokens.color.textSecondary}
+              onClick={() => window.close()}
+            >
+              Skip for now
+            </Button>
+          </Group>
+
+          <Paper radius={8} p={24} withBorder>
+            <Title order={4} mb={16} c={tokens.color.textPrimary}>
+              Connect your first AI provider
+            </Title>
+            <AddProviderWizard
+              embedded
+              onClose={() => { window.location.hash = "bridge-install"; }}
+              onSaved={() => setProviderSaved(true)}
+            />
+          </Paper>
+        </Box>
+      </Box>
     );
   }
 
