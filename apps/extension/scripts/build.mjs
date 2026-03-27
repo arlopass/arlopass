@@ -236,6 +236,7 @@ async function copyProviderIcons() {
     "bedrock-color",
     "perplexity-color",
     "claude-color",
+    "claudecode-color",
     "google-color",
   ];
 

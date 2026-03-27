@@ -17,6 +17,7 @@ const slugMap: Record<string, string> = {
   bedrock: "bedrock-color",
   perplexity: "perplexity-color",
   claude: "claude-color",
+  claudecode: "claudecode-color",
   google: "google-color",
 };
 

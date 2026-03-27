@@ -9,6 +9,10 @@ import {
   type BridgePairingState,
   type PairingBeginPayload,
 } from "./transport/bridge-pairing.js";
+import {
+  ensureBridgeHandshakeSession,
+  clearBridgeHandshakeSessionCache,
+} from "./transport/bridge-handshake.js";
 
 type ProviderModel = Readonly<{
   id: string;
@@ -857,6 +861,86 @@ async function sendNativeMessage(
   | Readonly<{ ok: true; response: unknown }>
   | Readonly<{ ok: false; errorMessage: string }>
 > {
+  return sendAuthenticatedNativeMessage(hostName, message, options);
+}
+
+/** Resolve the pairing secret from stored pairing state for HMAC handshake. */
+async function resolveOptionsPairingSecret(): Promise<string | undefined> {
+  const state = await new Promise<Record<string, unknown>>((resolve) => {
+    chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY], (result) => resolve(result));
+  });
+  const pairingState = parseBridgePairingState(state[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+  if (pairingState === undefined) return undefined;
+  const extensionId = typeof chrome.runtime.id === "string" ? chrome.runtime.id.trim() : "";
+  const unwrapped = await unwrapPairingKeyMaterial({
+    pairingState,
+    runtimeId: extensionId,
+  });
+  return unwrapped?.pairingKeyHex;
+}
+
+/** Resolve the pairing handle from stored pairing state. */
+async function resolveOptionsPairingHandle(): Promise<string | undefined> {
+  const state = await new Promise<Record<string, unknown>>((resolve) => {
+    chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY], (result) => resolve(result));
+  });
+  const pairingState = parseBridgePairingState(state[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+  return pairingState?.pairingHandle;
+}
+
+/** Cached session token for the options page lifetime. */
+let optionsSessionToken: string | undefined;
+
+/**
+ * Authenticated wrapper — performs HMAC handshake if needed and attaches
+ * the session token to every message so the bridge session gate accepts it.
+ * Falls back to unauthenticated send if pairing/handshake is unavailable.
+ */
+async function sendAuthenticatedNativeMessage(
+  hostName: string,
+  message: Readonly<Record<string, unknown>>,
+  options: Readonly<{ timeoutMs?: number }> = {},
+): Promise<
+  | Readonly<{ ok: true; response: unknown }>
+  | Readonly<{ ok: false; errorMessage: string }>
+> {
+  // Try to establish or reuse a session token for the bridge gate.
+  if (optionsSessionToken === undefined) {
+    try {
+      const extensionId = typeof chrome.runtime.id === "string" ? chrome.runtime.id.trim() : "";
+      const session = await ensureBridgeHandshakeSession({
+        hostName,
+        extensionId,
+        sendNativeMessage: async (h, m) => {
+          const result = await rawSendNativeMessage(h, m);
+          if (!result.ok) throw new Error(result.errorMessage);
+          return result.response;
+        },
+        resolveBridgeSharedSecret: async () => resolveOptionsPairingSecret(),
+        resolveBridgePairingHandle: async () => resolveOptionsPairingHandle(),
+      });
+      optionsSessionToken = session.sessionToken;
+    } catch {
+      // Handshake failed (no pairing, bridge unavailable, etc.) —
+      // send without token. The bridge will reject if session gate is active.
+    }
+  }
+
+  const enrichedMessage = optionsSessionToken !== undefined
+    ? { ...message, sessionToken: optionsSessionToken }
+    : message;
+
+  return rawSendNativeMessage(hostName, enrichedMessage, options);
+}
+
+function rawSendNativeMessage(
+  hostName: string,
+  message: Readonly<Record<string, unknown>>,
+  options: Readonly<{ timeoutMs?: number }> = {},
+): Promise<
+  | Readonly<{ ok: true; response: unknown }>
+  | Readonly<{ ok: false; errorMessage: string }>
+> {
   return new Promise((resolve) => {
     let bridgedMessage: Readonly<Record<string, unknown>>;
     try {
@@ -964,26 +1048,10 @@ function serializeThinkingLevelsMap(
   return JSON.stringify(normalized);
 }
 
-async function ensureNativeBridgeHandshake(hostName: string): Promise<void> {
-  const challengeResponse = await sendNativeMessage(hostName, {
-    type: "handshake.challenge",
-  }, { timeoutMs: 5_000 });
-  if (!challengeResponse.ok) {
-    throw new Error(formatNativeHostRuntimeError(challengeResponse.errorMessage));
-  }
-  if (
-    !isRecord(challengeResponse.response) ||
-    challengeResponse.response["type"] !== "handshake.challenge"
-  ) {
-    throw new Error("Native host responded with an unexpected payload.");
-  }
-}
-
 async function fetchCliModelsFromBridge(options: {
   hostName: string;
   cliType: SupportedCliType;
 }): Promise<readonly ProviderModel[]> {
-  await ensureNativeBridgeHandshake(options.hostName);
   const modelListResponse = await sendNativeMessage(options.hostName, {
     type: "cli.models.list",
     cliType: options.cliType,
@@ -1018,7 +1086,6 @@ async function fetchCliThinkingLevelsFromBridge(options: {
   cliType: SupportedCliType;
   modelId: string;
 }): Promise<readonly string[]> {
-  await ensureNativeBridgeHandshake(options.hostName);
   const levelsResponse = await sendNativeMessage(options.hostName, {
     type: "cli.thinking-levels.list",
     cliType: options.cliType,

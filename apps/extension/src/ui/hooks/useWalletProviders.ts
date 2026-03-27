@@ -19,6 +19,7 @@ function deriveProviderKey(provider: WalletProvider): string {
     if (methodId.startsWith("perplexity.") || nameLower.includes("perplexity")) return "perplexity";
     if (methodId.startsWith("foundry.") || nameLower.includes("foundry") || nameLower.includes("microsoft")) return "microsoft";
     if (provider.type === "local" || nameLower.includes("ollama")) return "ollama";
+    if (nameLower.includes("claude code") || nameLower.includes("claude-code") || (provider.type === "cli" && nameLower.includes("claude"))) return "claudecode";
     if (provider.type === "cli" || nameLower.includes("copilot")) return "githubcopilot";
     if (nameLower.includes("claude")) return "claude";
     if (nameLower.includes("opencode")) return "opencode";
