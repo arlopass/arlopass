@@ -365,7 +365,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
         h={52}
         px="md"
         justify="space-between"
-        style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}
+        style={{ borderBottom: "1px solid var(--ap-border)" }}
       >
         <Group gap="xs">
           <IconMessage size={16} />
@@ -395,7 +395,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
       {chatState !== "connected" && autoConnectDone && (
         <Box
           p="md"
-          style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}
+          style={{ borderBottom: "1px solid var(--ap-border)" }}
         >
           <Stack gap="sm">
             {chatState === "error" && (
@@ -461,8 +461,8 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                     borderRadius: 8,
                     background:
                       m.role === "user"
-                        ? "var(--mantine-color-blue-0)"
-                        : "var(--mantine-color-gray-0)",
+                        ? "var(--ap-brand-subtle-dark)"
+                        : "var(--ap-bg-surface)",
                   }}
                 >
                   {m.role === "assistant" ? (
@@ -477,14 +477,14 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                   m.usedTools !== undefined &&
                   m.usedTools.length > 0 && (
                     <Group gap={4} mt={3} ml={4}>
-                      <IconTool size={10} color="var(--mantine-color-dimmed)" />
+                      <IconTool size={10} color="var(--ap-text-tertiary)" />
                       {m.usedTools.map((t) => (
                         <Pill
                           key={t}
                           size="xs"
                           style={{
-                            background: "var(--mantine-color-gray-1)",
-                            color: "var(--mantine-color-dimmed)",
+                            background: "var(--ap-bg-elevated)",
+                            color: "var(--ap-text-tertiary)",
                             fontSize: 9,
                             fontWeight: 500,
                           }}
@@ -501,7 +501,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
             <Box ml="xs" py={4}>
               {toolState.phase === "priming" && (
                 <Group gap={6} align="center">
-                  <IconSearch size={12} color="var(--mantine-color-blue-5)" />
+                  <IconSearch size={12} color="var(--ap-brand)" />
                   <Text fz={11} c="blue" fw={500}>
                     Looking for tools...
                   </Text>
@@ -510,7 +510,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               )}
               {toolState.phase === "matched" && (
                 <Group gap={6} align="center" wrap="nowrap">
-                  <IconTool size={12} color="var(--mantine-color-teal-6)" />
+                  <IconTool size={12} color="var(--ap-success)" />
                   <Text fz={11} c="teal" fw={500}>
                     Found:
                   </Text>
@@ -519,8 +519,8 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                       key={t}
                       size="xs"
                       style={{
-                        background: "var(--mantine-color-teal-0)",
-                        color: "var(--mantine-color-teal-7)",
+                        background: "var(--ap-success-subtle)",
+                        color: "var(--ap-success)",
                         fontSize: 10,
                         fontWeight: 600,
                       }}
@@ -536,8 +536,8 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                   <Pill
                     size="xs"
                     style={{
-                      background: "var(--mantine-color-violet-0)",
-                      color: "var(--mantine-color-violet-7)",
+                      background: "var(--ap-brand-subtle-dark)",
+                      color: "var(--ap-brand)",
                       fontSize: 10,
                       fontWeight: 600,
                     }}
@@ -559,8 +559,8 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                   <Pill
                     size="xs"
                     style={{
-                      background: "var(--mantine-color-teal-0)",
-                      color: "var(--mantine-color-teal-7)",
+                      background: "var(--ap-success-subtle)",
+                      color: "var(--ap-success)",
                       fontSize: 10,
                       fontWeight: 600,
                     }}
@@ -581,7 +581,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
       {/* Input area with provider/model dropdowns */}
       <Box
         p="xs"
-        style={{ borderTop: "1px solid var(--mantine-color-gray-3)" }}
+        style={{ borderTop: "1px solid var(--ap-border)" }}
       >
         {chatState === "connected" && providers.length > 0 && (
           <Group gap={4} mb={6}>
@@ -594,22 +594,23 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                     cursor: "pointer",
                     padding: "2px 8px",
                     borderRadius: 4,
-                    background: "var(--mantine-color-gray-1)",
+                    background: "var(--ap-bg-elevated)",
                   }}
                 >
-                  <Text fz={10} fw={600}>
+                  <Text fz={10} fw={600} c="var(--ap-text-body)">
                     {selProvider?.providerName ?? "Provider"}
                   </Text>
-                  <IconChevronDown size={10} />
+                  <IconChevronDown size={10} color="var(--ap-text-secondary)" />
                 </Group>
               </Menu.Target>
-              <Menu.Dropdown>
+              <Menu.Dropdown style={{ background: "var(--ap-bg-elevated)", border: "1px solid var(--ap-border)" }}>
                 {providers.map((p) => (
                   <Menu.Item
                     key={p.providerId}
                     onClick={() => void handleProviderChange(p.providerId)}
                     fw={p.providerId === selProv ? 600 : 400}
-                    fz="sm"
+                    fz={11}
+                    style={{ color: "var(--ap-text-body)" }}
                   >
                     {p.providerName}
                   </Menu.Item>
@@ -626,22 +627,23 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                     cursor: "pointer",
                     padding: "2px 8px",
                     borderRadius: 4,
-                    background: "var(--mantine-color-gray-1)",
+                    background: "var(--ap-bg-elevated)",
                   }}
                 >
-                  <Text fz={10} fw={500}>
+                  <Text fz={10} fw={500} c="var(--ap-text-secondary)">
                     {selModel ? fmtModel(selModel) : "Model"}
                   </Text>
-                  <IconChevronDown size={10} color="gray" />
+                  <IconChevronDown size={10} color="var(--ap-text-tertiary)" />
                 </Group>
               </Menu.Target>
-              <Menu.Dropdown>
+              <Menu.Dropdown style={{ background: "var(--ap-bg-elevated)", border: "1px solid var(--ap-border)" }}>
                 {(selProvider?.models ?? []).map((m) => (
                   <Menu.Item
                     key={m}
                     onClick={() => void handleModelChange(m)}
                     fw={m === selModel ? 600 : 400}
-                    fz="sm"
+                    fz={11}
+                    style={{ color: "var(--ap-text-body)" }}
                   >
                     {fmtModel(m)}
                   </Menu.Item>
@@ -728,10 +730,10 @@ function ContextBar({ info }: { info: ContextWindowInfo }) {
   const pct = Math.round(info.usageRatio * 100);
   const color =
     pct > 90
-      ? "var(--mantine-color-red-6)"
+      ? "var(--ap-danger)"
       : pct > 70
-        ? "var(--mantine-color-orange-5)"
-        : "var(--mantine-color-dimmed)";
+        ? "var(--ap-warning)"
+        : "var(--ap-text-tertiary)";
 
   return (
     <Group gap={6} mt={6} justify="center">
