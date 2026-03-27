@@ -1,8 +1,8 @@
-/**
+﻿/**
  * Integration tests for the bridge mediation surface.
  *
  * Coverage:
- *  - connect/handshake → session establishment
+ *  - connect/handshake â†’ session establishment
  *  - grant sync + request.check success path
  *  - unauthorized origin denial (no grant)
  *  - revoked grant immediate denial
@@ -20,6 +20,7 @@ import {
   createRequestProof,
 } from "../cloud/request-proof.js";
 import { HandshakeManager } from "../session/handshake.js";
+import { PairingManager } from "../session/pairing.js";
 import { RequestVerifier } from "../session/request-verifier.js";
 import { SessionKeyRegistry } from "../session/session-key-registry.js";
 import { RuntimeEnforcer } from "../permissions/runtime-enforcer.js";
@@ -31,8 +32,8 @@ import type { CloudFeatureFlags } from "../config/cloud-feature-flags.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-const TEST_SECRET = Buffer.from("test-shared-secret-32-bytes-padd", "utf8");
-const TEST_EXTENSION_ID = "abcdefghijklmnopqrstuvwxyzabcdef";
+const TEST_EXTENSION_ID = "abcdefghabcdefghabcdefghabcdefgh";
+const TEST_HOST_NAME = "com.byom.bridge";
 const TEST_ORIGIN = "https://app.example.com";
 const FIXED_NOW = new Date("2026-03-23T12:00:00.000Z");
 
@@ -42,32 +43,70 @@ const HANDSHAKE_NONCE_HEX = HANDSHAKE_NONCE_BYTES.toString("hex");
 
 // Token bytes used for the session token after the nonce is consumed.
 const SESSION_TOKEN_BYTES = Buffer.from("bb".repeat(32), "hex");
+const SESSION_TOKEN_HEX = SESSION_TOKEN_BYTES.toString("hex");
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildTestHandler(): BridgeHandler {
+function buildTestHandshakeManager(): HandshakeManager {
   let callCount = 0;
-  const handshakeManager = new HandshakeManager({
+  return new HandshakeManager({
     now: () => FIXED_NOW,
     generateBytes: (n: number) => {
-      // First call produces the challenge nonce, second produces the session token.
+      // Odd calls produce challenge nonces, even calls produce session tokens.
       callCount++;
-      if (callCount === 1) return HANDSHAKE_NONCE_BYTES.subarray(0, n);
+      if (callCount % 2 === 1) return HANDSHAKE_NONCE_BYTES.subarray(0, n);
       return SESSION_TOKEN_BYTES.subarray(0, n);
     },
   });
+}
 
+function buildTestHandler(): BridgeHandler {
+  const handshakeManager = buildTestHandshakeManager();
+
+  const sessionKeyRegistry = new SessionKeyRegistry({ now: () => FIXED_NOW });
   const requestVerifier = new RequestVerifier({ now: () => FIXED_NOW });
   const enforcer = new RuntimeEnforcer({ now: () => FIXED_NOW });
+  const pairingManager = new PairingManager();
 
   return new BridgeHandler({
-    sharedSecret: TEST_SECRET,
+    signingKey: Buffer.alloc(32, 0x01),
     handshakeManager,
+    sessionKeyRegistry,
     requestVerifier,
     enforcer,
+    pairingManager,
   });
+}
+
+/**
+ * Performs a full HMAC handshake against the handler, returning the session
+ * token that must be included in subsequent requests.
+ */
+async function performHandshake(handler: BridgeHandler): Promise<string> {
+  // Auto-pair first
+  const autoPairing = await handler.handle({
+    type: "pairing.auto",
+    extensionId: TEST_EXTENSION_ID,
+    hostName: TEST_HOST_NAME,
+  });
+  const pairingHandle = (autoPairing as Record<string, string>)["pairingHandle"] ?? "";
+  const pairingKeyHex = (autoPairing as Record<string, string>)["pairingKeyHex"] ?? "";
+  const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
+  const challenge = await handler.handle({ type: "handshake.challenge" });
+  const nonce = (challenge as Record<string, string>)["nonce"] ?? "";
+  const hmac = computeExpectedHmac(nonce, pairingSecret);
+  const verify = await handler.handle({
+    type: "handshake.verify",
+    nonce,
+    hmac,
+    extensionId: TEST_EXTENSION_ID,
+    hostName: TEST_HOST_NAME,
+    pairingHandle,
+  });
+  return (verify as Record<string, string>)["sessionToken"] ?? "";
 }
 
 function computeExpectedHmac(nonce: string, secret: Buffer): string {
@@ -76,7 +115,7 @@ function computeExpectedHmac(nonce: string, secret: Buffer): string {
 
 /**
  * Creates a minimal valid envelope against FIXED_NOW:
- *  - issuedAt  = FIXED_NOW − 30 s  (within 30 s clock-skew limit)
+ *  - issuedAt  = FIXED_NOW âˆ’ 30 s  (within 30 s clock-skew limit)
  *  - expiresAt = FIXED_NOW + 3 min  (4 min lifetime < 5 min limit)
  */
 function makeEnvelope(nonce: string, origin = TEST_ORIGIN): Record<string, unknown> {
@@ -169,7 +208,7 @@ async function runWireScenario(
 // Handshake
 // ---------------------------------------------------------------------------
 
-describe("BridgeHandler — handshake", () => {
+describe("BridgeHandler â€” handshake", () => {
   it("issues a challenge with a nonce, issuedAt, and expiresAt", async () => {
     const handler = buildTestHandler();
     const response = await handler.handle({ type: "handshake.challenge" });
@@ -185,14 +224,25 @@ describe("BridgeHandler — handshake", () => {
   it("completes the handshake and returns a session token for a correct HMAC", async () => {
     const handler = buildTestHandler();
 
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+    const pairingKeyHex = (pairResp as Record<string, string>)["pairingKeyHex"] ?? "";
+    const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
     await handler.handle({ type: "handshake.challenge" });
 
-    const hmac = computeExpectedHmac(HANDSHAKE_NONCE_HEX, TEST_SECRET);
+    const hmac = computeExpectedHmac(HANDSHAKE_NONCE_HEX, pairingSecret);
     const response = await handler.handle({
       type: "handshake.verify",
       nonce: HANDSHAKE_NONCE_HEX,
       hmac,
       extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+      pairingHandle,
     });
 
     expect(response).toMatchObject({
@@ -211,6 +261,14 @@ describe("BridgeHandler — handshake", () => {
 
   it("rejects handshake.verify with an incorrect HMAC", async () => {
     const handler = buildTestHandler();
+
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+
     await handler.handle({ type: "handshake.challenge" });
 
     const response = await handler.handle({
@@ -218,6 +276,8 @@ describe("BridgeHandler — handshake", () => {
       nonce: HANDSHAKE_NONCE_HEX,
       hmac: "00".repeat(32), // wrong HMAC
       extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+      pairingHandle,
     });
 
     expect(response).toMatchObject({ type: "error", reasonCode: "auth.invalid" });
@@ -225,14 +285,26 @@ describe("BridgeHandler — handshake", () => {
 
   it("rejects a replayed nonce", async () => {
     const handler = buildTestHandler();
+
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+    const pairingKeyHex = (pairResp as Record<string, string>)["pairingKeyHex"] ?? "";
+    const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
     await handler.handle({ type: "handshake.challenge" });
 
-    const hmac = computeExpectedHmac(HANDSHAKE_NONCE_HEX, TEST_SECRET);
+    const hmac = computeExpectedHmac(HANDSHAKE_NONCE_HEX, pairingSecret);
     const verifyMsg = {
       type: "handshake.verify",
       nonce: HANDSHAKE_NONCE_HEX,
       hmac,
       extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+      pairingHandle,
     };
 
     await handler.handle(verifyMsg); // first verify: succeeds
@@ -244,13 +316,15 @@ describe("BridgeHandler — handshake", () => {
   it("rejects handshake.verify for a nonce that was never issued", async () => {
     const handler = buildTestHandler();
     const unknownNonce = "cc".repeat(32);
-    const hmac = computeExpectedHmac(unknownNonce, TEST_SECRET);
+    const hmac = computeExpectedHmac(unknownNonce, Buffer.alloc(32, 0xff));
 
     const response = await handler.handle({
       type: "handshake.verify",
       nonce: unknownNonce,
       hmac,
       extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+      pairingHandle: "pairh.nonexistent",
     });
 
     expect(response).toMatchObject({ type: "error", reasonCode: "auth.invalid" });
@@ -266,43 +340,179 @@ describe("BridgeHandler — handshake", () => {
 
     expect(response).toMatchObject({ type: "error", reasonCode: "request.invalid" });
   });
+
+  it("rejects handshake when extension ID is not in the allowlist", async () => {
+    const pairingManager = new PairingManager();
+    const handler = new BridgeHandler({
+      signingKey: Buffer.alloc(32, 0x01),
+      handshakeManager: buildTestHandshakeManager(),
+      sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
+      pairingManager,
+      extensionIdAllowlist: [
+        { extensionId: "pppppppppppppppppppppppppppppppp", browser: "chrome" },
+      ],
+    });
+
+    // With pairing-based auth, the allowlist is enforced at pairing.auto time
+    const response = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+
+    expect(response).toMatchObject({
+      type: "error",
+      reasonCode: "auth.invalid",
+    });
+  });
+
+  it("accepts handshake when extension ID is in the allowlist", async () => {
+    const pairingManager = new PairingManager();
+    const handler = new BridgeHandler({
+      signingKey: Buffer.alloc(32, 0x01),
+      handshakeManager: buildTestHandshakeManager(),
+      sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
+      pairingManager,
+      extensionIdAllowlist: [
+        { extensionId: TEST_EXTENSION_ID, browser: "chrome" },
+        { extensionId: "byom-ai-wallet@byomai.com", browser: "firefox" },
+      ],
+    });
+
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+    const pairingKeyHex = (pairResp as Record<string, string>)["pairingKeyHex"] ?? "";
+    const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
+    await handler.handle({ type: "handshake.challenge" });
+    const hmac = computeExpectedHmac(HANDSHAKE_NONCE_HEX, pairingSecret);
+    const response = await handler.handle({
+      type: "handshake.verify",
+      nonce: HANDSHAKE_NONCE_HEX,
+      hmac,
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+      pairingHandle,
+    });
+
+    expect(response).toMatchObject({
+      type: "handshake.session",
+      extensionId: TEST_EXTENSION_ID,
+    });
+  });
+
+  it("accepts Firefox add-on ID in the allowlist", async () => {
+    const pairingManager = new PairingManager();
+    const handler = new BridgeHandler({
+      signingKey: Buffer.alloc(32, 0x01),
+      handshakeManager: buildTestHandshakeManager(),
+      sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
+      pairingManager,
+      extensionIdAllowlist: [
+        { extensionId: "byom-ai-wallet@byomai.com", browser: "firefox" },
+      ],
+    });
+
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: "byom-ai-wallet@byomai.com",
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+    const pairingKeyHex = (pairResp as Record<string, string>)["pairingKeyHex"] ?? "";
+    const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
+    await handler.handle({ type: "handshake.challenge" });
+    const hmac = computeExpectedHmac(HANDSHAKE_NONCE_HEX, pairingSecret);
+    const response = await handler.handle({
+      type: "handshake.verify",
+      nonce: HANDSHAKE_NONCE_HEX,
+      hmac,
+      extensionId: "byom-ai-wallet@byomai.com",
+      hostName: TEST_HOST_NAME,
+      pairingHandle,
+    });
+
+    expect(response).toMatchObject({
+      type: "handshake.session",
+      extensionId: "byom-ai-wallet@byomai.com",
+    });
+  });
+
+  it("skips allowlist validation when no allowlist is configured", async () => {
+    const handler = buildTestHandler(); // no extensionIdAllowlist
+
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+    const pairingKeyHex = (pairResp as Record<string, string>)["pairingKeyHex"] ?? "";
+    const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
+    await handler.handle({ type: "handshake.challenge" });
+    const hmac = computeExpectedHmac(HANDSHAKE_NONCE_HEX, pairingSecret);
+    const response = await handler.handle({
+      type: "handshake.verify",
+      nonce: HANDSHAKE_NONCE_HEX,
+      hmac,
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+      pairingHandle,
+    });
+
+    expect(response).toMatchObject({
+      type: "handshake.session",
+      extensionId: TEST_EXTENSION_ID,
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
 // Grant sync and revoke
 // ---------------------------------------------------------------------------
 
-describe("BridgeHandler — grant sync and revoke", () => {
+describe("BridgeHandler â€” grant sync and revoke", () => {
   it("acknowledges grant.sync and makes the grant available for enforcement", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
     const grant = makeGrant();
 
-    const ack = await handler.handle({ type: "grant.sync", grant });
+    const ack = await handler.handle({ type: "grant.sync", sessionToken, grant });
 
     expect(ack).toMatchObject({ type: "grant.sync.ack", grantId: grant.id });
   });
 
   it("acknowledges grant.revoke", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
 
-    const ack = await handler.handle({ type: "grant.revoke", grantId: "grant.xyz" });
+    const ack = await handler.handle({ type: "grant.revoke", sessionToken, grantId: "grant.xyz" });
 
     expect(ack).toMatchObject({ type: "grant.revoke.ack", grantId: "grant.xyz" });
   });
 
   it("returns an error for grant.sync with a non-object grant", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
 
-    const response = await handler.handle({ type: "grant.sync", grant: "not-an-object" });
+    const response = await handler.handle({ type: "grant.sync", sessionToken, grant: "not-an-object" });
 
     expect(response).toMatchObject({ type: "error", reasonCode: "request.invalid" });
   });
 
   it("returns an error for grant.sync with missing required grant fields", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
 
     const response = await handler.handle({
       type: "grant.sync",
+      sessionToken,
       grant: { id: "g1" }, // missing origin, capability, etc.
     });
 
@@ -311,26 +521,29 @@ describe("BridgeHandler — grant sync and revoke", () => {
 
   it("returns an error for grant.revoke without a grantId string", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
 
-    const response = await handler.handle({ type: "grant.revoke" });
+    const response = await handler.handle({ type: "grant.revoke", sessionToken });
 
     expect(response).toMatchObject({ type: "error", reasonCode: "request.invalid" });
   });
 });
 
 // ---------------------------------------------------------------------------
-// Request check — success path (connect/consent/request)
+// Request check â€” success path (connect/consent/request)
 // ---------------------------------------------------------------------------
 
-describe("BridgeHandler — request.check success path", () => {
+describe("BridgeHandler â€” request.check success path", () => {
   it("allows a request when a matching persistent grant is present", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
     const grant = makeGrant();
 
-    await handler.handle({ type: "grant.sync", grant });
+    await handler.handle({ type: "grant.sync", sessionToken, grant });
 
     const response = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: makeEnvelope("nonce-alpha-success-0001"),
     });
 
@@ -343,15 +556,19 @@ describe("BridgeHandler — request.check success path", () => {
 
   it("allows a wildcard-provider grant to match a concrete request", async () => {
     const handler = buildTestHandler();
-    const grant = makeGrant({ id: "grant.wildcard.001", providerId: "*", modelId: "*",
-      capability: "provider.list" });
+    const sessionToken = await performHandshake(handler);
+    const grant = makeGrant({
+      id: "grant.wildcard.001", providerId: "*", modelId: "*",
+      capability: "provider.list"
+    });
 
-    await handler.handle({ type: "grant.sync", grant });
+    await handler.handle({ type: "grant.sync", sessionToken, grant });
 
     const envelope = makeEnvelope("nonce-wildcard-success-002");
     const envelopeWithCap = { ...envelope, capability: "provider.list" };
     const response = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: envelopeWithCap,
     });
 
@@ -360,15 +577,17 @@ describe("BridgeHandler — request.check success path", () => {
 
   it("consumes a one-time grant on the first evaluation", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
     const oneTimeGrant = makeGrant({
       id: "grant.onetime.001",
       grantType: "one-time",
     });
 
-    await handler.handle({ type: "grant.sync", grant: oneTimeGrant });
+    await handler.handle({ type: "grant.sync", sessionToken, grant: oneTimeGrant });
 
     const first = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: makeEnvelope("nonce-onetime-first-0003"),
     });
     expect(first).toMatchObject({ type: "request.allowed", consumed: true });
@@ -376,6 +595,7 @@ describe("BridgeHandler — request.check success path", () => {
     // Second evaluation: grant is consumed, must be denied.
     const second = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: makeEnvelope("nonce-onetime-second-004"),
     });
     expect(second).toMatchObject({ type: "request.denied", reasonCode: "permission.denied" });
@@ -383,15 +603,17 @@ describe("BridgeHandler — request.check success path", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Request check — denial paths
+// Request check â€” denial paths
 // ---------------------------------------------------------------------------
 
-describe("BridgeHandler — request.check denial paths", () => {
+describe("BridgeHandler â€” request.check denial paths", () => {
   it("denies a request when no grant is present (unauthorized origin)", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
 
     const response = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: makeEnvelope("nonce-unauth-deny-000005"),
     });
 
@@ -403,13 +625,15 @@ describe("BridgeHandler — request.check denial paths", () => {
 
   it("denies a request immediately after the grant is revoked", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
     const grant = makeGrant({ id: "grant.revoke.test.001" });
 
-    await handler.handle({ type: "grant.sync", grant });
-    await handler.handle({ type: "grant.revoke", grantId: grant.id });
+    await handler.handle({ type: "grant.sync", sessionToken, grant });
+    await handler.handle({ type: "grant.revoke", sessionToken, grantId: grant.id });
 
     const response = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: makeEnvelope("nonce-revoke-deny-00006"),
     });
 
@@ -421,12 +645,14 @@ describe("BridgeHandler — request.check denial paths", () => {
 
   it("denies a request from a different origin than the synced grant", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
     const grant = makeGrant({ id: "grant.origin.mismatch.001" });
 
-    await handler.handle({ type: "grant.sync", grant });
+    await handler.handle({ type: "grant.sync", sessionToken, grant });
 
     const response = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: makeEnvelope("nonce-origin-mismatch-07", "https://other.example.com"),
     });
 
@@ -438,9 +664,10 @@ describe("BridgeHandler — request.check denial paths", () => {
 
   it("returns an error for an expired envelope", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
     const grant = makeGrant();
 
-    await handler.handle({ type: "grant.sync", grant });
+    await handler.handle({ type: "grant.sync", sessionToken, grant });
 
     // Envelope that expired 1 second before FIXED_NOW.
     const expiredEnvelope = {
@@ -460,6 +687,7 @@ describe("BridgeHandler — request.check denial paths", () => {
 
     const response = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: expiredEnvelope,
     });
 
@@ -468,14 +696,16 @@ describe("BridgeHandler — request.check denial paths", () => {
 
   it("returns an error for a replayed request nonce", async () => {
     const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
     const grant = makeGrant();
 
-    await handler.handle({ type: "grant.sync", grant });
+    await handler.handle({ type: "grant.sync", sessionToken, grant });
 
     const sharedEnvelope = makeEnvelope("nonce-replay-test-000009");
-    await handler.handle({ type: "request.check", envelope: sharedEnvelope });
+    await handler.handle({ type: "request.check", sessionToken, envelope: sharedEnvelope });
     const replayed = await handler.handle({
       type: "request.check",
+      sessionToken,
       envelope: sharedEnvelope,
     });
 
@@ -487,7 +717,7 @@ describe("BridgeHandler — request.check denial paths", () => {
 
     const response = await handler.handle({ type: "unknown.command" });
 
-    expect(response).toMatchObject({ type: "error", reasonCode: "request.invalid" });
+    expect(response).toMatchObject({ type: "error", reasonCode: "auth.required" });
   });
 });
 
@@ -496,39 +726,56 @@ describe("BridgeHandler — request.check denial paths", () => {
 // ---------------------------------------------------------------------------
 
 describe("NativeHost wire-protocol integration", () => {
-  it("processes grant.sync → request.check → allowed through the wire protocol", async () => {
+  it("processes grant.sync â†’ request.check â†’ allowed through the wire protocol", async () => {
     let wireCallCount = 0;
     const wireHandshakeBytes = Buffer.from("dd".repeat(32), "hex");
     const wireTokenBytes = Buffer.from("ee".repeat(32), "hex");
+    const wireSessionTokenHex = wireTokenBytes.toString("hex");
 
     const handshakeManager = new HandshakeManager({
       now: () => FIXED_NOW,
       generateBytes: (n: number) => {
         wireCallCount++;
-        return wireCallCount === 1
+        return wireCallCount % 2 === 1
           ? wireHandshakeBytes.subarray(0, n)
           : wireTokenBytes.subarray(0, n);
       },
     });
 
+    const pairingManager = new PairingManager();
     const handler = new BridgeHandler({
-      sharedSecret: TEST_SECRET,
+      signingKey: Buffer.alloc(32, 0x01),
       handshakeManager,
+      sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
       requestVerifier: new RequestVerifier({ now: () => FIXED_NOW }),
       enforcer: new RuntimeEnforcer({ now: () => FIXED_NOW }),
+      pairingManager,
     });
 
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+    const pairingKeyHex = (pairResp as Record<string, string>)["pairingKeyHex"] ?? "";
+    const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
+    const wireNonceHex = wireHandshakeBytes.toString("hex");
+    const wireHmac = computeExpectedHmac(wireNonceHex, pairingSecret);
     const grant = makeGrant({ id: "grant.wire.001" });
     const messages = [
-      { type: "grant.sync", grant },
-      { type: "request.check", envelope: makeEnvelope("nonce-wire-allowed-0010") },
+      { type: "handshake.challenge" },
+      { type: "handshake.verify", nonce: wireNonceHex, hmac: wireHmac, extensionId: TEST_EXTENSION_ID, hostName: TEST_HOST_NAME, pairingHandle },
+      { type: "grant.sync", sessionToken: wireSessionTokenHex, grant },
+      { type: "request.check", sessionToken: wireSessionTokenHex, envelope: makeEnvelope("nonce-wire-allowed-0010") },
     ];
 
     const responses = await runWireScenario(handler, messages);
 
-    expect(responses).toHaveLength(2);
-    expect(responses[0]).toMatchObject({ type: "grant.sync.ack", grantId: grant.id });
-    expect(responses[1]).toMatchObject({
+    expect(responses).toHaveLength(4);
+    expect(responses[2]).toMatchObject({ type: "grant.sync.ack", grantId: grant.id });
+    expect(responses[3]).toMatchObject({
       type: "request.allowed",
       grantId: grant.id,
       consumed: false,
@@ -536,14 +783,11 @@ describe("NativeHost wire-protocol integration", () => {
   });
 
   it("denies a request.check for an origin with no grant through the wire protocol", async () => {
-    const handler = new BridgeHandler({
-      sharedSecret: TEST_SECRET,
-      requestVerifier: new RequestVerifier({ now: () => FIXED_NOW }),
-      enforcer: new RuntimeEnforcer({ now: () => FIXED_NOW }),
-    });
+    const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
 
     const messages = [
-      { type: "request.check", envelope: makeEnvelope("nonce-wire-denied-0011") },
+      { type: "request.check", sessionToken, envelope: makeEnvelope("nonce-wire-denied-0011") },
     ];
 
     const responses = await runWireScenario(handler, messages);
@@ -556,17 +800,14 @@ describe("NativeHost wire-protocol integration", () => {
   });
 
   it("denies after revocation through the wire protocol", async () => {
-    const handler = new BridgeHandler({
-      sharedSecret: TEST_SECRET,
-      requestVerifier: new RequestVerifier({ now: () => FIXED_NOW }),
-      enforcer: new RuntimeEnforcer({ now: () => FIXED_NOW }),
-    });
+    const handler = buildTestHandler();
+    const sessionToken = await performHandshake(handler);
 
     const grant = makeGrant({ id: "grant.wire.revoke.001" });
     const messages = [
-      { type: "grant.sync", grant },
-      { type: "grant.revoke", grantId: grant.id },
-      { type: "request.check", envelope: makeEnvelope("nonce-wire-revoked-0012") },
+      { type: "grant.sync", sessionToken, grant },
+      { type: "grant.revoke", sessionToken, grantId: grant.id },
+      { type: "request.check", sessionToken, envelope: makeEnvelope("nonce-wire-revoked-0012") },
     ];
 
     const responses = await runWireScenario(handler, messages);
@@ -630,11 +871,13 @@ describe("NativeHost wire-protocol integration", () => {
         sessionKey: SESSION_TOKEN_BYTES,
       }),
     };
+    const pairingManager = new PairingManager();
     const handler = new BridgeHandler({
-      sharedSecret: TEST_SECRET,
+      signingKey: Buffer.alloc(32, 0x01),
       handshakeManager,
       sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
       cloudChatExecutor,
+      pairingManager,
       cloudFeatureFlags: {
         cloudBrokerV2Enabled: true,
         cloudMethodAllowlist: {
@@ -643,6 +886,15 @@ describe("NativeHost wire-protocol integration", () => {
       },
     });
 
+    const pairResp = await handler.handle({
+      type: "pairing.auto",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: TEST_HOST_NAME,
+    });
+    const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
+    const pairingKeyHex = (pairResp as Record<string, string>)["pairingKeyHex"] ?? "";
+    const pairingSecret = Buffer.from(pairingKeyHex, "hex");
+
     const responses = await runWireScenario(handler, [
       {
         type: "handshake.challenge",
@@ -650,8 +902,10 @@ describe("NativeHost wire-protocol integration", () => {
       {
         type: "handshake.verify",
         nonce: HANDSHAKE_NONCE_HEX,
-        hmac: computeExpectedHmac(HANDSHAKE_NONCE_HEX, TEST_SECRET),
+        hmac: computeExpectedHmac(HANDSHAKE_NONCE_HEX, pairingSecret),
         extensionId: TEST_EXTENSION_ID,
+        hostName: TEST_HOST_NAME,
+        pairingHandle,
       },
       {
         type: "cloud.chat.execute",
@@ -758,14 +1012,16 @@ describe("NativeHost wire-protocol integration", () => {
       }),
     };
     const handler = new BridgeHandler({
-      sharedSecret: TEST_SECRET,
+      signingKey: Buffer.alloc(32, 0x01),
       cloudConnectionService,
       cloudFeatureFlags,
     });
+    const sessionToken = await performHandshake(handler);
 
     const responses = await runWireScenario(handler, [
       {
         type: "cloud.connection.validate",
+        sessionToken,
         providerId: "provider.claude",
         methodId: "anthropic.api_key",
         connectionHandle:
@@ -778,5 +1034,67 @@ describe("NativeHost wire-protocol integration", () => {
       type: "error",
       reasonCode: "auth.expired",
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Session gate security â€” unauthenticated operations must be rejected
+// ---------------------------------------------------------------------------
+
+describe("BridgeHandler â€” session gate rejects unauthenticated operations", () => {
+  const sensitiveMessageTypes: readonly { type: string; extra?: Record<string, unknown> }[] = [
+    { type: "grant.sync", extra: { grant: makeGrant({ id: "gate-test" }) } },
+    { type: "grant.revoke", extra: { grantId: "gate-test" } },
+    { type: "request.check", extra: { envelope: makeEnvelope("gate-nonce-001") } },
+    { type: "cli.chat.execute", extra: { prompt: "hello" } },
+    { type: "cli.models.list" },
+    { type: "cloud.connection.begin", extra: { providerId: "p", methodId: "m" } },
+    { type: "cloud.connection.complete" },
+    { type: "cloud.connection.validate" },
+    { type: "cloud.models.discover" },
+    { type: "cloud.chat.execute" },
+    { type: "pairing.list" },
+    { type: "pairing.revoke", extra: { pairingHandle: "pairh.test" } },
+  ];
+
+  for (const { type, extra } of sensitiveMessageTypes) {
+    it(`rejects ${type} without a session token`, async () => {
+      const handler = buildTestHandler();
+      const response = await handler.handle({ type, ...extra });
+      expect(response).toMatchObject({
+        type: "error",
+        reasonCode: "auth.required",
+      });
+    });
+
+    it(`rejects ${type} with an invalid session token`, async () => {
+      const handler = buildTestHandler();
+      const response = await handler.handle({
+        type,
+        sessionToken: "ff".repeat(32),
+        ...extra,
+      });
+      expect(response).toMatchObject({
+        type: "error",
+        reasonCode: "auth.expired",
+      });
+    });
+  }
+
+  it("allows handshake.challenge without a session token", async () => {
+    const handler = buildTestHandler();
+    const response = await handler.handle({ type: "handshake.challenge" });
+    expect(response).toMatchObject({ type: "handshake.challenge" });
+  });
+
+  it("allows pairing.begin without a session token", async () => {
+    const handler = buildTestHandler();
+    const response = await handler.handle({
+      type: "pairing.begin",
+      extensionId: TEST_EXTENSION_ID,
+      hostName: "com.byom.bridge",
+    });
+    // Should not be auth.required â€” pairing.begin doesn't need a session
+    expect((response as Record<string, unknown>)["reasonCode"]).not.toBe("auth.required");
   });
 });
