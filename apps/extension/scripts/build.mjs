@@ -33,6 +33,7 @@ const moduleEntryPoints = {
   background: path.join(sourceRoot, "background.ts"),
   popup: path.join(sourceRoot, "popup.tsx"),
   options: path.join(sourceRoot, "options.ts"),
+  "options-onboarding": path.join(sourceRoot, "options-onboarding.tsx"),
   index: path.join(sourceRoot, "index.ts"),
 };
 
