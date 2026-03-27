@@ -50,6 +50,8 @@ import {
   isValidExtensionId,
   type AllowlistEntry,
 } from "./native-host-manifest.js";
+import { VaultStore } from "./vault/vault-store.js";
+import { VaultError } from "./vault/vault-types.js";
 
 export type BridgeHandlerOptions = Readonly<{
   signingKey?: Buffer;
@@ -66,6 +68,7 @@ export type BridgeHandlerOptions = Readonly<{
   pairingCodeRetrievalHint?: string;
   extensionIdAllowlist?: readonly AllowlistEntry[];
   metrics?: TelemetryMetrics;
+  vaultStore?: VaultStore;
 }>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -236,6 +239,7 @@ export class BridgeHandler {
   readonly #pairingCodeRetrievalHint: string | undefined;
   readonly #extensionIdAllowlist: readonly AllowlistEntry[] | undefined;
   readonly #metrics: TelemetryMetrics | undefined;
+  readonly #vaultStore: VaultStore | undefined;
   readonly #cloudConnectionCompleteIdempotencyNamespace: string;
 
   constructor(options: BridgeHandlerOptions) {
@@ -277,6 +281,7 @@ export class BridgeHandler {
     this.#cloudFeatureFlags =
       options.cloudFeatureFlags ?? DEFAULT_CLOUD_FEATURE_FLAGS;
     this.#metrics = options.metrics;
+    this.#vaultStore = options.vaultStore;
   }
 
   /**
@@ -439,6 +444,39 @@ export class BridgeHandler {
 
       case "cloud.chat.execute":
         return this.#handleCloudChatExecute(message, writer);
+
+      case "vault.status":
+        return this.#handleVaultStatus();
+      case "vault.setup":
+        return this.#handleVaultSetup(message);
+      case "vault.unlock":
+        return this.#handleVaultUnlock(message);
+      case "vault.lock":
+        return this.#handleVaultLock();
+      case "vault.credentials.list":
+        return this.#handleVaultCredentialsList();
+      case "vault.credentials.get":
+        return this.#handleVaultCredentialsGet(message);
+      case "vault.credentials.save":
+        return this.#handleVaultCredentialsSave(message);
+      case "vault.credentials.delete":
+        return this.#handleVaultCredentialsDelete(message);
+      case "vault.providers.list":
+        return this.#handleVaultProvidersList();
+      case "vault.providers.save":
+        return this.#handleVaultProvidersSave(message);
+      case "vault.providers.delete":
+        return this.#handleVaultProvidersDelete(message);
+      case "vault.apps.list":
+        return this.#handleVaultAppsList();
+      case "vault.apps.save":
+        return this.#handleVaultAppsSave(message);
+      case "vault.apps.delete":
+        return this.#handleVaultAppsDelete(message);
+      case "vault.usage.read":
+        return this.#handleVaultUsageRead();
+      case "vault.usage.flush":
+        return this.#handleVaultUsageFlush(message);
 
       default:
         return errorResponse(
@@ -2030,5 +2068,175 @@ export class BridgeHandler {
         fallbackMessage: "Cloud chat execution failed.",
       });
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Vault
+  // ---------------------------------------------------------------------------
+
+  #requireVaultStore(): VaultStore {
+    if (!this.#vaultStore) {
+      return undefined as never;
+    }
+    return this.#vaultStore;
+  }
+
+  #handleVaultOp(fn: () => NativeMessage): NativeMessage {
+    try {
+      return fn();
+    } catch (error) {
+      if (error instanceof VaultError) {
+        return errorResponse(error.reasonCode, error.message);
+      }
+      throw error;
+    }
+  }
+
+  #handleVaultStatus(): NativeMessage {
+    const store = this.#requireVaultStore();
+    return { type: "vault.status", ...store.status() };
+  }
+
+  #handleVaultSetup(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      const keyMode = message["keyMode"] as "password" | "keychain";
+      const password = typeof message["password"] === "string" ? message["password"] : undefined;
+      store.setup({ keyMode, password });
+      return { type: "vault.setup", ...store.status() };
+    });
+  }
+
+  #handleVaultUnlock(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      const password = typeof message["password"] === "string" ? message["password"] : undefined;
+      store.unlock({ password });
+      return { type: "vault.unlock", ...store.status() };
+    });
+  }
+
+  #handleVaultLock(): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.lock();
+      return { type: "vault.lock", ...store.status() };
+    });
+  }
+
+  #handleVaultCredentialsList(): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      return { type: "vault.credentials.list", credentials: store.listCredentials() };
+    });
+  }
+
+  #handleVaultCredentialsGet(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      const credentialId = message["credentialId"] as string;
+      return { type: "vault.credentials.get", credential: store.getCredential(credentialId) };
+    });
+  }
+
+  #handleVaultCredentialsSave(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.saveCredential({
+        id: message["id"] as string,
+        connectorId: message["connectorId"] as string,
+        name: message["name"] as string,
+        fields: message["fields"] as Record<string, string>,
+      });
+      return { type: "vault.credentials.save" };
+    });
+  }
+
+  #handleVaultCredentialsDelete(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.deleteCredential(message["credentialId"] as string);
+      return { type: "vault.credentials.delete" };
+    });
+  }
+
+  #handleVaultProvidersList(): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      return { type: "vault.providers.list", providers: store.listProviders() };
+    });
+  }
+
+  #handleVaultProvidersSave(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.saveProvider({
+        id: message["id"] as string,
+        name: message["name"] as string,
+        type: message["providerType"] as "local" | "cloud" | "cli",
+        connectorId: message["connectorId"] as string,
+        credentialId: (message["credentialId"] as string) ?? "",
+        metadata: (message["metadata"] as Record<string, string>) ?? {},
+        models: (message["models"] as string[]) ?? [],
+        status: (message["status"] as string) ?? "connected",
+      });
+      return { type: "vault.providers.save" };
+    });
+  }
+
+  #handleVaultProvidersDelete(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.deleteProvider(message["providerId"] as string);
+      return { type: "vault.providers.delete" };
+    });
+  }
+
+  #handleVaultAppsList(): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      return { type: "vault.apps.list", appConnections: store.listAppConnections() };
+    });
+  }
+
+  #handleVaultAppsSave(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.saveAppConnection({
+        id: message["id"] as string,
+        origin: message["origin"] as string,
+        displayName: message["displayName"] as string,
+        approvedProviders: (message["approvedProviders"] as string[]) ?? [],
+        approvedModels: (message["approvedModels"] as string[]) ?? [],
+        permissions: (message["permissions"] as Record<string, unknown>) ?? {},
+        rules: (message["rules"] as Record<string, unknown>) ?? {},
+        limits: (message["limits"] as Record<string, unknown>) ?? {},
+      });
+      return { type: "vault.apps.save" };
+    });
+  }
+
+  #handleVaultAppsDelete(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.deleteAppConnection(message["appId"] as string);
+      return { type: "vault.apps.delete" };
+    });
+  }
+
+  #handleVaultUsageRead(): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      const usage = store.readUsage();
+      return { type: "vault.usage.read", ...usage };
+    });
+  }
+
+  #handleVaultUsageFlush(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      store.flushUsage({ entries: message["entries"] as any[] });
+      return { type: "vault.usage.flush" };
+    });
   }
 }
