@@ -34,6 +34,12 @@ import type {
   GrantRevocationReason,
   GrantType,
 } from "./permissions/grant-types.js";
+import { ensureBridgeHandshakeSession } from "./transport/bridge-handshake.js";
+import {
+  BRIDGE_PAIRING_STATE_STORAGE_KEY,
+  parseBridgePairingState,
+  unwrapPairingKeyMaterial,
+} from "./transport/bridge-pairing.js";
 
 export type BridgeGrantSynchronizer = Readonly<{
   publishGrant(event: BridgeGrantSynchronizationEvent): Promise<void>;
@@ -135,7 +141,6 @@ export type WalletHandlerOptions = Readonly<{
 }>;
 
 // Storage key constants (spec: Storage Contract v1).
-const WALLET_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
 const WALLET_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 
 type StoredProvider = {
@@ -168,6 +173,55 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
+function sendNativeMessagePromise(
+  host: string,
+  msg: Record<string, unknown>,
+): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendNativeMessage(host, msg, (resp) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(resp);
+      }
+    });
+  });
+}
+
+async function sendVaultMessageFromBackground(
+  message: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const extensionId = chrome.runtime.id;
+  const pairingData = await chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+  const pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+  const pairingKeyMaterial = pairingState !== undefined
+    ? await unwrapPairingKeyMaterial({ pairingState, runtimeId: extensionId })
+    : null;
+
+  const resolveBridgePairingHandle: ((hostName: string) => Promise<string | undefined | null>) | undefined =
+    pairingKeyMaterial !== null && pairingKeyMaterial !== undefined
+      ? async () => pairingKeyMaterial.pairingHandle
+      : undefined;
+
+  const session = await ensureBridgeHandshakeSession({
+    hostName: "com.arlopass.bridge",
+    extensionId,
+    sendNativeMessage: sendNativeMessagePromise,
+    resolveBridgeSharedSecret: async () => null,
+    ...(resolveBridgePairingHandle !== undefined ? { resolveBridgePairingHandle } : {}),
+  });
+
+  const resp = await sendNativeMessagePromise(
+    "com.arlopass.bridge",
+    { ...message, sessionToken: session.sessionToken },
+  );
+
+  if (typeof resp !== "object" || resp === null) {
+    throw new Error("Invalid vault response from bridge.");
+  }
+  return resp as Record<string, unknown>;
+}
+
 async function walletHandleSetActiveProvider(
   payload: unknown,
   storage: WalletStorageAdapter,
@@ -182,6 +236,25 @@ async function walletHandleSetActiveProvider(
 
   const providerId = payload["providerId"];
   const modelId = typeof payload["modelId"] === "string" ? payload["modelId"] : undefined;
+
+  try {
+    const resp = await sendVaultMessageFromBackground({ type: "vault.providers.list" });
+    const providers = (resp["providers"] ?? []) as Array<{ id: string; models: string[] }>;
+    const provider = providers.find((p) => p.id === providerId);
+    if (provider === undefined) {
+      return {
+        ok: false,
+        errorCode: "invalid_selection",
+        message: `Provider "${providerId}" not found`,
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      errorCode: "vault_unavailable",
+      message: "Could not validate provider: vault is unavailable",
+    };
+  }
 
   const active: { providerId: string; modelId?: string } = { providerId };
   if (modelId !== undefined) {
@@ -211,35 +284,32 @@ async function walletHandleSetActiveModel(
   const providerId = payload["providerId"];
   const modelId = payload["modelId"];
 
-  const stored = await storage.get([WALLET_KEY_PROVIDERS]);
-  const rawProviders = stored[WALLET_KEY_PROVIDERS];
+  try {
+    const resp = await sendVaultMessageFromBackground({ type: "vault.providers.list" });
+    const providers = (resp["providers"] ?? []) as Array<{ id: string; models: string[] }>;
 
-  if (!Array.isArray(rawProviders)) {
+    const provider = providers.find((p) => p.id === providerId);
+    if (provider === undefined) {
+      return {
+        ok: false,
+        errorCode: "invalid_selection",
+        message: `Provider "${providerId}" not found`,
+      };
+    }
+
+    const modelExists = provider.models.some((m) => m === modelId);
+    if (!modelExists) {
+      return {
+        ok: false,
+        errorCode: "invalid_selection",
+        message: `Model "${modelId}" not found in provider "${providerId}"`,
+      };
+    }
+  } catch {
     return {
       ok: false,
-      errorCode: "invalid_selection",
-      message: `Provider "${providerId}" not found`,
-    };
-  }
-
-  const provider = (rawProviders as unknown[]).find(
-    (p): p is StoredProvider => isStoredProvider(p) && p.id === providerId,
-  );
-
-  if (provider === undefined) {
-    return {
-      ok: false,
-      errorCode: "invalid_selection",
-      message: `Provider "${providerId}" not found`,
-    };
-  }
-
-  const modelExists = provider.models.some((m) => m.id === modelId);
-  if (!modelExists) {
-    return {
-      ok: false,
-      errorCode: "invalid_selection",
-      message: `Model "${modelId}" not found in provider "${providerId}"`,
+      errorCode: "vault_unavailable",
+      message: "Could not validate model: vault is unavailable",
     };
   }
 
@@ -261,30 +331,28 @@ async function walletHandleRevokeProvider(
 
   const providerId = payload["providerId"];
 
-  const stored = await storage.get([WALLET_KEY_PROVIDERS, WALLET_KEY_ACTIVE]);
-  const rawProviders = stored[WALLET_KEY_PROVIDERS];
-  const rawActive = stored[WALLET_KEY_ACTIVE];
+  try {
+    await sendVaultMessageFromBackground({ type: "vault.providers.delete", providerId });
+  } catch {
+    return {
+      ok: false,
+      errorCode: "vault_unavailable",
+      message: "Could not revoke provider: vault is unavailable",
+    };
+  }
 
-  const updatedProviders = Array.isArray(rawProviders)
-    ? (rawProviders as unknown[]).filter(
-      (p) => !(isStoredProvider(p) && p.id === providerId),
-    )
-    : [];
+  // Clean up active provider in local storage (ephemeral per-browser state).
+  const stored = await storage.get([WALLET_KEY_ACTIVE]);
+  const rawActive = stored[WALLET_KEY_ACTIVE];
 
   const currentActive =
     isRecord(rawActive) && typeof rawActive["providerId"] === "string"
       ? (rawActive as StoredActiveProvider)
       : null;
 
-  const updatedActive: StoredActiveProvider =
-    currentActive !== null && currentActive.providerId === providerId
-      ? null
-      : currentActive;
-
-  await storage.set({
-    [WALLET_KEY_PROVIDERS]: updatedProviders,
-    [WALLET_KEY_ACTIVE]: updatedActive,
-  });
+  if (currentActive !== null && currentActive.providerId === providerId) {
+    await storage.set({ [WALLET_KEY_ACTIVE]: null });
+  }
 
   return { ok: true };
 }
