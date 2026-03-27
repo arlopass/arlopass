@@ -18,6 +18,7 @@ import { usePersistedReducer } from "../../hooks/usePersistedReducer.js";
 import { tokens } from "../theme.js";
 import { createCloudConnectors } from "../../../options/connectors/index.js";
 import { ensureBridgeHandshakeSession } from "../../../transport/bridge-handshake.js";
+import { parseBridgePairingState, unwrapPairingKeyMaterial } from "../../../transport/bridge-pairing.js";
 import type {
   CloudConnectorDependencies,
   ConnectionTestResult,
@@ -71,16 +72,30 @@ function withCloudConnectionBinding(
   };
 }
 
-const WALLET_KEY_BRIDGE_SHARED_SECRET = "byom.wallet.bridgeSharedSecret.v1";
+const PAIRING_STATE_KEY = "byom.wallet.bridgePairing.v1";
 
-/** Resolve shared secret from extension storage for HMAC handshake. */
-async function resolveBridgeSharedSecret(): Promise<string | undefined> {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([WALLET_KEY_BRIDGE_SHARED_SECRET], (result) => {
-      const value = result[WALLET_KEY_BRIDGE_SHARED_SECRET];
-      resolve(typeof value === "string" && value.length > 0 ? value : undefined);
-    });
+/** Resolve pairing secret from wrapped pairing state for HMAC handshake. */
+async function resolvePairingSecret(): Promise<string | undefined> {
+  const state = await new Promise<Record<string, unknown>>((resolve) => {
+    chrome.storage.local.get([PAIRING_STATE_KEY], (result) => resolve(result));
   });
+  const pairingState = parseBridgePairingState(state[PAIRING_STATE_KEY]);
+  if (pairingState === undefined) return undefined;
+  const extensionId = chrome.runtime.id ?? "";
+  const unwrapped = await unwrapPairingKeyMaterial({
+    pairingState,
+    runtimeId: extensionId,
+  });
+  return unwrapped?.pairingKeyHex;
+}
+
+/** Resolve pairing handle from stored pairing state. */
+async function resolvePairingHandle(): Promise<string | undefined> {
+  const state = await new Promise<Record<string, unknown>>((resolve) => {
+    chrome.storage.local.get([PAIRING_STATE_KEY], (result) => resolve(result));
+  });
+  const pairingState = parseBridgePairingState(state[PAIRING_STATE_KEY]);
+  return pairingState?.pairingHandle;
 }
 
 /** Low-level one-shot native message (no auth). Used by handshake itself. */
@@ -90,14 +105,18 @@ function rawSendNativeMessage(
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
     try {
-      chrome.runtime.sendNativeMessage(hostName, message, (response: unknown) => {
-        const err = chrome.runtime.lastError;
-        if (err !== undefined) {
-          reject(new Error(err.message ?? "Native messaging error"));
-          return;
-        }
-        resolve(response);
-      });
+      chrome.runtime.sendNativeMessage(
+        hostName,
+        message,
+        (response: unknown) => {
+          const err = chrome.runtime.lastError;
+          if (err !== undefined) {
+            reject(new Error(err.message ?? "Native messaging error"));
+            return;
+          }
+          resolve(response);
+        },
+      );
     } catch (error) {
       reject(error instanceof Error ? error : new Error(String(error)));
     }
@@ -128,7 +147,8 @@ async function sendNativeMessage(
       hostName,
       extensionId: chrome.runtime.id ?? "",
       sendNativeMessage: rawSendNativeMessage,
-      resolveBridgeSharedSecret: async () => resolveBridgeSharedSecret(),
+      resolveBridgeSharedSecret: async () => resolvePairingSecret(),
+      resolveBridgePairingHandle: async () => resolvePairingHandle(),
     });
     cachedSessionToken = session.sessionToken;
 
@@ -151,22 +171,32 @@ async function sendNativeMessage(
       }, timeoutMs);
 
       try {
-        chrome.runtime.sendNativeMessage(hostName, enrichedMessage, (response: unknown) => {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timeoutHandle);
-          const runtimeError = chrome.runtime.lastError;
-          if (runtimeError !== undefined) {
-            resolve({ ok: false, errorMessage: runtimeError.message ?? "unknown error" });
-            return;
-          }
-          resolve({ ok: true, response });
-        });
+        chrome.runtime.sendNativeMessage(
+          hostName,
+          enrichedMessage,
+          (response: unknown) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutHandle);
+            const runtimeError = chrome.runtime.lastError;
+            if (runtimeError !== undefined) {
+              resolve({
+                ok: false,
+                errorMessage: runtimeError.message ?? "unknown error",
+              });
+              return;
+            }
+            resolve({ ok: true, response });
+          },
+        );
       } catch (error) {
         if (settled) return;
         settled = true;
         clearTimeout(timeoutHandle);
-        resolve({ ok: false, errorMessage: error instanceof Error ? error.message : String(error) });
+        resolve({
+          ok: false,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
       }
     });
   } catch (error) {
