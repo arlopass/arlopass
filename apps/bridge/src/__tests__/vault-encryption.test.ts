@@ -1,7 +1,6 @@
 // apps/bridge/src/__tests__/vault-encryption.test.ts
 import { describe, expect, it } from "vitest";
 import { deriveKey, encryptVault, decryptVault, HEADER_SIZE } from "../vault/vault-encryption.js";
-import type { Vault } from "../vault/vault-types.js";
 import { createEmptyVault } from "../vault/vault-types.js";
 
 describe("deriveKey", () => {
@@ -54,7 +53,7 @@ describe("encryptVault + decryptVault roundtrip", () => {
     const encrypted = encryptVault(vault, key, salt, "password");
     const decrypted = decryptVault(encrypted, key);
     expect(decrypted.credentials).toHaveLength(1);
-    expect(decrypted.credentials[0].fields.apiKey).toBe("sk-ant-test-123");
+    expect(decrypted.credentials[0]!.fields.apiKey).toBe("sk-ant-test-123");
   });
 
   it("fails to decrypt with wrong key", () => {
@@ -71,7 +70,7 @@ describe("encryptVault + decryptVault roundtrip", () => {
     const salt = Buffer.alloc(32, 0x44);
     const key = deriveKey("tamper-test", salt);
     const encrypted = encryptVault(vault, key, salt, "password");
-    encrypted[HEADER_SIZE + 5] ^= 0xff;
+    encrypted[HEADER_SIZE + 5]! ^= 0xff;
     expect(() => decryptVault(encrypted, key)).toThrow();
   });
 

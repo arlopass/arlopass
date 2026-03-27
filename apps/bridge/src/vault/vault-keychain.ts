@@ -16,7 +16,7 @@ export function createKeychainAdapter(): KeychainAdapter {
     async getKey(): Promise<Buffer | null> {
       throw new Error("OS keychain not yet implemented. Use password mode.");
     },
-    async setKey(_key: Buffer): Promise<void> {
+    async setKey(_key: Buffer): Promise<void> {  // eslint-disable-line @typescript-eslint/no-unused-vars
       throw new Error("OS keychain not yet implemented. Use password mode.");
     },
     async deleteKey(): Promise<void> {

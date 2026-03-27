@@ -157,7 +157,7 @@ export class VaultStore {
 
   listCredentials(): RedactedCredential[] {
     this.#requireUnlocked();
-    return this.#vault!.credentials.map(({ fields: _, ...rest }) => rest);
+    return this.#vault!.credentials.map(({ fields: _fields, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
   }
 
   getCredential(id: string): VaultCredential {

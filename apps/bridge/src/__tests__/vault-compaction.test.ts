@@ -18,13 +18,13 @@ describe("compactUsage", () => {
     };
     const result = compactUsage(usage, new Date(NOW));
     expect(result.recentEntries).toHaveLength(1);
-    expect(result.recentEntries[0].timestamp).toBe(RECENT);
+    expect(result.recentEntries[0]!.timestamp).toBe(RECENT);
 
     const key = "https://app.test\0p1\0m1";
     expect(result.totals[key]).toBeDefined();
-    expect(result.totals[key].inputTokens).toBe(100);
-    expect(result.totals[key].outputTokens).toBe(50);
-    expect(result.totals[key].requestCount).toBe(1);
+    expect(result.totals[key]!.inputTokens).toBe(100);
+    expect(result.totals[key]!.outputTokens).toBe(50);
+    expect(result.totals[key]!.requestCount).toBe(1);
   });
 
   it("merges into existing totals additively", () => {
@@ -39,9 +39,9 @@ describe("compactUsage", () => {
     };
     const result = compactUsage(usage, new Date(NOW));
     expect(result.recentEntries).toHaveLength(0);
-    expect(result.totals[key].inputTokens).toBe(600);
-    expect(result.totals[key].outputTokens).toBe(300);
-    expect(result.totals[key].requestCount).toBe(11);
+    expect(result.totals[key]!.inputTokens).toBe(600);
+    expect(result.totals[key]!.outputTokens).toBe(300);
+    expect(result.totals[key]!.requestCount).toBe(11);
   });
 
   it("does nothing when all entries are recent", () => {

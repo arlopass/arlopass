@@ -52,6 +52,7 @@ import {
 } from "./native-host-manifest.js";
 import { VaultStore } from "./vault/vault-store.js";
 import { VaultError } from "./vault/vault-types.js";
+import type { UsageEntry } from "./vault/vault-types.js";
 
 export type BridgeHandlerOptions = Readonly<{
   signingKey?: Buffer;
@@ -2102,7 +2103,7 @@ export class BridgeHandler {
       const store = this.#requireVaultStore();
       const keyMode = message["keyMode"] as "password" | "keychain";
       const password = typeof message["password"] === "string" ? message["password"] : undefined;
-      store.setup({ keyMode, password });
+      store.setup({ keyMode, ...(password !== undefined ? { password } : {}) });
       return { type: "vault.setup", ...store.status() };
     });
   }
@@ -2111,7 +2112,7 @@ export class BridgeHandler {
     return this.#handleVaultOp(() => {
       const store = this.#requireVaultStore();
       const password = typeof message["password"] === "string" ? message["password"] : undefined;
-      store.unlock({ password });
+      store.unlock(password !== undefined ? { password } : {});
       return { type: "vault.unlock", ...store.status() };
     });
   }
@@ -2235,7 +2236,7 @@ export class BridgeHandler {
   #handleVaultUsageFlush(message: NativeMessage): NativeMessage {
     return this.#handleVaultOp(() => {
       const store = this.#requireVaultStore();
-      store.flushUsage({ entries: message["entries"] as any[] });
+      store.flushUsage({ entries: message["entries"] as UsageEntry[] });
       return { type: "vault.usage.flush" };
     });
   }

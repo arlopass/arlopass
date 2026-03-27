@@ -18,7 +18,7 @@ describe("BridgeHandler vault.* messages", () => {
       vaultFilePath: join(dir, "vault.encrypted"),
       lockoutFilePath: join(dir, "vault-lockout.json"),
     });
-    handler = new BridgeHandler({ vaultStore } as any);
+    handler = new BridgeHandler({ vaultStore });
     sessionToken = await obtainSessionToken(handler);
   });
 
@@ -58,10 +58,10 @@ describe("BridgeHandler vault.* messages", () => {
 
     const listRes = await send({ type: "vault.credentials.list" });
     expect(listRes["credentials"]).toHaveLength(1);
-    expect((listRes["credentials"] as any[])[0]).not.toHaveProperty("fields");
+    expect((listRes["credentials"] as Record<string, unknown>[])[0]).not.toHaveProperty("fields");
 
     const getRes = await send({ type: "vault.credentials.get", credentialId: "cred.1" });
-    expect((getRes["credential"] as any)["fields"]["apiKey"]).toBe("sk-test");
+    expect((getRes["credential"] as Record<string, unknown>)["fields"]).toHaveProperty("apiKey", "sk-test");
 
     const delRes = await send({ type: "vault.credentials.delete", credentialId: "cred.1" });
     expect(delRes["type"]).toBe("vault.credentials.delete");
@@ -109,7 +109,7 @@ describe("BridgeHandler vault.* messages", () => {
       ],
     });
     const readRes = await send({ type: "vault.usage.read" });
-    expect((readRes["recentEntries"] as any[]).length).toBe(1);
+    expect((readRes["recentEntries"] as unknown[]).length).toBe(1);
   });
 
   it("returns error for vault operations when not set up", async () => {

@@ -77,7 +77,7 @@ export function parseHeader(data: Buffer): ParsedHeader {
     );
   }
   const keyModeByte = data[5];
-  const keyMode = KEY_MODE_REVERSE[keyModeByte];
+  const keyMode = keyModeByte !== undefined ? KEY_MODE_REVERSE[keyModeByte] : undefined;
   if (keyMode === undefined) {
     throw new Error(`Unknown key mode: ${keyModeByte}`);
   }
