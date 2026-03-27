@@ -1,4 +1,5 @@
 import { Image } from "@mantine/core";
+import { tokens } from "./theme.js";
 
 /**
  * Map of provider keys to their @lobehub/icons-static-svg slug.
@@ -19,6 +20,18 @@ const slugMap: Record<string, string> = {
   google: "google-color",
 };
 
+/**
+ * Icons that use dark fills and need a light container to remain
+ * visible on the dark stone background.
+ */
+const needsLightBg = new Set([
+  "anthropic",
+  "openai",
+  "githubcopilot",
+  "opencode",
+  "ollama",
+]);
+
 export type ProviderAvatarProps = {
   providerKey: string;
   size: number;
@@ -27,15 +40,32 @@ export type ProviderAvatarProps = {
 export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
   const slug = slugMap[providerKey];
   if (slug != null) {
+    const useLightBg = needsLightBg.has(providerKey);
     return (
-      <Image
-        src={`icons/${slug}.svg`}
-        alt=""
-        w={size}
-        h={size}
-        fit="contain"
-        style={{ flexShrink: 0 }}
-      />
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: tokens.radius.button,
+          background: useLightBg ? "rgba(250, 250, 249, 0.12)" : "transparent",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <Image
+          src={`icons/${slug}.svg`}
+          alt=""
+          w={Math.round(size * 0.75)}
+          h={Math.round(size * 0.75)}
+          fit="contain"
+          style={{
+            flexShrink: 0,
+            ...(useLightBg ? { filter: "brightness(0) invert(1) opacity(0.9)" } : {}),
+          }}
+        />
+      </div>
     );
   }
   // Fallback: first-letter circle for unknown providers
@@ -45,13 +75,13 @@ export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
         width: size,
         height: size,
         borderRadius: "50%",
-        background: "#dfe1e8",
+        background: tokens.color.bgElevated,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontSize: size * 0.4,
         fontWeight: 600,
-        color: "#202225",
+        color: tokens.color.textSecondary,
         flexShrink: 0,
       }}
       aria-hidden
