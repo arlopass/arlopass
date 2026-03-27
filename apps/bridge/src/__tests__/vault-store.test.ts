@@ -76,9 +76,9 @@ describe("VaultStore", () => {
             const store = createStore();
             expect(store.status()).toEqual({ state: "uninitialized" });
             store.setup({ keyMode: "password", password: "s" });
-            expect(store.status()).toEqual({ state: "unlocked" });
+            expect(store.status()).toEqual({ state: "unlocked", keyMode: "password" });
             store.lock();
-            expect(store.status()).toEqual({ state: "locked" });
+            expect(store.status()).toEqual({ state: "locked", keyMode: "password" });
         });
     });
 

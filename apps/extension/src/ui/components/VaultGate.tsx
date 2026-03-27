@@ -9,7 +9,9 @@ import type { VaultStatus } from "../hooks/useVault.js";
 export type VaultGateProps = {
   status: VaultStatus;
   onSetup: (password: string) => Promise<void>;
+  onSetupKeychain: () => Promise<void>;
   onUnlock: (password: string) => Promise<void>;
+  onUnlockKeychain: () => Promise<void>;
   onRetry: () => void;
   /** When true, vault was unlocked then auto-locked. Show unlock as overlay, not full gate. */
   needsReauth: boolean;
@@ -19,7 +21,9 @@ export type VaultGateProps = {
 export function VaultGate({
   status,
   onSetup,
+  onSetupKeychain,
   onUnlock,
+  onUnlockKeychain,
   onRetry,
   needsReauth,
   children,
@@ -110,7 +114,7 @@ export function VaultGate({
   }
 
   if (status.state === "uninitialized") {
-    return <VaultSetup onSetup={onSetup} />;
+    return <VaultSetup onSetup={onSetup} onSetupKeychain={onSetupKeychain} />;
   }
 
   if (status.state === "locked") {

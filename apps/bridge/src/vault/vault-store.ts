@@ -55,8 +55,21 @@ export class VaultStore {
         return this.#state;
     }
 
-    status(): { state: VaultState } {
-        return { state: this.#state };
+    status(): { state: VaultState; keyMode?: KeyMode } {
+        if (this.#state === "uninitialized") {
+            return { state: this.#state };
+        }
+        // When locked, read keyMode from file header without decrypting
+        if (this.#state === "locked") {
+            try {
+                const fileData = readFileSync(this.#vaultFilePath);
+                const header = parseHeader(fileData);
+                return { state: this.#state, keyMode: header.keyMode };
+            } catch {
+                return { state: this.#state };
+            }
+        }
+        return { state: this.#state, keyMode: this.#keyMode };
     }
 
     // -- Setup ------------------------------------------------------------------

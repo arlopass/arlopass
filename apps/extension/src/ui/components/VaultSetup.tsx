@@ -1,17 +1,19 @@
 // apps/extension/src/ui/components/VaultSetup.tsx
 import { useState, useCallback } from "react";
-import { Box, Text, Button, Stack, PasswordInput } from "@mantine/core";
+import { Box, Text, Button, Stack, PasswordInput, Divider } from "@mantine/core";
 import { tokens } from "./theme.js";
 
 export type VaultSetupProps = {
   onSetup: (password: string) => Promise<void>;
+  onSetupKeychain: () => Promise<void>;
 };
 
-export function VaultSetup({ onSetup }: VaultSetupProps) {
+export function VaultSetup({ onSetup, onSetupKeychain }: VaultSetupProps) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [keychainLoading, setKeychainLoading] = useState(false);
 
   const passwordsMatch = password.length > 0 && password === confirm;
   const passwordTooShort = password.length > 0 && password.length < 8;
@@ -28,6 +30,18 @@ export function VaultSetup({ onSetup }: VaultSetupProps) {
       setLoading(false);
     }
   }, [password, passwordsMatch, passwordTooShort, onSetup]);
+
+  const handleKeychain = useCallback(async () => {
+    setKeychainLoading(true);
+    setError(null);
+    try {
+      await onSetupKeychain();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Keychain setup failed.");
+    } finally {
+      setKeychainLoading(false);
+    }
+  }, [onSetupKeychain]);
 
   return (
     <Box
@@ -52,8 +66,8 @@ export function VaultSetup({ onSetup }: VaultSetupProps) {
           maxWidth: 280,
         }}
       >
-        Your credentials are encrypted with a master password. Choose something
-        strong — the bridge never sees your password in plaintext.
+        Your credentials are encrypted at rest. Choose how to protect the
+        encryption key.
       </Text>
 
       <Stack gap="sm" style={{ width: "100%", maxWidth: 280, marginTop: 8 }}>
@@ -84,12 +98,38 @@ export function VaultSetup({ onSetup }: VaultSetupProps) {
         <Button
           fullWidth
           loading={loading}
-          disabled={!passwordsMatch || passwordTooShort}
+          disabled={!passwordsMatch || passwordTooShort || keychainLoading}
           onClick={handleSubmit}
           style={{ marginTop: 8 }}
         >
-          Create vault
+          Create vault with password
         </Button>
+
+        <Divider
+          label="or"
+          labelPosition="center"
+          style={{ marginTop: 4, marginBottom: 4 }}
+        />
+
+        <Button
+          fullWidth
+          variant="outline"
+          loading={keychainLoading}
+          disabled={loading}
+          onClick={handleKeychain}
+        >
+          Use OS keychain instead
+        </Button>
+        <Text
+          size="xs"
+          style={{
+            color: tokens.color.textTertiary,
+            textAlign: "center",
+          }}
+        >
+          The encryption key is stored in your system's credential manager.
+          No password needed — unlocks automatically.
+        </Text>
       </Stack>
 
       <Text
@@ -102,8 +142,8 @@ export function VaultSetup({ onSetup }: VaultSetupProps) {
           paddingBottom: 16,
         }}
       >
-        If you forget this password, you'll need to reset the vault and re-add
-        your providers.
+        If you forget your password or lose keychain access, you'll need to
+        reset the vault and re-add your providers.
       </Text>
     </Box>
   );

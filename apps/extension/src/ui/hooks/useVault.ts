@@ -24,8 +24,12 @@ export type UseVaultResult = {
     sendVaultMessage: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
     /** Run vault.setup with password mode. */
     setup: (password: string) => Promise<void>;
+    /** Run vault.setup with OS keychain mode (no password needed). */
+    setupKeychain: () => Promise<void>;
     /** Unlock with password. */
     unlock: (password: string) => Promise<void>;
+    /** Unlock using OS keychain (no password needed). */
+    unlockKeychain: () => Promise<void>;
     /** Lock the vault. */
     lock: () => Promise<void>;
     /** Re-check vault status (e.g. after bridge reconnect). */
@@ -144,10 +148,32 @@ export function useVault(): UseVaultResult {
                 return;
             }
             const vaultState = resp["state"] as string;
+            const keyMode = resp["keyMode"] as string | undefined;
             if (vaultState === "uninitialized") {
                 setStatus({ state: "uninitialized" });
             } else if (vaultState === "locked") {
-                setStatus({ state: "locked" });
+                if (keyMode === "keychain") {
+                    // Auto-unlock for keychain mode
+                    setStatus({ state: "locked", keyMode: "keychain" });
+                    try {
+                        const unlockResp = await sendNativeMessage(HOST_NAME, {
+                            type: "vault.unlock.keychain",
+                            sessionToken: session.sessionToken,
+                        });
+                        if (!mountedRef.current) return;
+                        if (isRecord(unlockResp) && unlockResp["type"] !== "error") {
+                            setStatus({ state: "unlocked" });
+                        } else {
+                            // Keychain auto-unlock failed — show password fallback
+                            setStatus({ state: "locked", keyMode: "keychain" });
+                        }
+                    } catch {
+                        if (!mountedRef.current) return;
+                        setStatus({ state: "locked", keyMode: "keychain" });
+                    }
+                } else {
+                    setStatus({ state: "locked", keyMode: "password" });
+                }
             } else if (vaultState === "unlocked") {
                 setStatus({ state: "unlocked" });
             } else {
@@ -170,18 +196,34 @@ export function useVault(): UseVaultResult {
         setStatus({ state: "unlocked" });
     }, [sendVaultMessage]);
 
+    const setupKeychain = useCallback(async () => {
+        const resp = await sendVaultMessage({ type: "vault.setup.keychain" });
+        if (resp["type"] === "error") {
+            throw new Error(resp["message"] as string ?? "Keychain setup failed.");
+        }
+        setStatus({ state: "unlocked" });
+    }, [sendVaultMessage]);
+
     const unlock = useCallback(async (password: string) => {
         const resp = await sendVaultMessage({ type: "vault.unlock", password });
         if (resp["type"] === "error") {
             const code = resp["reasonCode"] as string;
             if (code === "vault.locked_out") {
-                // Parse seconds from message: "Too many failed attempts. Try again in N seconds."
                 const match = (resp["message"] as string)?.match(/(\d+) seconds/);
                 const seconds = match?.[1] !== undefined ? Number.parseInt(match[1], 10) : 60;
                 setStatus({ state: "locked_out", secondsRemaining: seconds });
                 throw new Error(resp["message"] as string);
             }
             throw new Error(resp["message"] as string ?? "Unlock failed.");
+        }
+        setNeedsReauth(false);
+        setStatus({ state: "unlocked" });
+    }, [sendVaultMessage]);
+
+    const unlockKeychain = useCallback(async () => {
+        const resp = await sendVaultMessage({ type: "vault.unlock.keychain" });
+        if (resp["type"] === "error") {
+            throw new Error(resp["message"] as string ?? "Keychain unlock failed.");
         }
         setNeedsReauth(false);
         setStatus({ state: "unlocked" });
@@ -198,5 +240,5 @@ export function useVault(): UseVaultResult {
         return () => { mountedRef.current = false; };
     }, [checkStatus]);
 
-    return { status, sendVaultMessage, setup, unlock, lock, refresh: checkStatus, needsReauth };
+    return { status, sendVaultMessage, setup, setupKeychain, unlock, unlockKeychain, lock, refresh: checkStatus, needsReauth };
 }

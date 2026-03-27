@@ -53,6 +53,7 @@ import {
 import { VaultStore } from "./vault/vault-store.js";
 import { VaultError } from "./vault/vault-types.js";
 import type { UsageEntry } from "./vault/vault-types.js";
+import { createKeychainAdapter } from "./vault/vault-keychain.js";
 
 export type BridgeHandlerOptions = Readonly<{
   signingKey?: Buffer;
@@ -450,8 +451,12 @@ export class BridgeHandler {
         return this.#handleVaultStatus();
       case "vault.setup":
         return this.#handleVaultSetup(message);
+      case "vault.setup.keychain":
+        return this.#handleVaultSetupKeychain();
       case "vault.unlock":
         return this.#handleVaultUnlock(message);
+      case "vault.unlock.keychain":
+        return this.#handleVaultUnlockKeychain();
       case "vault.lock":
         return this.#handleVaultLock();
       case "vault.credentials.list":
@@ -2104,19 +2109,66 @@ export class BridgeHandler {
     return this.#handleVaultOp(() => {
       const store = this.#requireVaultStore();
       const keyMode = message["keyMode"] as "password" | "keychain";
+      if (keyMode === "keychain") {
+        // Keychain mode: generate random key, store in OS keychain, pass to vault
+        // This is async but #handleVaultOp is sync — we need to handle this differently
+        throw new VaultError("Use vault.setup.keychain for keychain mode.", "request.invalid");
+      }
       const password = typeof message["password"] === "string" ? message["password"] : undefined;
-      store.setup({ keyMode, ...(password !== undefined ? { password } : {}) });
+      store.setup({ keyMode: "password", ...(password !== undefined ? { password } : {}) });
       return { type: "vault.setup", ...store.status() };
     });
+  }
+
+  async #handleVaultSetupKeychain(): Promise<NativeMessage> {
+    try {
+      const store = this.#requireVaultStore();
+      const keychain = createKeychainAdapter();
+      const { randomBytes } = await import("node:crypto");
+      const key = randomBytes(32);
+      await keychain.setKey(key);
+      store.setup({ keyMode: "keychain", keychainKey: key });
+      return { type: "vault.setup", ...store.status() };
+    } catch (error) {
+      if (error instanceof VaultError) {
+        return errorResponse(error.reasonCode, error.message);
+      }
+      return errorResponse("vault.keychain_unavailable",
+        error instanceof Error ? error.message : "OS credential store is unavailable. Switch to password mode.");
+    }
   }
 
   #handleVaultUnlock(message: NativeMessage): NativeMessage {
     return this.#handleVaultOp(() => {
       const store = this.#requireVaultStore();
       const password = typeof message["password"] === "string" ? message["password"] : undefined;
-      store.unlock(password !== undefined ? { password } : {});
-      return { type: "vault.unlock", ...store.status() };
+      if (password !== undefined) {
+        store.unlock({ password });
+        return { type: "vault.unlock", ...store.status() };
+      }
+      // No password — could be keychain mode, handled via async path
+      throw new VaultError("Use vault.unlock.keychain for keychain mode, or provide password.", "request.invalid");
     });
+  }
+
+  async #handleVaultUnlockKeychain(): Promise<NativeMessage> {
+    try {
+      const store = this.#requireVaultStore();
+      const keychain = createKeychainAdapter();
+      const key = await keychain.getKey();
+      if (key === null) {
+        return errorResponse("vault.keychain_unavailable",
+          "OS credential store returned no key. The keychain entry may have been deleted.");
+      }
+      store.unlock({ keychainKey: key });
+      return { type: "vault.unlock", ...store.status() };
+    } catch (error) {
+      if (error instanceof VaultError) {
+        return errorResponse(error.reasonCode, error.message);
+      }
+      return errorResponse("vault.keychain_unavailable",
+        error instanceof Error ? error.message : "OS credential store is unavailable. Switch to password mode.");
+    }
   }
 
   #handleVaultLock(): NativeMessage {

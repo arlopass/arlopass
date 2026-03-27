@@ -84,7 +84,9 @@ function App() {
       <VaultGate
         status={vault.status}
         onSetup={vault.setup}
+        onSetupKeychain={vault.setupKeychain}
         onUnlock={vault.unlock}
+        onUnlockKeychain={vault.unlockKeychain}
         onRetry={vault.refresh}
         needsReauth={vault.needsReauth}
       >
