@@ -2077,7 +2077,7 @@ export class BridgeHandler {
 
   #requireVaultStore(): VaultStore {
     if (!this.#vaultStore) {
-      return undefined as never;
+      throw new VaultError("Vault is not configured on this bridge.", "vault.uninitialized");
     }
     return this.#vaultStore;
   }
@@ -2094,8 +2094,10 @@ export class BridgeHandler {
   }
 
   #handleVaultStatus(): NativeMessage {
-    const store = this.#requireVaultStore();
-    return { type: "vault.status", ...store.status() };
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      return { type: "vault.status", ...store.status() };
+    });
   }
 
   #handleVaultSetup(message: NativeMessage): NativeMessage {
