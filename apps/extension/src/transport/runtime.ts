@@ -40,6 +40,14 @@ const RESPONSE_TTL_MS = 60_000;
 const TRANSPORT_STREAM_CHANNEL = "arlopass.transport.stream";
 const TRANSPORT_STREAM_PORT_NAME = "arlopass.transport.stream.v1";
 
+/** Thrown when a vault operation fails because the vault is locked. */
+export class VaultLockedError extends Error {
+    constructor() {
+        super("Vault is locked. User must unlock before this operation can proceed.");
+        this.name = "VaultLockedError";
+    }
+}
+
 const DEFAULT_CAPABILITIES = [
   "provider.list",
   "session.create",
@@ -397,23 +405,23 @@ async function readWalletSnapshot(
   let providers: StoredProvider[] = [];
 
   if (sendVaultMessage !== undefined) {
-    try {
-      const result = await sendVaultMessage({ type: "vault.providers.list" });
-      const vaultProviders = Array.isArray(result["providers"]) ? result["providers"] as unknown[] : [];
-      providers = vaultProviders
-        .filter((p): p is Record<string, unknown> => isRecord(p) && typeof p["id"] === "string")
-        .map((p) => parseStoredProvider({
-          ...p,
-          models: Array.isArray(p["models"])
-            ? (p["models"] as unknown[]).map((m) =>
-              typeof m === "string" ? { id: m, name: m } : m,
-            )
-            : [],
-        }))
-        .filter((value): value is StoredProvider => value !== null);
-    } catch {
-      // Vault unavailable — fall back to empty providers
+    const result = await sendVaultMessage({ type: "vault.providers.list" });
+    // If vault is locked, throw so callers can handle (e.g. open popup)
+    if (result["type"] === "error" && result["reasonCode"] === "vault.locked") {
+      throw new VaultLockedError();
     }
+    const vaultProviders = Array.isArray(result["providers"]) ? result["providers"] as unknown[] : [];
+    providers = vaultProviders
+      .filter((p): p is Record<string, unknown> => isRecord(p) && typeof p["id"] === "string")
+      .map((p) => parseStoredProvider({
+        ...p,
+        models: Array.isArray(p["models"])
+          ? (p["models"] as unknown[]).map((m) =>
+            typeof m === "string" ? { id: m, name: m } : m,
+          )
+          : [],
+      }))
+      .filter((value): value is StoredProvider => value !== null);
   }
 
   const rawState = await storage.get([WALLET_KEY_ACTIVE]);
@@ -2829,6 +2837,20 @@ export function registerDefaultTransportMessageListener(options: {
         );
       })
       .catch((error: unknown) => {
+        if (error instanceof VaultLockedError) {
+          // Vault is locked — open popup so user can unlock, tell SDK to retry
+          try { chrome.action?.openPopup?.(); } catch { /* MV2 or unavailable */ }
+          sendResponse({
+            ok: false,
+            error: {
+              message: "Vault is locked. Please unlock the Arlopass extension and try again.",
+              machineCode: PROTOCOL_MACHINE_CODES.PERMISSION_DENIED,
+              reasonCode: "vault.locked",
+              retryable: true,
+            },
+          });
+          return;
+        }
         const errorObject = error instanceof Error ? error : new Error(String(error));
         reportError(errorObject);
         sendResponse({
@@ -3030,6 +3052,21 @@ export function registerDefaultTransportStreamPortListener(options: {
         }
       } catch (error) {
         if (portDisconnected) {
+          return;
+        }
+        if (error instanceof VaultLockedError) {
+          try { chrome.action?.openPopup?.(); } catch { /* MV2 or unavailable */ }
+          void postToPort({
+            channel: TRANSPORT_STREAM_CHANNEL,
+            requestId: message.requestId,
+            event: "error",
+            error: {
+              message: "Vault is locked. Please unlock the Arlopass extension and try again.",
+              machineCode: PROTOCOL_MACHINE_CODES.PERMISSION_DENIED,
+              reasonCode: "vault.locked",
+              retryable: true,
+            },
+          });
           return;
         }
         const errorPayload = toTransportErrorPayload(error, envelope.correlationId);

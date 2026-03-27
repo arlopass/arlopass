@@ -557,8 +557,8 @@ export function registerDefaultWalletMessageListener(options: {
 
 registerDefaultWalletMessageListener();
 registerVaultProxyListener();
-registerDefaultTransportMessageListener();
-registerDefaultTransportStreamPortListener();
+registerDefaultTransportMessageListener({ sendVaultMessage: sendVaultMessageViaProxy });
+registerDefaultTransportStreamPortListener({ sendVaultMessage: sendVaultMessageViaProxy });
 
 // ---------------------------------------------------------------------------
 // ExtensionBackgroundService
