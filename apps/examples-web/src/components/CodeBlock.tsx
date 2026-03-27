@@ -106,7 +106,10 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
 
   // Calculate editor height from line count
   const lineCount = displayCode.split("\n").length;
-  const editorHeight = Math.min(Math.max(lineCount * 20 + 16, 60), 500);
+  const naturalHeight = lineCount * 20 + 16;
+  const maxHeight = 500;
+  const editorHeight = Math.min(Math.max(naturalHeight, 60), maxHeight);
+  const isOverflowing = naturalHeight > maxHeight;
 
   if (compact) {
     return (
@@ -116,7 +119,7 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
           language={monacoLang}
           value={displayCode}
           theme="light"
-          options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: "off", folding: false, fontSize: 13, padding: { top: 8, bottom: 8 }, renderLineHighlight: "none", overviewRulerLanes: 0, scrollbar: { vertical: "hidden", horizontal: "auto", handleMouseWheel: false, alwaysConsumeMouseWheel: false } }}
+          options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: "off", folding: false, fontSize: 13, padding: { top: 8, bottom: 8 }, renderLineHighlight: "none", overviewRulerLanes: 0, scrollbar: { vertical: isOverflowing ? "auto" : "hidden", horizontal: "auto", handleMouseWheel: isOverflowing, alwaysConsumeMouseWheel: false } }}
         />
       </Box>
     );
@@ -218,7 +221,7 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
           padding: { top: 12, bottom: 12 },
           renderLineHighlight: "none",
           overviewRulerLanes: 0,
-          scrollbar: { vertical: "hidden", horizontal: "auto", handleMouseWheel: false, alwaysConsumeMouseWheel: false },
+          scrollbar: { vertical: isOverflowing ? "auto" : "hidden", horizontal: "auto", handleMouseWheel: isOverflowing, alwaysConsumeMouseWheel: false },
           contextmenu: false,
           domReadOnly: true,
         }}
