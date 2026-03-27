@@ -57,7 +57,7 @@ function OptionsOnboarding() {
           <Text size="sm" c={tokens.color.textSecondary}>
             Heading back…
           </Text>
-          <Loader size="sm" color={tokens.color.primary} />
+          <Loader size="sm" color={tokens.color.btnPrimaryBg} />
         </Stack>
       );
     }

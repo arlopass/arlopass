@@ -119,7 +119,7 @@ export function OnboardingController({
   if (currentStep === null) {
     return (
       <Stack align="center" justify="center" h="100%" py={40}>
-        <Loader size="sm" color={tokens.color.primary} />
+        <Loader size="sm" color={tokens.color.btnPrimaryBg} />
       </Stack>
     );
   }
@@ -141,7 +141,7 @@ export function OnboardingController({
   if (currentStep === 4) {
     return (
       <Stack align="center" justify="center" h="100%" py={40} gap={12}>
-        <Loader size="sm" color={tokens.color.primary} />
+        <Loader size="sm" color={tokens.color.btnPrimaryBg} />
         <Text size="sm" c={tokens.color.textSecondary}>
           Opening setup…
         </Text>
@@ -156,7 +156,7 @@ export function OnboardingController({
   // Step 3 is handled by options page; fallback loader
   return (
     <Box py={40}>
-      <Loader size="sm" color={tokens.color.primary} />
+      <Loader size="sm" color={tokens.color.btnPrimaryBg} />
     </Box>
   );
 }
