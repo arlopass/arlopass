@@ -16,6 +16,9 @@ import {
   writeConnectionResult,
 } from "./ui/components/app-connect/pending-connection.js";
 import { arlopassTheme } from "./ui/components/theme.js";
+import { useVault } from "./ui/hooks/useVault.js";
+import { VaultGate } from "./ui/components/VaultGate.js";
+import { VaultProvider } from "./ui/hooks/VaultContext.js";
 import { useWalletProviders } from "./ui/hooks/useWalletProviders.js";
 import { useActiveTabApp } from "./ui/hooks/useActiveTabApp.js";
 import {
@@ -77,6 +80,7 @@ function App() {
   const { providers, rawProviders, loading, error, refresh } =
     useWalletProviders();
   const { activeApp } = useActiveTabApp();
+  const vault = useVault();
   const [view, setView] = useState<PopupView>({ type: "main" });
   const [restored, setRestored] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
@@ -149,56 +153,6 @@ function App() {
 
   if (!restored) return null;
 
-  if (view.type === "onboarding") {
-    return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
-        <OnboardingController
-          hasProviders={providers.length > 0}
-          onComplete={() => {
-            updateView({ type: "main" });
-            refresh();
-          }}
-          onOpenOptions={(route) => {
-            chrome.tabs.create({
-              url: chrome.runtime.getURL(`options.html#${route}`),
-            });
-          }}
-        />
-      </MantineProvider>
-    );
-  }
-
-  if (view.type === "add-provider") {
-    return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
-        <AddProviderWizard
-          onClose={() => updateView({ type: "main" })}
-          onSaved={refresh}
-        />
-      </MantineProvider>
-    );
-  }
-
-  if (view.type === "connect-app") {
-    return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
-        <AppConnectWizard
-          origin={view.origin}
-          providers={providers}
-          rawProviders={rawProviders}
-          onComplete={(approved) => {
-            void writeConnectionResult(view.origin, approved)
-              .then(() => clearPendingConnection())
-              .then(() => {
-                updateView({ type: "main" });
-                refresh();
-              });
-          }}
-        />
-      </MantineProvider>
-    );
-  }
-
   // Build header dropdown menu items when an app is detected
   const headerMenuItems: HeaderMenuItem[] = [];
   if (activeApp !== null) {
@@ -223,45 +177,86 @@ function App() {
     });
   }
 
-  // Show app-specific view when the active tab has a connected app
-  if (view.type === "main" && activeApp !== null) {
-    return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
-        <AppDetailView
-          app={activeApp.app}
-          rawProviders={rawProviders}
-          onBack={() => updateView({ type: "wallet" })}
-          onSettingsClick={() => {
-            void walletActions.openConnectFlow();
-          }}
-          headerMenuItems={headerMenuItems}
-        />
-      </MantineProvider>
-    );
-  }
-
   return (
     <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
-      <WalletPopup
-        providers={providers}
-        rawProviders={rawProviders}
-        loading={loading}
-        error={error}
-        onProviderClick={(id) => console.log("Provider clicked:", id)}
-        onRemoveProvider={(id) => {
-          void walletActions
-            .revokeProvider({ providerId: id })
-            .then(() => refresh());
-        }}
-        onEditProvider={() => {
-          void walletActions.openConnectFlow();
-        }}
-        onManageProviders={() => updateView({ type: "add-provider" })}
-        onSettingsClick={() => {
-          void walletActions.openConnectFlow();
-        }}
-        headerMenuItems={headerMenuItems}
-      />
+      <VaultGate
+        status={vault.status}
+        onSetup={vault.setup}
+        onUnlock={vault.unlock}
+        onRetry={vault.refresh}
+        needsReauth={vault.needsReauth}
+      >
+        <VaultProvider sendVaultMessage={vault.sendVaultMessage}>
+          {view.type === "onboarding" && (
+            <OnboardingController
+              hasProviders={providers.length > 0}
+              onComplete={() => {
+                updateView({ type: "main" });
+                refresh();
+              }}
+              onOpenOptions={(route) => {
+                chrome.tabs.create({
+                  url: chrome.runtime.getURL(`options.html#${route}`),
+                });
+              }}
+            />
+          )}
+          {view.type === "add-provider" && (
+            <AddProviderWizard
+              onClose={() => updateView({ type: "main" })}
+              onSaved={refresh}
+            />
+          )}
+          {view.type === "connect-app" && (
+            <AppConnectWizard
+              origin={view.origin}
+              providers={providers}
+              rawProviders={rawProviders}
+              onComplete={(approved) => {
+                void writeConnectionResult(view.origin, approved)
+                  .then(() => clearPendingConnection())
+                  .then(() => {
+                    updateView({ type: "main" });
+                    refresh();
+                  });
+              }}
+            />
+          )}
+          {view.type === "main" && activeApp !== null && (
+            <AppDetailView
+              app={activeApp.app}
+              rawProviders={rawProviders}
+              onBack={() => updateView({ type: "wallet" })}
+              onSettingsClick={() => {
+                void walletActions.openConnectFlow();
+              }}
+              headerMenuItems={headerMenuItems}
+            />
+          )}
+          {view.type !== "onboarding" && view.type !== "add-provider" && view.type !== "connect-app" && !(view.type === "main" && activeApp !== null) && (
+            <WalletPopup
+              providers={providers}
+              rawProviders={rawProviders}
+              loading={loading}
+              error={error}
+              onProviderClick={(id) => console.log("Provider clicked:", id)}
+              onRemoveProvider={(id) => {
+                void walletActions
+                  .revokeProvider({ providerId: id })
+                  .then(() => refresh());
+              }}
+              onEditProvider={() => {
+                void walletActions.openConnectFlow();
+              }}
+              onManageProviders={() => updateView({ type: "add-provider" })}
+              onSettingsClick={() => {
+                void walletActions.openConnectFlow();
+              }}
+              headerMenuItems={headerMenuItems}
+            />
+          )}
+        </VaultProvider>
+      </VaultGate>
     </MantineProvider>
   );
 }
