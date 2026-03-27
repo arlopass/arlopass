@@ -27,7 +27,14 @@ export function Sidebar() {
           leftSection={<IconSearch size={14} stroke={1.5} />}
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
-          styles={{ input: { border: "1px solid var(--mantine-color-gray-3)" } }}
+          styles={{
+            input: {
+              background: "var(--ap-bg-surface)",
+              border: "1px solid var(--ap-border)",
+              color: "var(--ap-text-body)",
+              "&::placeholder": { color: "var(--ap-text-tertiary)" },
+            },
+          }}
         />
       </Box>
       <ScrollArea type="scroll" scrollbarSize={6} style={{ flex: 1 }} px="sm">
@@ -36,16 +43,16 @@ export function Sidebar() {
             <Text
               fz={11}
               fw={700}
-              c="dimmed"
               tt="uppercase"
               lts={0.5}
               mb={6}
+              style={{ color: "var(--ap-text-tertiary)", letterSpacing: "0.05em" }}
             >
               {cat.label}
             </Text>
             <Box
               style={{
-                borderLeft: "1px solid var(--mantine-color-gray-3)",
+                borderLeft: "1px solid var(--ap-border)",
               }}
             >
               {cat.items.map((item) => {
@@ -61,25 +68,27 @@ export function Sidebar() {
                     fz="sm"
                     style={{
                       borderLeft: isActive
-                        ? "2px solid var(--mantine-color-blue-6)"
+                        ? "2px solid var(--ap-brand)"
                         : "2px solid transparent",
                       marginLeft: -1,
                       color: isActive
-                        ? "var(--mantine-color-blue-6)"
-                        : "var(--mantine-color-gray-7)",
+                        ? "var(--ap-text-primary)"
+                        : "var(--ap-text-secondary)",
                       fontWeight: isActive ? 500 : 400,
                       lineHeight: 1.5,
+                      background: isActive ? "var(--ap-brand-subtle-dark)" : "transparent",
+                      borderRadius: "0 var(--ap-radius-sm) var(--ap-radius-sm) 0",
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.borderLeftColor = "var(--mantine-color-gray-4)";
-                        e.currentTarget.style.color = "var(--mantine-color-dark-9)";
+                        e.currentTarget.style.background = "var(--ap-bg-surface)";
+                        e.currentTarget.style.color = "var(--ap-text-primary)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.borderLeftColor = "transparent";
-                        e.currentTarget.style.color = "var(--mantine-color-gray-7)";
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "var(--ap-text-secondary)";
                       }
                     }}
                   >

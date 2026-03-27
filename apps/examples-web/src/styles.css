@@ -1,25 +1,145 @@
-:root {
-  color-scheme: light;
+/* ─── Geist Fonts ───────────────────────────────────────────────── */
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('geist/dist/fonts/geist-sans/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
 }
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('geist/dist/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Arlopass Design System Tokens ──────────────────────────────── */
+
+:root {
+  color-scheme: dark;
+
+  /* Brand signature (constant across themes) */
+  --ap-brand: #C2410C;
+  --ap-brand-hover: #9A3412;
+  --ap-brand-subtle: #FFF7ED;
+  --ap-brand-subtle-dark: #2C1A0E;
+
+  /* Secondary accent */
+  --ap-amber: #D97706;
+  --ap-amber-hover: #B45309;
+
+  /* Semantic */
+  --ap-success: #4D7C0F;
+  --ap-success-subtle: #F7FEE7;
+  --ap-warning: #CA8A04;
+  --ap-warning-subtle: #FEFCE8;
+  --ap-danger: #B91C1C;
+  --ap-danger-subtle: #FEF2F2;
+
+  /* Font stacks */
+  --ap-font-body: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --ap-font-code: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ap-font-display: var(--ap-font-body);
+
+  /* Type scale */
+  --ap-text-xs: 0.75rem;
+  --ap-text-sm: 0.875rem;
+  --ap-text-base: 1rem;
+  --ap-text-lg: 1.125rem;
+  --ap-text-xl: 1.25rem;
+  --ap-text-2xl: 1.5rem;
+  --ap-text-3xl: 1.875rem;
+  --ap-text-4xl: 2.25rem;
+
+  /* Spacing scale (4px base) */
+  --ap-space-0: 0;
+  --ap-space-1: 4px;
+  --ap-space-2: 8px;
+  --ap-space-3: 12px;
+  --ap-space-4: 16px;
+  --ap-space-5: 20px;
+  --ap-space-6: 24px;
+  --ap-space-8: 32px;
+  --ap-space-10: 40px;
+  --ap-space-12: 48px;
+  --ap-space-16: 64px;
+  --ap-space-20: 80px;
+  --ap-space-24: 96px;
+
+  /* Border radius */
+  --ap-radius-sm: 4px;
+  --ap-radius-md: 8px;
+  --ap-radius-lg: 12px;
+  --ap-radius-full: 9999px;
+}
+
+/* ─── Dark Theme (Primary) ──────────────────────────────────────── */
+
+:root,
+[data-mantine-color-scheme="dark"] {
+  --ap-bg-base: #1C1917;
+  --ap-bg-surface: #292524;
+  --ap-bg-elevated: #3D3835;
+  --ap-bg-code: #1A1412;
+
+  --ap-border: #44403C;
+  --ap-border-strong: #57534E;
+
+  --ap-text-primary: #FAFAF9;
+  --ap-text-body: #D6D3D1;
+  --ap-text-secondary: #A8A29E;
+  --ap-text-tertiary: #78716C;
+
+  --ap-text-link: #C2410C;
+  --ap-text-link-hover: #D97706;
+
+  --ap-success-subtle: #1A2E05;
+  --ap-warning-subtle: #2E2204;
+  --ap-danger-subtle: #2E0505;
+}
+
+/* ─── Light Theme ───────────────────────────────────────────────── */
+
+[data-mantine-color-scheme="light"] {
+  --ap-bg-base: #FAFAF9;
+  --ap-bg-surface: #FFFFFF;
+  --ap-bg-elevated: #FFFFFF;
+  --ap-bg-code: #1C1917;
+
+  --ap-border: #E7E5E4;
+  --ap-border-strong: #D6D3D1;
+
+  --ap-text-primary: #1C1917;
+  --ap-text-body: #292524;
+  --ap-text-secondary: #78716C;
+  --ap-text-tertiary: #A8A29E;
+
+  --ap-text-link: #C2410C;
+  --ap-text-link-hover: #9A3412;
+
+  --ap-success-subtle: #F7FEE7;
+  --ap-warning-subtle: #FEFCE8;
+  --ap-danger-subtle: #FEF2F2;
+}
+
+/* ─── Base Styles ───────────────────────────────────────────────── */
 
 body {
   margin: 0;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  background: #f7f8fa;
+  font-family: var(--ap-font-body);
+  background: var(--ap-bg-base);
+  color: var(--ap-text-body);
+  font-size: var(--ap-text-base);
+  line-height: 1.625;
 }
 
+/* ─── Utility Classes ───────────────────────────────────────────── */
+
 .mono-text {
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  font-family: var(--ap-font-code);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -29,7 +149,8 @@ body {
   overflow-x: auto;
 }
 
-/* Chat markdown styles */
+/* ─── Chat Markdown ─────────────────────────────────────────────── */
+
 .chat-markdown {
   word-break: break-word;
 }
@@ -40,21 +161,23 @@ body {
   margin-bottom: 0;
 }
 .chat-markdown pre {
-  background: var(--mantine-color-gray-1);
-  border-radius: 6px;
+  background: var(--ap-bg-code);
+  border-radius: var(--ap-radius-md);
   padding: 8px 12px;
   overflow-x: auto;
-  font-size: 12px;
+  font-size: 13px;
   margin: 0.5em 0;
+  color: #D6D3D1;
 }
 .chat-markdown code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--ap-font-code);
   font-size: 0.875em;
 }
 .chat-markdown :not(pre) > code {
-  background: var(--mantine-color-gray-1);
+  background: var(--ap-bg-surface);
   padding: 1px 4px;
   border-radius: 3px;
+  color: var(--ap-amber);
 }
 .chat-markdown ul,
 .chat-markdown ol {
@@ -70,19 +193,23 @@ body {
   margin: 0.5em 0 0.25em;
   font-size: 1em;
   font-weight: 600;
+  color: var(--ap-text-primary);
 }
 .chat-markdown a {
-  color: var(--mantine-color-blue-6);
+  color: var(--ap-text-link);
+}
+.chat-markdown a:hover {
+  color: var(--ap-text-link-hover);
 }
 .chat-markdown blockquote {
-  border-left: 3px solid var(--mantine-color-gray-4);
+  border-left: 3px solid var(--ap-border);
   margin: 0.5em 0;
   padding: 0.25em 0.75em;
-  color: var(--mantine-color-gray-7);
+  color: var(--ap-text-secondary);
 }
 
 button.language-tab {
-  border: 1px solid var(--mantine-color-gray-3);
+  border: 1px solid var(--ap-border);
   border-top: 0;
   border-left: 0;
   border-radius: 0;
@@ -95,5 +222,5 @@ button.language-tab > span {
 }
 
 button.language-tab:where([data-active]) {
-  background-color: var(--mantine-color-gray-0);
+  background-color: var(--ap-bg-surface);
 }

@@ -18,9 +18,9 @@ export function Layout({ pageId, children }: LayoutProps) {
       {/* Breadcrumb */}
       {category && page && (
         <Group gap={4}>
-          <Text fz="xs" c="dimmed">{category.label}</Text>
-          <Text fz="xs" c="dimmed">/</Text>
-          <Text fz="xs" c="dimmed" fw={500}>{page.label}</Text>
+          <Text fz="xs" style={{ color: "var(--ap-text-tertiary)" }}>{category.label}</Text>
+          <Text fz="xs" style={{ color: "var(--ap-text-tertiary)" }}>/</Text>
+          <Text fz="xs" style={{ color: "var(--ap-text-tertiary)" }} fw={500}>{page.label}</Text>
         </Group>
       )}
 
@@ -30,15 +30,27 @@ export function Layout({ pageId, children }: LayoutProps) {
       {/* Prev/Next navigation */}
       {(prev || next) && (
         <>
-          <Divider my="xl" />
+          <Divider my="xl" style={{ borderColor: "var(--ap-border)" }} />
           <Group justify="space-between">
             {prev ? (
-              <Anchor fz="sm" onClick={() => navigate(prev.id)} style={{ cursor: "pointer" }}>
+              <Anchor
+                fz="sm"
+                onClick={() => navigate(prev.id)}
+                style={{ cursor: "pointer", color: "var(--ap-text-link)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--ap-text-link-hover)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ap-text-link)"; }}
+              >
                 ← {prev.label}
               </Anchor>
             ) : <Box />}
             {next ? (
-              <Anchor fz="sm" onClick={() => navigate(next.id)} style={{ cursor: "pointer" }}>
+              <Anchor
+                fz="sm"
+                onClick={() => navigate(next.id)}
+                style={{ cursor: "pointer", color: "var(--ap-text-link)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--ap-text-link-hover)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ap-text-link)"; }}
+              >
                 {next.label} →
               </Anchor>
             ) : <Box />}

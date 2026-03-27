@@ -132,7 +132,7 @@ export function CodeBlock({
             ? {}
             : {
                 overflow: "hidden",
-                border: "1px solid var(--mantine-color-gray-3)",
+                border: "1px solid var(--ap-border)",
               }
         }
       >
@@ -170,7 +170,7 @@ export function CodeBlock({
         inPreview
           ? {}
           : {
-              border: "1px solid var(--mantine-color-gray-3)",
+              border: "1px solid var(--ap-border)",
               borderRadius: 8,
               overflow: "hidden",
             }
@@ -182,8 +182,8 @@ export function CodeBlock({
         px="md"
         py={8}
         style={{
-          background: "var(--mantine-color-gray-0)",
-          borderBottom: "1px solid var(--mantine-color-gray-3)",
+          background: "var(--ap-bg-surface)",
+          borderBottom: "1px solid var(--ap-border)",
         }}
       >
         <Group gap="xs">
@@ -205,7 +205,7 @@ export function CodeBlock({
                     cursor: "pointer",
                     padding: "2px 10px",
                     borderRadius: 4,
-                    background: "var(--mantine-color-gray-2)",
+                    background: "var(--ap-bg-elevated)",
                   }}
                 >
                   <Text fz="xs" fw={500}>
@@ -244,7 +244,7 @@ export function CodeBlock({
               <Tooltip label={copied ? "Copied" : "Copy"} withArrow>
                 <ActionIcon
                   variant="subtle"
-                  color={copied ? "teal" : "gray"}
+                  color={copied ? "green" : "gray"}
                   size="sm"
                   onClick={copy}
                 >
@@ -259,7 +259,7 @@ export function CodeBlock({
             <Tooltip label="Run" withArrow>
               <ActionIcon
                 variant="subtle"
-                color="teal"
+                color="orange"
                 size="sm"
                 onClick={onRun}
               >

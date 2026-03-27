@@ -5,7 +5,7 @@ export type InlineCodeProps = {
   children: ReactNode;
 };
 
-/** Styled inline code span matching our doc design. */
+/** Styled inline code span matching Arlopass design. */
 export function InlineCode({ children }: InlineCodeProps) {
   return (
     <Code
@@ -14,6 +14,9 @@ export function InlineCode({ children }: InlineCodeProps) {
         borderRadius: 4,
         fontSize: "0.875em",
         fontWeight: 500,
+        fontFamily: "var(--ap-font-code)",
+        background: "var(--ap-bg-surface)",
+        color: "var(--ap-amber)",
       }}
     >
       {children}

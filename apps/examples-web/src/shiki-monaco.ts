@@ -15,7 +15,7 @@ import type { Monaco } from "@monaco-editor/react";
 let highlighterPromise: Promise<Highlighter> | null = null;
 let registered = false;
 
-const THEME = "github-light";
+const THEME = "vitesse-dark";
 
 const LANGS = [
     "typescript",
