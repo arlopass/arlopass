@@ -1,6 +1,5 @@
 import { Stack, Title, Text, Divider } from "@mantine/core";
 import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
-import { navigate } from "../../router";
 
 const props = [
   { name: "state", type: "ClientState", description: 'Connection state override. When omitted, reads from the nearest BYOMProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".' },

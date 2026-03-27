@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Box, Button, Collapse, Divider, Group, ScrollArea, Stack, Text, UnstyledButton } from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { ProviderAvatar } from "./ProviderAvatar.js";
-import { MetadataDivider } from "./MetadataDivider.js";
 import { PrimaryButton } from "./PrimaryButton.js";
 import { loadCredentials, deleteCredential, type StoredCredential } from "./onboarding/credential-storage.js";
 import { tokens } from "./theme.js";

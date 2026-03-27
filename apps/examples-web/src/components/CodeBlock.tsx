@@ -41,7 +41,15 @@ export type CodeBlockProps = {
   inPreview?: boolean | undefined;
 };
 
-export function CodeBlock({ title, code, variants, language, onRun, compact, inPreview }: CodeBlockProps) {
+export function CodeBlock({
+  title,
+  code,
+  variants,
+  language,
+  onRun,
+  compact,
+  inPreview,
+}: CodeBlockProps) {
   const { activeSDK, setActiveSDK, sdks } = useSDK();
   const [localSDK, setLocalSDK] = useState(activeSDK);
 
@@ -73,7 +81,10 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
     const match = variants.find((v) => v.sdkId === localSDK) ?? variants[0];
     if (match != null) {
       displayCode = match.code;
-      displayLabel = match.label ?? sdks.find((s) => s.id === match.sdkId)?.label ?? match.sdkId;
+      displayLabel =
+        match.label ??
+        sdks.find((s) => s.id === match.sdkId)?.label ??
+        match.sdkId;
     }
   }
 
@@ -115,21 +126,56 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
 
   if (compact) {
     return (
-      <Box style={inPreview ? {} : { overflow: "hidden", border: "1px solid var(--mantine-color-gray-3)" }}>
+      <Box
+        style={
+          inPreview
+            ? {}
+            : {
+                overflow: "hidden",
+                border: "1px solid var(--mantine-color-gray-3)",
+              }
+        }
+      >
         <Editor
           height={editorHeight}
           language={monacoLang}
           value={displayCode}
           theme={SHIKI_THEME}
           beforeMount={setupShikiMonaco}
-          options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: "off", folding: false, fontSize: 13, padding: { top: 8, bottom: 8 }, renderLineHighlight: "none", overviewRulerLanes: 0, scrollbar: { vertical: isOverflowing ? "auto" : "hidden", horizontal: "auto", handleMouseWheel: isOverflowing, alwaysConsumeMouseWheel: false } }}
+          options={{
+            readOnly: true,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            lineNumbers: "off",
+            folding: false,
+            fontSize: 13,
+            padding: { top: 8, bottom: 8 },
+            renderLineHighlight: "none",
+            overviewRulerLanes: 0,
+            scrollbar: {
+              vertical: isOverflowing ? "auto" : "hidden",
+              horizontal: "auto",
+              handleMouseWheel: isOverflowing,
+              alwaysConsumeMouseWheel: false,
+            },
+          }}
         />
       </Box>
     );
   }
 
   return (
-    <Box style={inPreview ? {} : { border: "1px solid var(--mantine-color-gray-3)", borderRadius: 8, overflow: "hidden" }}>
+    <Box
+      style={
+        inPreview
+          ? {}
+          : {
+              border: "1px solid var(--mantine-color-gray-3)",
+              borderRadius: 8,
+              overflow: "hidden",
+            }
+      }
+    >
       {/* Header bar */}
       <Group
         justify="space-between"
@@ -162,7 +208,9 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
                     background: "var(--mantine-color-gray-2)",
                   }}
                 >
-                  <Text fz="xs" fw={500}>{displayLabel}</Text>
+                  <Text fz="xs" fw={500}>
+                    {displayLabel}
+                  </Text>
                   <IconChevronDown size={12} />
                 </Group>
               </Menu.Target>
@@ -174,7 +222,9 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
                     <Menu.Item
                       key={v.sdkId}
                       onClick={() => handleSDKChange(v.sdkId)}
-                      rightSection={localSDK === v.sdkId ? <IconCheck size={14} /> : null}
+                      rightSection={
+                        localSDK === v.sdkId ? <IconCheck size={14} /> : null
+                      }
                     >
                       {label}
                     </Menu.Item>
@@ -183,14 +233,21 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
               </Menu.Dropdown>
             </Menu>
           ) : (
-            <Text fz="xs" fw={500} c="dimmed">{displayLabel}</Text>
+            <Text fz="xs" fw={500} c="dimmed">
+              {displayLabel}
+            </Text>
           )}
 
           {/* Copy button */}
           <CopyButton value={displayCode} timeout={2000}>
             {({ copied, copy }) => (
               <Tooltip label={copied ? "Copied" : "Copy"} withArrow>
-                <ActionIcon variant="subtle" color={copied ? "teal" : "gray"} size="sm" onClick={copy}>
+                <ActionIcon
+                  variant="subtle"
+                  color={copied ? "teal" : "gray"}
+                  size="sm"
+                  onClick={copy}
+                >
                   {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
                 </ActionIcon>
               </Tooltip>
@@ -200,7 +257,12 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
           {/* Run button */}
           {onRun != null && (
             <Tooltip label="Run" withArrow>
-              <ActionIcon variant="subtle" color="teal" size="sm" onClick={onRun}>
+              <ActionIcon
+                variant="subtle"
+                color="teal"
+                size="sm"
+                onClick={onRun}
+              >
                 <IconPlayerPlay size={14} />
               </ActionIcon>
             </Tooltip>
@@ -225,7 +287,12 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
           padding: { top: 12, bottom: 12 },
           renderLineHighlight: "none",
           overviewRulerLanes: 0,
-          scrollbar: { vertical: isOverflowing ? "auto" : "hidden", horizontal: "auto", handleMouseWheel: isOverflowing, alwaysConsumeMouseWheel: false },
+          scrollbar: {
+            vertical: isOverflowing ? "auto" : "hidden",
+            horizontal: "auto",
+            handleMouseWheel: isOverflowing,
+            alwaysConsumeMouseWheel: false,
+          },
           contextmenu: false,
           domReadOnly: true,
         }}

@@ -9,11 +9,9 @@ import {
   Menu,
   Pill,
   ScrollArea,
-  Select,
   Stack,
   Text,
   Textarea,
-  Transition,
 } from "@mantine/core";
 import {
   IconChevronDown,
@@ -29,6 +27,7 @@ import {
   ConversationManager,
   type BYOMTransport,
   type ChatMessage,
+  type ContextWindowInfo,
   type ProviderDescriptor,
 } from "@byom-ai/web-sdk";
 import { searchDocs } from "../docs-context";
@@ -45,7 +44,13 @@ function getInjected(): BYOMTransport | null {
 }
 
 function fmtModel(m: string): string {
-  return m.split(/[-_.]/g).filter(Boolean).map((p) => p.length <= 3 ? p.toUpperCase() : p[0]!.toUpperCase() + p.slice(1)).join(" ");
+  return m
+    .split(/[-_.]/g)
+    .filter(Boolean)
+    .map((p) =>
+      p.length <= 3 ? p.toUpperCase() : p[0]!.toUpperCase() + p.slice(1),
+    )
+    .join(" ");
 }
 
 export type ChatSidebarProps = {
@@ -87,13 +92,26 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   const inputHistoryRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const draftRef = useRef("");
+  const [contextInfo, setContextInfo] = useState<ContextWindowInfo | null>(
+    null,
+  );
 
-  const selProvider = useMemo(() => providers.find((p) => p.providerId === selProv) ?? null, [providers, selProv]);
-  const provOpts = useMemo(() => providers.map((p) => ({ value: p.providerId, label: p.providerName })), [providers]);
-  const modelOpts = useMemo(() => (selProvider?.models ?? []).map((m) => ({ value: m, label: fmtModel(m) })), [selProvider]);
+  const refreshContextInfo = useCallback(() => {
+    const conv = convRef.current;
+    if (conv) setContextInfo(conv.getContextInfo());
+  }, []);
 
+  const selProvider = useMemo(
+    () => providers.find((p) => p.providerId === selProv) ?? null,
+    [providers, selProv],
+  );
   // Auto-scroll on new messages
-  useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [msgs]);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [msgs]);
 
   // Auto-connect on mount
   useEffect(() => {
@@ -109,7 +127,11 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
     }
     setChatState("connecting");
     try {
-      const client = new BYOMClient({ transport, origin: window.location.origin, timeoutMs: 120_000 });
+      const client = new BYOMClient({
+        transport,
+        origin: window.location.origin,
+        timeoutMs: 120_000,
+      });
       await client.connect({
         appSuffix: "chat",
         appName: "BYOM AI Chat",
@@ -122,19 +144,27 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
 
       const lastProv = localStorage.getItem(CHAT_PROV_KEY);
       const lastModel = localStorage.getItem(CHAT_MODEL_KEY);
-      const matchedProv = provList.find((p) => p.providerId === lastProv) ?? provList[0];
+      const matchedProv =
+        provList.find((p) => p.providerId === lastProv) ?? provList[0];
       if (matchedProv) {
         setSelProv(matchedProv.providerId);
-        const matchedModel = lastModel && matchedProv.models.includes(lastModel) ? lastModel : matchedProv.models[0];
+        const matchedModel =
+          lastModel && matchedProv.models.includes(lastModel)
+            ? lastModel
+            : matchedProv.models[0];
         if (matchedModel) {
           setSelModel(matchedModel);
-          await client.selectProvider({ providerId: matchedProv.providerId, modelId: matchedModel });
+          await client.selectProvider({
+            providerId: matchedProv.providerId,
+            modelId: matchedModel,
+          });
         }
       }
       setChatState("connected");
 
       // Initialize ConversationManager with search_docs + navigate tools
       convRef.current = createConversation(client, onNavigateRef);
+      setContextInfo(convRef.current.getContextInfo());
     } catch (e) {
       setChatState("error");
       setErrorMsg(e instanceof Error ? e.message : String(e));
@@ -145,33 +175,69 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
 
   const handleConnect = () => void autoConnect();
 
-  const handleProviderChange = useCallback(async (providerId: string) => {
-    setSelProv(providerId);
-    const prov = providers.find((p) => p.providerId === providerId);
-    const model = prov?.models[0] ?? null;
-    setSelModel(model);
-    if (model && clientRef.current) {
-      localStorage.setItem(CHAT_PROV_KEY, providerId);
-      localStorage.setItem(CHAT_MODEL_KEY, model);
-      try { await clientRef.current.selectProvider({ providerId, modelId: model }); } catch { /* ignore */ }
-    }
-  }, [providers]);
+  const handleProviderChange = useCallback(
+    async (providerId: string) => {
+      setSelProv(providerId);
+      const prov = providers.find((p) => p.providerId === providerId);
+      const model = prov?.models[0] ?? null;
+      setSelModel(model);
+      if (model && clientRef.current) {
+        localStorage.setItem(CHAT_PROV_KEY, providerId);
+        localStorage.setItem(CHAT_MODEL_KEY, model);
+        try {
+          await clientRef.current.selectProvider({
+            providerId,
+            modelId: model,
+          });
+          convRef.current = createConversation(
+            clientRef.current,
+            onNavigateRef,
+          );
+          refreshContextInfo();
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    [providers, refreshContextInfo],
+  );
 
-  const handleModelChange = useCallback(async (modelId: string) => {
-    setSelModel(modelId);
-    if (selProv && clientRef.current) {
-      localStorage.setItem(CHAT_MODEL_KEY, modelId);
-      try { await clientRef.current.selectProvider({ providerId: selProv, modelId }); } catch { /* ignore */ }
-    }
-  }, [selProv]);
+  const handleModelChange = useCallback(
+    async (modelId: string) => {
+      setSelModel(modelId);
+      if (selProv && clientRef.current) {
+        localStorage.setItem(CHAT_MODEL_KEY, modelId);
+        try {
+          await clientRef.current.selectProvider({
+            providerId: selProv,
+            modelId,
+          });
+          // Recreate conversation manager so it picks up new model's context window
+          convRef.current = createConversation(
+            clientRef.current,
+            onNavigateRef,
+          );
+          refreshContextInfo();
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    [selProv, refreshContextInfo],
+  );
 
   const handleSend = useCallback(async () => {
     const txt = chatIn.trim();
     if (!txt || streaming) return;
     const conv = convRef.current;
     if (!conv || chatState !== "connected") {
-      setMsgs((p) => [...p, { role: "user", content: txt }, { role: "assistant", content: "⚠️ Not connected." }]);
-      setChatIn(""); return;
+      setMsgs((p) => [
+        ...p,
+        { role: "user", content: txt },
+        { role: "assistant", content: "⚠️ Not connected." },
+      ]);
+      setChatIn("");
+      return;
     }
     setMsgs((p) => [...p, { role: "user", content: txt }]);
     setChatIn("");
@@ -195,7 +261,11 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
           if (full.trim().length > 0) {
             setMsgs((p) => {
               const last = p[p.length - 1];
-              if (last?.role === "assistant") return [...p.slice(0, -1), { role: "assistant", content: full }];
+              if (last?.role === "assistant")
+                return [
+                  ...p.slice(0, -1),
+                  { role: "assistant", content: full },
+                ];
               return [...p, { role: "assistant", content: full }];
             });
           }
@@ -221,11 +291,12 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
           if (!usedToolsRef.current.includes(event.name)) {
             usedToolsRef.current.push(event.name);
           }
-          const detail = event.name === "navigate_to_page"
-            ? String(event.arguments.page_id ?? "")
-            : event.name === "search_docs"
-              ? String(event.arguments.query ?? "")
-              : undefined;
+          const detail =
+            event.name === "navigate_to_page"
+              ? String(event.arguments.page_id ?? "")
+              : event.name === "search_docs"
+                ? String(event.arguments.query ?? "")
+                : undefined;
           setToolState({ phase: "executing", name: event.name, detail });
         }
         if (event.type === "tool_result") {
@@ -236,12 +307,21 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
       const tools = [...usedToolsRef.current];
       setMsgs((prev) => {
         // Remove any empty assistant bubbles from tool call stripping
-        let cleaned = prev.filter((m) => m.role !== "assistant" || m.content.trim().length > 0);
+        let cleaned = prev.filter(
+          (m) => m.role !== "assistant" || m.content.trim().length > 0,
+        );
 
         if (tools.length > 0) {
-          const lastAssistantIdx = cleaned.reduce((acc, m, idx) => m.role === "assistant" ? idx : acc, -1);
-          const lastAssistant = lastAssistantIdx >= 0 ? cleaned[lastAssistantIdx] : undefined;
-          if (lastAssistant !== undefined && lastAssistant.content.trim().length > 0) {
+          const lastAssistantIdx = cleaned.reduce(
+            (acc, m, idx) => (m.role === "assistant" ? idx : acc),
+            -1,
+          );
+          const lastAssistant =
+            lastAssistantIdx >= 0 ? cleaned[lastAssistantIdx] : undefined;
+          if (
+            lastAssistant !== undefined &&
+            lastAssistant.content.trim().length > 0
+          ) {
             // Tag existing final assistant message with tools used
             cleaned = cleaned.map((m) =>
               m === lastAssistant ? { ...m, usedTools: tools } : m,
@@ -262,10 +342,17 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
         return cleaned;
       });
     } catch (e) {
-      setMsgs((p) => [...p, { role: "assistant", content: `Error: ${e instanceof Error ? e.message : String(e)}` }]);
+      setMsgs((p) => [
+        ...p,
+        {
+          role: "assistant",
+          content: `Error: ${e instanceof Error ? e.message : String(e)}`,
+        },
+      ]);
     } finally {
       setStreaming(false);
       setToolState(TOOL_IDLE);
+      refreshContextInfo();
     }
   }, [chatIn, streaming, chatState]);
 
@@ -274,26 +361,52 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   return (
     <Stack h="100%" gap={0}>
       {/* Header */}
-      <Group h={52} px="md" justify="space-between" style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}>
+      <Group
+        h={52}
+        px="md"
+        justify="space-between"
+        style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}
+      >
         <Group gap="xs">
           <IconMessage size={16} />
-          <Text fw={600} fz="sm">AI Chat</Text>
-          <Badge size="xs" color={chatState === "connected" ? "teal" : chatState === "connecting" ? "yellow" : "gray"} variant="dot">
+          <Text fw={600} fz="sm">
+            AI Chat
+          </Text>
+          <Badge
+            size="xs"
+            color={
+              chatState === "connected"
+                ? "teal"
+                : chatState === "connecting"
+                  ? "yellow"
+                  : "gray"
+            }
+            variant="dot"
+          >
             {chatState}
           </Badge>
         </Group>
-        <ActionIcon variant="subtle" size="sm" onClick={onClose}><IconX size={14} /></ActionIcon>
+        <ActionIcon variant="subtle" size="sm" onClick={onClose}>
+          <IconX size={14} />
+        </ActionIcon>
       </Group>
 
       {/* Connection setup — only shown after auto-connect fails */}
       {chatState !== "connected" && autoConnectDone && (
-        <Box p="md" style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}>
+        <Box
+          p="md"
+          style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}
+        >
           <Stack gap="sm">
             {chatState === "error" && (
-              <Text fz="xs" c="red">{errorMsg}</Text>
+              <Text fz="xs" c="red">
+                {errorMsg}
+              </Text>
             )}
             {chatState === "disconnected" && !getInjected() && (
-              <Text fz="xs" c="dimmed">Extension not detected. Load the BYOM extension first.</Text>
+              <Text fz="xs" c="dimmed">
+                Extension not detected. Load the BYOM extension first.
+              </Text>
             )}
             <Button
               size="xs"
@@ -310,58 +423,106 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
       )}
 
       {/* Messages */}
-      <ScrollArea style={{ flex: 1 }} p="xs" type="scroll" viewportRef={scrollRef}>
+      <ScrollArea
+        style={{ flex: 1 }}
+        p="xs"
+        type="scroll"
+        viewportRef={scrollRef}
+      >
         <Stack gap="xs">
           {msgs.length === 0 && (
             <Text fz="sm" c="dimmed" ta="center" py="xl">
-              {chatState === "connected" ? "Ask anything about BYOM." : "Connect to start chatting."}
+              {chatState === "connected"
+                ? "Ask anything about BYOM."
+                : "Connect to start chatting."}
             </Text>
           )}
           {msgs.map((m, i) => {
             // Skip empty assistant bubbles
-            if (m.role === "assistant" && m.content.trim().length === 0 && (m.usedTools === undefined || m.usedTools.length === 0)) return null;
+            if (
+              m.role === "assistant" &&
+              m.content.trim().length === 0 &&
+              (m.usedTools === undefined || m.usedTools.length === 0)
+            )
+              return null;
             return (
-            <Box key={i} style={{ maxWidth: "90%", alignSelf: m.role === "user" ? "flex-end" : "flex-start" }}>
               <Box
+                key={i}
                 style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  background: m.role === "user" ? "var(--mantine-color-blue-0)" : "var(--mantine-color-gray-0)",
+                  maxWidth: "90%",
+                  alignSelf: m.role === "user" ? "flex-end" : "flex-start",
                 }}
               >
-                {m.role === "assistant" ? (
-                  <Markdown content={m.content} className="chat-markdown" />
-                ) : (
-                  <Text fz="sm" style={{ whiteSpace: "pre-wrap" }}>{m.content}</Text>
-                )}
+                <Box
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    background:
+                      m.role === "user"
+                        ? "var(--mantine-color-blue-0)"
+                        : "var(--mantine-color-gray-0)",
+                  }}
+                >
+                  {m.role === "assistant" ? (
+                    <Markdown content={m.content} className="chat-markdown" />
+                  ) : (
+                    <Text fz="sm" style={{ whiteSpace: "pre-wrap" }}>
+                      {m.content}
+                    </Text>
+                  )}
+                </Box>
+                {m.role === "assistant" &&
+                  m.usedTools !== undefined &&
+                  m.usedTools.length > 0 && (
+                    <Group gap={4} mt={3} ml={4}>
+                      <IconTool size={10} color="var(--mantine-color-dimmed)" />
+                      {m.usedTools.map((t) => (
+                        <Pill
+                          key={t}
+                          size="xs"
+                          style={{
+                            background: "var(--mantine-color-gray-1)",
+                            color: "var(--mantine-color-dimmed)",
+                            fontSize: 9,
+                            fontWeight: 500,
+                          }}
+                        >
+                          {t.replace(/_/g, " ")}
+                        </Pill>
+                      ))}
+                    </Group>
+                  )}
               </Box>
-              {m.role === "assistant" && m.usedTools !== undefined && m.usedTools.length > 0 && (
-                <Group gap={4} mt={3} ml={4}>
-                  <IconTool size={10} color="var(--mantine-color-dimmed)" />
-                  {m.usedTools.map((t) => (
-                    <Pill key={t} size="xs" style={{ background: "var(--mantine-color-gray-1)", color: "var(--mantine-color-dimmed)", fontSize: 9, fontWeight: 500 }}>
-                      {t.replace(/_/g, " ")}
-                    </Pill>
-                  ))}
-                </Group>
-              )}
-            </Box>
-          ); })}
+            );
+          })}
           {streaming && (
             <Box ml="xs" py={4}>
               {toolState.phase === "priming" && (
                 <Group gap={6} align="center">
                   <IconSearch size={12} color="var(--mantine-color-blue-5)" />
-                  <Text fz={11} c="blue" fw={500}>Looking for tools...</Text>
+                  <Text fz={11} c="blue" fw={500}>
+                    Looking for tools...
+                  </Text>
                   <Loader size={10} color="blue" />
                 </Group>
               )}
               {toolState.phase === "matched" && (
                 <Group gap={6} align="center" wrap="nowrap">
                   <IconTool size={12} color="var(--mantine-color-teal-6)" />
-                  <Text fz={11} c="teal" fw={500}>Found:</Text>
+                  <Text fz={11} c="teal" fw={500}>
+                    Found:
+                  </Text>
                   {toolState.tools.map((t) => (
-                    <Pill key={t} size="xs" style={{ background: "var(--mantine-color-teal-0)", color: "var(--mantine-color-teal-7)", fontSize: 10, fontWeight: 600 }}>
+                    <Pill
+                      key={t}
+                      size="xs"
+                      style={{
+                        background: "var(--mantine-color-teal-0)",
+                        color: "var(--mantine-color-teal-7)",
+                        fontSize: 10,
+                        fontWeight: 600,
+                      }}
+                    >
                       {t.replace(/_/g, " ")}
                     </Pill>
                   ))}
@@ -370,21 +531,43 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               {toolState.phase === "executing" && (
                 <Group gap={6} align="center" wrap="nowrap">
                   <Loader size={10} color="violet" />
-                  <Pill size="xs" style={{ background: "var(--mantine-color-violet-0)", color: "var(--mantine-color-violet-7)", fontSize: 10, fontWeight: 600 }}>
+                  <Pill
+                    size="xs"
+                    style={{
+                      background: "var(--mantine-color-violet-0)",
+                      color: "var(--mantine-color-violet-7)",
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}
+                  >
                     {toolState.name.replace(/_/g, " ")}
                   </Pill>
                   {toolState.detail && (
-                    <Text fz={10} c="dimmed" truncate style={{ maxWidth: 150 }}>{toolState.detail}</Text>
+                    <Text fz={10} c="dimmed" truncate style={{ maxWidth: 150 }}>
+                      {toolState.detail}
+                    </Text>
                   )}
                 </Group>
               )}
               {toolState.phase === "result" && (
                 <Group gap={6} align="center">
-                  <Text fz={11} c="teal" fw={500}>✓</Text>
-                  <Pill size="xs" style={{ background: "var(--mantine-color-teal-0)", color: "var(--mantine-color-teal-7)", fontSize: 10, fontWeight: 600 }}>
+                  <Text fz={11} c="teal" fw={500}>
+                    ✓
+                  </Text>
+                  <Pill
+                    size="xs"
+                    style={{
+                      background: "var(--mantine-color-teal-0)",
+                      color: "var(--mantine-color-teal-7)",
+                      fontSize: 10,
+                      fontWeight: 600,
+                    }}
+                  >
                     {toolState.name.replace(/_/g, " ")}
                   </Pill>
-                  <Text fz={10} c="teal">done</Text>
+                  <Text fz={10} c="teal">
+                    done
+                  </Text>
                 </Group>
               )}
               {toolState.phase === "idle" && <Loader size="xs" />}
@@ -394,20 +577,38 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
       </ScrollArea>
 
       {/* Input area with provider/model dropdowns */}
-      <Box p="xs" style={{ borderTop: "1px solid var(--mantine-color-gray-3)" }}>
+      <Box
+        p="xs"
+        style={{ borderTop: "1px solid var(--mantine-color-gray-3)" }}
+      >
         {chatState === "connected" && providers.length > 0 && (
           <Group gap={4} mb={6}>
             {/* Provider dropdown */}
             <Menu shadow="sm" position="top-start" withinPortal>
               <Menu.Target>
-                <Group gap={2} style={{ cursor: "pointer", padding: "2px 8px", borderRadius: 4, background: "var(--mantine-color-gray-1)" }}>
-                  <Text fz={10} fw={600}>{selProvider?.providerName ?? "Provider"}</Text>
+                <Group
+                  gap={2}
+                  style={{
+                    cursor: "pointer",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: "var(--mantine-color-gray-1)",
+                  }}
+                >
+                  <Text fz={10} fw={600}>
+                    {selProvider?.providerName ?? "Provider"}
+                  </Text>
                   <IconChevronDown size={10} />
                 </Group>
               </Menu.Target>
               <Menu.Dropdown>
                 {providers.map((p) => (
-                  <Menu.Item key={p.providerId} onClick={() => void handleProviderChange(p.providerId)} fw={p.providerId === selProv ? 600 : 400} fz="sm">
+                  <Menu.Item
+                    key={p.providerId}
+                    onClick={() => void handleProviderChange(p.providerId)}
+                    fw={p.providerId === selProv ? 600 : 400}
+                    fz="sm"
+                  >
                     {p.providerName}
                   </Menu.Item>
                 ))}
@@ -417,14 +618,29 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
             {/* Model dropdown */}
             <Menu shadow="sm" position="top-start" withinPortal>
               <Menu.Target>
-                <Group gap={2} style={{ cursor: "pointer", padding: "2px 8px", borderRadius: 4, background: "var(--mantine-color-gray-1)" }}>
-                  <Text fz={10} fw={500}>{selModel ? fmtModel(selModel) : "Model"}</Text>
+                <Group
+                  gap={2}
+                  style={{
+                    cursor: "pointer",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: "var(--mantine-color-gray-1)",
+                  }}
+                >
+                  <Text fz={10} fw={500}>
+                    {selModel ? fmtModel(selModel) : "Model"}
+                  </Text>
                   <IconChevronDown size={10} color="gray" />
                 </Group>
               </Menu.Target>
               <Menu.Dropdown>
                 {(selProvider?.models ?? []).map((m) => (
-                  <Menu.Item key={m} onClick={() => void handleModelChange(m)} fw={m === selModel ? 600 : 400} fz="sm">
+                  <Menu.Item
+                    key={m}
+                    onClick={() => void handleModelChange(m)}
+                    fw={m === selModel ? 600 : 400}
+                    fz="sm"
+                  >
                     {fmtModel(m)}
                   </Menu.Item>
                 ))}
@@ -487,8 +703,46 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
             <IconSend size={16} />
           </ActionIcon>
         </Group>
+
+        {/* Context window indicator (Cursor-style) */}
+        {chatState === "connected" && contextInfo !== null && (
+          <ContextBar info={contextInfo} />
+        )}
       </Box>
     </Stack>
+  );
+}
+
+// ─── Context window bar (Cursor-style) ───────────────────────────────
+
+function formatTokenCount(n: number): string {
+  if (n >= 1_000_000)
+    return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}k`;
+  return String(n);
+}
+
+function ContextBar({ info }: { info: ContextWindowInfo }) {
+  const pct = Math.round(info.usageRatio * 100);
+  const color =
+    pct > 90
+      ? "var(--mantine-color-red-6)"
+      : pct > 70
+        ? "var(--mantine-color-orange-5)"
+        : "var(--mantine-color-dimmed)";
+
+  return (
+    <Group gap={6} mt={6} justify="center">
+      <Text
+        fz={10}
+        c={color}
+        fw={500}
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        Context: {formatTokenCount(info.usedTokens)}/
+        {formatTokenCount(info.maxTokens)} ({pct}%)
+      </Text>
+    </Group>
   );
 }
 
@@ -509,7 +763,9 @@ function createConversation(
   client: BYOMClient,
   onNavigateRef: React.RefObject<((pageId: string) => void) | undefined>,
 ): ConversationManager {
-  const allPageIds = NAVIGATION.flatMap((cat) => cat.items.map((item) => item.id));
+  const allPageIds = NAVIGATION.flatMap((cat) =>
+    cat.items.map((item) => item.id),
+  );
   const allItems = NAVIGATION.flatMap((cat) =>
     cat.items.map((item) => ({ ...item, category: cat.label })),
   );
@@ -529,7 +785,9 @@ function createConversation(
     const byLabel = allItems.find((item) => item.label.toLowerCase() === lower);
     if (byLabel) return byLabel.id;
     // Partial match on label
-    const byPartial = allItems.find((item) => item.label.toLowerCase().includes(lower));
+    const byPartial = allItems.find((item) =>
+      item.label.toLowerCase().includes(lower),
+    );
     if (byPartial) return byPartial.id;
     return null;
   }
@@ -542,7 +800,8 @@ function createConversation(
     tools: [
       {
         name: "search_docs",
-        description: "Search BYOM documentation for relevant pages about the SDK, extension, providers, apps, credentials, or integration patterns. Use this when the user asks about BYOM features.",
+        description:
+          "Search BYOM documentation for relevant pages about the SDK, extension, providers, apps, credentials, or integration patterns. Use this when the user asks about BYOM features.",
         parameters: {
           type: "object",
           properties: {
@@ -553,8 +812,14 @@ function createConversation(
         handler: async (args) => {
           const query = typeof args.query === "string" ? args.query : "";
           const results = searchDocs(query, 3);
-          if (results.length === 0) return JSON.stringify({ found: false, message: "No relevant docs found." });
-          return JSON.stringify(results.map((r) => ({ title: r.title, content: r.content })));
+          if (results.length === 0)
+            return JSON.stringify({
+              found: false,
+              message: "No relevant docs found.",
+            });
+          return JSON.stringify(
+            results.map((r) => ({ title: r.title, content: r.content })),
+          );
         },
       },
       {
@@ -563,7 +828,11 @@ function createConversation(
         parameters: {
           type: "object",
           properties: {
-            page_id: { type: "string", description: "The page ID to navigate to", enum: allPageIds },
+            page_id: {
+              type: "string",
+              description: "The page ID to navigate to",
+              enum: allPageIds,
+            },
           },
           required: ["page_id"],
         },
@@ -572,7 +841,10 @@ function createConversation(
           const pageId = resolvePageId(raw);
 
           if (!pageId) {
-            return JSON.stringify({ success: false, error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}` });
+            return JSON.stringify({
+              success: false,
+              error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}`,
+            });
           }
           onNavigateRef.current?.(pageId);
           const label = allItems.find((i) => i.id === pageId)?.label ?? pageId;

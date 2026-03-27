@@ -28,9 +28,16 @@ export function BridgeCheckStep({
     setState({ status: "detecting" });
     void detectBridge().then(async (result) => {
       if (result.connected) {
-        setState({ status: "pairing", ...(result.version != null ? { version: result.version } : {}) });
+        setState({
+          status: "pairing",
+          ...(result.version != null ? { version: result.version } : {}),
+        });
         const pairResult = await autoPair();
-        setState({ status: "found", ...(result.version != null ? { version: result.version } : {}), paired: pairResult.success });
+        setState({
+          status: "found",
+          ...(result.version != null ? { version: result.version } : {}),
+          paired: pairResult.success,
+        });
       } else {
         setState({ status: "not-found" });
       }
@@ -64,7 +71,9 @@ export function BridgeCheckStep({
       {(state.status === "detecting" || state.status === "pairing") && (
         <Stack gap={12}>
           <Text size="md" fw={600} c={tokens.color.textPrimary}>
-            {state.status === "pairing" ? "Connecting securely…" : "Checking your setup…"}
+            {state.status === "pairing"
+              ? "Connecting securely…"
+              : "Checking your setup…"}
           </Text>
           <Group justify="center">
             <Loader size="sm" color={tokens.color.textPrimary} />
@@ -82,7 +91,9 @@ export function BridgeCheckStep({
           <Group gap={8} align="center">
             <IconCircleCheck size={24} color="#2b8a3e" stroke={1.5} />
             <Text size="md" fw={600} c={tokens.color.textPrimary}>
-              {state.paired ? "Bridge connected and paired" : "Bridge connected"}
+              {state.paired
+                ? "Bridge connected and paired"
+                : "Bridge connected"}
             </Text>
           </Group>
 

@@ -8,18 +8,77 @@ const importLine = `import { BYOMClient } from "@byom-ai/web-sdk";`;
 // ---------------------------------------------------------------------------
 
 const clientOptions = [
-  { name: "transport", type: "BYOMTransport", required: true, description: "Transport implementation (provided by the browser extension via window.byom)." },
-  { name: "origin", type: "string", default: '"https://app.byom.local"', description: "Origin URL for envelope metadata. Auto-set to window.location.origin when in a browser." },
-  { name: "timeoutMs", type: "number", default: "5000", description: "Default request timeout in milliseconds." },
-  { name: "envelopeTtlMs", type: "number", default: "60000", description: "Time-to-live for protocol envelopes." },
-  { name: "protocolVersion", type: "string", default: '"1.0.0"', description: "Protocol version string." },
-  { name: "nonce", type: "string", description: "Nonce for envelope signatures." },
-  { name: "now", type: "() => Date", description: "Clock function for envelope timestamps. Defaults to () => new Date()." },
-  { name: "randomId", type: "() => string", description: "ID generator for request/correlation IDs. Defaults to crypto.randomUUID()." },
-  { name: "defaultCapabilities", type: "readonly ProtocolCapability[]", description: "Capabilities to request during connect." },
-  { name: "defaultProviderId", type: "string", default: '"provider.system"', description: "Fallback provider ID for envelopes before selection." },
-  { name: "defaultModelId", type: "string", default: '"model.default"', description: "Fallback model ID for envelopes before selection." },
-  { name: "tracing", type: "TelemetryTracing", description: "Optional tracing hook for observability." },
+  {
+    name: "transport",
+    type: "BYOMTransport",
+    required: true,
+    description:
+      "Transport implementation (provided by the browser extension via window.byom).",
+  },
+  {
+    name: "origin",
+    type: "string",
+    default: '"https://app.byom.local"',
+    description:
+      "Origin URL for envelope metadata. Auto-set to window.location.origin when in a browser.",
+  },
+  {
+    name: "timeoutMs",
+    type: "number",
+    default: "5000",
+    description: "Default request timeout in milliseconds.",
+  },
+  {
+    name: "envelopeTtlMs",
+    type: "number",
+    default: "60000",
+    description: "Time-to-live for protocol envelopes.",
+  },
+  {
+    name: "protocolVersion",
+    type: "string",
+    default: '"1.0.0"',
+    description: "Protocol version string.",
+  },
+  {
+    name: "nonce",
+    type: "string",
+    description: "Nonce for envelope signatures.",
+  },
+  {
+    name: "now",
+    type: "() => Date",
+    description:
+      "Clock function for envelope timestamps. Defaults to () => new Date().",
+  },
+  {
+    name: "randomId",
+    type: "() => string",
+    description:
+      "ID generator for request/correlation IDs. Defaults to crypto.randomUUID().",
+  },
+  {
+    name: "defaultCapabilities",
+    type: "readonly ProtocolCapability[]",
+    description: "Capabilities to request during connect.",
+  },
+  {
+    name: "defaultProviderId",
+    type: "string",
+    default: '"provider.system"',
+    description: "Fallback provider ID for envelopes before selection.",
+  },
+  {
+    name: "defaultModelId",
+    type: "string",
+    default: '"model.default"',
+    description: "Fallback model ID for envelopes before selection.",
+  },
+  {
+    name: "tracing",
+    type: "TelemetryTracing",
+    description: "Optional tracing hook for observability.",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -27,10 +86,32 @@ const clientOptions = [
 // ---------------------------------------------------------------------------
 
 const clientProperties = [
-  { name: "state", type: "ClientState", description: "Current connection state (readonly getter)." },
-  { name: "sessionId", type: "string | undefined", description: "Active session ID after connect, undefined before." },
-  { name: "selectedProvider", type: "{ providerId: string; modelId: string } | undefined", description: "Currently selected provider/model pair." },
-  { name: "chat", type: "{ send, stream }", description: "Chat operation namespace (see Methods below)." },
+  {
+    name: "state",
+    type: "ClientState",
+    description: "Current connection state (readonly getter).",
+  },
+  {
+    name: "sessionId",
+    type: "string | undefined",
+    description: "Active session ID after connect, undefined before.",
+  },
+  {
+    name: "selectedProvider",
+    type: "{ providerId: string; modelId: string } | undefined",
+    description: "Currently selected provider/model pair.",
+  },
+  {
+    name: "contextWindowSize",
+    type: "number",
+    description:
+      "Context window size in tokens for the selected model. Falls back to 4096 for unknown models.",
+  },
+  {
+    name: "chat",
+    type: "{ send, stream }",
+    description: "Chat operation namespace (see Methods below).",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -38,12 +119,46 @@ const clientProperties = [
 // ---------------------------------------------------------------------------
 
 const clientMethods = [
-  { name: "connect", type: "(options: ConnectOptions) => Promise<ConnectResult>", description: "Establish connection with the extension. Transitions state: disconnected → connecting → connected." },
-  { name: "disconnect", type: "() => Promise<void>", description: "Disconnect and reset state to disconnected." },
-  { name: "listProviders", type: "() => Promise<ListProvidersResult>", description: "Fetch available providers and models. Requires connected state." },
-  { name: "selectProvider", type: "(input: SelectProviderInput) => Promise<SelectProviderResult>", description: "Select a provider/model pair. Requires connected state." },
-  { name: "chat.send", type: "(input: ChatInput, options?: ChatOperationOptions) => Promise<ChatSendResult>", description: "Send messages and receive a complete response. Requires connected state + selected provider." },
-  { name: "chat.stream", type: "(input: ChatInput, options?: ChatOperationOptions) => AsyncIterable<ChatStreamEvent>", description: "Send messages and stream the response as chunks. Supports AbortSignal via options.signal." },
+  {
+    name: "connect",
+    type: "(options: ConnectOptions) => Promise<ConnectResult>",
+    description:
+      "Establish connection with the extension. Transitions state: disconnected → connecting → connected.",
+  },
+  {
+    name: "disconnect",
+    type: "() => Promise<void>",
+    description: "Disconnect and reset state to disconnected.",
+  },
+  {
+    name: "listProviders",
+    type: "() => Promise<ListProvidersResult>",
+    description:
+      "Fetch available providers and models. Requires connected state.",
+  },
+  {
+    name: "selectProvider",
+    type: "(input: SelectProviderInput) => Promise<SelectProviderResult>",
+    description: "Select a provider/model pair. Requires connected state.",
+  },
+  {
+    name: "chat.send",
+    type: "(input: ChatInput, options?: ChatOperationOptions) => Promise<ChatSendResult>",
+    description:
+      "Send messages and receive a complete response. Requires connected state + selected provider.",
+  },
+  {
+    name: "chat.stream",
+    type: "(input: ChatInput, options?: ChatOperationOptions) => AsyncIterable<ChatStreamEvent>",
+    description:
+      "Send messages and stream the response as chunks. Supports AbortSignal via options.signal.",
+  },
+  {
+    name: "getContextInfo",
+    type: "(messages: readonly ChatMessage[], reserveOutputTokens?: number) => ContextWindowInfo",
+    description:
+      'Compute context window usage for the selected model given a set of messages. Useful for token meters and "context full" warnings.',
+  },
 ];
 
 const connectExample = `const client = new BYOMClient({ transport: window.byom });
@@ -63,7 +178,12 @@ for await (const event of client.chat.stream({
   messages: [{ role: "user", content: "Hello" }],
 })) {
   if (event.type === "chunk") process.stdout.write(event.delta);
-}`;
+}
+
+// Context window info
+const info = client.getContextInfo(messages);
+console.log(\`\${info.usedTokens}/\${info.maxTokens} (\${Math.round(info.usageRatio * 100)}%)\`);
+console.log("Window size:", client.contextWindowSize);\`;
 
 const stateDiagram = `// State machine transitions:
 //
@@ -91,7 +211,10 @@ export default function WebSDKClient() {
       <Title order={3}>Constructor options</Title>
       <ApiTable data={clientOptions} title="BYOMClientOptions" />
 
-      <CodeBlock code={`const client = new BYOMClient({ transport, origin: window.location.origin });`} language="tsx" />
+      <CodeBlock
+        code={`const client = new BYOMClient({ transport, origin: window.location.origin });`}
+        language="tsx"
+      />
 
       {/* Properties */}
       <Divider />
@@ -112,8 +235,9 @@ export default function WebSDKClient() {
       <CodeBlock code={stateDiagram} language="text" />
 
       <Callout type="info" title="State guards">
-        Methods that require a connected state (listProviders, selectProvider, chat.*) throw a{" "}
-        <InlineCode>BYOMStateError</InlineCode> if called in an invalid state.
+        Methods that require a connected state (listProviders, selectProvider,
+        chat.*) throw a <InlineCode>BYOMStateError</InlineCode> if called in an
+        invalid state.
       </Callout>
     </Stack>
   );

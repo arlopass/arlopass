@@ -1,5 +1,5 @@
 import { Stack, Title, Text, Divider } from "@mantine/core";
-import { ApiTable, CodeBlock, InlineCode, Callout } from "../../../components";
+import { ApiTable, CodeBlock, InlineCode } from "../../../components";
 
 const importLine = `import {
   BYOMConnectionGate,

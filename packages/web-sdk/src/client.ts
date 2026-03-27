@@ -12,6 +12,8 @@ import {
 } from "@byom-ai/telemetry";
 
 import { resolveAppId, validateAppIconUrl } from "./app-id.js";
+import { resolveModelContextWindow } from "./model-context-windows.js";
+import { estimateTokenCount } from "./token-estimation.js";
 import {
   BYOMProtocolBoundaryError,
   BYOMSDKError,
@@ -40,6 +42,7 @@ import {
   type ConnectPayload,
   type ConnectResponsePayload,
   type ConnectResult,
+  type ContextWindowInfo,
   type CorrelationId,
   type InternalClientConfig,
   type ListProvidersResult,
@@ -411,6 +414,47 @@ export class BYOMClient {
     }>
     | undefined {
     return this.#selectedProvider;
+  }
+
+  /**
+   * Returns the context window size for the currently selected model.
+   * Falls back to the default (4096) when no model is selected or the
+   * model is unknown.
+   */
+  get contextWindowSize(): number {
+    const modelId = this.#selectedProvider?.modelId ?? "";
+    return resolveModelContextWindow(modelId);
+  }
+
+  /**
+   * Computes context window usage for the selected model given a set of
+   * messages.  Useful for UI token meters and "context full" warnings.
+   *
+   * @param messages The messages to measure.
+   * @param reserveOutputTokens Tokens to reserve for the model's reply (default 1024).
+   */
+  getContextInfo(
+    messages: readonly ChatMessage[],
+    reserveOutputTokens = 1024,
+  ): ContextWindowInfo {
+    const maxTokens = this.contextWindowSize;
+    let usedTokens = 0;
+    for (const m of messages) {
+      usedTokens += estimateTokenCount(m.content);
+    }
+    const inputBudget = maxTokens - reserveOutputTokens;
+    const remainingTokens = Math.max(0, inputBudget - usedTokens);
+    const usageRatio = inputBudget > 0
+      ? Math.min(1, usedTokens / inputBudget)
+      : 0;
+
+    return {
+      maxTokens,
+      usedTokens,
+      reservedOutputTokens: reserveOutputTokens,
+      remainingTokens,
+      usageRatio,
+    };
   }
 
   async connect(options: ConnectOptions): Promise<ConnectResult> {

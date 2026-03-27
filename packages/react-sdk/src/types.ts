@@ -4,6 +4,7 @@ import type {
     ChatMessage as WebSDKChatMessage,
     ChatRole as WebSDKChatRole,
     ClientState as WebSDKClientState,
+    ContextWindowInfo as WebSDKContextWindowInfo,
     ProviderDescriptor as WebSDKProviderDescriptor,
     SelectProviderInput as WebSDKSelectProviderInput,
     ChatOperationOptions as WebSDKChatOperationOptions,
@@ -40,6 +41,7 @@ export type ProviderDescriptor = WebSDKProviderDescriptor;
 export type SelectProviderInput = WebSDKSelectProviderInput;
 export type ChatOperationOptions = WebSDKChatOperationOptions;
 export type ChatStreamEvent = WebSDKChatStreamEvent;
+export type ContextWindowInfo = WebSDKContextWindowInfo;
 export type { WebSDKBYOMSDKError as BYOMSDKError };
 export type { WebSDKBYOMStateError as BYOMStateError };
 export type { WebSDKBYOMTransport as BYOMTransport };

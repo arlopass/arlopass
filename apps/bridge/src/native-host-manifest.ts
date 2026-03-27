@@ -1,10 +1,15 @@
 export const BRIDGE_HOST_NAME = "com.byom.bridge" as const;
 export const HOST_TYPE = "stdio" as const;
 
-const EXTENSION_ID_PATTERN = /^[a-z]{32}$/;
+/** Chromium extension IDs: 32 lowercase chars in the range a-p. */
+const CHROMIUM_EXTENSION_ID_PATTERN = /^[a-p]{32}$/;
+
+/** Firefox add-on IDs: email-style (addon@domain) or {uuid}. */
+const FIREFOX_ADDON_ID_PATTERN =
+  /^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+$|^\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}$/;
 
 /**
- * Structure matching the Chrome native messaging host manifest schema.
+ * Structure matching the Chrome/Edge native messaging host manifest schema.
  */
 export type NativeHostManifest = Readonly<{
   name: typeof BRIDGE_HOST_NAME;
@@ -14,8 +19,20 @@ export type NativeHostManifest = Readonly<{
   allowed_origins: readonly string[];
 }>;
 
+/**
+ * Structure matching the Firefox native messaging host manifest schema.
+ */
+export type FirefoxNativeHostManifest = Readonly<{
+  name: typeof BRIDGE_HOST_NAME;
+  description: string;
+  path: string;
+  type: typeof HOST_TYPE;
+  allowed_extensions: readonly string[];
+}>;
+
 export type AllowlistEntry = Readonly<{
   extensionId: string;
+  browser?: "chrome" | "edge" | "firefox";
   description?: string;
 }>;
 
@@ -29,7 +46,15 @@ export class ManifestValidationError extends Error {
 }
 
 export function isValidExtensionId(id: string): boolean {
-  return EXTENSION_ID_PATTERN.test(id);
+  return CHROMIUM_EXTENSION_ID_PATTERN.test(id) || FIREFOX_ADDON_ID_PATTERN.test(id);
+}
+
+export function isChromiumExtensionId(id: string): boolean {
+  return CHROMIUM_EXTENSION_ID_PATTERN.test(id);
+}
+
+export function isFirefoxAddonId(id: string): boolean {
+  return FIREFOX_ADDON_ID_PATTERN.test(id);
 }
 
 export function buildAllowedOrigin(extensionId: string): string {
@@ -46,7 +71,7 @@ export function assertExtensionIdInAllowlist(
 ): void {
   if (!isValidExtensionId(extensionId)) {
     throw new ManifestValidationError(
-      `Extension ID "${extensionId}" has invalid format (expected 32 lowercase a-z characters).`,
+      `Extension ID "${extensionId}" has invalid format (expected Chromium 32-char a-p or Firefox addon@domain / {uuid}).`,
     );
   }
 
@@ -59,20 +84,41 @@ export function assertExtensionIdInAllowlist(
 }
 
 /**
- * Builds the native messaging host manifest JSON object from a pinned
- * binary path and explicit extension ID allowlist.
+ * Builds the Chromium (Chrome/Edge) native messaging host manifest.
  */
 export function buildNativeHostManifest(
   hostBinaryPath: string,
   allowlist: readonly AllowlistEntry[],
 ): NativeHostManifest {
+  const chromiumEntries = allowlist.filter(
+    (entry) => entry.browser !== "firefox" && isChromiumExtensionId(entry.extensionId),
+  );
   return {
     name: BRIDGE_HOST_NAME,
     description: "BYOM AI Bridge — Secure native messaging host",
     path: hostBinaryPath,
     type: HOST_TYPE,
-    allowed_origins: allowlist.map((entry) =>
+    allowed_origins: chromiumEntries.map((entry) =>
       buildAllowedOrigin(entry.extensionId),
     ),
+  };
+}
+
+/**
+ * Builds the Firefox native messaging host manifest.
+ */
+export function buildFirefoxNativeHostManifest(
+  hostBinaryPath: string,
+  allowlist: readonly AllowlistEntry[],
+): FirefoxNativeHostManifest {
+  const firefoxEntries = allowlist.filter(
+    (entry) => entry.browser === "firefox" || isFirefoxAddonId(entry.extensionId),
+  );
+  return {
+    name: BRIDGE_HOST_NAME,
+    description: "BYOM AI Bridge — Secure native messaging host",
+    path: hostBinaryPath,
+    type: HOST_TYPE,
+    allowed_extensions: firefoxEntries.map((entry) => entry.extensionId),
   };
 }

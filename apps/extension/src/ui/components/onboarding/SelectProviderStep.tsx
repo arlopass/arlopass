@@ -9,7 +9,7 @@ import {
   type ProviderCategory,
   type ProviderEntry,
 } from "./provider-registry.js";
-import { loadCredentials, type StoredCredential } from "./credential-storage.js";
+import { loadCredentials } from "./credential-storage.js";
 import { tokens } from "../theme.js";
 
 export type SelectProviderStepProps = {

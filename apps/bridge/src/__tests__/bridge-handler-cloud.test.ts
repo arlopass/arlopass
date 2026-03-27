@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+﻿import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -15,9 +15,10 @@ import { createAuthenticatedOriginPolicyFromEnv } from "../config/authenticated-
 import type { CloudFeatureFlags } from "../config/cloud-feature-flags.js";
 import { RequestVerifier } from "../session/request-verifier.js";
 import { SessionKeyRegistry } from "../session/session-key-registry.js";
+import { obtainSessionToken } from "./test-session-helper.js";
 
 describe("BridgeHandler cloud control-plane dispatch", () => {
-  const sharedSecret = Buffer.alloc(32, 7);
+  const signingKey = Buffer.alloc(32, 7);
   const sessionToken = "11".repeat(32);
   const connectionHandle =
     "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig";
@@ -71,12 +72,12 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
               : "https://app.example.com",
           policyVersion:
             typeof input["policyVersion"] === "string" &&
-            input["policyVersion"].trim().length > 0
+              input["policyVersion"].trim().length > 0
               ? input["policyVersion"]
               : "pol.v2",
           endpointProfileHash:
             typeof input["endpointProfileHash"] === "string" &&
-            input["endpointProfileHash"].trim().length > 0
+              input["endpointProfileHash"].trim().length > 0
               ? input["endpointProfileHash"]
               : "sha256:endpoint-profile",
           epoch: 0,
@@ -187,7 +188,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     const cloudConnectionService = createCloudService();
     const cloudChatExecutor = createCloudChatExecutor();
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: {
@@ -197,14 +198,17 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
         },
       },
     });
+    const token = await obtainSessionToken(handler);
 
     const beginResponse = await handler.handle({
       type: "cloud.connection.begin",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
     });
     const chatResponse = await handler.handle({
       type: "cloud.chat.execute",
+      sessionToken: token,
       correlationId: "corr.cloud.001",
       tenantId: "tenant-1",
       origin: "https://app.example.com",
@@ -233,7 +237,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     const cloudConnectionService = createCloudService();
     const cloudChatExecutor = createCloudChatExecutor();
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: {
@@ -243,14 +247,17 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
         },
       },
     });
+    const token = await obtainSessionToken(handler);
 
     const beginResponse = await handler.handle({
       type: "cloud.connection.begin",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
     });
     const chatResponse = await handler.handle({
       type: "cloud.chat.execute",
+      sessionToken: token,
       correlationId: "corr.cloud.002",
       tenantId: "tenant-1",
       origin: "https://app.example.com",
@@ -278,13 +285,15 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
   it("returns cloud.connection.complete with connectionHandle on success", async () => {
     const cloudConnectionService = createCloudService();
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudFeatureFlags: enabledCloudFlags,
     });
+    const token = await obtainSessionToken(handler);
 
     const response = await handler.handle({
       type: "cloud.connection.complete",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       extensionId: "ext-1",
@@ -304,40 +313,47 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
   it("routes all required cloud message types", async () => {
     const cloudConnectionService = createCloudService();
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudFeatureFlags: enabledCloudFlags,
     });
+    const token = await obtainSessionToken(handler);
 
     await handler.handle({
       type: "cloud.connection.begin",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
     });
     await handler.handle({
       type: "cloud.connection.validate",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       connectionHandle,
     });
     await handler.handle({
       type: "cloud.connection.revoke",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       connectionHandle,
     });
     await handler.handle({
       type: "cloud.models.discover",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
     });
     await handler.handle({
       type: "cloud.capabilities.discover",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
     });
     await handler.handle({
       type: "cloud.discovery.refresh",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
     });
@@ -359,13 +375,15 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
       ),
     );
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudFeatureFlags: enabledCloudFlags,
     });
+    const token = await obtainSessionToken(handler);
 
     const response = await handler.handle({
       type: "cloud.models.discover",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       endpointOverride: "https://undeclared.example.com",
@@ -386,7 +404,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -415,7 +433,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -460,7 +478,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -505,7 +523,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -553,7 +571,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -595,7 +613,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -635,7 +653,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -670,7 +688,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -710,7 +728,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -747,13 +765,15 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
   it("replays duplicate cloud.connection.complete without re-running completion", async () => {
     const cloudConnectionService = createCloudService();
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudFeatureFlags: enabledCloudFlags,
     });
+    const token = await obtainSessionToken(handler);
 
     const request = {
       type: "cloud.connection.complete",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       extensionId: "ext-1",
@@ -777,13 +797,15 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
   it("replays duplicate cloud.connection.complete when only correlationId differs", async () => {
     const cloudConnectionService = createCloudService();
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudFeatureFlags: enabledCloudFlags,
     });
+    const token = await obtainSessionToken(handler);
 
     const firstRequest = {
       type: "cloud.connection.complete",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       extensionId: "ext-1",
@@ -847,14 +869,15 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
       } as const;
 
       const firstHandler = new BridgeHandler({
-        sharedSecret: firstSecret,
+        signingKey: firstSecret,
         cloudConnectionService,
         cloudFeatureFlags: enabledCloudFlags,
         requestIdempotencyStore: new InMemoryRequestIdempotencyStore({
           stateFilePath,
         }),
       });
-      const first = await firstHandler.handle(request);
+      const firstToken = await obtainSessionToken(firstHandler);
+      const first = await firstHandler.handle({ ...request, sessionToken: firstToken });
       expect(first).toMatchObject({
         type: "cloud.connection.complete",
         connectionHandle:
@@ -862,14 +885,15 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
       });
 
       const secondHandler = new BridgeHandler({
-        sharedSecret: secondSecret,
+        signingKey: secondSecret,
         cloudConnectionService,
         cloudFeatureFlags: enabledCloudFlags,
         requestIdempotencyStore: new InMemoryRequestIdempotencyStore({
           stateFilePath,
         }),
       });
-      const second = await secondHandler.handle(request);
+      const secondToken = await obtainSessionToken(secondHandler);
+      const second = await secondHandler.handle({ ...request, sessionToken: secondToken });
       expect(second).toMatchObject({
         type: "cloud.connection.complete",
         connectionHandle:
@@ -884,13 +908,15 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
   it("fails closed when cloud.connection.complete identity is reused with mismatched payload", async () => {
     const cloudConnectionService = createCloudService();
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudFeatureFlags: enabledCloudFlags,
     });
+    const token = await obtainSessionToken(handler);
 
     const first = await handler.handle({
       type: "cloud.connection.complete",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       extensionId: "ext-1",
@@ -905,6 +931,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
 
     const second = await handler.handle({
       type: "cloud.connection.complete",
+      sessionToken: token,
       providerId: "provider.claude",
       methodId: "anthropic.api_key",
       extensionId: "ext-1",
@@ -931,7 +958,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
 
     const originPolicy = createAuthenticatedOriginPolicyFromEnv({});
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -970,7 +997,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
       BYOM_BRIDGE_AUTHENTICATED_ORIGINS: "https://app.example.com",
     });
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -1015,7 +1042,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -1050,7 +1077,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -1083,7 +1110,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,
@@ -1113,7 +1140,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const handler = new BridgeHandler({
-      sharedSecret,
+      signingKey,
       cloudConnectionService,
       cloudChatExecutor,
       cloudFeatureFlags: enabledCloudFlags,

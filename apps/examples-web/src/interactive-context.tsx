@@ -2,7 +2,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import {
   BYOMClient,
   BYOMSDKError,
-  ConversationManager,
   type BYOMTransport,
   type ChatMessage,
   type ProviderDescriptor,

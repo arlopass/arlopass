@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { BYOMSDKError } from "@byom-ai/web-sdk";
 import type {
     ChatSubscribeNoTools,
+    ContextWindowInfo,
     MessageId,
     TrackedChatMessage,
 } from "../types.js";
@@ -34,6 +35,7 @@ type UseChatReturn = Readonly<{
     isStreaming: boolean;
     isSending: boolean;
     error: BYOMSDKError | null;
+    contextInfo: ContextWindowInfo;
     send: (content: string) => Promise<MessageId>;
     stream: (content: string) => Promise<MessageId>;
     stop: () => void;
@@ -270,6 +272,11 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
         });
     }, []) as unknown as ChatSubscribeNoTools;
 
+    const contextInfo = useMemo<ContextWindowInfo>(() => {
+        const chatMessages = messagesRef.current.map((m) => ({ role: m.role, content: m.content }));
+        return store.client.getContextInfo(chatMessages);
+    }, [store, messages]);
+
     return {
         messages,
         streamingContent,
@@ -277,6 +284,7 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
         isStreaming,
         isSending,
         error,
+        contextInfo,
         send,
         stream,
         stop,

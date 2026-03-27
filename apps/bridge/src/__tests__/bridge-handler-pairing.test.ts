@@ -34,12 +34,10 @@ describe("BridgeHandler pairing dispatch", () => {
       generateBytes: (length: number) =>
         length === 8 ? Buffer.from(pairingCodeBytes) : Buffer.alloc(length, 0x44),
     });
-    const sharedSecret = Buffer.alloc(32, 0x01);
     const handler = new BridgeHandler({
-      sharedSecret,
       pairingManager,
     });
-    const sessionToken = await obtainSessionToken(handler, sharedSecret);
+    const sessionToken = await obtainSessionToken(handler);
 
     const begin = await handler.handle({
       type: "pairing.begin",
@@ -124,7 +122,6 @@ describe("BridgeHandler pairing dispatch", () => {
         length === 8 ? Buffer.from(pairingCodeBytes) : Buffer.alloc(length, 0x66),
     });
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 0x01),
       pairingManager,
       pairingCodeRetrievalHint:
         "Bridge pairing code log: C:\\Users\\example\\AppData\\Local\\BYOM\\bridge\\logs\\pairing-code.log",
@@ -149,7 +146,6 @@ describe("BridgeHandler pairing dispatch", () => {
         length === 8 ? Buffer.from(pairingCodeBytes) : Buffer.alloc(length, 0x77),
     });
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 0x01),
       pairingManager,
     });
 
@@ -173,7 +169,6 @@ describe("BridgeHandler pairing dispatch", () => {
         length === 8 ? Buffer.from(pairingCodeBytes) : Buffer.alloc(length, 0x55),
     });
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 0x7f),
       pairingManager,
     });
 
@@ -302,7 +297,7 @@ describe("PairingManager.createAutoPairing", () => {
   it("returns a different pairing for a different extensionId", () => {
     const pairingManager = new PairingManager({
       generateBytes: (length: number) =>
-        Buffer.from(Array.from({ length }, (_, i) => Math.floor(Math.random() * 256))),
+        Buffer.from(Array.from({ length }, () => Math.floor(Math.random() * 256))),
     });
 
     const first = pairingManager.createAutoPairing({
@@ -321,12 +316,10 @@ describe("PairingManager.createAutoPairing", () => {
 
 describe("BridgeHandler pairing.auto dispatch", () => {
   it("returns a valid pairing.auto response", async () => {
-    const sharedSecret = Buffer.alloc(32, 0x01);
     const pairingManager = new PairingManager({
       generateBytes: (length: number) => Buffer.alloc(length, 0xee),
     });
     const handler = new BridgeHandler({
-      sharedSecret,
       pairingManager,
     });
 
@@ -348,9 +341,7 @@ describe("BridgeHandler pairing.auto dispatch", () => {
   });
 
   it("returns error when extensionId is missing", async () => {
-    const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 0x01),
-    });
+    const handler = new BridgeHandler({});
 
     const response = await handler.handle({
       type: "pairing.auto",
@@ -364,9 +355,7 @@ describe("BridgeHandler pairing.auto dispatch", () => {
   });
 
   it("returns error when hostName is missing", async () => {
-    const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 0x01),
-    });
+    const handler = new BridgeHandler({});
 
     const response = await handler.handle({
       type: "pairing.auto",
@@ -384,7 +373,6 @@ describe("BridgeHandler pairing.auto dispatch", () => {
       generateBytes: (length: number) => Buffer.alloc(length, 0xdd),
     });
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 0x7f),
       pairingManager,
     });
 

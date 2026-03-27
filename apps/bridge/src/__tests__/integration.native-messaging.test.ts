@@ -43,7 +43,6 @@ const HANDSHAKE_NONCE_HEX = HANDSHAKE_NONCE_BYTES.toString("hex");
 
 // Token bytes used for the session token after the nonce is consumed.
 const SESSION_TOKEN_BYTES = Buffer.from("bb".repeat(32), "hex");
-const SESSION_TOKEN_HEX = SESSION_TOKEN_BYTES.toString("hex");
 
 // ---------------------------------------------------------------------------
 // Helpers

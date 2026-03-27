@@ -145,8 +145,8 @@ const DEFAULT_IDEMPOTENCY_NAMESPACE = createHash("sha256")
   .update("byom.bridge.cloud.connection.complete.idempotency.v1.default", "utf8")
   .digest("hex");
 
-function deriveCloudConnectionCompleteIdempotencyNamespace(signingKey: Buffer | undefined): string {
-  if (signingKey === undefined || signingKey.length === 0) {
+function deriveCloudConnectionCompleteIdempotencyNamespace(signingKey: Buffer): string {
+  if (signingKey.length === 0) {
     return DEFAULT_IDEMPOTENCY_NAMESPACE;
   }
   return createHash("sha256")
@@ -291,6 +291,7 @@ export class BridgeHandler {
 
     // Strip the internal routing tag so it doesn't leak into handler logic
     // or adapter calls (adapters may reject unknown fields).
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- intentional: strip internal routing tag
     const { _bridgeRequestId: _tag, ...cleanMessage } = message;
 
     let response: NativeMessage;
@@ -367,6 +368,7 @@ export class BridgeHandler {
       // handler-specific logic (e.g. `#handleRequestCheck` uses
       // `handshakeSessionToken` for proof-path routing, and the
       // presence of `sessionToken` would incorrectly trigger it).
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- intentional: strip sessionToken from handler-specific logic
       const { sessionToken: _gateToken, ...gateStrippedMessage } = message;
       message = gateStrippedMessage as NativeMessage;
     }

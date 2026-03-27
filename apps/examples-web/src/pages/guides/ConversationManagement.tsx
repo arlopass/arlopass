@@ -119,7 +119,7 @@ function ChatWithTokenDisplay() {
   const {
     messages,
     stream,
-    tokenCount,
+    contextInfo,
     contextWindow,
     isStreaming,
     streamingContent,
@@ -128,19 +128,35 @@ function ChatWithTokenDisplay() {
     maxTokens: 8192,
   });
 
-  const usage = Math.round((tokenCount / 8192) * 100);
+  const pct = Math.round(contextInfo.usageRatio * 100);
 
   return (
     <div>
       <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-        <span>Tokens: {tokenCount} / 8192 ({usage}%)</span>
+        <span>
+          Tokens: {contextInfo.usedTokens} / {contextInfo.maxTokens} ({pct}%)
+        </span>
+        <span>{contextInfo.remainingTokens} remaining</span>
         <span>Context messages: {contextWindow.length}</span>
         <span>Total messages: {messages.length}</span>
       </div>
 
-      {usage > 80 && (
+      {/* Simple progress bar */}
+      <div style={{ height: 4, background: "#eee", borderRadius: 2 }}>
+        <div
+          style={{
+            width: pct + "%",
+            height: "100%",
+            background: pct > 80 ? "orange" : "#2563eb",
+            borderRadius: 2,
+            transition: "width 200ms",
+          }}
+        />
+      </div>
+
+      {pct > 80 && (
         <p style={{ color: "orange" }}>
-          Context window is {usage}% full. Older messages will be
+          Context window is {pct}% full. Older messages will be
           evicted soon.
         </p>
       )}
@@ -299,10 +315,10 @@ export default function ConversationManagement() {
 
       <Title order={3}>Pin messages that should never be evicted</Title>
       <Text>
-        Pinned messages survive context window truncation. Use them for
-        critical user facts, instructions, or system context that the AI must
-        always see. Pin on send with <code>{"{ pinned: true }"}</code> or
-        toggle later with <code>pinMessage()</code>.
+        Pinned messages survive context window truncation. Use them for critical
+        user facts, instructions, or system context that the AI must always see.
+        Pin on send with <code>{"{ pinned: true }"}</code> or toggle later with{" "}
+        <code>pinMessage()</code>.
       </Text>
       <CodeBlock title="PinnedMessages.tsx" code={pinExample} />
 
@@ -320,10 +336,11 @@ export default function ConversationManagement() {
 
       <Title order={3}>Monitor token usage</Title>
       <Text>
-        The <code>tokenCount</code> field gives the current estimated token
-        usage and <code>contextWindow</code> returns the actual messages that
-        will be sent to the model. Use these to build usage indicators and warn
-        users before truncation kicks in.
+        The <code>contextInfo</code> object gives a complete snapshot of context
+        window usage: <code>usedTokens</code>, <code>maxTokens</code>,{" "}
+        <code>remainingTokens</code>, and a <code>usageRatio</code> (0–1) that's
+        perfect for progress bars. On the web SDK, call{" "}
+        <code>convo.getContextInfo()</code> for the same data.
       </Text>
       <CodeBlock title="TokenMonitoring.tsx" code={tokenMonitoring} />
 

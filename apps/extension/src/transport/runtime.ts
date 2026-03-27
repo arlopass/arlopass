@@ -37,7 +37,6 @@ import { TokenUsageService } from "../usage/token-usage-service.js";
 
 const WALLET_KEY_PROVIDERS = "byom.wallet.providers.v1";
 const WALLET_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
-const WALLET_KEY_BRIDGE_SHARED_SECRET = "byom.wallet.bridgeSharedSecret.v1";
 const RESPONSE_TTL_MS = 60_000;
 const TRANSPORT_STREAM_CHANNEL = "byom.transport.stream";
 const TRANSPORT_STREAM_PORT_NAME = "byom.transport.stream.v1";
@@ -1202,6 +1201,7 @@ class PersistentBridgePort {
     // Terminal response — resolve the pending request.
     this.#pending.delete(requestId);
     // Strip internal tag before returning to caller.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _bridgeRequestId: _, ...cleanResponse } = response;
     pending.resolve(cleanResponse);
   }
@@ -2668,7 +2668,6 @@ function createDefaultTransportRuntimeDependencies(options: {
     ...(extensionId !== undefined ? { extensionId } : {}),
     resolveBridgeSharedSecret: async (hostName: string) => {
       const state = await options.storage.get([
-        WALLET_KEY_BRIDGE_SHARED_SECRET,
         BRIDGE_PAIRING_STATE_STORAGE_KEY,
       ]);
       if (extensionId !== undefined) {
@@ -2689,10 +2688,7 @@ function createDefaultTransportRuntimeDependencies(options: {
           }
         }
       }
-      const rawSecret = state[WALLET_KEY_BRIDGE_SHARED_SECRET];
-      return typeof rawSecret === "string" && rawSecret.trim().length > 0
-        ? rawSecret.trim()
-        : undefined;
+      return undefined;
     },
     resolveBridgePairingHandle: async (hostName: string) => {
       if (extensionId === undefined) {

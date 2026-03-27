@@ -121,6 +121,7 @@ describe("ClientStore", () => {
         store.refreshSnapshot();
         unsub();
         expect(typeof unsub).toBe("function");
+        expect(notified).toBe(false); // state didn't change, so no notification
         store.destroy();
     });
 
@@ -149,7 +150,7 @@ describe("ClientStore", () => {
     it("setError updates snapshot error field", () => {
         const client = createMockClient();
         const store = new ClientStore(client);
-        const error = new Error("test") as any;
+        const error = new Error("test") as unknown as import("@byom-ai/web-sdk").BYOMSDKError;
         store.setError(error);
         expect(store.getSnapshot().error).toBe(error);
         store.destroy();

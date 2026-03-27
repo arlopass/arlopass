@@ -32,13 +32,7 @@ const TIPS: TipCard[] = [
   },
 ];
 
-function DotIndicator({
-  total,
-  active,
-}: {
-  total: number;
-  active: number;
-}) {
+function DotIndicator({ total, active }: { total: number; active: number }) {
   return (
     <Group gap={6} justify="center">
       {Array.from({ length: total }, (_, i) => (
@@ -49,9 +43,7 @@ function DotIndicator({
             height: 8,
             borderRadius: "50%",
             background:
-              i === active
-                ? tokens.color.textPrimary
-                : tokens.color.border,
+              i === active ? tokens.color.textPrimary : tokens.color.border,
             transition: "background 200ms ease",
           }}
         />
@@ -98,17 +90,19 @@ export function TourCards({ onComplete }: TourCardsProps) {
           }}
         >
           {TIPS.map((tip) => (
-            <Box
-              key={tip.heading}
-              style={{ minWidth: "100%", flexShrink: 0 }}
-            >
+            <Box key={tip.heading} style={{ minWidth: "100%", flexShrink: 0 }}>
               <Stack gap={8} align="center" p={12}>
                 <tip.icon
                   size={48}
                   color={tokens.color.textPrimary}
                   stroke={1.5}
                 />
-                <Text size="sm" fw={600} c={tokens.color.textPrimary} ta="center">
+                <Text
+                  size="sm"
+                  fw={600}
+                  c={tokens.color.textPrimary}
+                  ta="center"
+                >
                   {tip.heading}
                 </Text>
                 <Text size="sm" c={tokens.color.textSecondary} ta="center">

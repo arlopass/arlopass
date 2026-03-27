@@ -1,6 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { MantineProvider, Stack, Text, Loader, Button, Group, Box, Paper, Title } from "@mantine/core";
+import {
+  MantineProvider,
+  Text,
+  Loader,
+  Button,
+  Group,
+  Box,
+  Paper,
+  Title,
+} from "@mantine/core";
 import "@mantine/core/styles.css";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { byomTheme } from "./ui/components/theme.js";
@@ -51,8 +60,20 @@ function OptionsOnboarding() {
   if (route === "add-provider-onboarding") {
     if (providerSaved) {
       return (
-        <Box style={{ minHeight: "100vh", background: "#f3f3f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Paper radius={8} p={40} style={{ textAlign: "center", maxWidth: 400 }}>
+        <Box
+          style={{
+            minHeight: "100vh",
+            background: "#f3f3f3",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Paper
+            radius={8}
+            p={40}
+            style={{ textAlign: "center", maxWidth: 400 }}
+          >
             <Text size="lg" fw={600} c={tokens.color.textPrimary}>
               Provider added!
             </Text>
@@ -80,7 +101,9 @@ function OptionsOnboarding() {
               size="xs"
               leftSection={<IconArrowLeft size={14} />}
               c={tokens.color.textSecondary}
-              onClick={() => { window.location.hash = "bridge-install"; }}
+              onClick={() => {
+                window.location.hash = "bridge-install";
+              }}
             >
               Back
             </Button>
@@ -100,7 +123,9 @@ function OptionsOnboarding() {
             </Title>
             <AddProviderWizard
               embedded
-              onClose={() => { window.location.hash = "bridge-install"; }}
+              onClose={() => {
+                window.location.hash = "bridge-install";
+              }}
               onSaved={() => setProviderSaved(true)}
             />
           </Paper>
@@ -116,7 +141,9 @@ function OptionsOnboarding() {
 const route = parseHash();
 if (route !== null) {
   // Hide legacy options UI
-  const legacyPage = document.querySelector(".options-page") as HTMLElement | null;
+  const legacyPage = document.querySelector(
+    ".options-page",
+  ) as HTMLElement | null;
   if (legacyPage) legacyPage.style.display = "none";
 
   let mountEl = document.getElementById("onboarding-root");

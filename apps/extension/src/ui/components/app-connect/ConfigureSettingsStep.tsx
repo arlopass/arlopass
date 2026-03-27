@@ -1,4 +1,4 @@
-import { Divider, Group, NumberInput, ScrollArea, Stack, Switch, Text } from "@mantine/core";
+import { Group, NumberInput, ScrollArea, Stack, Switch, Text } from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { PrimaryButton } from "../PrimaryButton.js";
 import type { AppPermissions, AppRules, AppLimits } from "./app-storage.js";

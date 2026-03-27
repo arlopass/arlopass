@@ -1,6 +1,5 @@
 import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
 import { CodeBlock, Callout, InlineCode, ApiTable, PreviewCode } from "../../components";
-import { navigate } from "../../router";
 
 const parts = [
   { name: "Root", type: "div", default: "—", description: "Manages conversation state (uncontrolled) or accepts external state (controlled). Renders the outermost wrapper.", required: false },

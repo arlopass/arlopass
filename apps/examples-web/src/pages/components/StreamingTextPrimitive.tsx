@@ -1,6 +1,5 @@
 import { Stack, Title, Text, Divider } from "@mantine/core";
 import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
-import { navigate } from "../../router";
 
 const props = [
   { name: "content", type: "string", description: "The text content to display.", required: true },

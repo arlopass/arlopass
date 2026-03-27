@@ -81,7 +81,12 @@ function WindowsInstructions() {
           <Text size="md" fw={500} c={tokens.color.btnPrimaryText}>
             Download BYOM Bridge for Windows
           </Text>
-          <Text size="xs" fw={500} c={tokens.color.btnPrimaryText} opacity={0.7}>
+          <Text
+            size="xs"
+            fw={500}
+            c={tokens.color.btnPrimaryText}
+            opacity={0.7}
+          >
             byom-bridge-win-x64.exe
           </Text>
         </Stack>
@@ -109,8 +114,8 @@ function WindowsInstructions() {
         }}
       >
         <Text size="sm" c={tokens.color.textPrimary}>
-          If Windows SmartScreen appears, click {"'"}More info{"'"} then {"'"}Run
-          anyway{"'"} — the installer is safe.
+          If Windows SmartScreen appears, click {"'"}More info{"'"} then {"'"}
+          Run anyway{"'"} — the installer is safe.
         </Text>
       </Box>
 

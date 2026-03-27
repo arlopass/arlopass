@@ -1,6 +1,5 @@
 import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
 import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
-import { navigate } from "../../router";
 
 const parts = [
   { name: "Root", type: "div", description: "Wraps tool-call display. Tracks whether any call is still in progress." },

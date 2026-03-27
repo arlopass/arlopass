@@ -197,6 +197,19 @@ export type RequiredResponsePayload<TPayload> = Readonly<{
   payload: TPayload;
 }>;
 
+export type ContextWindowInfo = Readonly<{
+  /** Maximum context window size in tokens for the selected model. */
+  maxTokens: number;
+  /** Estimated tokens currently used by messages in the context window. */
+  usedTokens: number;
+  /** Tokens reserved for model output (not available for input). */
+  reservedOutputTokens: number;
+  /** Tokens still available for new input messages. */
+  remainingTokens: number;
+  /** Usage as a fraction (0–1) of the input budget (maxTokens − reservedOutputTokens). */
+  usageRatio: number;
+}>;
+
 export type DeterministicFailure = Readonly<{
   reasonCode: ProtocolReasonCode;
   machineCode: string;

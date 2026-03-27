@@ -5,6 +5,7 @@ const importLine = `import type {
   ChatMessage,
   ChatRole,
   ClientState,
+  ContextWindowInfo,
   ChatInput,
   ChatOperationOptions,
   ChatStreamEvent,
@@ -64,6 +65,14 @@ const chatStreamEventDef = `type ChatStreamEvent =
 const chatSendResultDef = `type ChatSendResult = Readonly<{
   message: ChatMessage;
   correlationId: string;
+}>;`;
+
+const contextWindowInfoDef = `type ContextWindowInfo = Readonly<{
+  maxTokens: number;           // Context window size for the model
+  usedTokens: number;          // Estimated tokens in the context window
+  reservedOutputTokens: number; // Tokens reserved for model response
+  remainingTokens: number;     // Tokens still available for input
+  usageRatio: number;          // 0\u20131 fraction of input budget used
 }>;`;
 
 // Connect types
@@ -227,6 +236,15 @@ export default function WebSDKTypes() {
 
       <Title order={4}>ChatSendResult</Title>
       <CodeBlock code={chatSendResultDef} language="tsx" />
+
+      <Title order={4}>ContextWindowInfo</Title>
+      <CodeBlock code={contextWindowInfoDef} language="tsx" />
+      <Text fz="sm">
+        Returned by <InlineCode>BYOMClient.getContextInfo()</InlineCode> and{" "}
+        <InlineCode>ConversationManager.getContextInfo()</InlineCode>. Use{" "}
+        <InlineCode>usageRatio</InlineCode> for progress bars and{" "}
+        <InlineCode>remainingTokens</InlineCode> for "context full" warnings.
+      </Text>
 
       <Title order={4}>ID types</Title>
       <CodeBlock code={idTypesDef} language="tsx" />

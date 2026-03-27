@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { BridgeHandler } from "../bridge-handler.js";
 import { CliChatExecutionError } from "../cli/copilot-chat-executor.js";
+import { obtainSessionToken } from "./test-session-helper.js";
 
 describe("BridgeHandler CLI execution dispatch", () => {
   it("returns cli.chat.result when executor succeeds", async () => {
@@ -26,12 +27,13 @@ describe("BridgeHandler CLI execution dispatch", () => {
       })),
     };
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 1),
       cliChatExecutor,
     });
+    const sessionToken = await obtainSessionToken(handler);
 
     const response = await handler.handle({
       type: "cli.chat.execute",
+      sessionToken,
       correlationId: "corr.test.001",
       providerId: "provider.cli",
       modelId: "gpt-5.3-codex",
@@ -84,12 +86,13 @@ describe("BridgeHandler CLI execution dispatch", () => {
       })),
     };
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 2),
       cliChatExecutor,
     });
+    const sessionToken = await obtainSessionToken(handler);
 
     const response = await handler.handle({
       type: "cli.chat.execute",
+      sessionToken,
       correlationId: "corr.test.002",
       providerId: "provider.cli",
       modelId: "gpt-5.3-codex",
@@ -125,12 +128,13 @@ describe("BridgeHandler CLI execution dispatch", () => {
       })),
     };
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 3),
       cliChatExecutor,
     });
+    const sessionToken = await obtainSessionToken(handler);
 
     const response = await handler.handle({
       type: "cli.chat.execute",
+      sessionToken,
       correlationId: "corr.test.003",
       providerId: "provider.cli",
       modelId: "gpt-5.3-codex",
@@ -161,12 +165,13 @@ describe("BridgeHandler CLI execution dispatch", () => {
       })),
     };
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 4),
       cliChatExecutor,
     });
+    const sessionToken = await obtainSessionToken(handler);
 
     const response = await handler.handle({
       type: "cli.models.list",
+      sessionToken,
       cliType: "claude-code",
     });
 
@@ -197,12 +202,13 @@ describe("BridgeHandler CLI execution dispatch", () => {
       })),
     };
     const handler = new BridgeHandler({
-      sharedSecret: Buffer.alloc(32, 5),
       cliChatExecutor,
     });
+    const sessionToken = await obtainSessionToken(handler);
 
     const response = await handler.handle({
       type: "cli.thinking-levels.list",
+      sessionToken,
       cliType: "copilot-cli",
       modelId: "gpt-5.3-codex",
     });

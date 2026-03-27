@@ -2211,7 +2211,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
         (event) =>
           event["event"] === "error" &&
           (event["error"] as Record<string, unknown> | undefined)?.["reasonCode"] ===
-            "request.invalid",
+          "request.invalid",
       ),
     ).toBe(false);
     expect(

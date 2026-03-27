@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { WalletPopup } from "./ui/components/WalletPopup.js";
-import { AddProviderWizard, OnboardingController } from "./ui/components/onboarding/index.js";
+import {
+  AddProviderWizard,
+  OnboardingController,
+} from "./ui/components/onboarding/index.js";
 import { readSetupState } from "./ui/components/onboarding/setup-state.js";
 import { AppConnectWizard } from "./ui/components/app-connect/index.js";
 import { AppDetailView } from "./ui/components/AppDetailView.js";
@@ -15,7 +18,10 @@ import {
 import { byomTheme } from "./ui/components/theme.js";
 import { useWalletProviders } from "./ui/hooks/useWalletProviders.js";
 import { useActiveTabApp } from "./ui/hooks/useActiveTabApp.js";
-import { createWalletActionClient, type SendMessageFn } from "./ui/popup-actions.js";
+import {
+  createWalletActionClient,
+  type SendMessageFn,
+} from "./ui/popup-actions.js";
 import type { HeaderMenuItem } from "./ui/components/WalletHeader.js";
 
 const sendMessage: SendMessageFn = (message) =>
@@ -32,11 +38,18 @@ type PopupView =
   | { type: "connect-app"; origin: string }
   | { type: "wallet" };
 
-type PersistedViewState = { type: "main" | "wallet" | "add-provider" | "onboarding" };
+type PersistedViewState = {
+  type: "main" | "wallet" | "add-provider" | "onboarding";
+};
 
 function persistView(view: PopupView): void {
-  const state: PersistedViewState = view.type === "connect-app" ? { type: "main" } : { type: view.type };
-  try { chrome.storage.session.set({ [VIEW_STATE_KEY]: state }); } catch { /* session storage may not be available */ }
+  const state: PersistedViewState =
+    view.type === "connect-app" ? { type: "main" } : { type: view.type };
+  try {
+    chrome.storage.session.set({ [VIEW_STATE_KEY]: state });
+  } catch {
+    /* session storage may not be available */
+  }
 }
 
 async function restoreView(): Promise<PersistedViewState | null> {
@@ -44,7 +57,11 @@ async function restoreView(): Promise<PersistedViewState | null> {
     return new Promise((resolve) => {
       chrome.storage.session.get([VIEW_STATE_KEY], (result) => {
         const raw = result[VIEW_STATE_KEY];
-        if (raw != null && typeof raw === "object" && typeof (raw as Record<string, unknown>)["type"] === "string") {
+        if (
+          raw != null &&
+          typeof raw === "object" &&
+          typeof (raw as Record<string, unknown>)["type"] === "string"
+        ) {
           resolve(raw as PersistedViewState);
         } else {
           resolve(null);
@@ -57,7 +74,8 @@ async function restoreView(): Promise<PersistedViewState | null> {
 }
 
 function App() {
-  const { providers, rawProviders, loading, error, refresh } = useWalletProviders();
+  const { providers, rawProviders, loading, error, refresh } =
+    useWalletProviders();
   const { activeApp } = useActiveTabApp();
   const [view, setView] = useState<PopupView>({ type: "main" });
   const [restored, setRestored] = useState(false);
@@ -136,9 +154,14 @@ function App() {
       <MantineProvider theme={byomTheme} forceColorScheme="light">
         <OnboardingController
           hasProviders={providers.length > 0}
-          onComplete={() => { updateView({ type: "main" }); refresh(); }}
+          onComplete={() => {
+            updateView({ type: "main" });
+            refresh();
+          }}
           onOpenOptions={(route) => {
-            chrome.tabs.create({ url: chrome.runtime.getURL(`options.html#${route}`) });
+            chrome.tabs.create({
+              url: chrome.runtime.getURL(`options.html#${route}`),
+            });
           }}
         />
       </MantineProvider>
@@ -164,12 +187,12 @@ function App() {
           providers={providers}
           rawProviders={rawProviders}
           onComplete={(approved) => {
-            void writeConnectionResult(view.origin, approved).then(() =>
-              clearPendingConnection(),
-            ).then(() => {
-              updateView({ type: "main" });
-              refresh();
-            });
+            void writeConnectionResult(view.origin, approved)
+              .then(() => clearPendingConnection())
+              .then(() => {
+                updateView({ type: "main" });
+                refresh();
+              });
           }}
         />
       </MantineProvider>
@@ -180,7 +203,13 @@ function App() {
   const headerMenuItems: HeaderMenuItem[] = [];
   if (activeApp !== null) {
     const isAppView = view.type === "main";
-    const domain = (() => { try { return new URL(activeApp.app.origin).hostname; } catch { return activeApp.app.origin; } })();
+    const domain = (() => {
+      try {
+        return new URL(activeApp.app.origin).hostname;
+      } catch {
+        return activeApp.app.origin;
+      }
+    })();
     headerMenuItems.push({
       label: activeApp.app.displayName,
       subtitle: domain,
@@ -220,7 +249,9 @@ function App() {
         error={error}
         onProviderClick={(id) => console.log("Provider clicked:", id)}
         onRemoveProvider={(id) => {
-          void walletActions.revokeProvider({ providerId: id }).then(() => refresh());
+          void walletActions
+            .revokeProvider({ providerId: id })
+            .then(() => refresh());
         }}
         onEditProvider={() => {
           void walletActions.openConnectFlow();

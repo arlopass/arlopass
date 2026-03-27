@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Alert, Text, ThemeIcon, Group } from "@mantine/core";
+import { Alert, Text } from "@mantine/core";
 import { IconAlertTriangle, IconBulb, IconCircleCheck, IconInfoCircle } from "@tabler/icons-react";
 
 export type CalloutProps = {

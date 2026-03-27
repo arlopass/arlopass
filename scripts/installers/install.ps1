@@ -7,10 +7,19 @@
     Verifies SHA256 checksums. Registers native messaging hosts for Chrome, Edge and Firefox.
 .PARAMETER Uninstall
     Remove the BYOM Bridge installation.
+.PARAMETER ChromeExtId
+    Override the Chrome extension ID (32 lowercase a-p characters).
+.PARAMETER EdgeExtId
+    Override the Edge extension ID (32 lowercase a-p characters).
+.PARAMETER FirefoxExtId
+    Override the Firefox add-on ID (e.g. addon@domain or {uuid}).
 #>
 [CmdletBinding()]
 param(
-    [switch]$Uninstall
+    [switch]$Uninstall,
+    [string]$ChromeExtId,
+    [string]$EdgeExtId,
+    [string]$FirefoxExtId
 )
 
 Set-StrictMode -Version Latest
@@ -40,6 +49,97 @@ function Get-LatestRelease {
         }
     }
     throw "No bridge release found"
+}
+
+# ---- Default extension IDs (overridden via -ChromeExtId / -EdgeExtId / -FirefoxExtId) ----
+$DEFAULT_CHROME_EXT_ID  = "gebhamhhckkjfjibomllkpicongnebkh"
+$DEFAULT_EDGE_EXT_ID    = ""   # Set after Edge Add-ons store publishing
+$DEFAULT_FIREFOX_EXT_ID = "byom-ai-wallet@byomai.com"
+
+function Register-NativeHosts {
+    param(
+        [Parameter(Mandatory)] [string]$BinaryPath,
+        [Parameter(Mandatory)] [string]$ManifestDir
+    )
+
+    $chromeId  = if ($ChromeExtId)  { $ChromeExtId  } else { $DEFAULT_CHROME_EXT_ID }
+    $edgeId    = if ($EdgeExtId)    { $EdgeExtId    } else { $DEFAULT_EDGE_EXT_ID }
+    $firefoxId = if ($FirefoxExtId) { $FirefoxExtId } else { $DEFAULT_FIREFOX_EXT_ID }
+
+    # ---- Chromium manifest (Chrome + Edge share the allowed_origins format) ----
+    $chromiumOrigins = @()
+    if ($chromeId) { $chromiumOrigins += "chrome-extension://$chromeId/" }
+    if ($edgeId)   { $chromiumOrigins += "chrome-extension://$edgeId/" }
+
+    if ($chromiumOrigins.Count -gt 0) {
+        $chromiumManifest = @{
+            name             = $NATIVE_HOST_NAME
+            description      = "BYOM AI Bridge native messaging host"
+            path             = $BinaryPath
+            type             = "stdio"
+            allowed_origins  = $chromiumOrigins
+        } | ConvertTo-Json
+        $chromiumManifestPath = Join-Path $ManifestDir "$NATIVE_HOST_NAME.json"
+        Set-Content -Path $chromiumManifestPath -Value $chromiumManifest
+
+        # Chrome registry
+        if ($chromeId) {
+            $chromeReg = "HKCU:\Software\Google\Chrome\NativeMessagingHosts\$NATIVE_HOST_NAME"
+            $chromeParent = Split-Path $chromeReg
+            if (-not (Test-Path $chromeParent)) { New-Item -Path $chromeParent -Force | Out-Null }
+            New-Item -Path $chromeReg -Force | Out-Null
+            Set-ItemProperty -Path $chromeReg -Name '(Default)' -Value $chromiumManifestPath
+        }
+
+        # Edge registry
+        if ($edgeId) {
+            $edgeReg = "HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\$NATIVE_HOST_NAME"
+            $edgeParent = Split-Path $edgeReg
+            if (-not (Test-Path $edgeParent)) { New-Item -Path $edgeParent -Force | Out-Null }
+            New-Item -Path $edgeReg -Force | Out-Null
+            Set-ItemProperty -Path $edgeReg -Name '(Default)' -Value $chromiumManifestPath
+        }
+    }
+
+    # ---- Firefox manifest (uses allowed_extensions, not allowed_origins) ----
+    if ($firefoxId) {
+        $firefoxManifest = @{
+            name                = $NATIVE_HOST_NAME
+            description         = "BYOM AI Bridge native messaging host"
+            path                = $BinaryPath
+            type                = "stdio"
+            allowed_extensions  = @($firefoxId)
+        } | ConvertTo-Json
+        $firefoxManifestPath = Join-Path $ManifestDir "$NATIVE_HOST_NAME.firefox.json"
+        Set-Content -Path $firefoxManifestPath -Value $firefoxManifest
+
+        $firefoxReg = "HKCU:\Software\Mozilla\NativeMessagingHosts\$NATIVE_HOST_NAME"
+        $firefoxParent = Split-Path $firefoxReg
+        if (-not (Test-Path $firefoxParent)) { New-Item -Path $firefoxParent -Force | Out-Null }
+        New-Item -Path $firefoxReg -Force | Out-Null
+        Set-ItemProperty -Path $firefoxReg -Name '(Default)' -Value $firefoxManifestPath
+    }
+
+    # ---- Write config file for easy post-install edits ----
+    $configPath = Join-Path $ManifestDir "allowed-extensions.json"
+    $config = @{
+        chromium = [ordered]@{
+            chrome = $chromeId
+            edge   = $edgeId
+        }
+        firefox = @{
+            id = $firefoxId
+        }
+    } | ConvertTo-Json -Depth 3
+    Set-Content -Path $configPath -Value $config
+
+    Write-Host "Native messaging hosts registered." -ForegroundColor Green
+    if ($chromeId)  { Write-Host "  Chrome:  $chromeId" }
+    if ($edgeId)    { Write-Host "  Edge:    $edgeId" }
+    if ($firefoxId) { Write-Host "  Firefox: $firefoxId" }
+    if (-not $edgeId) {
+        Write-Host "  Edge:    (not configured — set after Edge Add-ons publishing with -EdgeExtId)" -ForegroundColor Yellow
+    }
 }
 
 function Install-Bridge {
@@ -87,34 +187,7 @@ function Install-Bridge {
         }
 
         # Register native messaging hosts
-        $nativeHostManifest = @{
-            name             = $NATIVE_HOST_NAME
-            description      = "BYOM AI Bridge native messaging host"
-            path             = (Join-Path $INSTALL_DIR $BINARY_NAME)
-            type             = "stdio"
-            allowed_origins  = @("chrome-extension://*")
-        } | ConvertTo-Json
-        $manifestPath = Join-Path $INSTALL_DIR "$NATIVE_HOST_NAME.json"
-        Set-Content -Path $manifestPath -Value $nativeHostManifest
-
-        # Chrome and Edge (same registry path pattern)
-        $regPaths = @(
-            "HKCU:\Software\Google\Chrome\NativeMessagingHosts\$NATIVE_HOST_NAME",
-            "HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\$NATIVE_HOST_NAME"
-        )
-        foreach ($regPath in $regPaths) {
-            $parent = Split-Path $regPath
-            if (-not (Test-Path $parent)) { New-Item -Path $parent -Force | Out-Null }
-            New-Item -Path $regPath -Force | Out-Null
-            Set-ItemProperty -Path $regPath -Name '(Default)' -Value $manifestPath
-        }
-
-        # Firefox
-        $firefoxRegPath = "HKCU:\Software\Mozilla\NativeMessagingHosts\$NATIVE_HOST_NAME"
-        $firefoxParent = Split-Path $firefoxRegPath
-        if (-not (Test-Path $firefoxParent)) { New-Item -Path $firefoxParent -Force | Out-Null }
-        New-Item -Path $firefoxRegPath -Force | Out-Null
-        Set-ItemProperty -Path $firefoxRegPath -Name '(Default)' -Value $manifestPath
+        Register-NativeHosts -BinaryPath (Join-Path $INSTALL_DIR $BINARY_NAME) -ManifestDir $INSTALL_DIR
 
         Write-Host ""
         Write-Host "BYOM Bridge $version installed successfully!" -ForegroundColor Green
@@ -132,8 +205,13 @@ function Uninstall-Bridge {
     $binaryPath = Join-Path $INSTALL_DIR $BINARY_NAME
     if (Test-Path $binaryPath) { Remove-Item $binaryPath -Force }
 
+    # Remove all native messaging manifest files
     $manifestPath = Join-Path $INSTALL_DIR "$NATIVE_HOST_NAME.json"
     if (Test-Path $manifestPath) { Remove-Item $manifestPath -Force }
+    $firefoxManifestPath = Join-Path $INSTALL_DIR "$NATIVE_HOST_NAME.firefox.json"
+    if (Test-Path $firefoxManifestPath) { Remove-Item $firefoxManifestPath -Force }
+    $configPath = Join-Path $INSTALL_DIR "allowed-extensions.json"
+    if (Test-Path $configPath) { Remove-Item $configPath -Force }
 
     $regPaths = @(
         "HKCU:\Software\Google\Chrome\NativeMessagingHosts\$NATIVE_HOST_NAME",

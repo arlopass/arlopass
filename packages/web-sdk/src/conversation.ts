@@ -1,6 +1,6 @@
 import type { BYOMClient } from "./client.js";
-import type { ChatMessage, ChatStreamEvent } from "./types.js";
-import type { ToolDefinition, ToolCall, ToolResult, ToolCallEvent, ToolResultEvent, ConversationStreamEvent, ToolPrimingStartEvent, ToolPrimingMatchEvent, ToolPrimingEndEvent } from "./tools.js";
+import type { ChatMessage, ContextWindowInfo } from "./types.js";
+import type { ToolDefinition, ToolCall, ToolResult, ConversationStreamEvent } from "./tools.js";
 import { estimateTokenCount } from "./token-estimation.js";
 import { resolveModelContextWindow } from "./model-context-windows.js";
 import { parseToolCalls, buildToolSystemPrompt, formatToolResults, shouldPrimeTools, buildToolPrimingMessage, stripToolCalls } from "./tool-parser.js";
@@ -122,6 +122,23 @@ export class ConversationManager {
             total += estimateTokenCount(m.content);
         }
         return total;
+    }
+
+    getContextInfo(): ContextWindowInfo {
+        const usedTokens = this.getTokenCount();
+        const inputBudget = this.#maxTokens - this.#reserveOutputTokens;
+        const remainingTokens = Math.max(0, inputBudget - usedTokens);
+        const usageRatio = inputBudget > 0
+            ? Math.min(1, usedTokens / inputBudget)
+            : 0;
+
+        return {
+            maxTokens: this.#maxTokens,
+            usedTokens,
+            reservedOutputTokens: this.#reserveOutputTokens,
+            remainingTokens,
+            usageRatio,
+        };
     }
 
     setPin(index: number, pinned: boolean): void {

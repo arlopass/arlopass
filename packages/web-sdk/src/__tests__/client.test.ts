@@ -289,3 +289,54 @@ describe("BYOMClient", () => {
     );
   });
 });
+
+describe("BYOMClient — context window", () => {
+  it("returns default context window size before provider selection", () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    const client = setupConnectedClient(transport);
+    // No provider selected yet — falls back to DEFAULT_CONTEXT_WINDOW (4096)
+    expect(client.contextWindowSize).toBe(4_096);
+  });
+
+  it("returns model-specific context window size after selection", async () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    const client = setupConnectedClient(transport);
+    await connectAndSelectProvider(client);
+    // selectProvider uses "test-model" which is unknown, so default
+    expect(client.contextWindowSize).toBe(4_096);
+  });
+
+  it("returns context info for a set of messages", async () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    const client = setupConnectedClient(transport);
+    await connectAndSelectProvider(client);
+
+    const messages = [
+      { role: "user" as const, content: "a".repeat(400) },  // ~100 tokens
+      { role: "assistant" as const, content: "b".repeat(800) }, // ~200 tokens
+    ];
+    const info = client.getContextInfo(messages, 500);
+    expect(info.maxTokens).toBe(4_096);
+    expect(info.usedTokens).toBe(300);
+    expect(info.reservedOutputTokens).toBe(500);
+    expect(info.remainingTokens).toBe(4_096 - 500 - 300);
+    expect(info.usageRatio).toBeCloseTo(300 / (4_096 - 500), 5);
+  });
+
+  it("returns zero remaining when messages exceed budget", async () => {
+    const transport = new MockTransport();
+    transport.requestHandler = createDefaultRequestHandler();
+    const client = setupConnectedClient(transport);
+    await connectAndSelectProvider(client);
+
+    const messages = [
+      { role: "user" as const, content: "x".repeat(100_000) }, // ~25000 tokens
+    ];
+    const info = client.getContextInfo(messages);
+    expect(info.remainingTokens).toBe(0);
+    expect(info.usageRatio).toBe(1);
+  });
+});

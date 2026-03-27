@@ -1,4 +1,4 @@
-import { Group, Loader, Stack, Text, TextInput } from "@mantine/core";
+import { Group, Stack, Text, TextInput } from "@mantine/core";
 import { ProviderAvatar } from "../ProviderAvatar.js";
 import { PrimaryButton } from "../PrimaryButton.js";
 import type { ProviderEntry } from "./provider-registry.js";

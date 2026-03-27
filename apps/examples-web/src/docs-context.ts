@@ -225,8 +225,11 @@ Key features:
 - Message pinning via addMessage({ pinned: true }) or setPin()
 - Auto-summarization of evicted messages (opt-in)
 - Built-in model context window lookup (25+ models)
-- getContextWindow() and getTokenCount() for inspection`,
-    keywords: ["conversation", "manager", "history", "context", "window", "truncation", "pin", "pinning", "summarize", "summarization", "tokens", "maxTokens"],
+- getContextWindow() and getTokenCount() for inspection
+- getContextInfo() returns ContextWindowInfo: maxTokens, usedTokens, reservedOutputTokens, remainingTokens, usageRatio
+- BYOMClient.contextWindowSize getter and getContextInfo(messages) for low-level usage
+- React hooks expose contextInfo on both useChat and useConversation`,
+    keywords: ["conversation", "manager", "history", "context", "window", "truncation", "pin", "pinning", "summarize", "summarization", "tokens", "maxTokens", "contextInfo", "contextWindowSize", "usageRatio", "remainingTokens", "getContextInfo", "ContextWindowInfo"],
   },
   {
     id: "tool-calling",

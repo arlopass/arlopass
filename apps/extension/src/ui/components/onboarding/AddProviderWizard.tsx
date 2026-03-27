@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Box, ScrollArea, Stack } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { PopupShell } from "../PopupShell.js";
 import { WalletHeader } from "../WalletHeader.js";
 import { SelectProviderStep } from "./SelectProviderStep.js";
@@ -18,10 +18,12 @@ import { usePersistedReducer } from "../../hooks/usePersistedReducer.js";
 import { tokens } from "../theme.js";
 import { createCloudConnectors } from "../../../options/connectors/index.js";
 import { ensureBridgeHandshakeSession } from "../../../transport/bridge-handshake.js";
-import { parseBridgePairingState, unwrapPairingKeyMaterial } from "../../../transport/bridge-pairing.js";
+import {
+  parseBridgePairingState,
+  unwrapPairingKeyMaterial,
+} from "../../../transport/bridge-pairing.js";
 import type {
   CloudConnectorDependencies,
-  ConnectionTestResult,
   ConnectorDefinition,
 } from "../../../options/connectors/types.js";
 
@@ -415,7 +417,8 @@ export function AddProviderWizard({
   onSaved,
   embedded,
 }: AddProviderWizardProps) {
-  const [state, dispatch, stateRestored] = usePersistedReducer(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [state, dispatch, _stateRestored] = usePersistedReducer(
     "byom.popup.addProvider.v1",
     onboardingReducer,
     INITIAL_STATE,

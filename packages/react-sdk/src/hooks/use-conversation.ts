@@ -6,6 +6,7 @@ import type { BYOMSDKError } from "@byom-ai/web-sdk";
 import type {
     ChatMessage,
     ChatSubscribe,
+    ContextWindowInfo,
     MessageId,
     ToolDefinition,
     TrackedChatMessage,
@@ -43,6 +44,7 @@ type UseConversationReturn = Readonly<{
     error: BYOMSDKError | null;
     tokenCount: number;
     contextWindow: readonly ChatMessage[];
+    contextInfo: ContextWindowInfo;
     send: (content: string, options?: { pinned?: boolean }) => Promise<MessageId>;
     stream: (content: string, options?: { pinned?: boolean }) => Promise<MessageId>;
     stop: () => void;
@@ -65,6 +67,9 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const [error, setError] = useState<BYOMSDKError | null>(null);
     const [tokenCount, setTokenCount] = useState(0);
     const [contextWindow, setContextWindow] = useState<readonly ChatMessage[]>([]);
+    const [contextInfo, setContextInfo] = useState<ContextWindowInfo>({
+        maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0,
+    });
 
     const messagesRef = useRef<TrackedChatMessage[]>(options?.initialMessages ?? []);
     const abortRef = useRef<AbortController | null>(null);
@@ -103,6 +108,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         const manager = managerRef.current!;
         setTokenCount(manager.getTokenCount());
         setContextWindow(manager.getContextWindow());
+        setContextInfo(manager.getContextInfo());
     }, []);
 
     const send = useCallback(async (content: string, opts?: { pinned?: boolean }): Promise<MessageId> => {
@@ -275,6 +281,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         setError(null);
         setTokenCount(0);
         setContextWindow([]);
+        setContextInfo({ maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0 });
         busyRef.current = false;
         lastRequestRef.current = null;
     }, []);
@@ -330,6 +337,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         error,
         tokenCount,
         contextWindow,
+        contextInfo,
         send,
         stream,
         stop,

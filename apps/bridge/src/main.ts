@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 import process from "node:process";
+import { randomBytes } from "node:crypto";
 import { join } from "node:path";
-
-import { readOrCreateBridgeState } from "./state/bridge-state.js";
 
 import { BridgeHandler } from "./bridge-handler.js";
 import { CopilotCliChatExecutor } from "./cli/copilot-chat-executor.js";
@@ -981,18 +980,6 @@ function resolveSessionKeyStateFilePathFromEnv(
   return undefined;
 }
 
-function resolveBridgeStateFilePathFromEnv(env: NodeJS.ProcessEnv): string {
-  const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
-  if (localAppData !== undefined) {
-    return join(localAppData, "BYOM", "bridge", "state", "bridge-state.json");
-  }
-  const tempDir =
-    normalizeNonEmptyString(env["TEMP"]) ??
-    normalizeNonEmptyString(env["TMPDIR"]) ??
-    "/tmp";
-  return join(tempDir, "BYOM", "bridge", "state", "bridge-state.json");
-}
-
 function resolveCloudConnectionStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
@@ -1055,9 +1042,7 @@ registerCloudAdapterPackage("@byom-ai/adapter-gemini");
  * performing a handshake — there is no shared secret.
  */
 async function main(): Promise<void> {
-  const bridgeStatePath = resolveBridgeStateFilePathFromEnv(process.env);
-  const bridgeState = readOrCreateBridgeState(bridgeStatePath);
-  const signingKey = Buffer.from(bridgeState.signingKey, "hex");
+  const signingKey = randomBytes(32); // Temporary — Task 7 adds persistence
   const cloudFeatureFlags = createCloudFeatureFlagsFromEnv(process.env);
   const authenticatedOriginPolicy =
     createAuthenticatedOriginPolicyFromEnv(process.env);

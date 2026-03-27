@@ -111,7 +111,8 @@ export default function BlockRegistry() {
       <div>
         <Title order={2}>Block registry</Title>
         <Text c="dimmed" mt={4}>
-          Pre-styled Tailwind blocks you copy into your project with a single command
+          Pre-styled Tailwind blocks you copy into your project with a single
+          command
         </Text>
       </div>
 
@@ -168,22 +169,113 @@ export default function BlockRegistry() {
       </Text>
       <PreviewCode
         preview={
-          <div style={{ border: "1px solid #e5e7eb", borderRadius: 16, overflow: "hidden", maxWidth: 420, fontFamily: "system-ui", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-            <div style={{ borderBottom: "1px solid #f3f4f6", padding: "10px 16px", fontSize: 13, fontWeight: 600, color: "#6b7280" }}>BYOM Chat</div>
-            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, minHeight: 180 }}>
-              <div style={{ alignSelf: "flex-end", background: "#2563eb", color: "white", borderRadius: "14px 14px 4px 14px", padding: "8px 14px", fontSize: 14, maxWidth: "80%" }}>
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 16,
+              overflow: "hidden",
+              maxWidth: 420,
+              fontFamily: "system-ui",
+              background: "white",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div
+              style={{
+                borderBottom: "1px solid #f3f4f6",
+                padding: "10px 16px",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#6b7280",
+              }}
+            >
+              BYOM Chat
+            </div>
+            <div
+              style={{
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                minHeight: 180,
+              }}
+            >
+              <div
+                style={{
+                  alignSelf: "flex-end",
+                  background: "#2563eb",
+                  color: "white",
+                  borderRadius: "14px 14px 4px 14px",
+                  padding: "8px 14px",
+                  fontSize: 14,
+                  maxWidth: "80%",
+                }}
+              >
                 What can you help me with?
               </div>
-              <div style={{ alignSelf: "flex-start", background: "#f4f4f5", borderRadius: "14px 14px 14px 4px", padding: "8px 14px", fontSize: 14, maxWidth: "80%", lineHeight: 1.5 }}>
-                I can answer questions, search documentation, generate code snippets, and help you integrate BYOM into your app.
+              <div
+                style={{
+                  alignSelf: "flex-start",
+                  background: "#f4f4f5",
+                  borderRadius: "14px 14px 14px 4px",
+                  padding: "8px 14px",
+                  fontSize: 14,
+                  maxWidth: "80%",
+                  lineHeight: 1.5,
+                }}
+              >
+                I can answer questions, search documentation, generate code
+                snippets, and help you integrate BYOM into your app.
               </div>
-              <div style={{ alignSelf: "flex-start", background: "#f4f4f5", borderRadius: "14px 14px 14px 4px", padding: "8px 14px", fontSize: 14, maxWidth: "80%", color: "#9ca3af" }}>
+              <div
+                style={{
+                  alignSelf: "flex-start",
+                  background: "#f4f4f5",
+                  borderRadius: "14px 14px 14px 4px",
+                  padding: "8px 14px",
+                  fontSize: 14,
+                  maxWidth: "80%",
+                  color: "#9ca3af",
+                }}
+              >
                 Thinking<span style={{ color: "#2563eb" }}>▌</span>
               </div>
             </div>
-            <div style={{ borderTop: "1px solid #e5e7eb", padding: "10px 16px", display: "flex", gap: 8 }}>
-              <input disabled placeholder="Type a message…" style={{ flex: 1, border: "1px solid #e5e7eb", borderRadius: 10, padding: "8px 14px", fontSize: 14, background: "#fafafa", color: "#6b7280" }} />
-              <button style={{ background: "#2563eb", color: "white", border: "none", borderRadius: 10, padding: "8px 18px", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Send</button>
+            <div
+              style={{
+                borderTop: "1px solid #e5e7eb",
+                padding: "10px 16px",
+                display: "flex",
+                gap: 8,
+              }}
+            >
+              <input
+                disabled
+                placeholder="Type a message…"
+                style={{
+                  flex: 1,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 10,
+                  padding: "8px 14px",
+                  fontSize: 14,
+                  background: "#fafafa",
+                  color: "#6b7280",
+                }}
+              />
+              <button
+                style={{
+                  background: "#2563eb",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "8px 18px",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                Send
+              </button>
             </div>
           </div>
         }
@@ -193,38 +285,152 @@ export default function BlockRegistry() {
 
       <Title order={3}>Chatbot widget block</Title>
       <Text>
-        A floating chat widget that renders a toggle bubble in the corner of
-        the screen. Opens an expandable panel with the full chat interface.
-        It wraps <InlineCode>BYOMProvider</InlineCode> and guard components
-        internally — just drop it anywhere.
+        A floating chat widget that renders a toggle bubble in the corner of the
+        screen. Opens an expandable panel with the full chat interface. It wraps{" "}
+        <InlineCode>BYOMProvider</InlineCode> and guard components internally —
+        just drop it anywhere.
       </Text>
       <PreviewCode
         preview={
-          <div style={{ position: "relative", height: 320, background: "#f9fafb", borderRadius: 12, overflow: "hidden", fontFamily: "system-ui" }}>
+          <div
+            style={{
+              position: "relative",
+              height: 320,
+              background: "#f9fafb",
+              borderRadius: 12,
+              overflow: "hidden",
+              fontFamily: "system-ui",
+            }}
+          >
             <div style={{ padding: 24 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>My Application</div>
-              <div style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>Your main page content goes here.</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
+                My Application
+              </div>
+              <div style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>
+                Your main page content goes here.
+              </div>
             </div>
-            <div style={{ position: "absolute", bottom: 16, right: 16, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
-              <div style={{ width: 280, background: "white", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", overflow: "hidden", border: "1px solid #e5e7eb" }}>
-                <div style={{ borderBottom: "1px solid #f3f4f6", padding: "8px 14px", fontSize: 12, fontWeight: 600, color: "#6b7280", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div
+              style={{
+                position: "absolute",
+                bottom: 16,
+                right: 16,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 280,
+                  background: "white",
+                  borderRadius: 16,
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.12)",
+                  overflow: "hidden",
+                  border: "1px solid #e5e7eb",
+                }}
+              >
+                <div
+                  style={{
+                    borderBottom: "1px solid #f3f4f6",
+                    padding: "8px 14px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#6b7280",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <span>AI Assistant</span>
                   <span style={{ color: "#9ca3af", cursor: "pointer" }}>✕</span>
                 </div>
-                <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, minHeight: 120 }}>
-                  <div style={{ alignSelf: "flex-start", background: "#f4f4f5", borderRadius: 10, padding: "6px 12px", fontSize: 13, maxWidth: "85%" }}>
+                <div
+                  style={{
+                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    minHeight: 120,
+                  }}
+                >
+                  <div
+                    style={{
+                      alignSelf: "flex-start",
+                      background: "#f4f4f5",
+                      borderRadius: 10,
+                      padding: "6px 12px",
+                      fontSize: 13,
+                      maxWidth: "85%",
+                    }}
+                  >
                     Hi! How can I help?
                   </div>
-                  <div style={{ alignSelf: "flex-end", background: "#2563eb", color: "white", borderRadius: 10, padding: "6px 12px", fontSize: 13 }}>
+                  <div
+                    style={{
+                      alignSelf: "flex-end",
+                      background: "#2563eb",
+                      color: "white",
+                      borderRadius: 10,
+                      padding: "6px 12px",
+                      fontSize: 13,
+                    }}
+                  >
                     Show me the docs
                   </div>
                 </div>
-                <div style={{ borderTop: "1px solid #e5e7eb", padding: 8, display: "flex", gap: 6 }}>
-                  <input disabled placeholder="Ask AI…" style={{ flex: 1, border: "1px solid #e5e7eb", borderRadius: 8, padding: "6px 10px", fontSize: 13, background: "#fafafa" }} />
-                  <button style={{ background: "#2563eb", color: "white", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 500 }}>Send</button>
+                <div
+                  style={{
+                    borderTop: "1px solid #e5e7eb",
+                    padding: 8,
+                    display: "flex",
+                    gap: 6,
+                  }}
+                >
+                  <input
+                    disabled
+                    placeholder="Ask AI…"
+                    style={{
+                      flex: 1,
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 8,
+                      padding: "6px 10px",
+                      fontSize: 13,
+                      background: "#fafafa",
+                    }}
+                  />
+                  <button
+                    style={{
+                      background: "#2563eb",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Send
+                  </button>
                 </div>
               </div>
-              <button style={{ background: "#2563eb", color: "white", border: "none", borderRadius: 999, padding: "12px 20px", fontSize: 14, fontWeight: 500, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,0.3)", display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                style={{
+                  background: "#2563eb",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 999,
+                  padding: "12px 20px",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
                 💬 Ask AI
               </button>
             </div>
@@ -237,30 +443,104 @@ export default function BlockRegistry() {
       <Title order={3}>Provider picker block</Title>
       <Text>
         Styled provider and model selection dropdowns. Fires an{" "}
-        <InlineCode>onSelect</InlineCode> callback when the user confirms
-        their choice.
+        <InlineCode>onSelect</InlineCode> callback when the user confirms their
+        choice.
       </Text>
       <PreviewCode
         preview={
-          <div style={{ maxWidth: 340, fontFamily: "system-ui", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, background: "white" }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#111827", marginBottom: 16 }}>Select AI Provider</div>
+          <div
+            style={{
+              maxWidth: 340,
+              fontFamily: "system-ui",
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 20,
+              background: "white",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 15,
+                fontWeight: 600,
+                color: "#111827",
+                marginBottom: 16,
+              }}
+            >
+              Select AI Provider
+            </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 6 }}>Provider</label>
-              <select disabled style={{ width: "100%", padding: "9px 12px", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 14, background: "white", color: "#111827", appearance: "auto" }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#6b7280",
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Provider
+              </label>
+              <select
+                disabled
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  fontSize: 14,
+                  background: "white",
+                  color: "#111827",
+                  appearance: "auto",
+                }}
+              >
                 <option>Ollama Local</option>
                 <option>Claude (Anthropic)</option>
                 <option>OpenAI</option>
               </select>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 6 }}>Model</label>
-              <select disabled style={{ width: "100%", padding: "9px 12px", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 14, background: "white", color: "#111827", appearance: "auto" }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#6b7280",
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Model
+              </label>
+              <select
+                disabled
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  fontSize: 14,
+                  background: "white",
+                  color: "#111827",
+                  appearance: "auto",
+                }}
+              >
                 <option>llama3</option>
                 <option>llama3.1</option>
                 <option>codellama</option>
               </select>
             </div>
-            <button style={{ width: "100%", background: "#2563eb", color: "white", border: "none", borderRadius: 8, padding: "10px 16px", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+            <button
+              style={{
+                width: "100%",
+                background: "#2563eb",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 16px",
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
               Select Provider
             </button>
           </div>
@@ -277,23 +557,94 @@ export default function BlockRegistry() {
       </Text>
       <PreviewCode
         preview={
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, fontFamily: "system-ui" }}>
-            <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 8, padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              fontFamily: "system-ui",
+            }}
+          >
+            <div
+              style={{
+                background: "#fef3c7",
+                border: "1px solid #fcd34d",
+                borderRadius: 8,
+                padding: "10px 16px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}>Extension not detected</div>
-                <div style={{ fontSize: 12, color: "#a16207", marginTop: 2 }}>Install the BYOM browser extension to enable AI features.</div>
+                <div
+                  style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}
+                >
+                  Extension not detected
+                </div>
+                <div style={{ fontSize: 12, color: "#a16207", marginTop: 2 }}>
+                  Install the BYOM browser extension to enable AI features.
+                </div>
               </div>
-              <button style={{ background: "#f59e0b", color: "white", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" }}>Install</button>
+              <button
+                style={{
+                  background: "#f59e0b",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "6px 12px",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Install
+              </button>
             </div>
-            <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 8, padding: "10px 16px" }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#991b1b" }}>Disconnected</div>
-              <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 2 }}>Not connected to AI provider. Check your extension settings.</div>
+            <div
+              style={{
+                background: "#fee2e2",
+                border: "1px solid #fca5a5",
+                borderRadius: 8,
+                padding: "10px 16px",
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#991b1b" }}>
+                Disconnected
+              </div>
+              <div style={{ fontSize: 12, color: "#b91c1c", marginTop: 2 }}>
+                Not connected to AI provider. Check your extension settings.
+              </div>
             </div>
-            <div style={{ background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: 999, background: "#059669" }} />
+            <div
+              style={{
+                background: "#d1fae5",
+                border: "1px solid #6ee7b7",
+                borderRadius: 8,
+                padding: "10px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 999,
+                  background: "#059669",
+                }}
+              />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#065f46" }}>Connected</div>
-                <div style={{ fontSize: 12, color: "#047857", marginTop: 1 }}>AI features are ready to use.</div>
+                <div
+                  style={{ fontSize: 13, fontWeight: 600, color: "#065f46" }}
+                >
+                  Connected
+                </div>
+                <div style={{ fontSize: 12, color: "#047857", marginTop: 1 }}>
+                  AI features are ready to use.
+                </div>
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Message } from "../message/index.js";
-import type { TrackedChatMessage, ToolCallInfo } from "../types.js";
+import type { TrackedChatMessage } from "../types.js";
 
 const sampleMessage: TrackedChatMessage = {
   id: "msg-1",

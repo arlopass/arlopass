@@ -1,6 +1,5 @@
 import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
 import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
-import { navigate } from "../../router";
 
 const parts = [
   { name: "Root", type: "div", description: "Manages provider/model selection state. Reads from useProviders when uncontrolled." },

@@ -50,7 +50,8 @@ export type ProviderCardProps = {
   onEdit?: ((providerId: string) => void) | undefined;
 };
 
-export function ProviderCard({ provider, tokenUsage, onClick, onRemove, onEdit }: ProviderCardProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function ProviderCard({ provider, tokenUsage, onClick: _onClick, onRemove, onEdit }: ProviderCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (

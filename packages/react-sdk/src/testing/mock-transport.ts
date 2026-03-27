@@ -54,9 +54,6 @@ export function createMockTransport(options: MockTransportOptions = {}): BYOMTra
         streamResponse,
     } = options;
 
-    let connected = false;
-    let disconnected = false;
-
     const transport: BYOMTransport = {
         async request(request) {
             if (latency > 0) await delay(latency);
@@ -69,7 +66,7 @@ export function createMockTransport(options: MockTransportOptions = {}): BYOMTra
             }
 
             if (capability === "session.create") {
-                connected = true;
+                // Session established
                 return {
                     envelope: makeEnvelope("session.create", { capabilities }),
                 } as never;
@@ -127,8 +124,7 @@ export function createMockTransport(options: MockTransportOptions = {}): BYOMTra
         },
 
         async disconnect() {
-            disconnected = true;
-            connected = false;
+            // No-op for mock
         },
     };
 

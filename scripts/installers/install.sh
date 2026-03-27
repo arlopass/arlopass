@@ -2,12 +2,20 @@
 # BYOM Bridge Installer
 # Usage: curl -fsSL https://byomai.com/install.sh | sh
 # Uninstall: curl -fsSL https://byomai.com/install.sh | sh -s -- --uninstall
+#
+# Override extension IDs:
+#   BYOM_CHROME_EXT_ID=... BYOM_EDGE_EXT_ID=... BYOM_FIREFOX_EXT_ID=... sh install.sh
 set -eu
 
 REPO="AltClick/byom-web"
 INSTALL_DIR="${HOME}/.local/bin"
 BINARY_NAME="byom-bridge"
 NATIVE_HOST_NAME="com.byom.bridge"
+
+# Default extension IDs — override via env vars above
+CHROME_EXT_ID="${BYOM_CHROME_EXT_ID:-gebhamhhckkjfjibomllkpicongnebkh}"
+EDGE_EXT_ID="${BYOM_EDGE_EXT_ID:-}"
+FIREFOX_EXT_ID="${BYOM_FIREFOX_EXT_ID:-byom-ai-wallet@byomai.com}"
 
 log()   { printf '\033[1;34m%s\033[0m\n' "$*"; }
 ok()    { printf '\033[1;32m%s\033[0m\n' "$*"; }
@@ -109,21 +117,44 @@ install_native_hosts() {
   os="$1"
   binary_path="${INSTALL_DIR}/${BINARY_NAME}"
 
-  manifest_content="{
+  # ---- Build Chromium allowed_origins list (Chrome + Edge) ----
+  chromium_origins=""
+  if [ -n "${CHROME_EXT_ID}" ]; then
+    chromium_origins="\"chrome-extension://${CHROME_EXT_ID}/\""
+  fi
+  if [ -n "${EDGE_EXT_ID}" ]; then
+    if [ -n "${chromium_origins}" ]; then
+      chromium_origins="${chromium_origins}, \"chrome-extension://${EDGE_EXT_ID}/\""
+    else
+      chromium_origins="\"chrome-extension://${EDGE_EXT_ID}/\""
+    fi
+  fi
+
+  chromium_manifest="{
   \"name\": \"${NATIVE_HOST_NAME}\",
   \"description\": \"BYOM AI Bridge native messaging host\",
   \"path\": \"${binary_path}\",
   \"type\": \"stdio\",
-  \"allowed_origins\": [\"chrome-extension://*\"]
+  \"allowed_origins\": [${chromium_origins}]
+}"
+
+  firefox_manifest="{
+  \"name\": \"${NATIVE_HOST_NAME}\",
+  \"description\": \"BYOM AI Bridge native messaging host\",
+  \"path\": \"${binary_path}\",
+  \"type\": \"stdio\",
+  \"allowed_extensions\": [\"${FIREFOX_EXT_ID}\"]
 }"
 
   case "${os}" in
     macos)
       chrome_dir="${HOME}/Library/Application Support/Google/Chrome/NativeMessagingHosts"
+      edge_dir="${HOME}/Library/Application Support/Microsoft Edge/NativeMessagingHosts"
       firefox_dir="${HOME}/Library/Application Support/Mozilla/NativeMessagingHosts"
       ;;
     linux)
       chrome_dir="${HOME}/.config/google-chrome/NativeMessagingHosts"
+      edge_dir="${HOME}/.config/microsoft-edge/NativeMessagingHosts"
       firefox_dir="${HOME}/.mozilla/native-messaging-hosts"
       ;;
     *)
@@ -131,12 +162,44 @@ install_native_hosts() {
       ;;
   esac
 
-  for dir in "${chrome_dir}" "${firefox_dir}"; do
-    mkdir -p "${dir}"
-    printf '%s' "${manifest_content}" > "${dir}/${NATIVE_HOST_NAME}.json"
-  done
+  # ---- Chromium manifest → Chrome + Edge directories ----
+  if [ -n "${chromium_origins}" ]; then
+    if [ -n "${CHROME_EXT_ID}" ]; then
+      mkdir -p "${chrome_dir}"
+      printf '%s' "${chromium_manifest}" > "${chrome_dir}/${NATIVE_HOST_NAME}.json"
+    fi
+    if [ -n "${EDGE_EXT_ID}" ]; then
+      mkdir -p "${edge_dir}"
+      printf '%s' "${chromium_manifest}" > "${edge_dir}/${NATIVE_HOST_NAME}.json"
+    fi
+  fi
 
-  log "Native messaging hosts registered for Chrome and Firefox."
+  # ---- Firefox manifest → Firefox directory ----
+  if [ -n "${FIREFOX_EXT_ID}" ]; then
+    mkdir -p "${firefox_dir}"
+    printf '%s' "${firefox_manifest}" > "${firefox_dir}/${NATIVE_HOST_NAME}.json"
+  fi
+
+  # ---- Config file for post-install edits ----
+  config_dir="${HOME}/.config/byom"
+  mkdir -p "${config_dir}"
+  cat > "${config_dir}/allowed-extensions.json" <<CONF
+{
+  "chromium": {
+    "chrome": "${CHROME_EXT_ID}",
+    "edge": "${EDGE_EXT_ID}"
+  },
+  "firefox": {
+    "id": "${FIREFOX_EXT_ID}"
+  }
+}
+CONF
+
+  log "Native messaging hosts registered."
+  [ -n "${CHROME_EXT_ID}" ]  && log "  Chrome:  ${CHROME_EXT_ID}"
+  [ -n "${EDGE_EXT_ID}" ]    && log "  Edge:    ${EDGE_EXT_ID}"
+  [ -n "${FIREFOX_EXT_ID}" ] && log "  Firefox: ${FIREFOX_EXT_ID}"
+  [ -z "${EDGE_EXT_ID}" ]    && warn "  Edge:    (not configured — set BYOM_EDGE_EXT_ID after Edge Add-ons publishing)"
 }
 
 uninstall_bridge() {
@@ -148,20 +211,25 @@ uninstall_bridge() {
   case "${os}" in
     macos)
       chrome_dir="${HOME}/Library/Application Support/Google/Chrome/NativeMessagingHosts"
+      edge_dir="${HOME}/Library/Application Support/Microsoft Edge/NativeMessagingHosts"
       firefox_dir="${HOME}/Library/Application Support/Mozilla/NativeMessagingHosts"
       ;;
     linux)
       chrome_dir="${HOME}/.config/google-chrome/NativeMessagingHosts"
+      edge_dir="${HOME}/.config/microsoft-edge/NativeMessagingHosts"
       firefox_dir="${HOME}/.mozilla/native-messaging-hosts"
       ;;
     *)
       chrome_dir=""
+      edge_dir=""
       firefox_dir=""
       ;;
   esac
 
-  [ -n "${chrome_dir}" ] && rm -f "${chrome_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
+  [ -n "${chrome_dir}" ]  && rm -f "${chrome_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
+  [ -n "${edge_dir}" ]    && rm -f "${edge_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
   [ -n "${firefox_dir}" ] && rm -f "${firefox_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
+  rm -f "${HOME}/.config/byom/allowed-extensions.json" 2>/dev/null || true
 
   ok "BYOM Bridge uninstalled."
 }

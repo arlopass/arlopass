@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { BYOMTransport } from "@byom-ai/web-sdk";
 import { BYOMProvider } from "../provider/byom-provider.js";
 import type { BYOMProviderProps } from "../types.js";
-import { mockWindowByom, cleanupWindowByom } from "./window-mock.js";
+import { mockWindowByom } from "./window-mock.js";
 
 type MockBYOMProviderProps = Omit<BYOMProviderProps, "appId"> & {
   appId?: string;

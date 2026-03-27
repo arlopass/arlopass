@@ -191,4 +191,49 @@ describe("ConversationManager", () => {
             expect(mgr.getMessages()[1]?.content).toBe("Hello");
         });
     });
+
+    describe("getContextInfo()", () => {
+        it("returns context window usage for current messages", () => {
+            const mgr = new ConversationManager({ client: mockClient("gpt-4o"), maxTokens: 1000, reserveOutputTokens: 200 });
+            mgr.addMessage({ role: "user", content: "a".repeat(400) }); // ~100 tokens
+            const info = mgr.getContextInfo();
+            expect(info.maxTokens).toBe(1000);
+            expect(info.reservedOutputTokens).toBe(200);
+            expect(info.usedTokens).toBe(100);
+            expect(info.remainingTokens).toBe(700); // 1000 - 200 - 100
+            expect(info.usageRatio).toBeCloseTo(100 / 800, 5);
+        });
+
+        it("returns zero usage when empty", () => {
+            const mgr = new ConversationManager({ client: mockClient(), maxTokens: 4096 });
+            const info = mgr.getContextInfo();
+            expect(info.usedTokens).toBe(0);
+            expect(info.remainingTokens).toBe(4096 - 1024); // default reserveOutputTokens
+            expect(info.usageRatio).toBe(0);
+        });
+
+        it("clamps usageRatio to 1 when context window is nearly full", () => {
+            // maxTokens=100, reserve=20 → input budget=80 tokens
+            // Add a message close to the budget: 76 tokens (304 chars / 4)
+            const mgr = new ConversationManager({ client: mockClient(), maxTokens: 100, reserveOutputTokens: 20 });
+            mgr.addMessage({ role: "user", content: "a".repeat(304) }); // 76 tokens
+            const info = mgr.getContextInfo();
+            expect(info.usedTokens).toBe(76);
+            expect(info.remainingTokens).toBe(4);
+            expect(info.usageRatio).toBeCloseTo(76 / 80, 5);
+        });
+
+        it("includes system prompt tokens in usage", () => {
+            const systemPrompt = "x".repeat(200); // ~50 tokens
+            const mgr = new ConversationManager({
+                client: mockClient(),
+                maxTokens: 1000,
+                reserveOutputTokens: 0,
+                systemPrompt,
+            });
+            const info = mgr.getContextInfo();
+            expect(info.usedTokens).toBe(50);
+            expect(info.remainingTokens).toBe(950);
+        });
+    });
 });

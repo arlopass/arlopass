@@ -88,7 +88,6 @@ type ProviderEditState = Readonly<{
 const STORAGE_KEY_PROVIDERS = "byom.wallet.providers.v1";
 const STORAGE_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
 const STORAGE_KEY_LAST_ERROR = "byom.wallet.ui.lastError.v1";
-const STORAGE_KEY_BRIDGE_SHARED_SECRET = "byom.wallet.bridgeSharedSecret.v1";
 const PROVIDER_ID_PREFIX = "provider";
 const NATIVE_MESSAGE_TIMEOUT_MS = 15_000;
 const DEFAULT_CLOUD_POLICY_VERSION = "policy.unknown";
@@ -219,15 +218,15 @@ function withCloudCompletionBindingFromRequest(
   return {
     ...response,
     ...(extensionId.length > 0 &&
-    !(typeof response["extensionId"] === "string" && response["extensionId"].trim().length > 0)
+      !(typeof response["extensionId"] === "string" && response["extensionId"].trim().length > 0)
       ? { extensionId }
       : {}),
     ...(origin.length > 0 &&
-    !(typeof response["origin"] === "string" && response["origin"].trim().length > 0)
+      !(typeof response["origin"] === "string" && response["origin"].trim().length > 0)
       ? { origin }
       : {}),
     ...(policyVersion.length > 0 &&
-    !(typeof response["policyVersion"] === "string" && response["policyVersion"].trim().length > 0)
+      !(typeof response["policyVersion"] === "string" && response["policyVersion"].trim().length > 0)
       ? { policyVersion }
       : {}),
   };
@@ -688,10 +687,10 @@ function parseStoredProvider(value: unknown): StoredProvider | null {
   const metadata =
     isRecord(value["metadata"])
       ? Object.fromEntries(
-          Object.entries(value["metadata"]).filter(
-            (entry): entry is [string, string] => typeof entry[1] === "string",
-          ),
-        )
+        Object.entries(value["metadata"]).filter(
+          (entry): entry is [string, string] => typeof entry[1] === "string",
+        ),
+      )
       : undefined;
 
   return {
@@ -778,26 +777,6 @@ async function writeBridgePairingState(pairingState: unknown): Promise<void> {
         const runtimeError = chrome.runtime.lastError;
         if (runtimeError !== undefined) {
           reject(new Error(runtimeError.message ?? "Failed to write bridge pairing state."));
-          return;
-        }
-        resolve();
-      },
-    );
-  });
-}
-
-async function clearLegacyBridgeSharedSecret(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.set(
-      {
-        [STORAGE_KEY_BRIDGE_SHARED_SECRET]: null,
-      },
-      () => {
-        const runtimeError = chrome.runtime.lastError;
-        if (runtimeError !== undefined) {
-          reject(
-            new Error(runtimeError.message ?? "Failed to clear legacy bridge shared secret."),
-          );
           return;
         }
         resolve();
@@ -1755,7 +1734,7 @@ function renderConnectedProviders(
       .map(
         (model) =>
           `<option value="${escapeHtml(model.id)}"${snapshot.activeProvider?.providerId === provider.id &&
-          snapshot.activeProvider.modelId === model.id
+            snapshot.activeProvider.modelId === model.id
             ? " selected"
             : ""}>${escapeHtml(model.name)}</option>`,
       )
@@ -1777,11 +1756,10 @@ function renderConnectedProviders(
         <button class="btn btn--secondary btn--small" type="button" data-provider-action="edit" data-provider-id="${escapeHtml(provider.id)}">
           Edit
         </button>
-        ${
-          provider.models.length > 0
-            ? `<select class="provider-model-select" data-provider-action="model" data-provider-id="${escapeHtml(provider.id)}"${isValidationOnly ? ' disabled aria-disabled="true"' : ""}>${modelOptions}</select>`
-            : ""
-        }
+        ${provider.models.length > 0
+        ? `<select class="provider-model-select" data-provider-action="model" data-provider-id="${escapeHtml(provider.id)}"${isValidationOnly ? ' disabled aria-disabled="true"' : ""}>${modelOptions}</select>`
+        : ""
+      }
         <button class="btn btn--danger btn--small" type="button" data-provider-action="remove" data-provider-id="${escapeHtml(provider.id)}">
           Remove
         </button>
@@ -2082,7 +2060,7 @@ function parsePairingDescriptors(payload: unknown): readonly PairingDescriptor[]
       hostName: entry["hostName"].trim(),
       createdAt: entry["createdAt"].trim(),
       ...(typeof entry["rotatedFromPairingHandle"] === "string" &&
-      entry["rotatedFromPairingHandle"].trim().length > 0
+        entry["rotatedFromPairingHandle"].trim().length > 0
         ? { rotatedFromPairingHandle: entry["rotatedFromPairingHandle"].trim() }
         : {}),
     });
@@ -2119,10 +2097,9 @@ function renderPairingSelector(
   selectNode.innerHTML = options
     .map(
       (option) =>
-        `<option value="${escapeHtml(option.value)}"${
-          preferredHandle !== undefined && preferredHandle === option.value
-            ? " selected"
-            : ""
+        `<option value="${escapeHtml(option.value)}"${preferredHandle !== undefined && preferredHandle === option.value
+          ? " selected"
+          : ""
         }>${escapeHtml(option.label)}</option>`,
     )
     .join("");
@@ -2262,13 +2239,12 @@ function setupBridgeSecurityControls(options: {
           : new Date().toISOString(),
       ...(typeof completeResponse.response["rotatedFromPairingHandle"] === "string"
         ? {
-            rotatedFromPairingHandle:
-              completeResponse.response["rotatedFromPairingHandle"],
-          }
+          rotatedFromPairingHandle:
+            completeResponse.response["rotatedFromPairingHandle"],
+        }
         : {}),
     });
     await writeBridgePairingState(wrappedState);
-    await clearLegacyBridgeSharedSecret();
     return wrappedState;
   };
 
@@ -2648,8 +2624,8 @@ async function onSaveProvider(
 
   const providers = isEditMode
     ? snapshot.providers.map((candidate) =>
-        candidate.id === options.editState?.providerId ? provider : candidate,
-      )
+      candidate.id === options.editState?.providerId ? provider : candidate,
+    )
     : [...snapshot.providers, provider];
   const preferredModelId =
     connector.id === "local-cli-bridge" || connector.id === "ollama"
@@ -2663,9 +2639,9 @@ async function onSaveProvider(
     preferredModelId.length > 0 && provider.models.some((model) => model.id === preferredModelId)
       ? preferredModelId
       : currentActiveModelId.length > 0 &&
-          provider.models.some((model) => model.id === currentActiveModelId)
+        provider.models.some((model) => model.id === currentActiveModelId)
         ? currentActiveModelId
-      : provider.models[0]?.id;
+        : provider.models[0]?.id;
   const shouldAutoActivateProvider = !isCloudValidationOnlyProvider(provider);
   const activeProvider =
     snapshot.activeProvider === null

@@ -1,4 +1,4 @@
-import { Center, Group, Stack, Text } from "@mantine/core";
+import { Center, Stack, Text } from "@mantine/core";
 import { IconPlugConnected } from "@tabler/icons-react";
 import { PrimaryButton } from "../PrimaryButton.js";
 import { tokens } from "../theme.js";

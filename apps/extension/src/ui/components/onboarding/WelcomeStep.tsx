@@ -1,5 +1,11 @@
 import { Stack, Text, Button, Box, Group } from "@mantine/core";
-import { IconShieldCheck, IconLock, IconHandStop, IconPlug, type Icon } from "@tabler/icons-react";
+import {
+  IconShieldCheck,
+  IconLock,
+  IconHandStop,
+  IconPlug,
+  type Icon,
+} from "@tabler/icons-react";
 import { tokens } from "../theme.js";
 
 type WelcomeStepProps = {
@@ -34,13 +40,12 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
   return (
     <Stack gap={12} p={12}>
       <Stack gap={4} align="center">
-        <IconShieldCheck size={48} color={tokens.color.textPrimary} stroke={1.5} />
-        <Text
-          size="lg"
-          fw={600}
-          c={tokens.color.textPrimary}
-          ta="center"
-        >
+        <IconShieldCheck
+          size={48}
+          color={tokens.color.textPrimary}
+          stroke={1.5}
+        />
+        <Text size="lg" fw={600} c={tokens.color.textPrimary} ta="center">
           Welcome to BYOM
         </Text>
         <Text size="sm" c={tokens.color.textSecondary} ta="center">

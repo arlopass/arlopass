@@ -8,7 +8,7 @@ import { ProviderAvatar } from "./ProviderAvatar.js";
 import { MetadataDivider } from "./MetadataDivider.js";
 import { PrimaryButton } from "./PrimaryButton.js";
 import { ConfigureSettingsStep } from "./app-connect/ConfigureSettingsStep.js";
-import { saveApp, type ConnectedApp, type AppPermissions, type AppRules, type AppLimits } from "./app-connect/app-storage.js";
+import { saveApp, type ConnectedApp } from "./app-connect/app-storage.js";
 import type { HeaderMenuItem } from "./WalletHeader.js";
 import type { WalletProvider } from "../popup-state.js";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
@@ -45,7 +45,8 @@ export type AppDetailViewProps = {
   headerMenuItems?: readonly HeaderMenuItem[] | undefined;
 };
 
-export function AppDetailView({ app, rawProviders, onBack, onSettingsClick, headerMenuItems }: AppDetailViewProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsClick, headerMenuItems }: AppDetailViewProps) {
   const [activeTab, setActiveTab] = useState<AppTabId>("providers");
   const [opened, { toggle }] = useDisclosure(true);
   const [localApp, setLocalApp] = useState(app);

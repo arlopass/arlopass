@@ -51,7 +51,7 @@ function makeManager(
   return { manager, now };
 }
 
-const EXTENSION_ID = "abcdefghijklmnopqrstuvwxyzabcdef"; // 32 a-z chars
+const EXTENSION_ID = "abcdefghabcdefghabcdefghabcdefgh"; // 32 a-p chars (Chromium format)
 const SECRET = Buffer.from("shared-secret-for-tests");
 
 // ---------------------------------------------------------------------------

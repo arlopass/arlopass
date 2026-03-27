@@ -13,7 +13,8 @@ type ConnectionStatusProps = HTMLAttributes<HTMLDivElement> & {
 
 export const ConnectionStatus = createForwardRef<HTMLDivElement, ConnectionStatusProps>(
   "ConnectionStatus",
-  ({ state: stateProp, sessionId: sessionIdProp, children, ...rest }, ref: Ref<HTMLDivElement>) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- sessionId reserved for future controlled mode
+  ({ state: stateProp, sessionId: _sessionIdProp, children, ...rest }, ref: Ref<HTMLDivElement>) => {
     const hook = useConnection();
 
     const isControlled = stateProp !== undefined;

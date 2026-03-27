@@ -8,16 +8,66 @@ const importLine = `import { ConversationManager } from "@byom-ai/web-sdk";`;
 // ---------------------------------------------------------------------------
 
 const constructorOptions = [
-  { name: "client", type: "BYOMClient", required: true, description: "Connected BYOMClient instance." },
-  { name: "maxTokens", type: "number", description: "Context window limit in tokens. Auto-detected from the selected model if omitted." },
-  { name: "reserveOutputTokens", type: "number", default: "1024", description: "Tokens reserved for the model's response." },
-  { name: "systemPrompt", type: "string", description: "System prompt prepended to every request." },
-  { name: "summarize", type: "boolean", default: "false", description: "Enable automatic summarization when the context window fills." },
-  { name: "summarizationPrompt", type: "string", default: '"Summarize the following conversation concisely…"', description: "Custom prompt used for summarization." },
-  { name: "tools", type: "ToolDefinition[]", default: "[]", description: "Tool definitions the model can call." },
-  { name: "maxToolRounds", type: "number", default: "5", description: "Maximum consecutive tool-call rounds before returning text." },
-  { name: "primeTools", type: "boolean", default: "false", description: "Enable tool priming for all messages globally." },
-  { name: "hideToolCalls", type: "boolean", default: "false", description: "Strip tool-call markup from responses globally." },
+  {
+    name: "client",
+    type: "BYOMClient",
+    required: true,
+    description: "Connected BYOMClient instance.",
+  },
+  {
+    name: "maxTokens",
+    type: "number",
+    description:
+      "Context window limit in tokens. Auto-detected from the selected model if omitted.",
+  },
+  {
+    name: "reserveOutputTokens",
+    type: "number",
+    default: "1024",
+    description: "Tokens reserved for the model's response.",
+  },
+  {
+    name: "systemPrompt",
+    type: "string",
+    description: "System prompt prepended to every request.",
+  },
+  {
+    name: "summarize",
+    type: "boolean",
+    default: "false",
+    description:
+      "Enable automatic summarization when the context window fills.",
+  },
+  {
+    name: "summarizationPrompt",
+    type: "string",
+    default: '"Summarize the following conversation concisely…"',
+    description: "Custom prompt used for summarization.",
+  },
+  {
+    name: "tools",
+    type: "ToolDefinition[]",
+    default: "[]",
+    description: "Tool definitions the model can call.",
+  },
+  {
+    name: "maxToolRounds",
+    type: "number",
+    default: "5",
+    description: "Maximum consecutive tool-call rounds before returning text.",
+  },
+  {
+    name: "primeTools",
+    type: "boolean",
+    default: "false",
+    description: "Enable tool priming for all messages globally.",
+  },
+  {
+    name: "hideToolCalls",
+    type: "boolean",
+    default: "false",
+    description: "Strip tool-call markup from responses globally.",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -25,15 +75,62 @@ const constructorOptions = [
 // ---------------------------------------------------------------------------
 
 const methods = [
-  { name: "send", type: "(content: string, options?: PinOptions) => Promise<ChatMessage>", description: "Send a user message and receive a complete response. Executes tool calls automatically if handlers are defined." },
-  { name: "stream", type: "(content: string, options?: PinOptions) => AsyncIterable<ConversationStreamEvent>", description: "Send a user message and stream the response. Yields chunk, done, tool_call, tool_result, and tool_priming_* events." },
-  { name: "addMessage", type: "(message: ChatMessage, options?: PinOptions) => void", description: "Manually add a message to the conversation history." },
-  { name: "getMessages", type: "() => readonly ChatMessage[]", description: "Get all messages including the system prompt." },
-  { name: "getContextWindow", type: "() => readonly ChatMessage[]", description: "Get the messages that would be sent in the next request (after summarization/truncation)." },
-  { name: "getTokenCount", type: "() => number", description: "Estimated total tokens in the current context window." },
-  { name: "setPin", type: "(index: number, pinned: boolean) => void", description: "Toggle pin status of a message by index. Pinned messages survive summarization." },
-  { name: "clear", type: "() => void", description: "Remove all messages from the conversation." },
-  { name: "submitToolResult", type: "(toolCallId: string, result: string) => void", description: "Submit a result for a manual tool call (tools without a handler)." },
+  {
+    name: "send",
+    type: "(content: string, options?: PinOptions) => Promise<ChatMessage>",
+    description:
+      "Send a user message and receive a complete response. Executes tool calls automatically if handlers are defined.",
+  },
+  {
+    name: "stream",
+    type: "(content: string, options?: PinOptions) => AsyncIterable<ConversationStreamEvent>",
+    description:
+      "Send a user message and stream the response. Yields chunk, done, tool_call, tool_result, and tool_priming_* events.",
+  },
+  {
+    name: "addMessage",
+    type: "(message: ChatMessage, options?: PinOptions) => void",
+    description: "Manually add a message to the conversation history.",
+  },
+  {
+    name: "getMessages",
+    type: "() => readonly ChatMessage[]",
+    description: "Get all messages including the system prompt.",
+  },
+  {
+    name: "getContextWindow",
+    type: "() => readonly ChatMessage[]",
+    description:
+      "Get the messages that would be sent in the next request (after summarization/truncation).",
+  },
+  {
+    name: "getTokenCount",
+    type: "() => number",
+    description: "Estimated total tokens in the current context window.",
+  },
+  {
+    name: "getContextInfo",
+    type: "() => ContextWindowInfo",
+    description:
+      "Returns a snapshot of context window usage: maxTokens, usedTokens, reservedOutputTokens, remainingTokens, and usageRatio (0\u20131).",
+  },
+  {
+    name: "setPin",
+    type: "(index: number, pinned: boolean) => void",
+    description:
+      "Toggle pin status of a message by index. Pinned messages survive summarization.",
+  },
+  {
+    name: "clear",
+    type: "() => void",
+    description: "Remove all messages from the conversation.",
+  },
+  {
+    name: "submitToolResult",
+    type: "(toolCallId: string, result: string) => void",
+    description:
+      "Submit a result for a manual tool call (tools without a handler).",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -41,7 +138,11 @@ const methods = [
 // ---------------------------------------------------------------------------
 
 const properties = [
-  { name: "maxTokens", type: "number", description: "Configured context window limit (readonly getter)." },
+  {
+    name: "maxTokens",
+    type: "number",
+    description: "Configured context window limit (readonly getter).",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -49,9 +150,23 @@ const properties = [
 // ---------------------------------------------------------------------------
 
 const pinOptions = [
-  { name: "pinned", type: "boolean", description: "Pin the message so it survives context-window summarization." },
-  { name: "primeTools", type: "boolean", description: "Force tool priming for this message (overrides manager-level setting)." },
-  { name: "hideToolCalls", type: "boolean", description: "Hide tool call markup for this message (overrides manager-level setting)." },
+  {
+    name: "pinned",
+    type: "boolean",
+    description: "Pin the message so it survives context-window summarization.",
+  },
+  {
+    name: "primeTools",
+    type: "boolean",
+    description:
+      "Force tool priming for this message (overrides manager-level setting).",
+  },
+  {
+    name: "hideToolCalls",
+    type: "boolean",
+    description:
+      "Hide tool call markup for this message (overrides manager-level setting).",
+  },
 ];
 
 const streamEventDef = `type ConversationStreamEvent =
@@ -62,6 +177,14 @@ const streamEventDef = `type ConversationStreamEvent =
   | { type: "tool_priming_start"; message: string }
   | { type: "tool_priming_match"; tools: readonly string[] }
   | { type: "tool_priming_end" };`;
+
+const contextWindowInfoDef = `type ContextWindowInfo = Readonly<{
+  maxTokens: number;           // Context window size for the model
+  usedTokens: number;          // Tokens currently in the context window
+  reservedOutputTokens: number; // Tokens reserved for model output
+  remainingTokens: number;     // Tokens left for new input
+  usageRatio: number;          // 0\u20131 fraction of input budget used
+}>;`;
 
 const usageExample = `const manager = new ConversationManager({
   client,
@@ -76,7 +199,12 @@ const reply = await manager.send("What is the weather?");
 for await (const event of manager.stream("Tell me more")) {
   if (event.type === "chunk") process.stdout.write(event.delta);
   if (event.type === "tool_call") console.log("Tool:", event.name);
-}`;
+}
+
+// Context window usage
+const info = manager.getContextInfo();
+console.log(\`\${info.usedTokens}/\${info.maxTokens} tokens (\${Math.round(info.usageRatio * 100)}%)\`);
+console.log(\`\${info.remainingTokens} tokens remaining for input\`);`;
 
 export default function ConversationManagerAPI() {
   return (
@@ -109,8 +237,9 @@ export default function ConversationManagerAPI() {
       <Divider />
       <Title order={3}>PinOptions</Title>
       <Text>
-        Options passed to <InlineCode>send</InlineCode>, <InlineCode>stream</InlineCode>,
-        and <InlineCode>addMessage</InlineCode>.
+        Options passed to <InlineCode>send</InlineCode>,{" "}
+        <InlineCode>stream</InlineCode>, and <InlineCode>addMessage</InlineCode>
+        .
       </Text>
       <ApiTable data={pinOptions} />
 
@@ -118,10 +247,22 @@ export default function ConversationManagerAPI() {
       <Divider />
       <Title order={3}>ConversationStreamEvent</Title>
       <Text>
-        Discriminated union yielded by <InlineCode>stream()</InlineCode>. Extends the base{" "}
-        <InlineCode>ChatStreamEvent</InlineCode> with tool and priming events.
+        Discriminated union yielded by <InlineCode>stream()</InlineCode>.
+        Extends the base <InlineCode>ChatStreamEvent</InlineCode> with tool and
+        priming events.
       </Text>
       <CodeBlock code={streamEventDef} language="tsx" />
+
+      {/* ContextWindowInfo */}
+      <Divider />
+      <Title order={3}>ContextWindowInfo</Title>
+      <Text>
+        Returned by <InlineCode>getContextInfo()</InlineCode>. Provides a
+        snapshot of context window usage — useful for building token meters,
+        "context full" warnings, and adaptive UI that responds to how much space
+        is left.
+      </Text>
+      <CodeBlock code={contextWindowInfoDef} language="tsx" />
 
       {/* Example */}
       <Divider />
