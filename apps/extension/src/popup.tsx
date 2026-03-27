@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { WalletPopup } from "./ui/components/WalletPopup.js";
-import { AddProviderWizard } from "./ui/components/onboarding/index.js";
+import { AddProviderWizard, OnboardingController } from "./ui/components/onboarding/index.js";
+import { readSetupState } from "./ui/components/onboarding/setup-state.js";
 import { AppConnectWizard } from "./ui/components/app-connect/index.js";
 import { AppDetailView } from "./ui/components/AppDetailView.js";
 import {
@@ -26,11 +27,12 @@ const VIEW_STATE_KEY = "byom.popup.viewState.v1";
 
 type PopupView =
   | { type: "main" }
+  | { type: "onboarding" }
   | { type: "add-provider" }
   | { type: "connect-app"; origin: string }
   | { type: "wallet" };
 
-type PersistedViewState = { type: "main" | "wallet" | "add-provider" };
+type PersistedViewState = { type: "main" | "wallet" | "add-provider" | "onboarding" };
 
 function persistView(view: PopupView): void {
   const state: PersistedViewState = view.type === "connect-app" ? { type: "main" } : { type: view.type };
@@ -59,6 +61,7 @@ function App() {
   const { activeApp } = useActiveTabApp();
   const [view, setView] = useState<PopupView>({ type: "main" });
   const [restored, setRestored] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
   const prevActiveAppOrigin = useRef<string | null>(null);
 
   // Wrap setView to also persist
@@ -81,6 +84,8 @@ function App() {
         setView(saved);
       }
       setRestored(true);
+      // Onboarding check deferred until providers load
+      setOnboardingChecked(false);
     })();
   }, []);
 
@@ -112,7 +117,33 @@ function App() {
     }
   }, [activeApp?.tabOrigin, view.type, restored, updateView]);
 
+  // Check onboarding after provider loading completes
+  useEffect(() => {
+    if (!restored || loading) return;
+    if (onboardingChecked) return;
+    setOnboardingChecked(true);
+    void readSetupState().then((state) => {
+      if (!state.completed && providers.length === 0) {
+        setView({ type: "onboarding" });
+      }
+    });
+  }, [restored, loading, providers.length, onboardingChecked]);
+
   if (!restored) return null;
+
+  if (view.type === "onboarding") {
+    return (
+      <MantineProvider theme={byomTheme} forceColorScheme="light">
+        <OnboardingController
+          hasProviders={providers.length > 0}
+          onComplete={() => { updateView({ type: "main" }); refresh(); }}
+          onOpenOptions={(route) => {
+            chrome.tabs.create({ url: chrome.runtime.getURL(`options.html#${route}`) });
+          }}
+        />
+      </MantineProvider>
+    );
+  }
 
   if (view.type === "add-provider") {
     return (
