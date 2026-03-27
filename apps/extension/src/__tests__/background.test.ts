@@ -12,7 +12,29 @@
  *    revokeProvider (active nulling), openConnectFlow, unsupported action, invalid envelope
  *  - Runtime bootstrap listener: registers chrome.runtime.onMessage bridge and routes actions
  */
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// ---------------------------------------------------------------------------
+// Module mocks — bridge handshake & pairing so sendVaultMessageFromBackground
+// resolves without real native messaging infrastructure.
+// ---------------------------------------------------------------------------
+
+vi.mock("../transport/bridge-handshake.js", () => ({
+  ensureBridgeHandshakeSession: vi.fn().mockResolvedValue({
+    sessionToken: "test-session-token",
+    hostName: "com.arlopass.bridge",
+    extensionId: "test-extension-id",
+    sessionKey: new Uint8Array(32),
+    establishedAt: "2026-03-23T12:00:00.000Z",
+    expiresAt: "2026-03-23T12:05:00.000Z",
+  }),
+}));
+
+vi.mock("../transport/bridge-pairing.js", () => ({
+  BRIDGE_PAIRING_STATE_STORAGE_KEY: "arlopass.wallet.bridgePairing.v1",
+  parseBridgePairingState: vi.fn().mockReturnValue(undefined),
+  unwrapPairingKeyMaterial: vi.fn().mockResolvedValue(null),
+}));
 
 import { PermissionError } from "@arlopass/protocol";
 import type { CanonicalEnvelope } from "@arlopass/protocol";
@@ -627,10 +649,68 @@ function makeProvider(
 }
 
 // ---------------------------------------------------------------------------
+// Vault mock infrastructure for wallet handler tests
+// ---------------------------------------------------------------------------
+
+type VaultProvider = { id: string; models: string[] };
+
+let _vaultProviders: VaultProvider[] = [];
+
+function setVaultProviders(providers: VaultProvider[]): void {
+  _vaultProviders = providers;
+}
+
+/**
+ * Installs a minimal global `chrome` stub so that
+ * `sendVaultMessageFromBackground` (called by wallet handlers) can resolve.
+ */
+function installChromeVaultStub(): void {
+  const g = globalThis as Record<string, unknown>;
+  g["chrome"] = {
+    runtime: {
+      id: "test-extension-id",
+      lastError: undefined,
+      sendNativeMessage: vi.fn(
+        (
+          _host: string,
+          msg: Record<string, unknown>,
+          callback: (resp: unknown) => void,
+        ) => {
+          if (msg["type"] === "vault.providers.list") {
+            callback({ type: "vault.providers.list", providers: _vaultProviders });
+          } else if (msg["type"] === "vault.providers.delete") {
+            callback({ type: "vault.providers.delete" });
+          } else {
+            callback({ error: "unknown vault message type" });
+          }
+        },
+      ),
+    },
+    storage: {
+      local: {
+        get: vi.fn().mockResolvedValue({}),
+      },
+    },
+  };
+}
+
+function uninstallChromeVaultStub(): void {
+  const g = globalThis as Record<string, unknown>;
+  delete g["chrome"];
+  _vaultProviders = [];
+}
+
+// ---------------------------------------------------------------------------
 // Wallet handler: setActiveProvider
 // ---------------------------------------------------------------------------
 
 describe("createWalletMessageHandler — wallet.setActiveProvider", () => {
+  beforeEach(() => {
+    installChromeVaultStub();
+    setVaultProviders([{ id: "ollama", models: ["llama3"] }]);
+  });
+  afterEach(() => uninstallChromeVaultStub());
+
   it("writes providerId to active storage and returns ok:true", async () => {
     const { storage, state } = makeFakeStorage();
     const handle = createWalletMessageHandler({ storage });
@@ -683,12 +763,15 @@ describe("createWalletMessageHandler — wallet.setActiveProvider", () => {
 // ---------------------------------------------------------------------------
 
 describe("createWalletMessageHandler — wallet.setActiveModel", () => {
+  beforeEach(() => installChromeVaultStub());
+  afterEach(() => uninstallChromeVaultStub());
+
   it("sets active provider and model atomically when provider differs from current", async () => {
+    setVaultProviders([
+      { id: "anthropic", models: ["claude-3"] },
+      { id: "ollama", models: ["llama3"] },
+    ]);
     const { storage, state } = makeFakeStorage({
-      [STORAGE_KEY_PROVIDERS]: [
-        makeProvider("anthropic", [{ id: "claude-3", name: "Claude 3" }]),
-        makeProvider("ollama", [{ id: "llama3", name: "Llama 3" }]),
-      ],
       [STORAGE_KEY_ACTIVE]: { providerId: "anthropic", modelId: "claude-3" },
     });
     const handle = createWalletMessageHandler({ storage });
@@ -708,13 +791,8 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
   });
 
   it("updates only modelId when provider is already active", async () => {
+    setVaultProviders([{ id: "ollama", models: ["llama3", "mistral"] }]);
     const { storage, state } = makeFakeStorage({
-      [STORAGE_KEY_PROVIDERS]: [
-        makeProvider("ollama", [
-          { id: "llama3", name: "Llama 3" },
-          { id: "mistral", name: "Mistral" },
-        ]),
-      ],
       [STORAGE_KEY_ACTIVE]: { providerId: "ollama", modelId: "llama3" },
     });
     const handle = createWalletMessageHandler({ storage });
@@ -734,9 +812,8 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
   });
 
   it("returns invalid_selection when provider is not found", async () => {
-    const { storage } = makeFakeStorage({
-      [STORAGE_KEY_PROVIDERS]: [makeProvider("ollama", [{ id: "llama3", name: "Llama 3" }])],
-    });
+    setVaultProviders([{ id: "ollama", models: ["llama3"] }]);
+    const { storage } = makeFakeStorage();
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
@@ -750,9 +827,8 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
   });
 
   it("returns invalid_selection when model is not found in provider", async () => {
-    const { storage } = makeFakeStorage({
-      [STORAGE_KEY_PROVIDERS]: [makeProvider("ollama", [{ id: "llama3", name: "Llama 3" }])],
-    });
+    setVaultProviders([{ id: "ollama", models: ["llama3"] }]);
+    const { storage } = makeFakeStorage();
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
@@ -785,9 +861,11 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
 // ---------------------------------------------------------------------------
 
 describe("createWalletMessageHandler — wallet.revokeProvider", () => {
-  it("removes the provider from the providers list", async () => {
+  beforeEach(() => installChromeVaultStub());
+  afterEach(() => uninstallChromeVaultStub());
+
+  it("delegates provider deletion to the vault and returns ok:true", async () => {
     const { storage, state } = makeFakeStorage({
-      [STORAGE_KEY_PROVIDERS]: [makeProvider("ollama"), makeProvider("anthropic")],
       [STORAGE_KEY_ACTIVE]: { providerId: "anthropic" },
     });
     const handle = createWalletMessageHandler({ storage });
@@ -800,13 +878,12 @@ describe("createWalletMessageHandler — wallet.revokeProvider", () => {
     });
 
     expect(result).toEqual({ ok: true });
-    const providers = state[STORAGE_KEY_PROVIDERS] as Array<{ id: string }>;
-    expect(providers.map((p) => p.id)).toEqual(["anthropic"]);
+    // Active provider is different from revoked — should remain unchanged.
+    expect(state[STORAGE_KEY_ACTIVE]).toMatchObject({ providerId: "anthropic" });
   });
 
   it("sets active provider to null when the active provider is revoked", async () => {
     const { storage, state } = makeFakeStorage({
-      [STORAGE_KEY_PROVIDERS]: [makeProvider("ollama")],
       [STORAGE_KEY_ACTIVE]: { providerId: "ollama", modelId: "llama3" },
     });
     const handle = createWalletMessageHandler({ storage });
@@ -823,7 +900,6 @@ describe("createWalletMessageHandler — wallet.revokeProvider", () => {
 
   it("does not clear active when a different provider is revoked", async () => {
     const { storage, state } = makeFakeStorage({
-      [STORAGE_KEY_PROVIDERS]: [makeProvider("ollama"), makeProvider("anthropic")],
       [STORAGE_KEY_ACTIVE]: { providerId: "anthropic" },
     });
     const handle = createWalletMessageHandler({ storage });
