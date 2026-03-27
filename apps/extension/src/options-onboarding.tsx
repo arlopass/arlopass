@@ -17,6 +17,9 @@ import { BridgeInstallGuide } from "./ui/components/onboarding/BridgeInstallGuid
 import { OnboardingBanner } from "./ui/components/onboarding/OnboardingBanner.js";
 import { AddProviderWizard } from "./ui/components/onboarding/AddProviderWizard.js";
 import { tokens } from "./ui/components/theme.js";
+import { useVault } from "./ui/hooks/useVault.js";
+import { VaultGate } from "./ui/components/VaultGate.js";
+import { VaultProvider } from "./ui/hooks/VaultContext.js";
 
 type OnboardingRoute = "bridge-install" | "add-provider-onboarding" | null;
 
@@ -153,9 +156,26 @@ if (route !== null) {
     document.body.prepend(mountEl);
   }
 
-  createRoot(mountEl).render(
-    <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
-      <OptionsOnboarding />
-    </MantineProvider>,
-  );
+  function OptionsOnboardingApp() {
+    const vault = useVault();
+    return (
+      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
+        <VaultGate
+          status={vault.status}
+          onSetup={vault.setup}
+          onSetupKeychain={vault.setupKeychain}
+          onUnlock={vault.unlock}
+          onUnlockKeychain={vault.unlockKeychain}
+          onRetry={vault.refresh}
+          needsReauth={vault.needsReauth}
+        >
+          <VaultProvider sendVaultMessage={vault.sendVaultMessage}>
+            <OptionsOnboarding />
+          </VaultProvider>
+        </VaultGate>
+      </MantineProvider>
+    );
+  }
+
+  createRoot(mountEl).render(<OptionsOnboardingApp />);
 }
