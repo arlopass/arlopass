@@ -11,21 +11,23 @@ type ConnectionStatusProps = HTMLAttributes<HTMLDivElement> & {
   children?: ReactNode;
 };
 
-export const ConnectionStatus = createForwardRef<HTMLDivElement, ConnectionStatusProps>(
+export const ConnectionStatus = createForwardRef<
+  HTMLDivElement,
+  ConnectionStatusProps
+>(
   "ConnectionStatus",
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- sessionId reserved for future controlled mode
-  ({ state: stateProp, sessionId: _sessionIdProp, children, ...rest }, ref: Ref<HTMLDivElement>) => {
+  (
+    { state: stateProp, sessionId: _sessionIdProp, children, ...rest },
+    ref: Ref<HTMLDivElement>,
+  ) => {
     const hook = useConnection();
 
     const isControlled = stateProp !== undefined;
     const state = isControlled ? stateProp : hook.state;
 
     return (
-      <div
-        ref={ref}
-        data-state={state}
-        {...rest}
-      >
+      <div ref={ref} data-state={state} {...rest}>
         {children ?? state}
       </div>
     );

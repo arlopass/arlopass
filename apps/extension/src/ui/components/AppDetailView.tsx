@@ -1,5 +1,17 @@
 import { useCallback, useState } from "react";
-import { Box, Button, Checkbox, Collapse, Divider, Group, ScrollArea, Stack, Tabs, Text, UnstyledButton } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Collapse,
+  Divider,
+  Group,
+  ScrollArea,
+  Stack,
+  Tabs,
+  Text,
+  UnstyledButton,
+} from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import { PopupShell } from "./PopupShell.js";
@@ -15,10 +27,18 @@ import { useTokenUsage } from "../hooks/useTokenUsage.js";
 import { tokens } from "./theme.js";
 
 type AppTabId = "providers" | "models" | "settings";
-type SubView = "none" | "enable-provider" | "pick-provider-models" | "enable-model";
+type SubView =
+  | "none"
+  | "enable-provider"
+  | "pick-provider-models"
+  | "enable-model";
 
 function extractDomain(origin: string): string {
-  try { return new URL(origin).hostname; } catch { return origin; }
+  try {
+    return new URL(origin).hostname;
+  } catch {
+    return origin;
+  }
 }
 
 function deriveProviderKey(provider: WalletProvider): string {
@@ -26,7 +46,12 @@ function deriveProviderKey(provider: WalletProvider): string {
   const m = provider.metadata?.["methodId"] ?? "";
   const cliType = provider.metadata?.["cliType"] ?? "";
   if (cliType === "claude-code") return "claude";
-  if (m.startsWith("anthropic.") || n.includes("anthropic") || n.includes("claude")) return "anthropic";
+  if (
+    m.startsWith("anthropic.") ||
+    n.includes("anthropic") ||
+    n.includes("claude")
+  )
+    return "anthropic";
   if (m.startsWith("openai.") || n.includes("openai")) return "openai";
   if (m.startsWith("gemini.") || n.includes("gemini")) return "gemini";
   if (m.startsWith("foundry.") || n.includes("microsoft")) return "microsoft";
@@ -46,7 +71,13 @@ export type AppDetailViewProps = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsClick, headerMenuItems }: AppDetailViewProps) {
+export function AppDetailView({
+  app,
+  rawProviders,
+  onBack: _onBack,
+  onSettingsClick,
+  headerMenuItems,
+}: AppDetailViewProps) {
   const [activeTab, setActiveTab] = useState<AppTabId>("providers");
   const [opened, { toggle }] = useDisclosure(true);
   const [localApp, setLocalApp] = useState(app);
@@ -55,16 +86,23 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
   const [pickedModelIds, setPickedModelIds] = useState<string[]>([]);
 
   const { summaries: usageSummaries } = useTokenUsage();
-  const appUsageSummary = usageSummaries.find((s) => s.origin === localApp.origin);
+  const appUsageSummary = usageSummaries.find(
+    (s) => s.origin === localApp.origin,
+  );
   const appTotalTokens = appUsageSummary
     ? appUsageSummary.totalInputTokens + appUsageSummary.totalOutputTokens
     : localApp.tokenUsage;
 
   // Providers enabled for this app
-  const enabledProviders = rawProviders.filter((p) => localApp.enabledProviderIds.includes(p.id));
+  const enabledProviders = rawProviders.filter((p) =>
+    localApp.enabledProviderIds.includes(p.id),
+  );
 
   // Models enabled for this app, grouped by provider
-  const enabledModels = new Map<string, { name: string; providerKey: string; providerCount: number }>();
+  const enabledModels = new Map<
+    string,
+    { name: string; providerKey: string; providerCount: number }
+  >();
   for (const p of enabledProviders) {
     const pk = deriveProviderKey(p);
     for (const m of p.models) {
@@ -73,7 +111,11 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
         if (existing != null) {
           existing.providerCount++;
         } else {
-          enabledModels.set(m.id, { name: m.name, providerKey: pk, providerCount: 1 });
+          enabledModels.set(m.id, {
+            name: m.name,
+            providerKey: pk,
+            providerCount: 1,
+          });
         }
       }
     }
@@ -107,27 +149,43 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
   }, []);
 
   // Providers NOT yet enabled for this app
-  const availableProviders = rawProviders.filter((p) => !localApp.enabledProviderIds.includes(p.id));
+  const availableProviders = rawProviders.filter(
+    (p) => !localApp.enabledProviderIds.includes(p.id),
+  );
 
   // For enable-model: all models from enabled providers that aren't yet enabled
-  const availableModels: { id: string; name: string; providerKey: string }[] = [];
+  const availableModels: { id: string; name: string; providerKey: string }[] =
+    [];
   for (const p of enabledProviders) {
     const pk = deriveProviderKey(p);
     for (const m of p.models) {
-      if (!localApp.enabledModelIds.includes(m.id) && !availableModels.some((am) => am.id === m.id)) {
+      if (
+        !localApp.enabledModelIds.includes(m.id) &&
+        !availableModels.some((am) => am.id === m.id)
+      ) {
         availableModels.push({ id: m.id, name: m.name, providerKey: pk });
       }
     }
   }
 
   // The provider being configured in the enable-provider flow
-  const pickedProvider = pickedProviderId != null ? rawProviders.find((p) => p.id === pickedProviderId) ?? null : null;
+  const pickedProvider =
+    pickedProviderId != null
+      ? (rawProviders.find((p) => p.id === pickedProviderId) ?? null)
+      : null;
 
   const handleConfirmEnableProvider = useCallback(async () => {
     if (pickedProvider == null) return;
     const newProviderIds = [...localApp.enabledProviderIds, pickedProvider.id];
-    const newModelIds = [...localApp.enabledModelIds, ...pickedModelIds.filter((id) => !localApp.enabledModelIds.includes(id))];
-    const updated = { ...localApp, enabledProviderIds: newProviderIds, enabledModelIds: newModelIds };
+    const newModelIds = [
+      ...localApp.enabledModelIds,
+      ...pickedModelIds.filter((id) => !localApp.enabledModelIds.includes(id)),
+    ];
+    const updated = {
+      ...localApp,
+      enabledProviderIds: newProviderIds,
+      enabledModelIds: newModelIds,
+    };
     await persistApp(updated);
     setSubView("none");
     setPickedProviderId(null);
@@ -135,43 +193,82 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
   }, [localApp, pickedProvider, pickedModelIds, persistApp]);
 
   const handleConfirmEnableModels = useCallback(async () => {
-    const newModelIds = [...localApp.enabledModelIds, ...pickedModelIds.filter((id) => !localApp.enabledModelIds.includes(id))];
+    const newModelIds = [
+      ...localApp.enabledModelIds,
+      ...pickedModelIds.filter((id) => !localApp.enabledModelIds.includes(id)),
+    ];
     const updated = { ...localApp, enabledModelIds: newModelIds };
     await persistApp(updated);
     setSubView("none");
     setPickedModelIds([]);
   }, [localApp, pickedModelIds, persistApp]);
 
-  const handleDisableProvider = useCallback(async (providerId: string) => {
-    const updated = {
-      ...localApp,
-      enabledProviderIds: localApp.enabledProviderIds.filter((id) => id !== providerId),
-    };
-    await persistApp(updated);
-  }, [localApp, persistApp]);
+  const handleDisableProvider = useCallback(
+    async (providerId: string) => {
+      const updated = {
+        ...localApp,
+        enabledProviderIds: localApp.enabledProviderIds.filter(
+          (id) => id !== providerId,
+        ),
+      };
+      await persistApp(updated);
+    },
+    [localApp, persistApp],
+  );
 
-  const handleDisableModel = useCallback(async (modelId: string) => {
-    const updated = {
-      ...localApp,
-      enabledModelIds: localApp.enabledModelIds.filter((id) => id !== modelId),
-    };
-    await persistApp(updated);
-  }, [localApp, persistApp]);
+  const handleDisableModel = useCallback(
+    async (modelId: string) => {
+      const updated = {
+        ...localApp,
+        enabledModelIds: localApp.enabledModelIds.filter(
+          (id) => id !== modelId,
+        ),
+      };
+      await persistApp(updated);
+    },
+    [localApp, persistApp],
+  );
 
   return (
     <PopupShell>
       <WalletHeader
-        title={subView === "none" ? localApp.displayName
-          : subView === "enable-provider" ? "Enable provider"
-          : subView === "pick-provider-models" ? `${pickedProvider?.name ?? "Provider"} models`
-          : "Enable model"}
-        subtitle={subView === "none" ? extractDomain(localApp.origin) : undefined}
+        title={
+          subView === "none"
+            ? localApp.displayName
+            : subView === "enable-provider"
+              ? "Enable provider"
+              : subView === "pick-provider-models"
+                ? `${pickedProvider?.name ?? "Provider"} models`
+                : "Enable model"
+        }
+        subtitle={
+          subView === "none" ? extractDomain(localApp.origin) : undefined
+        }
         collapsed={!opened}
-        onToggleCollapse={subView !== "none" ? () => { setSubView("none"); setPickedProviderId(null); setPickedModelIds([]); } : headerMenuItems != null && headerMenuItems.length > 0 ? undefined : toggle}
+        onToggleCollapse={
+          subView !== "none"
+            ? () => {
+                setSubView("none");
+                setPickedProviderId(null);
+                setPickedModelIds([]);
+              }
+            : headerMenuItems != null && headerMenuItems.length > 0
+              ? undefined
+              : toggle
+        }
         onSettingsClick={subView !== "none" ? undefined : onSettingsClick}
         menuItems={subView === "none" ? headerMenuItems : undefined}
       />
-      <Collapse in={opened} transitionDuration={200} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <Collapse
+        in={opened}
+        transitionDuration={200}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <Box
           style={{
             flex: 1,
@@ -188,14 +285,22 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
           {/* App stats bar */}
           <Group gap={tokens.spacing.metadataGap}>
             {localApp.iconUrl && (
-              <img src={localApp.iconUrl} alt="" width={24} height={24} style={{ borderRadius: 4, flexShrink: 0 }} />
+              <img
+                src={localApp.iconUrl}
+                alt=""
+                width={24}
+                height={24}
+                style={{ borderRadius: 4, flexShrink: 0 }}
+              />
             )}
             <Text fz="sm" fw={500} c={tokens.color.textPrimary}>
               {formatTokens(appTotalTokens)} tokens used
             </Text>
             <MetadataDivider />
             <Text fz="sm" fw={500} c={tokens.color.textPrimary}>
-              {localApp.permissions.autopilot && localApp.permissions.readBalance && localApp.permissions.autoSelectModel
+              {localApp.permissions.autopilot &&
+              localApp.permissions.readBalance &&
+              localApp.permissions.autoSelectModel
                 ? "Full permissions"
                 : "Partial permissions"}
             </Text>
@@ -204,7 +309,9 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
           {/* App tabs */}
           <Tabs
             value={activeTab}
-            onChange={(v) => { if (v !== null) setActiveTab(v as AppTabId); }}
+            onChange={(v) => {
+              if (v !== null) setActiveTab(v as AppTabId);
+            }}
             variant="unstyled"
             styles={{
               root: { overflow: "hidden" },
@@ -232,9 +339,20 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
                 <Tabs.Tab
                   key={id}
                   value={id}
-                  style={id === activeTab ? { borderBottomColor: tokens.color.textPrimary, color: tokens.color.textPrimary } : undefined}
+                  style={
+                    id === activeTab
+                      ? {
+                          borderBottomColor: tokens.color.textPrimary,
+                          color: tokens.color.textPrimary,
+                        }
+                      : undefined
+                  }
                 >
-                  {id === "providers" ? "Providers" : id === "models" ? "Models" : "Settings"}
+                  {id === "providers"
+                    ? "Providers"
+                    : id === "models"
+                      ? "Models"
+                      : "Settings"}
                 </Tabs.Tab>
               ))}
             </Tabs.List>
@@ -243,11 +361,25 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
           {/* Sub-views override tab content */}
           {subView === "enable-provider" && (
             <>
-              <Text fw={500} fz="sm" c={tokens.color.textPrimary}>Select a provider to enable</Text>
-              <ScrollArea style={{ flex: 1, minHeight: 0 }} type="scroll" offsetScrollbars scrollbarSize={6}>
+              <Text fw={500} fz="sm" c={tokens.color.textPrimary}>
+                Select a provider to enable
+              </Text>
+              <ScrollArea
+                style={{ flex: 1, minHeight: 0 }}
+                type="scroll"
+                offsetScrollbars
+                scrollbarSize={6}
+              >
                 <Stack gap={8}>
                   {availableProviders.length === 0 && (
-                    <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">All providers are already enabled.</Text>
+                    <Text
+                      fz="sm"
+                      c={tokens.color.textSecondary}
+                      ta="center"
+                      py="xl"
+                    >
+                      All providers are already enabled.
+                    </Text>
                   )}
                   {availableProviders.map((p) => (
                     <UnstyledButton
@@ -258,17 +390,36 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
                         setSubView("pick-provider-models");
                       }}
                       style={{
-                        display: "flex", alignItems: "center", gap: tokens.spacing.iconTextGap,
-                        width: "100%", padding: tokens.spacing.cardPadding,
-                        background: tokens.color.bgCard, border: `1px solid ${tokens.color.border}`,
-                        borderRadius: tokens.radius.card, cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: tokens.spacing.iconTextGap,
+                        width: "100%",
+                        padding: tokens.spacing.cardPadding,
+                        background: tokens.color.bgCard,
+                        border: `1px solid ${tokens.color.border}`,
+                        borderRadius: tokens.radius.card,
+                        cursor: "pointer",
                       }}
                     >
-                      <ProviderAvatar providerKey={deriveProviderKey(p)} size={tokens.size.providerIcon} />
-                      <Stack gap={0} style={{ overflow: "hidden", minWidth: 0 }}>
-                        <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>{p.name}</Text>
+                      <ProviderAvatar
+                        providerKey={deriveProviderKey(p)}
+                        size={tokens.size.providerIcon}
+                      />
+                      <Stack
+                        gap={0}
+                        style={{ overflow: "hidden", minWidth: 0 }}
+                      >
+                        <Text
+                          fw={600}
+                          fz="sm"
+                          c={tokens.color.textPrimary}
+                          truncate
+                        >
+                          {p.name}
+                        </Text>
                         <Text fw={500} fz="xs" c={tokens.color.textSecondary}>
-                          {p.models.length} {p.models.length === 1 ? "model" : "models"} available
+                          {p.models.length}{" "}
+                          {p.models.length === 1 ? "model" : "models"} available
                         </Text>
                       </Stack>
                     </UnstyledButton>
@@ -281,42 +432,83 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
           {subView === "pick-provider-models" && pickedProvider != null && (
             <>
               <Group justify="space-between">
-                <Text fw={500} fz="sm" c={tokens.color.textPrimary}>Select models to enable</Text>
-                <UnstyledButton onClick={() => {
-                  const allIds = pickedProvider.models.map((m) => m.id);
-                  setPickedModelIds(pickedModelIds.length === allIds.length ? [] : allIds);
-                }}>
+                <Text fw={500} fz="sm" c={tokens.color.textPrimary}>
+                  Select models to enable
+                </Text>
+                <UnstyledButton
+                  onClick={() => {
+                    const allIds = pickedProvider.models.map((m) => m.id);
+                    setPickedModelIds(
+                      pickedModelIds.length === allIds.length ? [] : allIds,
+                    );
+                  }}
+                >
                   <Text fz="xs" c="#2f70ff" fw={500}>
-                    {pickedModelIds.length === pickedProvider.models.length ? "Deselect all" : "Select all"}
+                    {pickedModelIds.length === pickedProvider.models.length
+                      ? "Deselect all"
+                      : "Select all"}
                   </Text>
                 </UnstyledButton>
               </Group>
-              <ScrollArea style={{ flex: 1, minHeight: 0 }} type="scroll" offsetScrollbars scrollbarSize={6}>
+              <ScrollArea
+                style={{ flex: 1, minHeight: 0 }}
+                type="scroll"
+                offsetScrollbars
+                scrollbarSize={6}
+              >
                 <Stack gap={8}>
                   {pickedProvider.models.map((m) => (
                     <UnstyledButton
                       key={m.id}
                       onClick={() => {
                         setPickedModelIds((prev) =>
-                          prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id]
+                          prev.includes(m.id)
+                            ? prev.filter((x) => x !== m.id)
+                            : [...prev, m.id],
                         );
                       }}
                       style={{
-                        display: "flex", alignItems: "center", gap: tokens.spacing.iconTextGap,
-                        width: "100%", padding: tokens.spacing.cardPadding,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: tokens.spacing.iconTextGap,
+                        width: "100%",
+                        padding: tokens.spacing.cardPadding,
                         background: tokens.color.bgCard,
-                        border: pickedModelIds.includes(m.id) ? "2px solid #2f70ff" : `1px solid ${tokens.color.border}`,
-                        borderRadius: tokens.radius.card, cursor: "pointer",
+                        border: pickedModelIds.includes(m.id)
+                          ? "2px solid #2f70ff"
+                          : `1px solid ${tokens.color.border}`,
+                        borderRadius: tokens.radius.card,
+                        cursor: "pointer",
                       }}
                     >
-                      <Checkbox checked={pickedModelIds.includes(m.id)} onChange={() => {}} size="xs" color="#2f70ff" styles={{ input: { cursor: "pointer" } }} />
-                      <ProviderAvatar providerKey={deriveProviderKey(pickedProvider)} size={20} />
-                      <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate style={{ flex: 1, minWidth: 0 }}>{m.name}</Text>
+                      <Checkbox
+                        checked={pickedModelIds.includes(m.id)}
+                        onChange={() => {}}
+                        size="xs"
+                        color="#2f70ff"
+                        styles={{ input: { cursor: "pointer" } }}
+                      />
+                      <ProviderAvatar
+                        providerKey={deriveProviderKey(pickedProvider)}
+                        size={20}
+                      />
+                      <Text
+                        fw={600}
+                        fz="sm"
+                        c={tokens.color.textPrimary}
+                        truncate
+                        style={{ flex: 1, minWidth: 0 }}
+                      >
+                        {m.name}
+                      </Text>
                     </UnstyledButton>
                   ))}
                 </Stack>
               </ScrollArea>
-              <PrimaryButton onClick={() => void handleConfirmEnableProvider()} disabled={pickedModelIds.length === 0}>
+              <PrimaryButton
+                onClick={() => void handleConfirmEnableProvider()}
+                disabled={pickedModelIds.length === 0}
+              >
                 Enable provider
               </PrimaryButton>
             </>
@@ -325,19 +517,39 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
           {subView === "enable-model" && (
             <>
               <Group justify="space-between">
-                <Text fw={500} fz="sm" c={tokens.color.textPrimary}>Select models to enable</Text>
-                <UnstyledButton onClick={() => {
-                  setPickedModelIds(pickedModelIds.length === availableModels.length ? [] : availableModels.map((m) => m.id));
-                }}>
+                <Text fw={500} fz="sm" c={tokens.color.textPrimary}>
+                  Select models to enable
+                </Text>
+                <UnstyledButton
+                  onClick={() => {
+                    setPickedModelIds(
+                      pickedModelIds.length === availableModels.length
+                        ? []
+                        : availableModels.map((m) => m.id),
+                    );
+                  }}
+                >
                   <Text fz="xs" c="#2f70ff" fw={500}>
-                    {pickedModelIds.length === availableModels.length ? "Deselect all" : "Select all"}
+                    {pickedModelIds.length === availableModels.length
+                      ? "Deselect all"
+                      : "Select all"}
                   </Text>
                 </UnstyledButton>
               </Group>
-              <ScrollArea style={{ flex: 1, minHeight: 0 }} type="scroll" offsetScrollbars scrollbarSize={6}>
+              <ScrollArea
+                style={{ flex: 1, minHeight: 0 }}
+                type="scroll"
+                offsetScrollbars
+                scrollbarSize={6}
+              >
                 <Stack gap={8}>
                   {availableModels.length === 0 && (
-                    <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">
+                    <Text
+                      fz="sm"
+                      c={tokens.color.textSecondary}
+                      ta="center"
+                      py="xl"
+                    >
                       All models from enabled providers are already enabled.
                     </Text>
                   )}
@@ -346,26 +558,53 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
                       key={m.id}
                       onClick={() => {
                         setPickedModelIds((prev) =>
-                          prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id]
+                          prev.includes(m.id)
+                            ? prev.filter((x) => x !== m.id)
+                            : [...prev, m.id],
                         );
                       }}
                       style={{
-                        display: "flex", alignItems: "center", gap: tokens.spacing.iconTextGap,
-                        width: "100%", padding: tokens.spacing.cardPadding,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: tokens.spacing.iconTextGap,
+                        width: "100%",
+                        padding: tokens.spacing.cardPadding,
                         background: tokens.color.bgCard,
-                        border: pickedModelIds.includes(m.id) ? "2px solid #2f70ff" : `1px solid ${tokens.color.border}`,
-                        borderRadius: tokens.radius.card, cursor: "pointer",
+                        border: pickedModelIds.includes(m.id)
+                          ? "2px solid #2f70ff"
+                          : `1px solid ${tokens.color.border}`,
+                        borderRadius: tokens.radius.card,
+                        cursor: "pointer",
                       }}
                     >
-                      <Checkbox checked={pickedModelIds.includes(m.id)} onChange={() => {}} size="xs" color="#2f70ff" styles={{ input: { cursor: "pointer" } }} />
+                      <Checkbox
+                        checked={pickedModelIds.includes(m.id)}
+                        onChange={() => {}}
+                        size="xs"
+                        color="#2f70ff"
+                        styles={{ input: { cursor: "pointer" } }}
+                      />
                       <ProviderAvatar providerKey={m.providerKey} size={20} />
-                      <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate style={{ flex: 1, minWidth: 0 }}>{m.name}</Text>
+                      <Text
+                        fw={600}
+                        fz="sm"
+                        c={tokens.color.textPrimary}
+                        truncate
+                        style={{ flex: 1, minWidth: 0 }}
+                      >
+                        {m.name}
+                      </Text>
                     </UnstyledButton>
                   ))}
                 </Stack>
               </ScrollArea>
-              <PrimaryButton onClick={() => void handleConfirmEnableModels()} disabled={pickedModelIds.length === 0}>
-                {pickedModelIds.length > 0 ? `Enable ${String(pickedModelIds.length)} model${pickedModelIds.length !== 1 ? "s" : ""}` : "Enable models"}
+              <PrimaryButton
+                onClick={() => void handleConfirmEnableModels()}
+                disabled={pickedModelIds.length === 0}
+              >
+                {pickedModelIds.length > 0
+                  ? `Enable ${String(pickedModelIds.length)} model${pickedModelIds.length !== 1 ? "s" : ""}`
+                  : "Enable models"}
               </PrimaryButton>
             </>
           )}
@@ -373,42 +612,112 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
           {/* Normal tab content — only when no sub-view is active */}
           {subView === "none" && activeTab === "providers" && (
             <>
-              <Text fw={500} fz="xs" c={tokens.color.textPrimary}>Enabled providers</Text>
-              <ScrollArea style={{ flex: 1, minHeight: 0 }} type="scroll" offsetScrollbars scrollbarSize={6}>
+              <Text fw={500} fz="xs" c={tokens.color.textPrimary}>
+                Enabled providers
+              </Text>
+              <ScrollArea
+                style={{ flex: 1, minHeight: 0 }}
+                type="scroll"
+                offsetScrollbars
+                scrollbarSize={6}
+              >
                 <Stack gap={tokens.spacing.sectionGap}>
                   {enabledProviders.length === 0 && (
-                    <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">No providers enabled for this app.</Text>
+                    <Text
+                      fz="sm"
+                      c={tokens.color.textSecondary}
+                      ta="center"
+                      py="xl"
+                    >
+                      No providers enabled for this app.
+                    </Text>
                   )}
                   {enabledProviders.map((p) => {
-                    const enabledModelCount = p.models.filter((m) => localApp.enabledModelIds.includes(m.id)).length;
-                    const providerUsage = appUsageSummary?.byProvider
-                      .filter((bp) => bp.providerId === p.id)
-                      .reduce((sum, bp) => sum + bp.inputTokens + bp.outputTokens, 0) ?? 0;
-                    return <AppProviderCard key={p.id} provider={p} providerKey={deriveProviderKey(p)} enabledModelCount={enabledModelCount} totalModelCount={p.models.length} tokenUsage={providerUsage} onDisable={() => void handleDisableProvider(p.id)} />;
+                    const enabledModelCount = p.models.filter((m) =>
+                      localApp.enabledModelIds.includes(m.id),
+                    ).length;
+                    const providerUsage =
+                      appUsageSummary?.byProvider
+                        .filter((bp) => bp.providerId === p.id)
+                        .reduce(
+                          (sum, bp) => sum + bp.inputTokens + bp.outputTokens,
+                          0,
+                        ) ?? 0;
+                    return (
+                      <AppProviderCard
+                        key={p.id}
+                        provider={p}
+                        providerKey={deriveProviderKey(p)}
+                        enabledModelCount={enabledModelCount}
+                        totalModelCount={p.models.length}
+                        tokenUsage={providerUsage}
+                        onDisable={() => void handleDisableProvider(p.id)}
+                      />
+                    );
                   })}
                 </Stack>
               </ScrollArea>
-              <PrimaryButton onClick={() => { setPickedModelIds([]); setSubView("enable-provider"); }}>Enable provider</PrimaryButton>
+              <PrimaryButton
+                onClick={() => {
+                  setPickedModelIds([]);
+                  setSubView("enable-provider");
+                }}
+              >
+                Enable provider
+              </PrimaryButton>
             </>
           )}
 
           {subView === "none" && activeTab === "models" && (
             <>
-              <Text fw={500} fz="xs" c={tokens.color.textPrimary}>Enabled models</Text>
-              <ScrollArea style={{ flex: 1, minHeight: 0 }} type="scroll" offsetScrollbars scrollbarSize={6}>
+              <Text fw={500} fz="xs" c={tokens.color.textPrimary}>
+                Enabled models
+              </Text>
+              <ScrollArea
+                style={{ flex: 1, minHeight: 0 }}
+                type="scroll"
+                offsetScrollbars
+                scrollbarSize={6}
+              >
                 <Stack gap={tokens.spacing.sectionGap}>
                   {enabledModels.size === 0 && (
-                    <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">No models enabled for this app.</Text>
+                    <Text
+                      fz="sm"
+                      c={tokens.color.textSecondary}
+                      ta="center"
+                      py="xl"
+                    >
+                      No models enabled for this app.
+                    </Text>
                   )}
                   {Array.from(enabledModels.entries()).map(([id, model]) => {
-                    const modelUsage = appUsageSummary?.byProvider
-                      .filter((bp) => bp.modelId === id)
-                      .reduce((sum, bp) => sum + bp.inputTokens + bp.outputTokens, 0) ?? 0;
-                    return <AppModelCard key={id} modelId={id} model={model} tokenUsage={modelUsage} onDisable={() => void handleDisableModel(id)} />;
+                    const modelUsage =
+                      appUsageSummary?.byProvider
+                        .filter((bp) => bp.modelId === id)
+                        .reduce(
+                          (sum, bp) => sum + bp.inputTokens + bp.outputTokens,
+                          0,
+                        ) ?? 0;
+                    return (
+                      <AppModelCard
+                        key={id}
+                        modelId={id}
+                        model={model}
+                        tokenUsage={modelUsage}
+                        onDisable={() => void handleDisableModel(id)}
+                      />
+                    );
                   })}
                 </Stack>
               </ScrollArea>
-              <PrimaryButton onClick={() => { setPickedModelIds([]); setSubView("enable-model"); }}>Enable model</PrimaryButton>
+              <PrimaryButton
+                onClick={() => {
+                  setPickedModelIds([]);
+                  setSubView("enable-model");
+                }}
+              >
+                Enable model
+              </PrimaryButton>
             </>
           )}
 
@@ -417,9 +726,24 @@ export function AppDetailView({ app, rawProviders, onBack: _onBack, onSettingsCl
               rules={localApp.rules}
               permissions={localApp.permissions}
               limits={localApp.limits}
-              onRuleChange={(key, value) => setLocalApp((prev) => ({ ...prev, rules: { ...prev.rules, [key]: value } }))}
-              onPermissionChange={(key, value) => setLocalApp((prev) => ({ ...prev, permissions: { ...prev.permissions, [key]: value } }))}
-              onLimitChange={(key, value) => setLocalApp((prev) => ({ ...prev, limits: { ...prev.limits, [key]: value } }))}
+              onRuleChange={(key, value) =>
+                setLocalApp((prev) => ({
+                  ...prev,
+                  rules: { ...prev.rules, [key]: value },
+                }))
+              }
+              onPermissionChange={(key, value) =>
+                setLocalApp((prev) => ({
+                  ...prev,
+                  permissions: { ...prev.permissions, [key]: value },
+                }))
+              }
+              onLimitChange={(key, value) =>
+                setLocalApp((prev) => ({
+                  ...prev,
+                  limits: { ...prev.limits, [key]: value },
+                }))
+              }
               onSave={() => void handleSaveSettings()}
               saving={false}
             />
@@ -436,45 +760,121 @@ function formatTokens(n: number): string {
   return String(n);
 }
 
-function AppProviderCard({ provider, providerKey, enabledModelCount, totalModelCount, tokenUsage, onDisable }: {
-  provider: WalletProvider; providerKey: string; enabledModelCount: number; totalModelCount: number; tokenUsage?: number | undefined; onDisable: () => void;
+function AppProviderCard({
+  provider,
+  providerKey,
+  enabledModelCount,
+  totalModelCount,
+  tokenUsage,
+  onDisable,
+}: {
+  provider: WalletProvider;
+  providerKey: string;
+  enabledModelCount: number;
+  totalModelCount: number;
+  tokenUsage?: number | undefined;
+  onDisable: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <Box style={{ width: "100%", background: tokens.color.bgCard, border: `1px solid ${tokens.color.border}`, borderRadius: tokens.radius.card, overflow: "hidden" }}>
-      <UnstyledButton onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: tokens.spacing.cardPadding, cursor: "pointer" }}>
-        <Group gap={tokens.spacing.iconTextGap} align="center" wrap="nowrap" style={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
-          <ProviderAvatar providerKey={providerKey} size={tokens.size.providerIcon} />
+    <Box
+      style={{
+        width: "100%",
+        background: tokens.color.bgCard,
+        border: `1px solid ${tokens.color.border}`,
+        borderRadius: tokens.radius.card,
+        overflow: "hidden",
+      }}
+    >
+      <UnstyledButton
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          padding: tokens.spacing.cardPadding,
+          cursor: "pointer",
+        }}
+      >
+        <Group
+          gap={tokens.spacing.iconTextGap}
+          align="center"
+          wrap="nowrap"
+          style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
+        >
+          <ProviderAvatar
+            providerKey={providerKey}
+            size={tokens.size.providerIcon}
+          />
           <Stack gap={0} style={{ overflow: "hidden", minWidth: 0 }}>
-            <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>{provider.name}</Text>
-            <Text fw={500} fz="xs" c={tokens.color.textSecondary} style={{ whiteSpace: "nowrap" }}>
+            <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>
+              {provider.name}
+            </Text>
+            <Text
+              fw={500}
+              fz="xs"
+              c={tokens.color.textSecondary}
+              style={{ whiteSpace: "nowrap" }}
+            >
               {enabledModelCount}/{totalModelCount} models enabled
             </Text>
           </Stack>
         </Group>
-        <IconChevronDown size={20} color={tokens.color.textSecondary} style={{ transform: expanded ? undefined : "rotate(-90deg)", transition: "transform 150ms ease", flexShrink: 0 }} aria-hidden />
+        <IconChevronDown
+          size={20}
+          color={tokens.color.textSecondary}
+          style={{
+            transform: expanded ? undefined : "rotate(-90deg)",
+            transition: "transform 150ms ease",
+            flexShrink: 0,
+          }}
+          aria-hidden
+        />
       </UnstyledButton>
       <Collapse in={expanded}>
-        <Box style={{ padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px` }}>
+        <Box
+          style={{
+            padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px`,
+          }}
+        >
           <Divider mb={tokens.spacing.sectionGap} color={tokens.color.border} />
           <Stack gap={8}>
             <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>Type</Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>{provider.type}</Text>
+              <Text fz="xs" c={tokens.color.textSecondary}>
+                Type
+              </Text>
+              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
+                {provider.type}
+              </Text>
             </Group>
             <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>Enabled models</Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>{enabledModelCount} / {totalModelCount}</Text>
+              <Text fz="xs" c={tokens.color.textSecondary}>
+                Enabled models
+              </Text>
+              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
+                {enabledModelCount} / {totalModelCount}
+              </Text>
             </Group>
             {tokenUsage != null && tokenUsage > 0 && (
               <Group justify="space-between">
-                <Text fz="xs" c={tokens.color.textSecondary}>Token usage</Text>
-                <Text fz="xs" fw={500} c={tokens.color.textPrimary}>{formatTokens(tokenUsage)}</Text>
+                <Text fz="xs" c={tokens.color.textSecondary}>
+                  Token usage
+                </Text>
+                <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
+                  {formatTokens(tokenUsage)}
+                </Text>
               </Group>
             )}
             <Group gap={8} mt={4}>
-              <Button size="compact-xs" variant="light" color="red" radius={tokens.radius.card} onClick={onDisable}>
+              <Button
+                size="compact-xs"
+                variant="light"
+                color="red"
+                radius={tokens.radius.card}
+                onClick={onDisable}
+              >
                 Disable
               </Button>
             </Group>
@@ -485,45 +885,119 @@ function AppProviderCard({ provider, providerKey, enabledModelCount, totalModelC
   );
 }
 
-function AppModelCard({ modelId, model, tokenUsage, onDisable }: {
-  modelId: string; model: { name: string; providerKey: string; providerCount: number }; tokenUsage?: number | undefined; onDisable: () => void;
+function AppModelCard({
+  modelId,
+  model,
+  tokenUsage,
+  onDisable,
+}: {
+  modelId: string;
+  model: { name: string; providerKey: string; providerCount: number };
+  tokenUsage?: number | undefined;
+  onDisable: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <Box style={{ width: "100%", background: tokens.color.bgCard, border: `1px solid ${tokens.color.border}`, borderRadius: tokens.radius.card, overflow: "hidden" }}>
-      <UnstyledButton onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: tokens.spacing.cardPadding, cursor: "pointer" }}>
-        <Group gap={tokens.spacing.iconTextGap} align="center" wrap="nowrap" style={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
-          <ProviderAvatar providerKey={model.providerKey} size={tokens.size.providerIcon} />
+    <Box
+      style={{
+        width: "100%",
+        background: tokens.color.bgCard,
+        border: `1px solid ${tokens.color.border}`,
+        borderRadius: tokens.radius.card,
+        overflow: "hidden",
+      }}
+    >
+      <UnstyledButton
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          padding: tokens.spacing.cardPadding,
+          cursor: "pointer",
+        }}
+      >
+        <Group
+          gap={tokens.spacing.iconTextGap}
+          align="center"
+          wrap="nowrap"
+          style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
+        >
+          <ProviderAvatar
+            providerKey={model.providerKey}
+            size={tokens.size.providerIcon}
+          />
           <Stack gap={0} style={{ overflow: "hidden", minWidth: 0 }}>
-            <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>{model.name}</Text>
+            <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>
+              {model.name}
+            </Text>
             <Text fw={500} fz="xs" c={tokens.color.textSecondary}>
-              {model.providerCount} {model.providerCount === 1 ? "provider" : "providers"}
+              {model.providerCount}{" "}
+              {model.providerCount === 1 ? "provider" : "providers"}
             </Text>
           </Stack>
         </Group>
-        <IconChevronDown size={20} color={tokens.color.textSecondary} style={{ transform: expanded ? undefined : "rotate(-90deg)", transition: "transform 150ms ease", flexShrink: 0 }} aria-hidden />
+        <IconChevronDown
+          size={20}
+          color={tokens.color.textSecondary}
+          style={{
+            transform: expanded ? undefined : "rotate(-90deg)",
+            transition: "transform 150ms ease",
+            flexShrink: 0,
+          }}
+          aria-hidden
+        />
       </UnstyledButton>
       <Collapse in={expanded}>
-        <Box style={{ padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px` }}>
+        <Box
+          style={{
+            padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px`,
+          }}
+        >
           <Divider mb={tokens.spacing.sectionGap} color={tokens.color.border} />
           <Stack gap={8}>
             <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>Model ID</Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary} truncate maw={180}>{modelId}</Text>
+              <Text fz="xs" c={tokens.color.textSecondary}>
+                Model ID
+              </Text>
+              <Text
+                fz="xs"
+                fw={500}
+                c={tokens.color.textPrimary}
+                truncate
+                maw={180}
+              >
+                {modelId}
+              </Text>
             </Group>
             <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>Providers</Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>{model.providerCount}</Text>
+              <Text fz="xs" c={tokens.color.textSecondary}>
+                Providers
+              </Text>
+              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
+                {model.providerCount}
+              </Text>
             </Group>
             {tokenUsage != null && tokenUsage > 0 && (
               <Group justify="space-between">
-                <Text fz="xs" c={tokens.color.textSecondary}>Token usage</Text>
-                <Text fz="xs" fw={500} c={tokens.color.textPrimary}>{formatTokens(tokenUsage)}</Text>
+                <Text fz="xs" c={tokens.color.textSecondary}>
+                  Token usage
+                </Text>
+                <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
+                  {formatTokens(tokenUsage)}
+                </Text>
               </Group>
             )}
             <Group gap={8} mt={4}>
-              <Button size="compact-xs" variant="light" color="red" radius={tokens.radius.card} onClick={onDisable}>
+              <Button
+                size="compact-xs"
+                variant="light"
+                color="red"
+                radius={tokens.radius.card}
+                onClick={onDisable}
+              >
                 Disable
               </Button>
             </Group>

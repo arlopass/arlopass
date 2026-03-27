@@ -2,9 +2,24 @@ import { Stack, Title, Text, Divider } from "@mantine/core";
 import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 
 const props = [
-  { name: "content", type: "string", description: "The text content to display.", required: true },
-  { name: "isStreaming", type: "boolean", description: "Whether the text is currently being streamed.", required: true },
-  { name: "cursor", type: "string", default: '"▌"', description: "Cursor character shown while streaming." },
+  {
+    name: "content",
+    type: "string",
+    description: "The text content to display.",
+    required: true,
+  },
+  {
+    name: "isStreaming",
+    type: "boolean",
+    description: "Whether the text is currently being streamed.",
+    required: true,
+  },
+  {
+    name: "cursor",
+    type: "string",
+    default: '"▌"',
+    description: "Cursor character shown while streaming.",
+  },
 ];
 
 const usageExample = `import { StreamingText } from "@byom-ai/react-ui";
@@ -39,7 +54,12 @@ const withChatExample = `import { Chat, StreamingText } from "@byom-ai/react-ui"
 </Chat.Root>`;
 
 const dataAttributes = [
-  { name: "data-state", type: '"streaming" | "idle"', default: '"idle"', description: "Reflects whether text is currently being streamed." },
+  {
+    name: "data-state",
+    type: '"streaming" | "idle"',
+    default: '"idle"',
+    description: "Reflects whether text is currently being streamed.",
+  },
 ];
 
 const stylingExample = `/* Animate the cursor while streaming */
@@ -70,7 +90,10 @@ export default function StreamingTextPrimitive() {
         </Text>
       </div>
 
-      <CodeBlock code={`import { StreamingText } from "@byom-ai/react-ui";`} language="tsx" />
+      <CodeBlock
+        code={`import { StreamingText } from "@byom-ai/react-ui";`}
+        language="tsx"
+      />
 
       <Title order={3}>Props</Title>
       <ApiTable data={props} />
@@ -79,8 +102,19 @@ export default function StreamingTextPrimitive() {
       <Title order={3}>Usage</Title>
       <PreviewCode
         preview={
-          <div style={{ fontFamily: "system-ui", fontSize: 14, padding: 12, background: "#f9fafb", borderRadius: 8, border: "1px solid #e5e7eb" }}>
-            <span>BYOM is an AI wallet that lets you use your own providers</span>
+          <div
+            style={{
+              fontFamily: "system-ui",
+              fontSize: 14,
+              padding: 12,
+              background: "#f9fafb",
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+            }}
+          >
+            <span>
+              BYOM is an AI wallet that lets you use your own providers
+            </span>
             <span style={{ color: "#2563eb" }}>▌</span>
           </div>
         }
@@ -101,8 +135,8 @@ export default function StreamingTextPrimitive() {
 
       <Title order={3}>Styling</Title>
       <Text>
-        The component renders a <InlineCode>{"<span>"}</InlineCode> element.
-        The cursor character is appended as a text node while streaming.
+        The component renders a <InlineCode>{"<span>"}</InlineCode> element. The
+        cursor character is appended as a text node while streaming.
       </Text>
       <CodeBlock title="CSS" code={stylingExample} language="css" />
     </Stack>

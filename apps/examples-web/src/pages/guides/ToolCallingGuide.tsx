@@ -474,10 +474,10 @@ export default function ToolCallingGuide() {
 
       <Title order={3}>Subscribe to tool events</Title>
       <Text>
-        Use the <code>subscribe()</code> function from <code>useConversation</code>{" "}
-        to listen for <code>tool_call</code> and <code>tool_result</code>{" "}
-        events. This is useful for logging, analytics, or showing tool activity
-        in the UI.
+        Use the <code>subscribe()</code> function from{" "}
+        <code>useConversation</code> to listen for <code>tool_call</code> and{" "}
+        <code>tool_result</code> events. This is useful for logging, analytics,
+        or showing tool activity in the UI.
       </Text>
       <CodeBlock title="ToolEvents.tsx" code={streamEventsExample} />
 

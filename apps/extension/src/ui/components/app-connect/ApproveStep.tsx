@@ -13,15 +13,32 @@ export type ApproveStepProps = {
   onDecline: () => void;
 };
 
-export function ApproveStep({ origin, displayName, iconUrl, description, onApprove, onDecline }: ApproveStepProps) {
+export function ApproveStep({
+  origin,
+  displayName,
+  iconUrl,
+  description,
+  onApprove,
+  onDecline,
+}: ApproveStepProps) {
   return (
     <>
       <Center style={{ flex: 1 }}>
         <Stack gap={16} align="center" maw={300}>
           {iconUrl ? (
-            <img src={iconUrl} alt="" width={48} height={48} style={{ borderRadius: 10 }} />
+            <img
+              src={iconUrl}
+              alt=""
+              width={48}
+              height={48}
+              style={{ borderRadius: 10 }}
+            />
           ) : (
-            <IconPlugConnected size={48} color={tokens.color.textSecondary} stroke={1.5} />
+            <IconPlugConnected
+              size={48}
+              color={tokens.color.textSecondary}
+              stroke={1.5}
+            />
           )}
           <Text fw={600} fz="lg" c={tokens.color.textPrimary} ta="center">
             {displayName}
@@ -35,7 +52,8 @@ export function ApproveStep({ origin, displayName, iconUrl, description, onAppro
             </Text>
           )}
           <Text fz="sm" c={tokens.color.textSecondary} ta="center">
-            This app wants to connect to your BYOM wallet to use AI providers and models.
+            This app wants to connect to your BYOM wallet to use AI providers
+            and models.
           </Text>
         </Stack>
       </Center>

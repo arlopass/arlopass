@@ -2,9 +2,22 @@ import { Stack, Title, Text, Divider } from "@mantine/core";
 import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 
 const props = [
-  { name: "state", type: "ClientState", description: 'Connection state override. When omitted, reads from the nearest BYOMProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".' },
-  { name: "sessionId", type: "string", description: "Session ID override. When omitted, reads from BYOMProvider." },
-  { name: "children", type: "ReactNode", description: "Custom content. Defaults to rendering the state string." },
+  {
+    name: "state",
+    type: "ClientState",
+    description:
+      'Connection state override. When omitted, reads from the nearest BYOMProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".',
+  },
+  {
+    name: "sessionId",
+    type: "string",
+    description: "Session ID override. When omitted, reads from BYOMProvider.",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    description: "Custom content. Defaults to rendering the state string.",
+  },
 ];
 
 const uncontrolledExample = `import { BYOMProvider } from "@byom-ai/react";
@@ -29,7 +42,12 @@ function CustomStatus({ state }) {
 }`;
 
 const dataAttributes = [
-  { name: "data-state", type: '"disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed"', default: "—", description: "Set on the root div. Mirrors the current connection state." },
+  {
+    name: "data-state",
+    type: '"disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed"',
+    default: "—",
+    description: "Set on the root div. Mirrors the current connection state.",
+  },
 ];
 
 const stylingExample = `/* Color-code connection states */
@@ -67,7 +85,10 @@ export default function ConnectionStatusPrimitive() {
         </Text>
       </div>
 
-      <CodeBlock code={`import { ConnectionStatus } from "@byom-ai/react-ui";`} language="tsx" />
+      <CodeBlock
+        code={`import { ConnectionStatus } from "@byom-ai/react-ui";`}
+        language="tsx"
+      />
 
       <Title order={3}>Props</Title>
       <ApiTable data={props} />
@@ -81,16 +102,53 @@ export default function ConnectionStatusPrimitive() {
       </Text>
       <PreviewCode
         preview={
-          <div style={{ display: "flex", gap: 12, fontFamily: "system-ui", fontSize: 13, flexWrap: "wrap" }}>
-            {["connected", "disconnected", "connecting", "degraded", "failed"].map(s => (
-              <span key={s} style={{
-                padding: "4px 10px",
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 500,
-                background: s === "connected" ? "#d1fae5" : s === "disconnected" ? "#f3f4f6" : s === "connecting" ? "#dbeafe" : s === "degraded" ? "#fef3c7" : "#fee2e2",
-                color: s === "connected" ? "#065f46" : s === "disconnected" ? "#6b7280" : s === "connecting" ? "#1e40af" : s === "degraded" ? "#92400e" : "#991b1b",
-              }}>{s}</span>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              fontFamily: "system-ui",
+              fontSize: 13,
+              flexWrap: "wrap",
+            }}
+          >
+            {[
+              "connected",
+              "disconnected",
+              "connecting",
+              "degraded",
+              "failed",
+            ].map((s) => (
+              <span
+                key={s}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  background:
+                    s === "connected"
+                      ? "#d1fae5"
+                      : s === "disconnected"
+                        ? "#f3f4f6"
+                        : s === "connecting"
+                          ? "#dbeafe"
+                          : s === "degraded"
+                            ? "#fef3c7"
+                            : "#fee2e2",
+                  color:
+                    s === "connected"
+                      ? "#065f46"
+                      : s === "disconnected"
+                        ? "#6b7280"
+                        : s === "connecting"
+                          ? "#1e40af"
+                          : s === "degraded"
+                            ? "#92400e"
+                            : "#991b1b",
+                }}
+              >
+                {s}
+              </span>
             ))}
           </div>
         }

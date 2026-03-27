@@ -1,4 +1,11 @@
-import { Group, NumberInput, ScrollArea, Stack, Switch, Text } from "@mantine/core";
+import {
+  Group,
+  NumberInput,
+  ScrollArea,
+  Stack,
+  Switch,
+  Text,
+} from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { PrimaryButton } from "../PrimaryButton.js";
 import type { AppPermissions, AppRules, AppLimits } from "./app-storage.js";
@@ -13,24 +20,55 @@ type SectionProps = {
   onMasterToggle?: (() => void) | undefined;
 };
 
-function CollapsibleSection({ title, badge, children, masterToggle, onMasterToggle }: SectionProps) {
+function CollapsibleSection({
+  title,
+  badge,
+  children,
+  masterToggle,
+  onMasterToggle,
+}: SectionProps) {
   const [opened, { toggle }] = useDisclosure(true);
   return (
-    <Stack gap={0} style={{ border: `1px solid ${tokens.color.border}`, borderRadius: tokens.radius.card, overflow: "hidden" }}>
+    <Stack
+      gap={0}
+      style={{
+        border: `1px solid ${tokens.color.border}`,
+        borderRadius: tokens.radius.card,
+        overflow: "hidden",
+      }}
+    >
       <Group
         justify="space-between"
-        style={{ padding: `${tokens.spacing.cardPadding}px`, borderBottom: opened ? `1px solid ${tokens.color.border}` : undefined, cursor: "pointer" }}
+        style={{
+          padding: `${tokens.spacing.cardPadding}px`,
+          borderBottom: opened ? `1px solid ${tokens.color.border}` : undefined,
+          cursor: "pointer",
+        }}
         onClick={toggle}
       >
         <Group gap={8}>
-          <IconChevronDown size={14} color={tokens.color.textPrimary} style={{ transform: opened ? undefined : "rotate(-90deg)", transition: "transform 150ms ease" }} />
-          <Text fw={600} fz="sm" c={tokens.color.textPrimary}>{title}</Text>
-          <Text fw={400} fz="xs" c={tokens.color.textSecondary}>({badge})</Text>
+          <IconChevronDown
+            size={14}
+            color={tokens.color.textPrimary}
+            style={{
+              transform: opened ? undefined : "rotate(-90deg)",
+              transition: "transform 150ms ease",
+            }}
+          />
+          <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+            {title}
+          </Text>
+          <Text fw={400} fz="xs" c={tokens.color.textSecondary}>
+            ({badge})
+          </Text>
         </Group>
         {masterToggle !== undefined && (
           <Switch
             checked={masterToggle}
-            onChange={(e) => { e.stopPropagation(); onMasterToggle?.(); }}
+            onChange={(e) => {
+              e.stopPropagation();
+              onMasterToggle?.();
+            }}
             size="xs"
             color="#2f70ff"
           />
@@ -45,34 +83,75 @@ function CollapsibleSection({ title, badge, children, masterToggle, onMasterTogg
   );
 }
 
-function SettingRow({ title, description, checked, onChange }: { title: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
+function SettingRow({
+  title,
+  description,
+  checked,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <Group justify="space-between" align="flex-start" wrap="nowrap" py={8}>
       <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>{title}</Text>
-        <Text fz="xs" c={tokens.color.textSecondary}>{description}</Text>
+        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+          {title}
+        </Text>
+        <Text fz="xs" c={tokens.color.textSecondary}>
+          {description}
+        </Text>
       </Stack>
-      <Switch checked={checked} onChange={(e) => onChange(e.currentTarget.checked)} size="xs" color="#2f70ff" />
+      <Switch
+        checked={checked}
+        onChange={(e) => onChange(e.currentTarget.checked)}
+        size="xs"
+        color="#2f70ff"
+      />
     </Group>
   );
 }
 
-function LimitRow({ title, description, value, onChange }: { title: string; description: string; value: number; onChange: (v: number) => void }) {
+function LimitRow({
+  title,
+  description,
+  value,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
   return (
     <Group justify="space-between" align="flex-start" wrap="nowrap" py={8}>
       <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>{title}</Text>
-        <Text fz="xs" c={tokens.color.textSecondary}>{description}</Text>
+        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+          {title}
+        </Text>
+        <Text fz="xs" c={tokens.color.textSecondary}>
+          {description}
+        </Text>
       </Stack>
       <NumberInput
         value={value}
-        onChange={(v) => { if (typeof v === "number") onChange(v); }}
+        onChange={(v) => {
+          if (typeof v === "number") onChange(v);
+        }}
         min={1}
         max={1_000_000}
         size="xs"
         w={90}
         styles={{
-          input: { height: 28, fontSize: 12, textAlign: "right", borderColor: tokens.color.border, borderRadius: tokens.radius.card },
+          input: {
+            height: 28,
+            fontSize: 12,
+            textAlign: "right",
+            borderColor: tokens.color.border,
+            borderRadius: tokens.radius.card,
+          },
         }}
       />
     </Group>
@@ -91,18 +170,39 @@ export type ConfigureSettingsStepProps = {
 };
 
 export function ConfigureSettingsStep({
-  rules, permissions, limits,
-  onRuleChange, onPermissionChange, onLimitChange,
-  onSave, saving,
+  rules,
+  permissions,
+  limits,
+  onRuleChange,
+  onPermissionChange,
+  onLimitChange,
+  onSave,
+  saving,
 }: ConfigureSettingsStepProps) {
-  const rulesCount = [rules.lowTokenUsage, rules.noFallback, rules.alwaysAskPermission].filter(Boolean).length;
-  const permsCount = [permissions.autopilot, permissions.readBalance, permissions.autoSelectModel].filter(Boolean).length;
+  const rulesCount = [
+    rules.lowTokenUsage,
+    rules.noFallback,
+    rules.alwaysAskPermission,
+  ].filter(Boolean).length;
+  const permsCount = [
+    permissions.autopilot,
+    permissions.readBalance,
+    permissions.autoSelectModel,
+  ].filter(Boolean).length;
 
   return (
     <>
-      <ScrollArea style={{ flex: 1, minHeight: 0 }} type="scroll" offsetScrollbars scrollbarSize={6}>
+      <ScrollArea
+        style={{ flex: 1, minHeight: 0 }}
+        type="scroll"
+        offsetScrollbars
+        scrollbarSize={6}
+      >
         <Stack gap={tokens.spacing.sectionGap}>
-          <CollapsibleSection title="Rules" badge={`${String(rulesCount)}/3 enforced`}>
+          <CollapsibleSection
+            title="Rules"
+            badge={`${String(rulesCount)}/3 enforced`}
+          >
             <SettingRow
               title="Low token usage mode"
               description="Force the web app to only send user message without additional metadata."
@@ -123,7 +223,10 @@ export function ConfigureSettingsStep({
             />
           </CollapsibleSection>
 
-          <CollapsibleSection title="Permissions" badge={`${String(permsCount)}/3 enabled`}>
+          <CollapsibleSection
+            title="Permissions"
+            badge={`${String(permsCount)}/3 enabled`}
+          >
             <SettingRow
               title="Autopilot mode"
               description="Let the web app run on autopilot mode, executing multiple consecutive AI commands and messages without human interaction."

@@ -39,8 +39,19 @@ export function EnterCredentialsStep({
           borderRadius: tokens.radius.card,
         }}
       >
-        <Group gap={tokens.spacing.iconTextGap} align="center" wrap="nowrap" style={{ paddingBottom: tokens.spacing.sectionGap, borderBottom: `1px solid ${tokens.color.border}` }}>
-          <ProviderAvatar providerKey={provider.providerKey} size={tokens.size.providerIcon} />
+        <Group
+          gap={tokens.spacing.iconTextGap}
+          align="center"
+          wrap="nowrap"
+          style={{
+            paddingBottom: tokens.spacing.sectionGap,
+            borderBottom: `1px solid ${tokens.color.border}`,
+          }}
+        >
+          <ProviderAvatar
+            providerKey={provider.providerKey}
+            size={tokens.size.providerIcon}
+          />
           <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
             {provider.shortLabel}
           </Text>
@@ -51,7 +62,14 @@ export function EnterCredentialsStep({
           New credential
         </Text>
 
-        <Stack gap={10} style={{ background: tokens.color.bgSurface, padding: tokens.spacing.cardPadding, borderRadius: tokens.radius.card }}>
+        <Stack
+          gap={10}
+          style={{
+            background: tokens.color.bgSurface,
+            padding: tokens.spacing.cardPadding,
+            borderRadius: tokens.radius.card,
+          }}
+        >
           <TextInput
             label="Credential name"
             size="xs"
@@ -59,8 +77,18 @@ export function EnterCredentialsStep({
             onChange={(e) => onCredentialNameChange(e.currentTarget.value)}
             placeholder={`${provider.shortLabel} Key`}
             styles={{
-              label: { fontSize: 10, fontWeight: 500, color: tokens.color.textSecondary, marginBottom: 4 },
-              input: { height: 32, fontSize: 10, borderColor: tokens.color.border, borderRadius: tokens.radius.card },
+              label: {
+                fontSize: 10,
+                fontWeight: 500,
+                color: tokens.color.textSecondary,
+                marginBottom: 4,
+              },
+              input: {
+                height: 32,
+                fontSize: 10,
+                borderColor: tokens.color.border,
+                borderRadius: tokens.radius.card,
+              },
             }}
           />
 
@@ -74,8 +102,18 @@ export function EnterCredentialsStep({
               onChange={(e) => onFieldChange(field.key, e.currentTarget.value)}
               placeholder={field.placeholder ?? ""}
               styles={{
-                label: { fontSize: 10, fontWeight: 500, color: tokens.color.textSecondary, marginBottom: 4 },
-                input: { height: 32, fontSize: 10, borderColor: tokens.color.border, borderRadius: tokens.radius.card },
+                label: {
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: tokens.color.textSecondary,
+                  marginBottom: 4,
+                },
+                input: {
+                  height: 32,
+                  fontSize: 10,
+                  borderColor: tokens.color.border,
+                  borderRadius: tokens.radius.card,
+                },
               }}
             />
           ))}

@@ -70,7 +70,11 @@ describe("Message.Root", () => {
 
   it("forwards className", () => {
     render(
-      <Message.Root message={sampleMessage} data-testid="root" className="my-class">
+      <Message.Root
+        message={sampleMessage}
+        data-testid="root"
+        className="my-class"
+      >
         <span>content</span>
       </Message.Root>,
     );

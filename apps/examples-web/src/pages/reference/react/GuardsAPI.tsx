@@ -20,10 +20,30 @@ const importLine = `import {
 // ---------------------------------------------------------------------------
 
 const connectionGateProps = [
-  { name: "fallback", type: "ReactNode", default: "null", description: "Rendered while connecting or when disconnected." },
-  { name: "errorFallback", type: "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode", description: "Rendered when connection fails. Receives the error and a retry function." },
-  { name: "notInstalledFallback", type: "ReactNode", description: "Rendered when the BYOM extension is not installed." },
-  { name: "children", type: "ReactNode", required: true, description: "Rendered when connected (state is \"connected\" or \"degraded\")." },
+  {
+    name: "fallback",
+    type: "ReactNode",
+    default: "null",
+    description: "Rendered while connecting or when disconnected.",
+  },
+  {
+    name: "errorFallback",
+    type: "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+    description:
+      "Rendered when connection fails. Receives the error and a retry function.",
+  },
+  {
+    name: "notInstalledFallback",
+    type: "ReactNode",
+    description: "Rendered when the BYOM extension is not installed.",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    required: true,
+    description:
+      'Rendered when connected (state is "connected" or "degraded").',
+  },
 ];
 
 const connectionGateExample = `<BYOMConnectionGate
@@ -40,9 +60,24 @@ const connectionGateExample = `<BYOMConnectionGate
 </BYOMConnectionGate>`;
 
 const providerGateProps = [
-  { name: "fallback", type: "ReactNode", default: "null", description: "Rendered when no provider is selected." },
-  { name: "loadingFallback", type: "ReactNode", description: "Rendered while providers are being listed. Falls back to fallback if not set." },
-  { name: "children", type: "ReactNode", required: true, description: "Rendered when a provider is selected." },
+  {
+    name: "fallback",
+    type: "ReactNode",
+    default: "null",
+    description: "Rendered when no provider is selected.",
+  },
+  {
+    name: "loadingFallback",
+    type: "ReactNode",
+    description:
+      "Rendered while providers are being listed. Falls back to fallback if not set.",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    required: true,
+    description: "Rendered when a provider is selected.",
+  },
 ];
 
 const providerGateExample = `<BYOMProviderGate fallback={<ProviderPicker />}>
@@ -50,11 +85,34 @@ const providerGateExample = `<BYOMProviderGate fallback={<ProviderPicker />}>
 </BYOMProviderGate>`;
 
 const chatReadyGateProps = [
-  { name: "connectingFallback", type: "ReactNode", default: "null", description: "Rendered while connecting." },
-  { name: "notInstalledFallback", type: "ReactNode", description: "Rendered when the extension is not installed." },
-  { name: "providerFallback", type: "ReactNode", default: "null", description: "Rendered when connected but no provider is selected." },
-  { name: "errorFallback", type: "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode", description: "Rendered on connection failure." },
-  { name: "children", type: "ReactNode", required: true, description: "Rendered when connected and a provider is selected." },
+  {
+    name: "connectingFallback",
+    type: "ReactNode",
+    default: "null",
+    description: "Rendered while connecting.",
+  },
+  {
+    name: "notInstalledFallback",
+    type: "ReactNode",
+    description: "Rendered when the extension is not installed.",
+  },
+  {
+    name: "providerFallback",
+    type: "ReactNode",
+    default: "null",
+    description: "Rendered when connected but no provider is selected.",
+  },
+  {
+    name: "errorFallback",
+    type: "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+    description: "Rendered on connection failure.",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    required: true,
+    description: "Rendered when connected and a provider is selected.",
+  },
 ];
 
 const chatReadyGateExample = `<BYOMChatReadyGate
@@ -71,17 +129,20 @@ const chatReadyGateExample = `<BYOMChatReadyGate
 const negativeGuards = [
   {
     name: "BYOMNotInstalled",
-    description: "Renders children only when the BYOM extension is not detected.",
+    description:
+      "Renders children only when the BYOM extension is not detected.",
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
     name: "BYOMDisconnected",
-    description: "Renders children when the client is not connected (any state except \"connected\" or \"degraded\").",
+    description:
+      'Renders children when the client is not connected (any state except "connected" or "degraded").',
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
     name: "BYOMConnected",
-    description: "Renders children only when connected (\"connected\" or \"degraded\").",
+    description:
+      'Renders children only when connected ("connected" or "degraded").',
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
@@ -91,17 +152,21 @@ const negativeGuards = [
   },
   {
     name: "BYOMHasError",
-    description: "Renders children when a connection error is present. Children receive { error, retry } as a render prop.",
-    childrenType: "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+    description:
+      "Renders children when a connection error is present. Children receive { error, retry } as a render prop.",
+    childrenType:
+      "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
   },
   {
     name: "BYOMChatNotReady",
-    description: "Renders children when chat is not ready (not connected or no provider selected).",
+    description:
+      "Renders children when chat is not ready (not connected or no provider selected).",
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
     name: "BYOMChatReady",
-    description: "Renders children only when chat is ready (connected and provider selected).",
+    description:
+      "Renders children only when chat is ready (connected and provider selected).",
     childrenType: "ReactNode | (() => ReactNode)",
   },
 ];
@@ -130,9 +195,24 @@ const negativeExample = `<BYOMNotInstalled>
 // ---------------------------------------------------------------------------
 
 const errorBoundaryProps = [
-  { name: "fallback", type: "(props: { error: Error; resetErrorBoundary: () => void }) => ReactNode", required: true, description: "Render prop called when an error is caught. Receives the error and a reset function." },
-  { name: "onError", type: "(error: Error, errorInfo: ErrorInfo) => void", description: "Optional callback for logging or telemetry." },
-  { name: "children", type: "ReactNode", required: true, description: "Child tree to wrap with the error boundary." },
+  {
+    name: "fallback",
+    type: "(props: { error: Error; resetErrorBoundary: () => void }) => ReactNode",
+    required: true,
+    description:
+      "Render prop called when an error is caught. Receives the error and a reset function.",
+  },
+  {
+    name: "onError",
+    type: "(error: Error, errorInfo: ErrorInfo) => void",
+    description: "Optional callback for logging or telemetry.",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    required: true,
+    description: "Child tree to wrap with the error boundary.",
+  },
 ];
 
 const errorBoundaryExample = `<BYOMErrorBoundary
@@ -153,7 +233,8 @@ export default function GuardsAPI() {
       <Title order={2}>Guard Components</Title>
       <Text>
         Guards conditionally render children based on connection state, provider
-        selection, and error conditions. Import from <InlineCode>@byom-ai/react/guards</InlineCode>.
+        selection, and error conditions. Import from{" "}
+        <InlineCode>@byom-ai/react/guards</InlineCode>.
       </Text>
 
       <CodeBlock code={importLine} language="tsx" />
@@ -162,7 +243,8 @@ export default function GuardsAPI() {
       <Divider />
       <Title order={3}>Positive gates</Title>
       <Text>
-        Gates render their children when a condition is met and show a fallback otherwise.
+        Gates render their children when a condition is met and show a fallback
+        otherwise.
       </Text>
 
       <Title order={4}>BYOMConnectionGate</Title>
@@ -174,9 +256,7 @@ export default function GuardsAPI() {
       <CodeBlock code={connectionGateExample} language="tsx" />
 
       <Title order={4}>BYOMProviderGate</Title>
-      <Text>
-        Renders children when a provider/model pair is selected.
-      </Text>
+      <Text>Renders children when a provider/model pair is selected.</Text>
       <ApiTable data={providerGateProps} title="Props" />
       <CodeBlock code={providerGateExample} language="tsx" />
 

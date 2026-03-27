@@ -34,8 +34,19 @@ export function TestConnectionStep({
         }}
       >
         {/* Provider header */}
-        <Group gap={tokens.spacing.iconTextGap} align="center" wrap="nowrap" style={{ paddingBottom: tokens.spacing.sectionGap, borderBottom: `1px solid ${tokens.color.border}` }}>
-          <ProviderAvatar providerKey={provider.providerKey} size={tokens.size.providerIcon} />
+        <Group
+          gap={tokens.spacing.iconTextGap}
+          align="center"
+          wrap="nowrap"
+          style={{
+            paddingBottom: tokens.spacing.sectionGap,
+            borderBottom: `1px solid ${tokens.color.border}`,
+          }}
+        >
+          <ProviderAvatar
+            providerKey={provider.providerKey}
+            size={tokens.size.providerIcon}
+          />
           <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
             {provider.shortLabel}
           </Text>
@@ -68,8 +79,19 @@ export function TestConnectionStep({
           onChange={(e) => onProviderNameChange(e.currentTarget.value)}
           placeholder={provider.defaultName}
           styles={{
-            label: { fontSize: 12, fontWeight: 500, color: tokens.color.textPrimary, marginBottom: 8 },
-            input: { height: 32, fontSize: 12, borderColor: tokens.color.border, borderRadius: tokens.radius.card, background: tokens.color.bgSurface },
+            label: {
+              fontSize: 12,
+              fontWeight: 500,
+              color: tokens.color.textPrimary,
+              marginBottom: 8,
+            },
+            input: {
+              height: 32,
+              fontSize: 12,
+              borderColor: tokens.color.border,
+              borderRadius: tokens.radius.card,
+              background: tokens.color.bgSurface,
+            },
           }}
         />
       </Stack>
@@ -84,8 +106,12 @@ export function TestConnectionStep({
             borderRadius: tokens.radius.card,
           }}
         >
-          <Text fw={600} fz="sm" c="#8e2e2e">Connection failed</Text>
-          <Text fz="xs" c="#8e2e2e">{testError}</Text>
+          <Text fw={600} fz="sm" c="#8e2e2e">
+            Connection failed
+          </Text>
+          <Text fz="xs" c="#8e2e2e">
+            {testError}
+          </Text>
         </Stack>
       )}
 

@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 import { Alert, Text } from "@mantine/core";
-import { IconAlertTriangle, IconBulb, IconCircleCheck, IconInfoCircle } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconBulb,
+  IconCircleCheck,
+  IconInfoCircle,
+} from "@tabler/icons-react";
 
 export type CalloutProps = {
   type?: "info" | "warning" | "success" | "tip";
@@ -25,7 +30,11 @@ export function Callout({ type = "info", title, children }: CalloutProps) {
       icon={<Icon size={18} />}
       title={title}
     >
-      {typeof children === "string" ? <Text fz="sm">{children}</Text> : children}
+      {typeof children === "string" ? (
+        <Text fz="sm">{children}</Text>
+      ) : (
+        children
+      )}
     </Alert>
   );
 }

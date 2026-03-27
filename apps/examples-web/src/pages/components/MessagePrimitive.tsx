@@ -2,17 +2,50 @@ import { Stack, Title, Text, Table, Code, Divider } from "@mantine/core";
 import { CodeBlock, InlineCode, ApiTable, PreviewCode } from "../../components";
 
 const parts = [
-  { name: "Root", type: "div", description: "Outermost wrapper. Provides message context to children." },
-  { name: "Content", type: "div", description: "Renders the text/markdown content of the message." },
-  { name: "Role", type: "span", description: "Displays the message role (user, assistant, system)." },
-  { name: "Timestamp", type: "time", description: "Renders the message timestamp." },
-  { name: "Status", type: "span", description: "Shows message delivery status (pending, sent, error)." },
-  { name: "ToolCalls", type: "div", description: "Slot for rendering tool-call information within the message." },
+  {
+    name: "Root",
+    type: "div",
+    description: "Outermost wrapper. Provides message context to children.",
+  },
+  {
+    name: "Content",
+    type: "div",
+    description: "Renders the text/markdown content of the message.",
+  },
+  {
+    name: "Role",
+    type: "span",
+    description: "Displays the message role (user, assistant, system).",
+  },
+  {
+    name: "Timestamp",
+    type: "time",
+    description: "Renders the message timestamp.",
+  },
+  {
+    name: "Status",
+    type: "span",
+    description: "Shows message delivery status (pending, sent, error).",
+  },
+  {
+    name: "ToolCalls",
+    type: "div",
+    description: "Slot for rendering tool-call information within the message.",
+  },
 ];
 
 const rootProps = [
-  { name: "message", type: "TrackedChatMessage", description: "The message object to display.", required: true },
-  { name: "children", type: "ReactNode", description: "Sub-components to render inside the message." },
+  {
+    name: "message",
+    type: "TrackedChatMessage",
+    description: "The message object to display.",
+    required: true,
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    description: "Sub-components to render inside the message.",
+  },
 ];
 
 const standaloneExample = `import { Message } from "@byom-ai/react-ui";
@@ -49,8 +82,18 @@ const insideChatExample = `import { Chat, Message } from "@byom-ai/react-ui";
 </Chat.Root>`;
 
 const dataAttributes = [
-  { name: "data-role", type: '"user" | "assistant" | "system"', default: "—", description: "Set on Message.Root. The message role." },
-  { name: "data-status", type: '"pending" | "sent" | "error"', default: "—", description: "Set on Message.Root. Delivery status of the message." },
+  {
+    name: "data-role",
+    type: '"user" | "assistant" | "system"',
+    default: "—",
+    description: "Set on Message.Root. The message role.",
+  },
+  {
+    name: "data-status",
+    type: '"pending" | "sent" | "error"',
+    default: "—",
+    description: "Set on Message.Root. Delivery status of the message.",
+  },
 ];
 
 const stylingExample = `/* Role-based message styling */
@@ -76,7 +119,10 @@ export default function MessagePrimitive() {
         </Text>
       </div>
 
-      <CodeBlock code={`import { Message } from "@byom-ai/react-ui";`} language="tsx" />
+      <CodeBlock
+        code={`import { Message } from "@byom-ai/react-ui";`}
+        language="tsx"
+      />
 
       <Title order={3}>Parts</Title>
       <Table withTableBorder withColumnBorders striped fz="sm">
@@ -90,9 +136,15 @@ export default function MessagePrimitive() {
         <Table.Tbody>
           {parts.map((p) => (
             <Table.Tr key={p.name}>
-              <Table.Td><Code fz="xs">Message.{p.name}</Code></Table.Td>
-              <Table.Td><Code fz="xs">{p.type}</Code></Table.Td>
-              <Table.Td><Text fz="xs">{p.description}</Text></Table.Td>
+              <Table.Td>
+                <Code fz="xs">Message.{p.name}</Code>
+              </Table.Td>
+              <Table.Td>
+                <Code fz="xs">{p.type}</Code>
+              </Table.Td>
+              <Table.Td>
+                <Text fz="xs">{p.description}</Text>
+              </Table.Td>
             </Table.Tr>
           ))}
         </Table.Tbody>
@@ -110,16 +162,77 @@ export default function MessagePrimitive() {
       </Text>
       <PreviewCode
         preview={
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontFamily: "system-ui" }}>
-            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase" as const }}>User</span>
-              <div style={{ fontSize: 14, marginTop: 4 }}>Explain React hooks in one sentence.</div>
-              <span style={{ fontSize: 11, color: "#9ca3af", marginTop: 4, display: "block" }}>complete</span>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              fontFamily: "system-ui",
+            }}
+          >
+            <div
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                padding: 12,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#6b7280",
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                User
+              </span>
+              <div style={{ fontSize: 14, marginTop: 4 }}>
+                Explain React hooks in one sentence.
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "#9ca3af",
+                  marginTop: 4,
+                  display: "block",
+                }}
+              >
+                complete
+              </span>
             </div>
-            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#f9fafb" }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase" as const }}>Assistant</span>
-              <div style={{ fontSize: 14, marginTop: 4 }}>Hooks are functions that let you use state and lifecycle features in function components.</div>
-              <span style={{ fontSize: 11, color: "#9ca3af", marginTop: 4, display: "block" }}>complete</span>
+            <div
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                padding: 12,
+                background: "#f9fafb",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#6b7280",
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                Assistant
+              </span>
+              <div style={{ fontSize: 14, marginTop: 4 }}>
+                Hooks are functions that let you use state and lifecycle
+                features in function components.
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "#9ca3af",
+                  marginTop: 4,
+                  display: "block",
+                }}
+              >
+                complete
+              </span>
             </div>
           </div>
         }
