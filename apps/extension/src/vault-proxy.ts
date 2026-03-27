@@ -170,6 +170,14 @@ export async function sendVaultMessageViaProxy(
         return retryResp as Record<string, unknown>;
     }
 
+    // Clear vault-locked badge after successful unlock
+    if (
+        (message["type"] === "vault.unlock" || message["type"] === "vault.unlock.keychain") &&
+        resp["type"] !== "error"
+    ) {
+        try { void chrome.action?.setBadgeText?.({ text: "" }); } catch { /* ok */ }
+    }
+
     return resp as Record<string, unknown>;
 }
 

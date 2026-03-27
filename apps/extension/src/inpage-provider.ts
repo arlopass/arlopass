@@ -729,14 +729,41 @@ function createBridgeDispatcher() {
 function createInjectedTransport(): ArlopassTransport {
   const bridge = createBridgeDispatcher();
 
+  const VAULT_LOCKED_RETRY_DELAY_MS = 2000;
+  const VAULT_LOCKED_MAX_RETRIES = 30; // 30 * 2s = 60s max wait
+
+  async function requestWithVaultRetry<TRequestPayload, TResponsePayload>(
+    request: TransportRequest<TRequestPayload>,
+  ): Promise<TransportResponse<TResponsePayload>> {
+    for (let attempt = 0; attempt <= VAULT_LOCKED_MAX_RETRIES; attempt++) {
+      const response = await bridge.send("request", request, {
+        ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      });
+      // If vault is locked and retryable, wait for user to unlock then retry
+      if (
+        !response.ok &&
+        response.error?.reasonCode === "vault.locked" &&
+        response.error?.retryable === true &&
+        attempt < VAULT_LOCKED_MAX_RETRIES
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, VAULT_LOCKED_RETRY_DELAY_MS));
+        if (request.signal?.aborted === true) break;
+        continue;
+      }
+      return normalizeTransportResponse(response) as TransportResponse<TResponsePayload>;
+    }
+    // Exhausted retries
+    const finalResponse = await bridge.send("request", request, {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+    });
+    return normalizeTransportResponse(finalResponse) as TransportResponse<TResponsePayload>;
+  }
+
   return {
     async request<TRequestPayload, TResponsePayload>(
       request: TransportRequest<TRequestPayload>,
     ): Promise<TransportResponse<TResponsePayload>> {
-      const response = await bridge.send("request", request, {
-        ...(request.signal !== undefined ? { signal: request.signal } : {}),
-      });
-      return normalizeTransportResponse(response) as TransportResponse<TResponsePayload>;
+      return requestWithVaultRetry<TRequestPayload, TResponsePayload>(request);
     },
 
     async stream<TRequestPayload, TResponsePayload>(

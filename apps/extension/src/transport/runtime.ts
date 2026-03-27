@@ -42,10 +42,38 @@ const TRANSPORT_STREAM_PORT_NAME = "arlopass.transport.stream.v1";
 
 /** Thrown when a vault operation fails because the vault is locked. */
 export class VaultLockedError extends Error {
-    constructor() {
-        super("Vault is locked. User must unlock before this operation can proceed.");
-        this.name = "VaultLockedError";
+  constructor() {
+    super("Vault is locked. User must unlock before this operation can proceed.");
+    this.name = "VaultLockedError";
+  }
+}
+
+/**
+ * Notify the user that the vault needs unlocking.
+ * Tries chrome.action.openPopup() first (MV3, may require user gesture).
+ * Falls back to setting a badge and opening popup.html as a tab.
+ */
+async function notifyVaultLocked(): Promise<void> {
+  try {
+    // Set badge to indicate vault needs attention
+    if (chrome.action?.setBadgeText) {
+      await chrome.action.setBadgeText({ text: "🔒" });
+      await chrome.action.setBadgeBackgroundColor({ color: "#B91C1C" });
     }
+    // Try opening the popup programmatically (Chrome 99+ MV3)
+    if (typeof chrome.action?.openPopup === "function") {
+      await chrome.action.openPopup();
+      return;
+    }
+  } catch {
+    // openPopup failed (common) — fall back to opening as a tab
+  }
+  try {
+    const popupUrl = chrome.runtime.getURL("popup.html");
+    await chrome.tabs.create({ url: popupUrl, active: true });
+  } catch {
+    // Last resort — user sees the badge and clicks manually
+  }
 }
 
 const DEFAULT_CAPABILITIES = [
@@ -2633,6 +2661,10 @@ export function createTransportMessageHandler(
         envelope: createResponseEnvelope(envelope, responsePayload, now()),
       };
     } catch (error) {
+      if (error instanceof VaultLockedError) {
+        // Re-throw so the outer listener handler catches it and opens the popup
+        throw error;
+      }
       return {
         ok: false,
         error: toTransportErrorPayload(error, correlationId),
@@ -2838,8 +2870,8 @@ export function registerDefaultTransportMessageListener(options: {
       })
       .catch((error: unknown) => {
         if (error instanceof VaultLockedError) {
-          // Vault is locked — open popup so user can unlock, tell SDK to retry
-          try { chrome.action?.openPopup?.(); } catch { /* MV2 or unavailable */ }
+          // Vault is locked — prompt user to unlock
+          void notifyVaultLocked();
           sendResponse({
             ok: false,
             error: {
@@ -3055,7 +3087,7 @@ export function registerDefaultTransportStreamPortListener(options: {
           return;
         }
         if (error instanceof VaultLockedError) {
-          try { chrome.action?.openPopup?.(); } catch { /* MV2 or unavailable */ }
+          void notifyVaultLocked();
           void postToPort({
             channel: TRANSPORT_STREAM_CHANNEL,
             requestId: message.requestId,
