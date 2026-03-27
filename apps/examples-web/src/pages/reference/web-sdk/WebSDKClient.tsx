@@ -183,7 +183,7 @@ for await (const event of client.chat.stream({
 // Context window info
 const info = client.getContextInfo(messages);
 console.log(\`\${info.usedTokens}/\${info.maxTokens} (\${Math.round(info.usageRatio * 100)}%)\`);
-console.log("Window size:", client.contextWindowSize);\`;
+console.log("Window size:", client.contextWindowSize);`;
 
 const stateDiagram = `// State machine transitions:
 //
