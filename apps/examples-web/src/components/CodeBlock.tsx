@@ -16,6 +16,7 @@ import {
 } from "@tabler/icons-react";
 import Editor from "@monaco-editor/react";
 import { useSDK } from "./SDKContext";
+import { setupShikiMonaco, SHIKI_THEME } from "../shiki-monaco";
 
 export type CodeVariant = {
   sdkId: string;
@@ -81,12 +82,13 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
     setActiveSDK(id);
   };
 
-  // Map friendly language names to Monaco language identifiers
+  // Map friendly language names to Shiki/Monaco language identifiers.
+  // With @shikijs/monaco, these are TextMate grammar IDs — tsx, jsx, shell all work natively.
   const LANGUAGE_MAP: Record<string, string> = {
-    tsx: "typescript",
+    tsx: "tsx",
     ts: "typescript",
     typescript: "typescript",
-    jsx: "javascript",
+    jsx: "jsx",
     js: "javascript",
     javascript: "javascript",
     bash: "shell",
@@ -118,7 +120,8 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
           height={editorHeight}
           language={monacoLang}
           value={displayCode}
-          theme="light"
+          theme={SHIKI_THEME}
+          beforeMount={setupShikiMonaco}
           options={{ readOnly: true, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: "off", folding: false, fontSize: 13, padding: { top: 8, bottom: 8 }, renderLineHighlight: "none", overviewRulerLanes: 0, scrollbar: { vertical: isOverflowing ? "auto" : "hidden", horizontal: "auto", handleMouseWheel: isOverflowing, alwaysConsumeMouseWheel: false } }}
         />
       </Box>
@@ -205,12 +208,13 @@ export function CodeBlock({ title, code, variants, language, onRun, compact, inP
         </Group>
       </Group>
 
-      {/* Code content — Monaco Editor with light theme */}
+      {/* Code content — Monaco Editor with Shiki TextMate highlighting */}
       <Editor
         height={editorHeight}
         language={monacoLang}
         value={displayCode}
-        theme="light"
+        theme={SHIKI_THEME}
+        beforeMount={setupShikiMonaco}
         options={{
           readOnly: true,
           minimap: { enabled: false },
