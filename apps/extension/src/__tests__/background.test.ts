@@ -610,7 +610,6 @@ describe("ExtensionBackgroundService — in-flight revocation", () => {
 // Wallet message handler helpers
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
 const STORAGE_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 
 type FakeStorageState = Record<string, unknown>;
