@@ -29,6 +29,7 @@ import { PairingManager } from "./session/pairing.js";
 import { RequestVerifier } from "./session/request-verifier.js";
 import { SessionKeyRegistry } from "./session/session-key-registry.js";
 import { CloudObservability } from "./telemetry/cloud-observability.js";
+import { VaultStore } from "./vault/vault-store.js";
 
 type CloudAdapterContractV2Like = Readonly<{
   manifest: Readonly<{
@@ -1027,6 +1028,26 @@ function resolveRequestIdempotencyStateFilePathFromEnv(
   return undefined;
 }
 
+function resolveVaultFilePathFromEnv(
+  env: Readonly<Record<string, string | undefined>>,
+): string | undefined {
+  const value = env["ARLOPASS_BRIDGE_VAULT_FILE_PATH"];
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+  return undefined;
+}
+
+function resolveVaultLockoutFilePathFromEnv(
+  env: Readonly<Record<string, string | undefined>>,
+): string | undefined {
+  const value = env["ARLOPASS_BRIDGE_VAULT_LOCKOUT_FILE_PATH"];
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+  return undefined;
+}
+
 registerCloudAdapterPackage("@arlopass/adapter-claude-subscription");
 registerCloudAdapterPackage("@arlopass/adapter-microsoft-foundry");
 registerCloudAdapterPackage("@arlopass/adapter-google-vertex-ai");
@@ -1186,6 +1207,26 @@ async function main(): Promise<void> {
       );
     }
   }
+  const vaultFilePath = resolveVaultFilePathFromEnv(process.env);
+  const vaultLockoutFilePath = resolveVaultLockoutFilePathFromEnv(process.env);
+  const vaultAutoLockMs = parsePositiveIntegerEnv(
+    process.env["ARLOPASS_VAULT_AUTO_LOCK_MS"],
+  );
+  const signingKeyFilePath = resolveSigningKeyFilePathFromEnv(process.env);
+  const vaultStore = new VaultStore({
+    vaultFilePath:
+      vaultFilePath ??
+      (signingKeyFilePath !== undefined
+        ? join(dirname(signingKeyFilePath), "vault.encrypted")
+        : "vault.encrypted"),
+    lockoutFilePath:
+      vaultLockoutFilePath ??
+      (signingKeyFilePath !== undefined
+        ? join(dirname(signingKeyFilePath), "vault-lockout.json")
+        : "vault-lockout.json"),
+    ...(vaultAutoLockMs !== undefined ? { autoLockMs: vaultAutoLockMs } : {}),
+  });
+
   const pairingCodeRetrievalHint =
     resolvePairingCodeRetrievalHintFromEnv(process.env);
   const pairingStateFilePath = resolvePairingStateFilePathFromEnv(process.env);
@@ -1194,6 +1235,7 @@ async function main(): Promise<void> {
   );
 
   const bridgeHandler = new BridgeHandler({
+    vaultStore,
     signingKey,
     handshakeManager: new HandshakeManager({
       ...(handshakeStateFilePath !== undefined
