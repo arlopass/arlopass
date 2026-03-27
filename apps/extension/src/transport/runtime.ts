@@ -33,9 +33,8 @@ import {
 } from "./cloud-native.js";
 import type { UsageReport } from "../usage/token-usage-types.js";
 import { estimateUsageReport } from "../usage/token-estimation.js";
-import { TokenUsageService } from "../usage/token-usage-service.js";
 
-const WALLET_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
+
 const WALLET_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 const RESPONSE_TTL_MS = 60_000;
 const TRANSPORT_STREAM_CHANNEL = "arlopass.transport.stream";
@@ -158,6 +157,7 @@ type RuntimeDependencies = Readonly<{
   ) => Promise<string | Uint8Array | undefined | null>;
   resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
   extensionId?: string;
+  sendVaultMessage?: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
 }>;
 
 type ResolvedRuntimeDependencies = Readonly<{
@@ -172,6 +172,7 @@ type ResolvedRuntimeDependencies = Readonly<{
   ) => Promise<string | Uint8Array | undefined | null>;
   resolveBridgePairingHandle?: (hostName: string) => Promise<string | undefined | null>;
   extensionId?: string;
+  sendVaultMessage?: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
 }>;
 
 type TransportMessageHandlerOptions = Readonly<{
@@ -391,14 +392,31 @@ function parseActiveProvider(value: unknown): StoredActiveProvider {
 
 async function readWalletSnapshot(
   storage: WalletStorageAdapter,
+  sendVaultMessage?: (message: Record<string, unknown>) => Promise<Record<string, unknown>>,
 ): Promise<WalletSnapshot> {
-  const rawState = await storage.get([WALLET_KEY_PROVIDERS, WALLET_KEY_ACTIVE]);
-  const providersRaw = rawState[WALLET_KEY_PROVIDERS];
-  const providers = Array.isArray(providersRaw)
-    ? providersRaw
-      .map((value) => parseStoredProvider(value))
-      .filter((value): value is StoredProvider => value !== null)
-    : [];
+  let providers: StoredProvider[] = [];
+
+  if (sendVaultMessage !== undefined) {
+    try {
+      const result = await sendVaultMessage({ type: "vault.providers.list" });
+      const vaultProviders = Array.isArray(result["providers"]) ? result["providers"] as unknown[] : [];
+      providers = vaultProviders
+        .filter((p): p is Record<string, unknown> => isRecord(p) && typeof p["id"] === "string")
+        .map((p) => parseStoredProvider({
+          ...p,
+          models: Array.isArray(p["models"])
+            ? (p["models"] as unknown[]).map((m) =>
+              typeof m === "string" ? { id: m, name: m } : m,
+            )
+            : [],
+        }))
+        .filter((value): value is StoredProvider => value !== null);
+    } catch {
+      // Vault unavailable — fall back to empty providers
+    }
+  }
+
+  const rawState = await storage.get([WALLET_KEY_ACTIVE]);
 
   const activeProvider = parseActiveProvider(rawState[WALLET_KEY_ACTIVE]);
   return {
@@ -2040,14 +2058,13 @@ async function dispatchTransportRequest(options: {
   requestTimeoutMs?: number;
   storage: WalletStorageAdapter;
   dependencies: ResolvedRuntimeDependencies;
-  usageService: TokenUsageService;
 }): Promise<
   | ConnectResponsePayload
   | SelectProviderResponsePayload
   | ProviderListResponsePayload
   | ChatSendResponsePayload
 > {
-  const snapshot = await readWalletSnapshot(options.storage);
+  const snapshot = await readWalletSnapshot(options.storage, options.dependencies.sendVaultMessage);
 
   // Load the connected app for this origin to enforce access controls
   const appsRaw = await options.storage.get(["arlopass.wallet.apps.v1"]);
@@ -2250,12 +2267,19 @@ async function dispatchTransportRequest(options: {
         sendNativeMessage: options.dependencies.sendNativeMessage,
       });
 
-      void options.usageService.recordUsage({
-        origin: options.envelope.origin,
-        providerId: options.envelope.providerId,
-        modelId: options.envelope.modelId,
-        report: result.usage,
-      });
+      if (options.dependencies.sendVaultMessage !== undefined) {
+        void options.dependencies.sendVaultMessage({
+          type: "vault.usage.flush",
+          entries: [{
+            origin: options.envelope.origin,
+            providerId: options.envelope.providerId,
+            modelId: options.envelope.modelId,
+            inputTokens: result.usage?.inputTokens ?? 0,
+            outputTokens: result.usage?.outputTokens ?? 0,
+            timestamp: new Date().toISOString(),
+          }],
+        }).catch(() => { /* best effort */ });
+      }
 
       const response: ChatSendResponsePayload = {
         message: {
@@ -2276,10 +2300,14 @@ async function dispatchTransportRequest(options: {
       );
 
     case "usage.query": {
-      const usageSummary = await options.usageService.getUsageByOrigin(
-        options.envelope.origin,
-      );
-      return usageSummary as unknown as ChatSendResponsePayload;
+      if (options.dependencies.sendVaultMessage !== undefined) {
+        const usageSummary = await options.dependencies.sendVaultMessage({
+          type: "vault.usage.query",
+          origin: options.envelope.origin,
+        });
+        return usageSummary as unknown as ChatSendResponsePayload;
+      }
+      return {} as ChatSendResponsePayload;
     }
 
     default:
@@ -2326,7 +2354,7 @@ async function resolveTransportStreamEnvelopeIterable(options: {
 
   throwIfAborted(options.signal);
 
-  const snapshot = await readWalletSnapshot(options.storage);
+  const snapshot = await readWalletSnapshot(options.storage, options.dependencies.sendVaultMessage);
 
   // Enforce app-level access control for streams
   const streamAppsRaw = await options.storage.get(["arlopass.wallet.apps.v1"]);
@@ -2389,7 +2417,7 @@ async function resolveTransportStreamEnvelopeIterable(options: {
 
   const { stream: completionStream, usage: usagePromise } = completionResult;
 
-  const usageService = new TokenUsageService(options.storage);
+  const sendVaultMessage = options.dependencies.sendVaultMessage;
 
   const stream = async function* (): AsyncIterable<
     CanonicalEnvelope<ChatStreamResponsePayload>
@@ -2414,16 +2442,23 @@ async function resolveTransportStreamEnvelopeIterable(options: {
     }
 
     // Record usage after stream completes, before signaling done.
-    try {
-      const usageReport = await usagePromise;
-      void usageService.recordUsage({
-        origin: options.envelope.origin,
-        providerId: options.envelope.providerId,
-        modelId: options.envelope.modelId,
-        report: usageReport,
-      });
-    } catch {
-      // Best effort — don't fail the stream on usage recording errors.
+    if (sendVaultMessage !== undefined) {
+      try {
+        const usageReport = await usagePromise;
+        await sendVaultMessage({
+          type: "vault.usage.flush",
+          entries: [{
+            origin: options.envelope.origin,
+            providerId: options.envelope.providerId,
+            modelId: options.envelope.modelId,
+            inputTokens: usageReport?.inputTokens ?? 0,
+            outputTokens: usageReport?.outputTokens ?? 0,
+            timestamp: new Date().toISOString(),
+          }],
+        });
+      } catch {
+        // Best effort — don't fail the stream on usage recording errors.
+      }
     }
 
     throwIfAborted(options.signal);
@@ -2500,7 +2535,7 @@ export function createTransportMessageHandler(
   const resolveBridgeSharedSecret = options.dependencies?.resolveBridgeSharedSecret;
   const resolveBridgePairingHandle = options.dependencies?.resolveBridgePairingHandle;
   const extensionId = options.dependencies?.extensionId;
-  const usageService = new TokenUsageService(options.storage);
+  const sendVaultMessage = options.dependencies?.sendVaultMessage;
 
   return async (message: unknown): Promise<TransportActionResponse | null> => {
     if (!isTransportMessageEnvelope(message)) {
@@ -2538,6 +2573,9 @@ export function createTransportMessageHandler(
             ...(typeof extensionId === "string" && extensionId.trim().length > 0
               ? { extensionId: extensionId.trim() }
               : {}),
+            ...(sendVaultMessage !== undefined
+              ? { sendVaultMessage }
+              : {}),
           },
           now,
           ...(parsedRequest.timeoutMs !== undefined
@@ -2554,7 +2592,6 @@ export function createTransportMessageHandler(
       const responsePayload = await dispatchTransportRequest({
         envelope,
         storage: options.storage,
-        usageService,
         dependencies: {
           now,
           fetchImpl,
@@ -2567,6 +2604,9 @@ export function createTransportMessageHandler(
             : {}),
           ...(typeof extensionId === "string" && extensionId.trim().length > 0
             ? { extensionId: extensionId.trim() }
+            : {}),
+          ...(sendVaultMessage !== undefined
+            ? { sendVaultMessage }
             : {}),
         },
         ...(parsedRequest.timeoutMs !== undefined
