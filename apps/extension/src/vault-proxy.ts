@@ -24,6 +24,7 @@ import {
     unwrapPairingKeyMaterial,
 } from "./transport/bridge-pairing.js";
 import { autoPair } from "./ui/components/onboarding/setup-state.js";
+import { clearVaultLockNotification } from "./transport/runtime.js";
 
 const HOST_NAME = "com.arlopass.bridge";
 
@@ -170,11 +171,12 @@ export async function sendVaultMessageViaProxy(
         return retryResp as Record<string, unknown>;
     }
 
-    // Clear vault-locked badge after successful unlock
+    // Clear vault-locked badge and notification flag after successful unlock
     if (
         (message["type"] === "vault.unlock" || message["type"] === "vault.unlock.keychain") &&
         resp["type"] !== "error"
     ) {
+        clearVaultLockNotification();
         try { void chrome.action?.setBadgeText?.({ text: "" }); } catch { /* ok */ }
     }
 

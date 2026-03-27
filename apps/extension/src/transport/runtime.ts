@@ -50,30 +50,37 @@ export class VaultLockedError extends Error {
 
 /**
  * Notify the user that the vault needs unlocking.
- * Tries chrome.action.openPopup() first (MV3, may require user gesture).
- * Falls back to setting a badge and opening popup.html as a tab.
+ * Only fires once until the vault is unlocked (prevents tab flood on retries).
  */
+let vaultLockNotified = false;
+
 async function notifyVaultLocked(): Promise<void> {
+  if (vaultLockNotified) return;
+  vaultLockNotified = true;
+
   try {
-    // Set badge to indicate vault needs attention
     if (chrome.action?.setBadgeText) {
       await chrome.action.setBadgeText({ text: "🔒" });
       await chrome.action.setBadgeBackgroundColor({ color: "#B91C1C" });
     }
-    // Try opening the popup programmatically (Chrome 99+ MV3)
     if (typeof chrome.action?.openPopup === "function") {
       await chrome.action.openPopup();
       return;
     }
   } catch {
-    // openPopup failed (common) — fall back to opening as a tab
+    // openPopup failed — fall back to tab
   }
   try {
     const popupUrl = chrome.runtime.getURL("popup.html");
     await chrome.tabs.create({ url: popupUrl, active: true });
   } catch {
-    // Last resort — user sees the badge and clicks manually
+    // User sees the badge and clicks manually
   }
+}
+
+/** Called after a successful vault unlock to allow re-notification. */
+export function clearVaultLockNotification(): void {
+  vaultLockNotified = false;
 }
 
 const DEFAULT_CAPABILITIES = [
