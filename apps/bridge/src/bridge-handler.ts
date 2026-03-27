@@ -46,6 +46,10 @@ import {
   PairingManager,
   type BeginPairingResult,
 } from "./session/pairing.js";
+import {
+  isValidExtensionId,
+  type AllowlistEntry,
+} from "./native-host-manifest.js";
 
 export type BridgeHandlerOptions = Readonly<{
   sharedSecret: Buffer;
@@ -60,6 +64,7 @@ export type BridgeHandlerOptions = Readonly<{
   sessionKeyRegistry?: SessionKeyRegistry;
   pairingManager?: PairingManager;
   pairingCodeRetrievalHint?: string;
+  extensionIdAllowlist?: readonly AllowlistEntry[];
   metrics?: TelemetryMetrics;
 }>;
 
@@ -222,6 +227,7 @@ export class BridgeHandler {
   readonly #sessionKeyRegistry: SessionKeyRegistry;
   readonly #pairingManager: PairingManager;
   readonly #pairingCodeRetrievalHint: string | undefined;
+  readonly #extensionIdAllowlist: readonly AllowlistEntry[] | undefined;
   readonly #metrics: TelemetryMetrics | undefined;
   readonly #cloudConnectionCompleteIdempotencyNamespace: string;
 
@@ -237,6 +243,10 @@ export class BridgeHandler {
     this.#pairingCodeRetrievalHint = normalizeOptionalNonEmptyString(
       options.pairingCodeRetrievalHint,
     );
+    this.#extensionIdAllowlist =
+      options.extensionIdAllowlist !== undefined && options.extensionIdAllowlist.length > 0
+        ? options.extensionIdAllowlist
+        : undefined;
     this.#requestVerifier =
       options.requestVerifier ??
       new RequestVerifier({
@@ -293,13 +303,76 @@ export class BridgeHandler {
   // Internal dispatch and telemetry
   // ---------------------------------------------------------------------------
 
+  /**
+   * Message types that are allowed without an authenticated session.
+   * Every other message type requires a valid `sessionToken` or
+   * `handshakeSessionToken` field that resolves to a live session in the
+   * {@link SessionKeyRegistry}.
+   *
+   * `pairing.complete` is unauthenticated because it is part of the
+   * bootstrap flow — the caller proves possession of the one-time pairing
+   * code, not a pre-existing session token.
+   */
+  static readonly #UNAUTHENTICATED_MESSAGE_TYPES: ReadonlySet<string> = new Set([
+    "handshake.challenge",
+    "handshake.verify",
+    "pairing.auto",
+    "pairing.begin",
+    "pairing.complete",
+  ]);
+
+  /**
+   * Validates that the message carries a session token referencing a live,
+   * non-expired session.  Returns `undefined` when valid, or an error
+   * response when the caller is not authorised.
+   */
+  #requireSession(message: NativeMessage): NativeMessage | undefined {
+    const sessionToken =
+      normalizeOptionalNonEmptyString(message["sessionToken"]) ??
+      normalizeOptionalNonEmptyString(message["handshakeSessionToken"]);
+    if (sessionToken === undefined) {
+      return errorResponse(
+        "auth.required",
+        "This operation requires an authenticated session. Complete a handshake first.",
+      );
+    }
+    const resolved = this.#sessionKeyRegistry.resolveRecord(sessionToken);
+    if (resolved === undefined) {
+      return errorResponse(
+        "auth.expired",
+        "Session token is invalid or has expired. Re-authenticate via handshake.",
+      );
+    }
+    return undefined;
+  }
+
   async #dispatch(message: NativeMessage, writer?: NativeStreamWriter): Promise<NativeMessage> {
+    const messageType = typeof message["type"] === "string" ? message["type"] : "";
+
+    // Enforce session authentication on all operations except the
+    // unauthenticated bootstrap messages (handshake + pairing.begin).
+    if (!BridgeHandler.#UNAUTHENTICATED_MESSAGE_TYPES.has(messageType)) {
+      const authError = this.#requireSession(message);
+      if (authError !== undefined) {
+        return authError;
+      }
+      // Strip the gate-level `sessionToken` so it doesn't leak into
+      // handler-specific logic (e.g. `#handleRequestCheck` uses
+      // `handshakeSessionToken` for proof-path routing, and the
+      // presence of `sessionToken` would incorrectly trigger it).
+      const { sessionToken: _gateToken, ...gateStrippedMessage } = message;
+      message = gateStrippedMessage as NativeMessage;
+    }
+
     switch (message["type"]) {
       case "handshake.challenge":
         return this.#handleHandshakeChallenge();
 
       case "handshake.verify":
         return this.#handleHandshakeVerify(message);
+
+      case "pairing.auto":
+        return this.#handlePairingAuto(message);
 
       case "pairing.begin":
         return this.#handlePairingBegin(message);
@@ -471,6 +544,27 @@ export class BridgeHandler {
         response,
         handshakeSecret,
       );
+
+      // Validate extension ID against the allowlist (defense in depth —
+      // the OS-level native messaging manifest is the primary gate).
+      if (this.#extensionIdAllowlist !== undefined) {
+        if (!isValidExtensionId(session.extensionId)) {
+          return errorResponse(
+            "auth.invalid",
+            `Extension ID "${session.extensionId}" has an invalid format.`,
+          );
+        }
+        const isAllowed = this.#extensionIdAllowlist.some(
+          (entry) => entry.extensionId === session.extensionId,
+        );
+        if (!isAllowed) {
+          return errorResponse(
+            "auth.invalid",
+            `Extension ID "${session.extensionId}" is not in the bridge allowlist.`,
+          );
+        }
+      }
+
       if (pairingHandle !== undefined && hostName !== undefined) {
         this.#emitPairingAuditEvent({
           action: "complete",
@@ -604,6 +698,69 @@ export class BridgeHandler {
     }
     const message = error instanceof Error ? error.message : fallbackMessage;
     return errorResponse("transport.transient_failure", message);
+  }
+
+  #handlePairingAuto(message: NativeMessage): NativeMessage {
+    const extensionId = normalizeOptionalNonEmptyString(message["extensionId"]);
+    const hostName = normalizeOptionalNonEmptyString(message["hostName"]);
+
+    if (extensionId === undefined || hostName === undefined) {
+      return errorResponse(
+        "request.invalid",
+        "pairing.auto requires non-empty extensionId and hostName.",
+      );
+    }
+
+    // Validate against allowlist if configured
+    if (this.#extensionIdAllowlist !== undefined) {
+      if (!isValidExtensionId(extensionId)) {
+        return errorResponse(
+          "auth.invalid",
+          `Extension ID "${extensionId}" has an invalid format.`,
+        );
+      }
+      const isAllowed = this.#extensionIdAllowlist.some(
+        (entry) => entry.extensionId === extensionId,
+      );
+      if (!isAllowed) {
+        return errorResponse(
+          "auth.invalid",
+          `Extension ID "${extensionId}" is not in the bridge allowlist.`,
+        );
+      }
+    }
+
+    try {
+      const result = this.#pairingManager.createAutoPairing({ extensionId, hostName });
+      this.#emitPairingAuditEvent({
+        action: "begin",
+        outcome: "allow",
+        reasonCode: "pairing.auto.ok",
+        extensionId,
+        hostName,
+        pairingHandle: result.pairingHandle,
+      });
+      return {
+        type: "pairing.auto",
+        pairingHandle: result.pairingHandle,
+        pairingKeyHex: result.pairingKeyHex,
+        extensionId: result.extensionId,
+        hostName: result.hostName,
+        createdAt: result.createdAt,
+      };
+    } catch (error) {
+      this.#emitPairingAuditEvent({
+        action: "begin",
+        outcome: "deny",
+        reasonCode:
+          error instanceof PairingError
+            ? error.reasonCode
+            : "transport.transient_failure",
+        extensionId,
+        hostName,
+      });
+      return this.#asPairingErrorResponse(error, "Auto-pairing failed.");
+    }
   }
 
   #handlePairingBegin(message: NativeMessage): NativeMessage {
