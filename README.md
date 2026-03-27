@@ -268,13 +268,7 @@ npm run build
 ```
 
 > [!IMPORTANT]
-> The bridge requires a 32-byte hex shared secret set via `BYOM_BRIDGE_SHARED_SECRET`. Generate one with:
-> ```powershell
-> $bytes = New-Object byte[] 32
-> [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-> $env:BYOM_BRIDGE_SHARED_SECRET = ($bytes | ForEach-Object { $_.ToString("x2") }) -join ""
-> ```
-> Bridge startup is fail-closed and exits when this variable is missing or not exactly 64 hex characters.
+> The bridge and extension pair automatically on first connection. No shared secret or manual configuration is needed.
 
 ### Native Messaging Host Registration
 
@@ -304,7 +298,7 @@ Or manually create a `com.byom.bridge.json` manifest pointing to your bridge exe
 | Problem | Solution |
 |---------|---------|
 | Extension can't connect to bridge | Verify `com.byom.bridge` native host is registered. Run `npm run dev:register-native-host` and reload the extension. |
-| `auth.invalid` during handshake | Secret mismatch — regenerate `BYOM_BRIDGE_SHARED_SECRET` and restart both bridge and extension. |
+| `auth.invalid` during handshake | Extension and bridge may have stale pairing state — delete `%LOCALAPPDATA%\BYOM\bridge\state` and re-pair. |
 | Popup shows no providers | Seed demo providers via the extension options page or service worker console. See the [usage guide](RUNNING_AND_USAGE_GUIDE.md#7-how-to-use-current-extension-wallet-ui). |
 | `window.byom` is undefined | Reload the unpacked extension, refresh the target tab, and verify the extension has site access for that origin. |
 

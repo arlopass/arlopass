@@ -148,16 +148,7 @@ Build bridge:
 npm run typecheck -w @byom-ai/bridge
 ```
 
-Set a 32-byte hex shared secret (64 hex chars):
-
-```powershell
-$bytes = New-Object byte[] 32
-$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
-$env:BYOM_BRIDGE_SHARED_SECRET = ($bytes | ForEach-Object { $_.ToString("x2") }) -join ""
-```
-
-Bridge startup is fail-closed: it exits if `BYOM_BRIDGE_SHARED_SECRET` is unset or not exactly 64 hexadecimal characters.
+The bridge generates its own signing key on first run and persists it to `%LOCALAPPDATA%\BYOM\bridge\state\bridge-state.json`. No shared secret or manual configuration is needed.
 
 Run:
 
@@ -254,8 +245,6 @@ Register manifest path in registry:
 ```powershell
 reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.byom.bridge" /ve /t REG_SZ /d "C:\BYOM\bridge\com.byom.bridge.json" /f
 ```
-
-Set `BYOM_BRIDGE_SHARED_SECRET` in the bridge process environment for bootstrap/recovery.
 
 Then open extension options and run **Pair Bridge (One Click)**:
 
@@ -532,7 +521,6 @@ Operational docs:
 
 ## 10) Security checklist for running this safely
 
-- Always set a strong `BYOM_BRIDGE_SHARED_SECRET` (32-byte random hex).
 - Keep secrets out of source control and CI logs.
 - Use explicit extension allowlists in native host manifest.
 - Enable signature verification for policy/adapters in production paths.

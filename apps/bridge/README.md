@@ -39,17 +39,12 @@ node --loader ./scripts/dev/ts-js-specifier-loader.mjs ./apps/bridge/src/main.ts
 
 ### Environment Variables
 
+The bridge generates its own signing key automatically on first run and persists it to `bridge-state.json`. No shared secret is required.
+
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `BYOM_BRIDGE_SHARED_SECRET` | Yes | 32-byte hex string (64 characters) for HMAC authentication |
-
-Generate a secret:
-
-```powershell
-$bytes = New-Object byte[] 32
-[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-$env:BYOM_BRIDGE_SHARED_SECRET = ($bytes | ForEach-Object { $_.ToString("x2") }) -join ""
-```
+| `BYOM_BRIDGE_PAIRING_STATE_PATH` | No | Override path for pairing state file |
+| `BYOM_BRIDGE_HANDSHAKE_STATE_PATH` | No | Override path for handshake state file |
 
 ### Native Messaging Host Registration
 
