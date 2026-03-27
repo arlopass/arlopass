@@ -6,6 +6,7 @@ import {
     parseBridgePairingState,
     unwrapPairingKeyMaterial,
 } from "../../transport/bridge-pairing.js";
+import { autoPair } from "../components/onboarding/setup-state.js";
 
 const HOST_NAME = "com.arlopass.bridge";
 
@@ -62,11 +63,23 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 async function establishSession(): Promise<SessionRef> {
     const extensionId = chrome.runtime.id;
-    const pairingData = await chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-    const pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-    const pairingKeyMaterial = pairingState !== undefined
-        ? await unwrapPairingKeyMaterial({ pairingState, runtimeId: extensionId })
-        : null;
+
+    // Auto-pair if no pairing state exists (first run or reinstall)
+    let pairingData = await chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+    let pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+    if (pairingState === undefined) {
+        const pairResult = await autoPair();
+        if (!pairResult.success) {
+            throw new Error(pairResult.error ?? "Auto-pairing with bridge failed.");
+        }
+        pairingData = await chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+        pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+        if (pairingState === undefined) {
+            throw new Error("Pairing succeeded but state was not persisted.");
+        }
+    }
+
+    const pairingKeyMaterial = await unwrapPairingKeyMaterial({ pairingState, runtimeId: extensionId });
 
     const resolveBridgePairingHandle: ((hostName: string) => Promise<string | undefined | null>) | undefined =
         pairingKeyMaterial !== null && pairingKeyMaterial !== undefined
