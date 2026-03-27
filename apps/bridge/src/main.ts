@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import process from "node:process";
-import { createHash } from "node:crypto";
 import { join } from "node:path";
+
+import { readOrCreateBridgeState } from "./state/bridge-state.js";
 
 import { BridgeHandler } from "./bridge-handler.js";
 import { CopilotCliChatExecutor } from "./cli/copilot-chat-executor.js";
@@ -138,28 +139,6 @@ function normalizeNonEmptyString(value: unknown): string | undefined {
   }
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : undefined;
-}
-
-function resolveSharedSecretFromEnv(env: NodeJS.ProcessEnv): Buffer {
-  const rawSecret = normalizeNonEmptyString(env["BYOM_BRIDGE_SHARED_SECRET"]);
-  if (rawSecret === undefined) {
-    throw new Error(
-      "BYOM_BRIDGE_SHARED_SECRET must be set to a 32-byte (64 hex chars) shared secret.",
-    );
-  }
-  if (!/^[0-9a-fA-F]{64}$/.test(rawSecret)) {
-    throw new Error(
-      "BYOM_BRIDGE_SHARED_SECRET must be exactly 64 hexadecimal characters.",
-    );
-  }
-  return Buffer.from(rawSecret, "hex");
-}
-
-function deriveConnectionRegistrySigningKey(sharedSecret: Buffer): Buffer {
-  return createHash("sha256")
-    .update("byom.bridge.connection-registry.v1", "utf8")
-    .update(sharedSecret)
-    .digest();
 }
 
 function toReadonlyRecord(value: unknown): Readonly<Record<string, unknown>> | undefined {
@@ -1002,6 +981,18 @@ function resolveSessionKeyStateFilePathFromEnv(
   return undefined;
 }
 
+function resolveBridgeStateFilePathFromEnv(env: NodeJS.ProcessEnv): string {
+  const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
+  if (localAppData !== undefined) {
+    return join(localAppData, "BYOM", "bridge", "state", "bridge-state.json");
+  }
+  const tempDir =
+    normalizeNonEmptyString(env["TEMP"]) ??
+    normalizeNonEmptyString(env["TMPDIR"]) ??
+    "/tmp";
+  return join(tempDir, "BYOM", "bridge", "state", "bridge-state.json");
+}
+
 function resolveCloudConnectionStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
@@ -1060,12 +1051,13 @@ registerCloudAdapterPackage("@byom-ai/adapter-gemini");
  * Bridge entry point.
  *
  * Bootstraps the native messaging host and wires the BridgeHandler into the
- * message pipeline.  The shared secret used for the extension handshake is
- * read from the BYOM_BRIDGE_SHARED_SECRET environment variable (hex-encoded).
- * Startup fails closed when the variable is missing or invalid.
+ * message pipeline.  Extensions must pair via `pairing.auto` before
+ * performing a handshake — there is no shared secret.
  */
 async function main(): Promise<void> {
-  const sharedSecret = resolveSharedSecretFromEnv(process.env);
+  const bridgeStatePath = resolveBridgeStateFilePathFromEnv(process.env);
+  const bridgeState = readOrCreateBridgeState(bridgeStatePath);
+  const signingKey = Buffer.from(bridgeState.signingKey, "hex");
   const cloudFeatureFlags = createCloudFeatureFlagsFromEnv(process.env);
   const authenticatedOriginPolicy =
     createAuthenticatedOriginPolicyFromEnv(process.env);
@@ -1090,7 +1082,7 @@ async function main(): Promise<void> {
   const cliChatExecutor = new CopilotCliChatExecutor();
   const adaptersByProvider = await loadRegisteredCloudAdapters();
   const connectionRegistry = new ConnectionRegistry({
-    signatureKey: deriveConnectionRegistrySigningKey(sharedSecret),
+    signatureKey: signingKey,
   });
   const cloudConnectionService = new CloudConnectionService({
     adaptersByProvider,
@@ -1159,7 +1151,7 @@ async function main(): Promise<void> {
   );
 
   const bridgeHandler = new BridgeHandler({
-    sharedSecret,
+    signingKey,
     handshakeManager: new HandshakeManager({
       ...(handshakeStateFilePath !== undefined
         ? { stateFilePath: handshakeStateFilePath }
