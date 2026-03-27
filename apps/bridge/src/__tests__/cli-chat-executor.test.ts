@@ -70,6 +70,31 @@ function extractPromptArgAt(spawnFn: unknown, callIndex: number): string {
   return "";
 }
 
+/**
+ * Get the full command string for a spawn call. On Windows, args are wrapped
+ * inside cmd.exe `/d /s /c "command ..."` — join them to get the full string.
+ * On non-Windows, args are direct array elements.
+ */
+function getCommandString(spawnFn: unknown, callIndex = 0): string {
+  const calls = (spawnFn as { mock: { calls: Array<[string, string[]]> } }).mock.calls;
+  const args = calls[callIndex]?.[1] ?? [];
+  return args.join(" ").replace(/\^\^\^/g, "");
+}
+
+/**
+ * Check if a flag is present in spawn args. Works on both Windows (where
+ * args are concatenated into a single cmd.exe string) and non-Windows.
+ */
+function argsContain(spawnFn: unknown, flag: string, callIndex = 0): boolean {
+  const calls = (spawnFn as { mock: { calls: Array<[string, string[]]> } }).mock.calls;
+  const args = calls[callIndex]?.[1] ?? [];
+  // Direct check (non-Windows)
+  if (args.includes(flag)) return true;
+  // Joined check (Windows cmd.exe wrapper)
+  const joined = args.join(" ").replace(/\^\^\^/g, "");
+  return joined.includes(flag);
+}
+
 describe("CopilotCliChatExecutor", () => {
   it("executes CLI and returns assistant content from JSONL output", async () => {
     const child = createMockChildProcess();
@@ -78,11 +103,10 @@ describe("CopilotCliChatExecutor", () => {
 
     const execution = executor.execute(makeRequest());
     await vi.waitFor(() => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 1);
-    const args = (spawnFn as unknown as { mock: { calls: Array<[string, string[]]> } }).mock.calls[0]?.[1] ?? [];
-    expect(args).toContain("--available-tools");
-    expect(args).toContain("--disable-builtin-mcps");
-    expect(args).toContain("--model");
-    expect(args).toContain("gpt-5.3-codex");
+    expect(argsContain(spawnFn, "--available-tools")).toBe(true);
+    expect(argsContain(spawnFn, "--disable-builtin-mcps")).toBe(true);
+    expect(argsContain(spawnFn, "--model")).toBe(true);
+    expect(argsContain(spawnFn, "gpt-5.3-codex")).toBe(true);
 
     child.stdout.emit("data", Buffer.from('{"type":"assistant.message","data":{"content":"Bridge reply"}}\n'));
     child.emit("close", 0, null);
@@ -243,10 +267,9 @@ describe("CopilotCliChatExecutor", () => {
       }),
     );
     await vi.waitFor(() => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 1);
-    const args = (spawnFn as unknown as { mock: { calls: Array<[string, string[]]> } }).mock.calls[0]?.[1] ?? [];
-    expect(args).toContain("--thinking-level");
-    expect(args).toContain("xhigh");
-    expect(args).toContain("--disable-builtin-mcps");
+    expect(argsContain(spawnFn, "--thinking-level")).toBe(true);
+    expect(argsContain(spawnFn, "xhigh")).toBe(true);
+    expect(argsContain(spawnFn, "--disable-builtin-mcps")).toBe(true);
 
     child.stdout.emit("data", Buffer.from('{"type":"assistant.message","data":{"content":"done"}}\n'));
     child.emit("close", 0, null);
@@ -273,9 +296,7 @@ describe("CopilotCliChatExecutor", () => {
     await vi.waitFor(
       () => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 1,
     );
-    const firstArgs = (spawnFn as unknown as { mock: { calls: Array<[string, string[]]> } })
-      .mock.calls[0]?.[1] ?? [];
-    expect(firstArgs).not.toContain("--continue");
+    expect(argsContain(spawnFn, "--continue", 0)).toBe(false);
     firstChild.stdout.emit("data", Buffer.from('{"type":"assistant.message","data":{"content":"done"}}\n'));
     firstChild.emit("close", 0, null);
     await firstExecution;
@@ -289,9 +310,7 @@ describe("CopilotCliChatExecutor", () => {
     await vi.waitFor(
       () => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 2,
     );
-    const secondArgs = (spawnFn as unknown as { mock: { calls: Array<[string, string[]]> } })
-      .mock.calls[1]?.[1] ?? [];
-    expect(secondArgs).toContain("--continue");
+    expect(argsContain(spawnFn, "--continue", 1)).toBe(true);
     secondChild.stdout.emit("data", Buffer.from('{"type":"assistant.message","data":{"content":"done2"}}\n'));
     secondChild.emit("close", 0, null);
     await secondExecution;
@@ -401,10 +420,8 @@ describe("CopilotCliChatExecutor", () => {
     await vi.waitFor(
       () => (spawnFn as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 2,
     );
-    const secondArgs = (spawnFn as unknown as { mock: { calls: Array<[string, string[]]> } })
-      .mock.calls[1]?.[1] ?? [];
-    expect(secondArgs.some((arg) => arg.startsWith("--resume="))).toBe(true);
-    expect(secondArgs).not.toContain("--continue");
+    expect(getCommandString(spawnFn, 1).includes("--resume=")).toBe(true);
+    expect(argsContain(spawnFn, "--continue", 1)).toBe(false);
     secondChild.stdout.emit("data", Buffer.from('{"type":"assistant.message","data":{"content":"done2"}}\n'));
     secondChild.emit("close", 0, null);
     await secondExecution;
@@ -449,10 +466,8 @@ describe("CopilotCliChatExecutor", () => {
       }),
     );
     const calls = (spawnFn as unknown as { mock: { calls: Array<[string, string[]]> } }).mock.calls;
-    const firstAttemptArgs = calls[1]?.[1] ?? [];
-    expect(firstAttemptArgs).toContain("--continue");
-    const fallbackArgs = calls[2]?.[1] ?? [];
-    expect(fallbackArgs).not.toContain("--continue");
+    expect(argsContain(spawnFn, "--continue", 1)).toBe(true);
+    expect(argsContain(spawnFn, "--continue", 2)).toBe(false);
     expect(result.content).toBe("fallback");
   });
 
