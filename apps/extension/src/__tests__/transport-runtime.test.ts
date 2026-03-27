@@ -17,7 +17,6 @@ import {
 
 const WALLET_KEY_PROVIDERS = "byom.wallet.providers.v1";
 const WALLET_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
-const WALLET_KEY_BRIDGE_SHARED_SECRET = "byom.wallet.bridgeSharedSecret.v1";
 const TRANSPORT_MESSAGE_LISTENER_FLAG = "__byom.transport.listener.registered.v1";
 const TRANSPORT_STREAM_PORT_LISTENER_FLAG =
   "__byom.transport.stream-port.listener.registered.v1";
@@ -1480,6 +1479,16 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("registers default runtime listener with cloud handshake dependencies", async () => {
+    const pairingHandle = "pairh.00112233445566778899aabbccddeeff";
+    const wrappedPairingState = await wrapPairingKeyMaterial({
+      pairingHandle,
+      extensionId: "ext.runtime.transport",
+      hostName: "com.byom.bridge.cloud-default",
+      pairingKeyHex: "ab".repeat(32),
+      runtimeId: "ext.runtime.transport",
+      createdAt: new Date().toISOString(),
+    });
+
     const sendNativeMessage = vi.fn(
       (
         _hostName: string,
@@ -1549,7 +1558,7 @@ describe("createTransportMessageHandler", () => {
         },
       ],
       [WALLET_KEY_ACTIVE]: { providerId: "provider.claude", modelId: "claude-sonnet-4-5" },
-      [WALLET_KEY_BRIDGE_SHARED_SECRET]: "ab".repeat(32),
+      [BRIDGE_PAIRING_STATE_STORAGE_KEY]: wrappedPairingState,
     };
 
     const storageGet = vi.fn((keys: readonly string[], callback: (value: unknown) => void) => {
@@ -1616,7 +1625,7 @@ describe("createTransportMessageHandler", () => {
     expect(verifyPayload?.["extensionId"]).toBe("ext.runtime.transport");
 
     expect(storageGet).toHaveBeenCalledWith(
-      expect.arrayContaining([WALLET_KEY_BRIDGE_SHARED_SECRET]),
+      expect.arrayContaining([BRIDGE_PAIRING_STATE_STORAGE_KEY]),
       expect.any(Function),
     );
   });
@@ -1698,7 +1707,6 @@ describe("createTransportMessageHandler", () => {
         },
       ],
       [WALLET_KEY_ACTIVE]: { providerId: "provider.claude", modelId: "claude-sonnet-4-5" },
-      [WALLET_KEY_BRIDGE_SHARED_SECRET]: null,
       [BRIDGE_PAIRING_STATE_STORAGE_KEY]: wrappedPairingState,
     };
 
