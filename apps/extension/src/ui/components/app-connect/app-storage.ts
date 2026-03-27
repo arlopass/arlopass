@@ -3,12 +3,11 @@
  *
  * Each connected app represents a web origin that the user has approved
  * to use the wallet's providers and models. Apps survive browser restarts
- * and are persisted in chrome.storage.local.
- *
- * Storage key: `arlopass.wallet.apps.v1`
+ * and are persisted in the vault via the bridge.
  */
 
-const STORAGE_KEY = "arlopass.wallet.apps.v1";
+export type SendVaultMessage = (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
+
 const MAX_APPS = 100;
 
 export type AppPermissions = {
@@ -71,43 +70,96 @@ function generateAppId(): string {
     return `app.${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export async function loadApps(): Promise<ConnectedApp[]> {
-    return new Promise((resolve) => {
-        chrome.storage.local.get([STORAGE_KEY], (result) => {
-            const raw = result[STORAGE_KEY];
-            if (!Array.isArray(raw)) { resolve([]); return; }
-            resolve(raw.filter(isValidApp));
-        });
-    });
+/** Map a vault VaultAppConnection record to a ConnectedApp. */
+function vaultToConnectedApp(v: Record<string, unknown>): ConnectedApp {
+    const perms = (typeof v["permissions"] === "object" && v["permissions"] !== null ? v["permissions"] : {}) as Record<string, unknown>;
+    const rules = (typeof v["rules"] === "object" && v["rules"] !== null ? v["rules"] : {}) as Record<string, unknown>;
+    const limits = (typeof v["limits"] === "object" && v["limits"] !== null ? v["limits"] : {}) as Record<string, unknown>;
+
+    const app: ConnectedApp = {
+        id: String(v["id"] ?? ""),
+        origin: String(v["origin"] ?? ""),
+        displayName: String(v["displayName"] ?? ""),
+        enabledProviderIds: Array.isArray(v["approvedProviders"]) ? v["approvedProviders"] as string[] : [],
+        enabledModelIds: Array.isArray(v["approvedModels"]) ? v["approvedModels"] as string[] : [],
+        permissions: {
+            autopilot: perms["autopilot"] === true,
+            readBalance: perms["readBalance"] === true,
+            autoSelectModel: perms["autoSelectModel"] === true,
+        },
+        rules: {
+            lowTokenUsage: rules["lowTokenUsage"] === true,
+            noFallback: rules["noFallback"] === true,
+            alwaysAskPermission: rules["alwaysAskPermission"] !== false,
+        },
+        limits: {
+            consecutiveCalls: typeof limits["consecutiveCalls"] === "number" ? limits["consecutiveCalls"] : DEFAULT_LIMITS.consecutiveCalls,
+            dailyTokens: typeof limits["dailyTokens"] === "number" ? limits["dailyTokens"] : DEFAULT_LIMITS.dailyTokens,
+            concurrentCalls: typeof limits["concurrentCalls"] === "number" ? limits["concurrentCalls"] : DEFAULT_LIMITS.concurrentCalls,
+        },
+        tokenUsage: typeof perms["__tokenUsage"] === "number" ? perms["__tokenUsage"] : 0,
+        lastUsedAt: typeof v["lastUsedAt"] === "string" ? new Date(v["lastUsedAt"] as string).getTime() : 0,
+        createdAt: typeof v["createdAt"] === "string" ? new Date(v["createdAt"] as string).getTime() : 0,
+        status: perms["__status"] === "disabled" ? "disabled" : "active",
+    };
+    if (typeof perms["__appId"] === "string") app.appId = perms["__appId"];
+    if (typeof perms["__description"] === "string") app.description = perms["__description"];
+    if (typeof perms["__iconUrl"] === "string") app.iconUrl = perms["__iconUrl"];
+    return app;
 }
 
-export async function loadAppByOrigin(origin: string): Promise<ConnectedApp | null> {
-    const apps = await loadApps();
+/** Map a ConnectedApp to vault message fields for vault.apps.save. */
+function connectedAppToVaultFields(app: ConnectedApp): Record<string, unknown> {
+    return {
+        id: app.id,
+        origin: app.origin,
+        displayName: app.displayName,
+        approvedProviders: app.enabledProviderIds,
+        approvedModels: app.enabledModelIds,
+        permissions: {
+            ...app.permissions,
+            __appId: app.appId,
+            __description: app.description,
+            __iconUrl: app.iconUrl,
+            __tokenUsage: app.tokenUsage,
+            __status: app.status,
+        } as Record<string, unknown>,
+        rules: { ...app.rules } as Record<string, unknown>,
+        limits: { ...app.limits } as Record<string, unknown>,
+    };
+}
+
+export async function loadApps(sendVaultMessage: SendVaultMessage): Promise<ConnectedApp[]> {
+    const resp = await sendVaultMessage({ type: "vault.apps.list" });
+    const raw = Array.isArray(resp["appConnections"]) ? resp["appConnections"] as Record<string, unknown>[] : [];
+    return raw.map(vaultToConnectedApp);
+}
+
+export async function loadAppByOrigin(origin: string, sendVaultMessage: SendVaultMessage): Promise<ConnectedApp | null> {
+    const apps = await loadApps(sendVaultMessage);
     return apps.find((a) => a.origin === origin) ?? null;
 }
 
-export async function saveApp(app: Omit<ConnectedApp, "id" | "createdAt" | "tokenUsage" | "lastUsedAt">): Promise<ConnectedApp> {
-    const apps = await loadApps();
+export async function saveApp(app: Omit<ConnectedApp, "id" | "createdAt" | "tokenUsage" | "lastUsedAt">, sendVaultMessage: SendVaultMessage): Promise<ConnectedApp> {
+    const apps = await loadApps(sendVaultMessage);
     const now = Date.now();
 
     // Check if origin already exists → update
-    const existingIdx = apps.findIndex((a) => a.origin === app.origin);
-    if (existingIdx >= 0) {
+    const existing = apps.find((a) => a.origin === app.origin);
+    if (existing) {
         const updated: ConnectedApp = {
-            ...apps[existingIdx]!,
+            ...existing,
             ...app,
             lastUsedAt: now,
         };
-        apps[existingIdx] = updated;
-        await writeApps(apps);
+        await sendVaultMessage({ type: "vault.apps.save", ...connectedAppToVaultFields(updated) });
         return updated;
     }
 
     // Enforce cap
     if (apps.length >= MAX_APPS) {
         const oldest = apps.reduce((a, b) => (a.lastUsedAt < b.lastUsedAt ? a : b));
-        const idx = apps.indexOf(oldest);
-        if (idx >= 0) apps.splice(idx, 1);
+        await sendVaultMessage({ type: "vault.apps.delete", appId: oldest.id });
     }
 
     const newApp: ConnectedApp = {
@@ -117,47 +169,21 @@ export async function saveApp(app: Omit<ConnectedApp, "id" | "createdAt" | "toke
         lastUsedAt: now,
         createdAt: now,
     };
-    apps.push(newApp);
-    await writeApps(apps);
+    await sendVaultMessage({ type: "vault.apps.save", ...connectedAppToVaultFields(newApp) });
     return newApp;
 }
 
-export async function updateAppLastUsed(origin: string): Promise<void> {
-    const apps = await loadApps();
-    const idx = apps.findIndex((a) => a.origin === origin);
-    if (idx >= 0) {
-        apps[idx] = { ...apps[idx]!, lastUsedAt: Date.now() };
-        await writeApps(apps);
+export async function updateAppLastUsed(origin: string, sendVaultMessage: SendVaultMessage): Promise<void> {
+    const app = await loadAppByOrigin(origin, sendVaultMessage);
+    if (app) {
+        const updated = { ...app, lastUsedAt: Date.now() };
+        await sendVaultMessage({ type: "vault.apps.save", ...connectedAppToVaultFields(updated) });
     }
 }
 
-export async function removeApp(origin: string): Promise<void> {
-    const apps = await loadApps();
-    await writeApps(apps.filter((a) => a.origin !== origin));
-}
-
-function writeApps(apps: ConnectedApp[]): Promise<void> {
-    return new Promise((resolve) => {
-        chrome.storage.local.set({ [STORAGE_KEY]: apps }, () => resolve());
-    });
-}
-
-function isValidApp(raw: unknown): raw is ConnectedApp {
-    if (typeof raw !== "object" || raw === null) return false;
-    const obj = raw as Record<string, unknown>;
-    return (
-        typeof obj["id"] === "string" &&
-        typeof obj["origin"] === "string" &&
-        typeof obj["displayName"] === "string" &&
-        Array.isArray(obj["enabledProviderIds"]) &&
-        Array.isArray(obj["enabledModelIds"]) &&
-        typeof obj["permissions"] === "object" && obj["permissions"] !== null &&
-        typeof obj["rules"] === "object" && obj["rules"] !== null &&
-        typeof obj["limits"] === "object" && obj["limits"] !== null &&
-        typeof obj["createdAt"] === "number" &&
-        typeof obj["status"] === "string" &&
-        (obj["appId"] == null || typeof obj["appId"] === "string") &&
-        (obj["description"] == null || typeof obj["description"] === "string") &&
-        (obj["iconUrl"] == null || typeof obj["iconUrl"] === "string")
-    );
+export async function removeApp(origin: string, sendVaultMessage: SendVaultMessage): Promise<void> {
+    const app = await loadAppByOrigin(origin, sendVaultMessage);
+    if (app) {
+        await sendVaultMessage({ type: "vault.apps.delete", appId: app.id });
+    }
 }

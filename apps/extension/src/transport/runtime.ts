@@ -2067,16 +2067,19 @@ async function dispatchTransportRequest(options: {
   const snapshot = await readWalletSnapshot(options.storage, options.dependencies.sendVaultMessage);
 
   // Load the connected app for this origin to enforce access controls
-  const appsRaw = await options.storage.get(["arlopass.wallet.apps.v1"]);
-  const apps = Array.isArray(appsRaw["arlopass.wallet.apps.v1"]) ? appsRaw["arlopass.wallet.apps.v1"] as unknown[] : [];
+  let apps: Array<Record<string, unknown>> = [];
+  if (options.dependencies.sendVaultMessage) {
+    const appsResp = await options.dependencies.sendVaultMessage({ type: "vault.apps.list" });
+    apps = Array.isArray(appsResp["appConnections"]) ? appsResp["appConnections"] as Array<Record<string, unknown>> : [];
+  }
   const connectedApp = apps.find((a): a is Record<string, unknown> =>
-    isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && a["status"] === "active"
+    isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && (a["permissions"] as Record<string, unknown> | undefined)?.["__status"] !== "disabled"
   ) ?? null;
-  const appProviderIds: ReadonlySet<string> | null = connectedApp !== null && Array.isArray(connectedApp["enabledProviderIds"])
-    ? new Set(connectedApp["enabledProviderIds"] as string[])
+  const appProviderIds: ReadonlySet<string> | null = connectedApp !== null && Array.isArray(connectedApp["approvedProviders"])
+    ? new Set(connectedApp["approvedProviders"] as string[])
     : null;
-  const appModelIds: ReadonlySet<string> | null = connectedApp !== null && Array.isArray(connectedApp["enabledModelIds"])
-    ? new Set(connectedApp["enabledModelIds"] as string[])
+  const appModelIds: ReadonlySet<string> | null = connectedApp !== null && Array.isArray(connectedApp["approvedModels"])
+    ? new Set(connectedApp["approvedModels"] as string[])
     : null;
 
   switch (options.envelope.capability) {
@@ -2357,14 +2360,17 @@ async function resolveTransportStreamEnvelopeIterable(options: {
   const snapshot = await readWalletSnapshot(options.storage, options.dependencies.sendVaultMessage);
 
   // Enforce app-level access control for streams
-  const streamAppsRaw = await options.storage.get(["arlopass.wallet.apps.v1"]);
-  const streamApps = Array.isArray(streamAppsRaw["arlopass.wallet.apps.v1"]) ? streamAppsRaw["arlopass.wallet.apps.v1"] as unknown[] : [];
+  let streamApps: Array<Record<string, unknown>> = [];
+  if (options.dependencies.sendVaultMessage) {
+    const streamAppsResp = await options.dependencies.sendVaultMessage({ type: "vault.apps.list" });
+    streamApps = Array.isArray(streamAppsResp["appConnections"]) ? streamAppsResp["appConnections"] as Array<Record<string, unknown>> : [];
+  }
   const streamApp = streamApps.find((a): a is Record<string, unknown> =>
-    isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && a["status"] === "active"
+    isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && (a["permissions"] as Record<string, unknown> | undefined)?.["__status"] !== "disabled"
   ) ?? null;
   if (streamApp !== null) {
-    const streamAppProviderIds = Array.isArray(streamApp["enabledProviderIds"]) ? new Set(streamApp["enabledProviderIds"] as string[]) : null;
-    const streamAppModelIds = Array.isArray(streamApp["enabledModelIds"]) ? new Set(streamApp["enabledModelIds"] as string[]) : null;
+    const streamAppProviderIds = Array.isArray(streamApp["approvedProviders"]) ? new Set(streamApp["approvedProviders"] as string[]) : null;
+    const streamAppModelIds = Array.isArray(streamApp["approvedModels"]) ? new Set(streamApp["approvedModels"] as string[]) : null;
     if (streamAppProviderIds !== null && !streamAppProviderIds.has(options.envelope.providerId)) {
       throw new ProviderUnavailableError(
         `Provider "${options.envelope.providerId}" is not enabled for this app.`,

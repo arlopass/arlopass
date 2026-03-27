@@ -23,6 +23,7 @@ import { ConfigureSettingsStep } from "./app-connect/ConfigureSettingsStep.js";
 import { saveApp, type ConnectedApp } from "./app-connect/app-storage.js";
 import type { HeaderMenuItem } from "./WalletHeader.js";
 import type { WalletProvider } from "../popup-state.js";
+import { useVaultContext } from "../hooks/VaultContext.js";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
 import { tokens } from "./theme.js";
 
@@ -84,6 +85,7 @@ export function AppDetailView({
   const [subView, setSubView] = useState<SubView>("none");
   const [pickedProviderId, setPickedProviderId] = useState<string | null>(null);
   const [pickedModelIds, setPickedModelIds] = useState<string[]>([]);
+  const { sendVaultMessage } = useVaultContext();
 
   const { summaries: usageSummaries } = useTokenUsage();
   const appUsageSummary = usageSummaries.find(
@@ -131,8 +133,8 @@ export function AppDetailView({
       rules: localApp.rules,
       limits: localApp.limits,
       status: localApp.status,
-    });
-  }, [localApp]);
+    }, sendVaultMessage);
+  }, [localApp, sendVaultMessage]);
 
   const persistApp = useCallback(async (updated: ConnectedApp) => {
     setLocalApp(updated);
@@ -145,8 +147,8 @@ export function AppDetailView({
       rules: updated.rules,
       limits: updated.limits,
       status: updated.status,
-    });
-  }, []);
+    }, sendVaultMessage);
+  }, [sendVaultMessage]);
 
   // Providers NOT yet enabled for this app
   const availableProviders = rawProviders.filter(

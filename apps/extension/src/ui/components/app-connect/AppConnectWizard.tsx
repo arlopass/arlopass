@@ -11,6 +11,7 @@ import { appConnectReducer, createInitialState } from "./app-connect-state.js";
 import { usePersistedReducer } from "../../hooks/usePersistedReducer.js";
 import type { ProviderCardData } from "../ProviderCard.js";
 import type { WalletProvider } from "../../popup-state.js";
+import { useVaultContext } from "../../hooks/VaultContext.js";
 import { tokens } from "../theme.js";
 
 export type AppConnectWizardProps = {
@@ -26,6 +27,7 @@ export function AppConnectWizard({
   rawProviders,
   onComplete,
 }: AppConnectWizardProps) {
+  const { sendVaultMessage } = useVaultContext();
   const [state, dispatch] = usePersistedReducer(
     "arlopass.popup.appConnect.v1",
     appConnectReducer,
@@ -80,11 +82,11 @@ export function AppConnectWizard({
       rules: state.rules,
       limits: state.limits,
       status: "active",
-    });
+    }, sendVaultMessage);
     dispatch({ type: "SAVE_COMPLETE" });
     clearPersistedState();
     onComplete(true);
-  }, [state, onComplete, clearPersistedState]);
+  }, [state, onComplete, clearPersistedState, sendVaultMessage]);
 
   return (
     <PopupShell>

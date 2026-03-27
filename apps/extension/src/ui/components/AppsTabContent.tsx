@@ -19,6 +19,7 @@ import {
   removeApp,
   type ConnectedApp,
 } from "./app-connect/app-storage.js";
+import { useVaultContext } from "../hooks/VaultContext.js";
 import { tokens } from "./theme.js";
 
 function formatAge(timestamp: number): string {
@@ -47,24 +48,14 @@ function extractDomain(origin: string): string {
 export function AppsTabContent() {
   const [apps, setApps] = useState<ConnectedApp[]>([]);
   const [loading, setLoading] = useState(true);
+  const { sendVaultMessage } = useVaultContext();
 
   useEffect(() => {
-    void loadApps().then((loaded) => {
+    void loadApps(sendVaultMessage).then((loaded) => {
       setApps(loaded);
       setLoading(false);
     });
-
-    const listener = (
-      changes: Record<string, chrome.storage.StorageChange>,
-      area: string,
-    ) => {
-      if (area === "local" && "arlopass.wallet.apps.v1" in changes) {
-        void loadApps().then(setApps);
-      }
-    };
-    chrome.storage.onChanged.addListener(listener);
-    return () => chrome.storage.onChanged.removeListener(listener);
-  }, []);
+  }, [sendVaultMessage]);
 
   return (
     <>
@@ -103,7 +94,7 @@ export function AppsTabContent() {
               <AppCard
                 key={app.id}
                 app={app}
-                onRemove={(origin) => void removeApp(origin)}
+                onRemove={(origin) => void removeApp(origin, sendVaultMessage)}
               />
             ))}
           </Stack>

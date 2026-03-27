@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { loadAppByOrigin, type ConnectedApp } from "../components/app-connect/app-storage.js";
+import { useVaultContext } from "./VaultContext.js";
 
 export type ActiveTabApp = {
     app: ConnectedApp;
@@ -13,6 +14,7 @@ export type ActiveTabApp = {
 export function useActiveTabApp(): { activeApp: ActiveTabApp | null; loading: boolean } {
     const [activeApp, setActiveApp] = useState<ActiveTabApp | null>(null);
     const [loading, setLoading] = useState(true);
+    const { sendVaultMessage } = useVaultContext();
 
     useEffect(() => {
         let cancelled = false;
@@ -44,7 +46,7 @@ export function useActiveTabApp(): { activeApp: ActiveTabApp | null; loading: bo
                     return;
                 }
 
-                const app = await loadAppByOrigin(origin);
+                const app = await loadAppByOrigin(origin, sendVaultMessage);
                 if (!cancelled) {
                     if (app !== null && app.status === "active") {
                         setActiveApp({ app, tabOrigin: origin });
@@ -63,19 +65,10 @@ export function useActiveTabApp(): { activeApp: ActiveTabApp | null; loading: bo
 
         void detect();
 
-        // Re-check when app storage changes
-        const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
-            if (area === "local" && "arlopass.wallet.apps.v1" in changes) {
-                void detect();
-            }
-        };
-        chrome.storage.onChanged.addListener(listener);
-
         return () => {
             cancelled = true;
-            chrome.storage.onChanged.removeListener(listener);
         };
-    }, []);
+    }, [sendVaultMessage]);
 
     return { activeApp, loading };
 }
