@@ -6,8 +6,8 @@
 
 :root {
   --font-family-primary:
-    "Geist Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
-    sans-serif;
+    "Geist Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
 }
 
 * {
@@ -18,8 +18,8 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #1C1917;
-  color: #D6D3D1;
+  background: #1c1917;
+  color: #d6d3d1;
   font-family: var(--font-family-primary);
 }
 

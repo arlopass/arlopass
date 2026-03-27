@@ -154,6 +154,10 @@ for await (const chunk of stream) {
     align-items: center;
   }
 
+  .developer-code {
+    min-width: 0;
+  }
+
   @media (min-width: 1024px) {
     .developer-inner {
       grid-template-columns: 1fr 1.2fr;
@@ -304,17 +308,30 @@ for await (const chunk of stream) {
 
   .code-content {
     padding: 20px;
+    margin: 0;
     overflow-x: auto;
+    overflow-y: hidden;
     scrollbar-width: thin;
     font-family: var(--ap-font-code);
     font-size: 13px;
     line-height: 1.7;
     color: #d6d3d1;
     tab-size: 2;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
   }
 
   .code-content code {
     font-size: inherit;
+    white-space: inherit;
+  }
+
+  @media (max-width: 640px) {
+    .code-content {
+      padding: 16px 12px;
+      font-size: 11px;
+    }
   }
 </style>
 

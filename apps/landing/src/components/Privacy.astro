@@ -29,8 +29,8 @@ const features = [
         Your keys stay home. Always.
       </h2>
       <p class="section-desc">
-        No more pasting API keys into apps you don’t fully trust. Arlopass
-        keeps your credentials in your OS keychain — the app gets AI, you keep
+        No more pasting API keys into apps you don’t fully trust. Arlopass keeps
+        your credentials in your OS keychain — the app gets AI, you keep
         control.
       </p>
     </div>
@@ -50,7 +50,25 @@ const features = [
     <div class="privacy-visual">
       <div class="data-flow">
         <div class="flow-node flow-app">
-          <svg class="flow-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          <svg
+            class="flow-icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            ><circle cx="12" cy="12" r="10"></circle><line
+              x1="2"
+              y1="12"
+              x2="22"
+              y2="12"></line><path
+              d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
+            ></path></svg
+          >
           <span class="flow-label">Web App</span>
         </div>
         <div class="flow-arrow">
@@ -111,7 +129,25 @@ const features = [
           </svg>
         </div>
         <div class="flow-node flow-provider">
-          <svg class="flow-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+          <svg
+            class="flow-icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            ><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect
+              x="9"
+              y="9"
+              width="6"
+              height="6"></rect><path
+              d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"
+            ></path></svg
+          >
           <span class="flow-label">Your Provider</span>
           <span class="flow-sub">Your keys</span>
         </div>
@@ -217,13 +253,27 @@ const features = [
     align-items: center;
     justify-content: center;
     gap: var(--ap-space-4);
-    flex-wrap: wrap;
+    flex-direction: column;
   }
 
   @media (min-width: 768px) {
     .data-flow {
-      flex-wrap: nowrap;
+      flex-direction: row;
       gap: var(--ap-space-6);
+    }
+  }
+
+  .flow-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 767px) {
+    .flow-arrow svg {
+      transform: rotate(90deg);
     }
   }
 

@@ -117,7 +117,7 @@
     color: #fafaf9;
     background: var(--ap-brand);
     padding: 14px 28px;
-    border-radius: var(--ap-radius-full);
+    border-radius: var(--ap-radius-sm);
     text-decoration: none;
     transition:
       background var(--ap-ease-micro),
@@ -139,7 +139,7 @@
     background: transparent;
     border: 1px solid var(--ap-border);
     padding: 14px 28px;
-    border-radius: var(--ap-radius-full);
+    border-radius: var(--ap-radius-sm);
     text-decoration: none;
     transition:
       border-color var(--ap-ease-micro),
@@ -149,5 +149,16 @@
     border-color: var(--ap-border-strong);
     background: var(--ap-bg-elevated);
     color: var(--ap-text-body);
+  }
+
+  @media (max-width: 480px) {
+    .cta-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .cta-btn-primary,
+    .cta-btn-secondary {
+      justify-content: center;
+    }
   }
 </style>

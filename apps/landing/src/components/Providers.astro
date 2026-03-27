@@ -104,4 +104,18 @@ const providers = [
   :global([data-theme="light"]) .provider-chip:hover .provider-icon {
     filter: brightness(0) invert(0.1);
   }
+
+  @media (max-width: 480px) {
+    .provider-chip {
+      padding: 8px 12px;
+      font-size: var(--ap-text-xs);
+    }
+    .provider-icon {
+      width: 16px;
+      height: 16px;
+    }
+    .providers-track {
+      gap: var(--ap-space-2);
+    }
+  }
 </style>

@@ -65,8 +65,10 @@ const comparisonRows = [
   },
 ];
 
-const checkSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-const dashSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+const checkSvg =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const dashSvg =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
 
 function renderCell(value: boolean | string) {
   if (value === true) return { html: checkSvg, cls: "cell-yes" };
@@ -101,10 +103,18 @@ function renderCell(value: boolean | string) {
             comparisonRows.map((row) => (
               <tr>
                 <td class="cap-cell">{row.capability}</td>
-                <td class={`${renderCell(row.arlopass).cls} col-arlopass`} set:html={renderCell(row.arlopass).html} />
-                <td class={renderCell(row.pasteKey).cls} set:html={renderCell(row.pasteKey).html} />
-                <td class={renderCell(row.gateway).cls} set:html={renderCell(row.gateway).html} />
-                <td class={renderCell(row.vendorSdk).cls} set:html={renderCell(row.vendorSdk).html} />
+                <td class={`${renderCell(row.arlopass).cls} col-arlopass`}>
+                  {renderCell(row.arlopass).text}
+                </td>
+                <td class={renderCell(row.pasteKey).cls}>
+                  {renderCell(row.pasteKey).text}
+                </td>
+                <td class={renderCell(row.gateway).cls}>
+                  {renderCell(row.gateway).text}
+                </td>
+                <td class={renderCell(row.vendorSdk).cls}>
+                  {renderCell(row.vendorSdk).text}
+                </td>
               </tr>
             ))
           }
@@ -150,6 +160,7 @@ function renderCell(value: boolean | string) {
     -webkit-overflow-scrolling: touch;
     border: 1px solid var(--ap-border);
     border-radius: var(--ap-radius-md);
+    position: relative;
   }
 
   .comparison-table {
@@ -157,6 +168,16 @@ function renderCell(value: boolean | string) {
     min-width: 600px;
     border-collapse: collapse;
     font-size: var(--ap-text-sm);
+  }
+
+  @media (max-width: 640px) {
+    .comparison-table {
+      font-size: var(--ap-text-xs);
+    }
+    th,
+    td {
+      padding: 10px 10px;
+    }
   }
 
   thead {

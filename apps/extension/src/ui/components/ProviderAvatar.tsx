@@ -48,7 +48,9 @@ export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
           width: size,
           height: size,
           borderRadius: tokens.radius.button,
-          background: invertToWhite ? "transparent" : "rgba(250, 250, 249, 0.1)",
+          background: invertToWhite
+            ? "transparent"
+            : "rgba(250, 250, 249, 0.1)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -63,7 +65,9 @@ export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
           fit="contain"
           style={{
             flexShrink: 0,
-            ...(invertToWhite ? { filter: "brightness(0) invert(1) opacity(0.9)" } : {}),
+            ...(invertToWhite
+              ? { filter: "brightness(0) invert(1) opacity(0.9)" }
+              : {}),
           }}
         />
       </div>

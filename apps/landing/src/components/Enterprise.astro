@@ -60,7 +60,23 @@
 
       <ul class="enterprise-features">
         <li>
-          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+          <span class="ef-icon"
+            ><svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><rect x="5" y="11" width="14" height="10" rx="2"></rect><circle
+                cx="12"
+                cy="16"
+                r="1"></circle><path d="M8 11V7a4 4 0 018 0v4"></path></svg
+            ></span
+          >
           <div>
             <strong>Zero-trust architecture</strong>
             <span
@@ -70,7 +86,22 @@
           </div>
         </li>
         <li>
-          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>
+          <span class="ef-icon"
+            ><svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><path
+                d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"
+              ></path><rect x="8" y="2" width="8" height="4" rx="1"></rect></svg
+            ></span
+          >
           <div>
             <strong>Signed policy bundles</strong>
             <span
@@ -80,7 +111,24 @@
           </div>
         </li>
         <li>
-          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+          <span class="ef-icon"
+            ><svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><line x1="18" y1="20" x2="18" y2="10"></line><line
+                x1="12"
+                y1="20"
+                x2="12"
+                y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg
+            ></span
+          >
           <div>
             <strong>Audit trails</strong>
             <span
@@ -90,7 +138,21 @@
           </div>
         </li>
         <li>
-          <span class="ef-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="ef-icon"
+            ><svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+              ></path><path d="M9 12l2 2 4-4"></path></svg
+            ></span
+          >
           <div>
             <strong>Compliance-ready</strong>
             <span
@@ -258,6 +320,16 @@
   @media (max-width: 1023px) {
     .enterprise-visual {
       order: -1;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .policy-line {
+      flex-direction: column;
+      gap: 2px;
+    }
+    .policy-key {
+      min-width: auto;
     }
   }
 </style>

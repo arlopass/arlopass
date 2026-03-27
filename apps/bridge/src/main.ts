@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import process from "node:process";
 import { randomBytes } from "node:crypto";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 import { BridgeHandler } from "./bridge-handler.js";
 import { CopilotCliChatExecutor } from "./cli/copilot-chat-executor.js";
@@ -1035,6 +1036,63 @@ registerCloudAdapterPackage("@arlopass/adapter-perplexity");
 registerCloudAdapterPackage("@arlopass/adapter-gemini");
 
 /**
+ * Resolves file path for the connection registry signing key.
+ */
+function resolveSigningKeyFilePathFromEnv(
+  env: NodeJS.ProcessEnv,
+): string | undefined {
+  const explicitPath = normalizeNonEmptyString(env["ARLOPASS_BRIDGE_SIGNING_KEY_PATH"]);
+  if (explicitPath !== undefined) {
+    return explicitPath;
+  }
+
+  const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
+  if (localAppData !== undefined) {
+    return join(localAppData, "Arlopass", "bridge", "state", "signing-key.bin");
+  }
+  return undefined;
+}
+
+/**
+ * Loads the connection registry signing key from disk, or generates and
+ * persists a new one.  This ensures connection handles survive bridge
+ * process restarts — the same key is used to sign and verify handles.
+ */
+function loadOrGenerateSigningKey(env: NodeJS.ProcessEnv): Buffer {
+  const keyPath = resolveSigningKeyFilePathFromEnv(env);
+  if (keyPath === undefined) {
+    return randomBytes(32);
+  }
+
+  if (existsSync(keyPath)) {
+    try {
+      const raw = readFileSync(keyPath);
+      if (raw.length === 32) {
+        return Buffer.from(raw);
+      }
+      process.stderr.write(
+        `[arlopass-bridge] warning: signing key at "${keyPath}" has invalid length (${String(raw.length)}), regenerating\n`,
+      );
+    } catch (error) {
+      process.stderr.write(
+        `[arlopass-bridge] warning: failed to read signing key from "${keyPath}": ${toErrorMessage(error)}, regenerating\n`,
+      );
+    }
+  }
+
+  const key = randomBytes(32);
+  try {
+    mkdirSync(dirname(keyPath), { recursive: true });
+    writeFileSync(keyPath, key, { mode: 0o600 });
+  } catch (error) {
+    process.stderr.write(
+      `[arlopass-bridge] warning: failed to persist signing key to "${keyPath}": ${toErrorMessage(error)}\n`,
+    );
+  }
+  return key;
+}
+
+/**
  * Bridge entry point.
  *
  * Bootstraps the native messaging host and wires the BridgeHandler into the
@@ -1042,7 +1100,7 @@ registerCloudAdapterPackage("@arlopass/adapter-gemini");
  * performing a handshake — there is no shared secret.
  */
 async function main(): Promise<void> {
-  const signingKey = randomBytes(32); // Temporary — Task 7 adds persistence
+  const signingKey = loadOrGenerateSigningKey(process.env);
   const cloudFeatureFlags = createCloudFeatureFlagsFromEnv(process.env);
   const authenticatedOriginPolicy =
     createAuthenticatedOriginPolicyFromEnv(process.env);

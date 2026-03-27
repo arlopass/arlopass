@@ -21,7 +21,7 @@
       />
     </a>
 
-    <div class="nav-links">
+    <div class="nav-links" id="nav-links">
       <a href="#how-it-works">How It Works</a>
       <a href="#developers">Developers</a>
       <a href="#privacy">Privacy</a>
@@ -47,16 +47,77 @@
       </a>
     </div>
 
-    <a
-      href="https://chrome.google.com/webstore"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="nav-cta"
-    >
-      Install Extension
-    </a>
+    <div class="nav-right">
+      <a
+        href="https://chrome.google.com/webstore"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="nav-cta"
+      >
+        Install Extension
+      </a>
+      <button
+        class="nav-toggle"
+        id="nav-toggle"
+        aria-label="Toggle menu"
+        aria-expanded="false"
+        aria-controls="nav-links"
+      >
+        <svg
+          class="nav-toggle-open"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          ><line x1="3" y1="6" x2="21" y2="6"></line><line
+            x1="3"
+            y1="12"
+            x2="21"
+            y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg
+        >
+        <svg
+          class="nav-toggle-close"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          ><line x1="18" y1="6" x2="6" y2="18"></line><line
+            x1="6"
+            y1="6"
+            x2="18"
+            y2="18"></line></svg
+        >
+      </button>
+    </div>
   </div>
 </nav>
+
+<script>
+  const toggle = document.getElementById("nav-toggle");
+  const links = document.getElementById("nav-links");
+  if (toggle && links) {
+    toggle.addEventListener("click", () => {
+      const open = links.classList.toggle("nav-links--open");
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+    links.querySelectorAll("a").forEach((a) => {
+      a.addEventListener("click", () => {
+        links.classList.remove("nav-links--open");
+        toggle.setAttribute("aria-expanded", "false");
+      });
+    });
+  }
+</script>
 
 <style>
   .nav {
@@ -143,9 +204,88 @@
     color: #fafaf9;
   }
 
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-3);
+  }
+
+  .nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--ap-text-secondary);
+    cursor: pointer;
+    border-radius: var(--ap-radius-sm);
+    transition:
+      color var(--ap-ease-micro),
+      background var(--ap-ease-micro);
+  }
+  .nav-toggle:hover {
+    color: var(--ap-text-primary);
+    background: var(--ap-bg-surface);
+  }
+  .nav-toggle .nav-toggle-close {
+    display: none;
+  }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-open {
+    display: none;
+  }
+  .nav-toggle[aria-expanded="true"] .nav-toggle-close {
+    display: block;
+  }
+
   @media (min-width: 768px) {
     .nav-links {
       display: flex;
+    }
+    .nav-toggle {
+      display: none;
+    }
+  }
+
+  /* Mobile dropdown menu */
+  @media (max-width: 767px) {
+    .nav-links {
+      display: none;
+      position: absolute;
+      top: 64px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      padding: var(--ap-space-4) var(--ap-space-4) var(--ap-space-6);
+      background: var(--ap-bg-base);
+      border-bottom: 1px solid var(--ap-border);
+      gap: 0;
+    }
+    .nav-links.nav-links--open {
+      display: flex;
+    }
+    .nav-links a {
+      padding: 12px var(--ap-space-4);
+      border-radius: var(--ap-radius-sm);
+      font-size: var(--ap-text-base);
+    }
+    .nav-links a:hover {
+      background: var(--ap-bg-surface);
+    }
+    .nav-github {
+      padding: 12px var(--ap-space-4);
+    }
+    .nav-cta {
+      display: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .nav-cta {
+      display: inline-flex;
     }
   }
 </style>

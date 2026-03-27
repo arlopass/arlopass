@@ -264,7 +264,7 @@
     color: #fafaf9;
     background: var(--ap-brand);
     padding: 12px 28px;
-    border-radius: var(--ap-radius-full);
+    border-radius: var(--ap-radius-sm);
     text-decoration: none;
     transition:
       background var(--ap-ease-micro),
@@ -286,7 +286,7 @@
     background: transparent;
     border: 1px solid var(--ap-border);
     padding: 12px 28px;
-    border-radius: var(--ap-radius-full);
+    border-radius: var(--ap-radius-sm);
     text-decoration: none;
     transition:
       border-color var(--ap-ease-micro),
@@ -539,6 +539,27 @@
     }
     .hero-stats {
       justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .btn-primary,
+    .btn-secondary {
+      justify-content: center;
+      padding: 14px 20px;
+    }
+    .hero-stats {
+      gap: var(--ap-space-4);
+    }
+    .mockup-window {
+      max-width: 100%;
+    }
+    .provider-options {
+      flex-wrap: wrap;
     }
   }
 </style>

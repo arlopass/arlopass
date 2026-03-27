@@ -1,37 +1,41 @@
 ---
 const steps = [
   {
-    number: '01',
-    title: 'Install Arlopass',
-    description: 'Add the browser extension from the Chrome Web Store. It takes 30 seconds. No accounts, no cloud, no sign-up.',
+    number: "01",
+    title: "Install Arlopass",
+    description:
+      "Add the browser extension from the Chrome Web Store. It takes 30 seconds. No accounts, no cloud, no sign-up.",
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
   },
   {
-    number: '02',
-    title: 'Connect your providers',
-    description: 'Link your AI accounts — Ollama, Claude, GPT, Gemini, Bedrock. Credentials stay in your OS keychain, never in the browser.',
+    number: "02",
+    title: "Connect your providers",
+    description:
+      "Link your AI accounts — Ollama, Claude, GPT, Gemini, Bedrock. Credentials stay in your OS keychain, never in the browser.",
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`,
   },
   {
-    number: '03',
-    title: 'Approve and go',
-    description: 'When a web app wants to use AI, you see exactly what it needs. Pick your model, approve the connection, and it just works from there.',
+    number: "03",
+    title: "Approve and go",
+    description:
+      "When a web app wants to use AI, you see exactly what it needs. Pick your model, approve the connection, and it just works from there.",
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
   },
 ];
 
 const howToSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'HowTo',
-  name: 'How to use Arlopass to manage AI access in web apps',
-  description: 'Set up Arlopass in under a minute to connect your AI providers to any web app without exposing API keys.',
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How to use Arlopass to manage AI access in web apps",
+  description:
+    "Set up Arlopass in under a minute to connect your AI providers to any web app without exposing API keys.",
   step: steps.map((s, i) => ({
-    '@type': 'HowToStep',
+    "@type": "HowToStep",
     position: i + 1,
     name: s.title,
     text: s.description,
   })),
-  totalTime: 'PT1M',
+  totalTime: "PT1M",
 };
 ---
 
@@ -39,21 +43,25 @@ const howToSchema = {
   <div class="container">
     <div class="section-header">
       <span class="section-label">How it works</span>
-      <h2 id="hiw-heading" class="section-title">Up and running in under a minute</h2>
+      <h2 id="hiw-heading" class="section-title">
+        Up and running in under a minute
+      </h2>
       <p class="section-desc">
         No backend to deploy, no accounts to create. Just three quick steps.
       </p>
     </div>
 
     <div class="steps-grid">
-      {steps.map((step) => (
-        <div class="step-card">
-          <div class="step-number">{step.number}</div>
-          <div class="step-icon" set:html={step.icon} />
-          <h3 class="step-title">{step.title}</h3>
-          <p class="step-desc">{step.description}</p>
-        </div>
-      ))}
+      {
+        steps.map((step) => (
+          <div class="step-card">
+            <div class="step-number">{step.number}</div>
+            <div class="step-icon" set:html={step.icon} />
+            <h3 class="step-title">{step.title}</h3>
+            <p class="step-desc">{step.description}</p>
+          </div>
+        ))
+      }
     </div>
   </div>
   <script type="application/ld+json" set:html={JSON.stringify(howToSchema)} />
@@ -114,7 +122,9 @@ const howToSchema = {
     background: var(--ap-bg-base);
     border: 1px solid var(--ap-border);
     border-radius: var(--ap-radius-lg);
-    transition: border-color var(--ap-ease-micro), transform var(--ap-ease-micro);
+    transition:
+      border-color var(--ap-ease-micro),
+      transform var(--ap-ease-micro);
   }
 
   .step-card:hover {
