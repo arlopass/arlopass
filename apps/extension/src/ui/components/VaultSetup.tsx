@@ -1,6 +1,13 @@
 // apps/extension/src/ui/components/VaultSetup.tsx
 import { useState, useCallback } from "react";
-import { Box, Text, Button, Stack, PasswordInput, Divider } from "@mantine/core";
+import {
+  Box,
+  Text,
+  Button,
+  Stack,
+  PasswordInput,
+  Divider,
+} from "@mantine/core";
 import { tokens } from "./theme.js";
 
 export type VaultSetupProps = {
@@ -127,8 +134,8 @@ export function VaultSetup({ onSetup, onSetupKeychain }: VaultSetupProps) {
             textAlign: "center",
           }}
         >
-          The encryption key is stored in your system's credential manager.
-          No password needed — unlocks automatically.
+          The encryption key is stored in your system's credential manager. No
+          password needed — unlocks automatically.
         </Text>
       </Stack>
 

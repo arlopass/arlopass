@@ -1,6 +1,6 @@
 // apps/extension/src/ui/hooks/useVault.ts
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ensureBridgeHandshakeSession } from "../../transport/bridge-handshake.js";
+import { ensureBridgeHandshakeSession, clearBridgeHandshakeSessionCache } from "../../transport/bridge-handshake.js";
 import {
     BRIDGE_PAIRING_STATE_STORAGE_KEY,
     parseBridgePairingState,
@@ -9,6 +9,76 @@ import {
 import { autoPair } from "../components/onboarding/setup-state.js";
 
 const HOST_NAME = "com.arlopass.bridge";
+
+// ---------------------------------------------------------------------------
+// Persistent native port — keeps 1 bridge process alive for all vault calls
+// ---------------------------------------------------------------------------
+
+type PendingRequest = {
+    resolve: (response: unknown) => void;
+    reject: (error: Error) => void;
+};
+
+let sharedPort: chrome.runtime.Port | null = null;
+const pendingRequests = new Map<string, PendingRequest>();
+let nextRequestId = 0;
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+    return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function ensurePort(): chrome.runtime.Port {
+    if (sharedPort !== null) return sharedPort;
+    const port = chrome.runtime.connectNative(HOST_NAME);
+    port.onMessage.addListener((msg: unknown) => {
+        if (!isRecord(msg)) return;
+        const reqId = msg["_bridgeRequestId"];
+        if (typeof reqId !== "string") return;
+        const pending = pendingRequests.get(reqId);
+        if (!pending) return;
+        pendingRequests.delete(reqId);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { _bridgeRequestId: _, ...clean } = msg;
+        pending.resolve(clean);
+    });
+    port.onDisconnect.addListener(() => {
+        sharedPort = null;
+        const err = new Error("Bridge port disconnected.");
+        for (const [, p] of pendingRequests) p.reject(err);
+        pendingRequests.clear();
+        // Clear cached sessions since the bridge process died
+        clearBridgeHandshakeSessionCache();
+    });
+    sharedPort = port;
+    return port;
+}
+
+/** Send a message over the persistent port and await the response. */
+function sendViaPort(message: Record<string, unknown>): Promise<unknown> {
+    const port = ensurePort();
+    const reqId = `_vr.${String(++nextRequestId)}.${Date.now().toString(36)}`;
+    return new Promise<unknown>((resolve, reject) => {
+        pendingRequests.set(reqId, { resolve, reject });
+        try {
+            port.postMessage({ ...message, _bridgeRequestId: reqId });
+        } catch (err) {
+            pendingRequests.delete(reqId);
+            reject(err instanceof Error ? err : new Error(String(err)));
+        }
+    });
+}
+
+/** Wrapper matching the sendNativeMessage signature expected by ensureBridgeHandshakeSession. */
+async function sendNativeMessageViaPersistentPort(
+    _hostName: string,
+    message: Record<string, unknown>,
+): Promise<unknown> {
+    return sendViaPort(message);
+}
+
+// ---------------------------------------------------------------------------
+// Session establishment
+// ---------------------------------------------------------------------------
 
 export type VaultStatus =
     | { state: "connecting" }
@@ -20,50 +90,17 @@ export type VaultStatus =
 
 export type UseVaultResult = {
     status: VaultStatus;
-    /** Send an authenticated vault.* message to the bridge. Returns the response. */
     sendVaultMessage: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
-    /** Run vault.setup with password mode. */
     setup: (password: string) => Promise<void>;
-    /** Run vault.setup with OS keychain mode (no password needed). */
     setupKeychain: () => Promise<void>;
-    /** Unlock with password. */
     unlock: (password: string) => Promise<void>;
-    /** Unlock using OS keychain (no password needed). */
     unlockKeychain: () => Promise<void>;
-    /** Lock the vault. */
     lock: () => Promise<void>;
-    /** Re-check vault status (e.g. after bridge reconnect). */
     refresh: () => void;
-    /** True when vault was unlocked but auto-locked mid-session. Show overlay, not full re-gate. */
     needsReauth: boolean;
 };
 
-type SessionRef = {
-    sessionToken: string;
-};
-
-async function sendNativeMessage(
-    hostName: string,
-    message: Record<string, unknown>,
-): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-        try {
-            chrome.runtime.sendNativeMessage(hostName, message, (response) => {
-                if (chrome.runtime.lastError) {
-                    reject(new Error(chrome.runtime.lastError.message ?? "Native messaging error"));
-                } else {
-                    resolve(response);
-                }
-            });
-        } catch (err) {
-            reject(err instanceof Error ? err : new Error(String(err)));
-        }
-    });
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-    return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+type SessionRef = { sessionToken: string };
 
 async function establishSession(): Promise<SessionRef> {
     const extensionId = chrome.runtime.id;
@@ -92,7 +129,7 @@ async function establishSession(): Promise<SessionRef> {
     const session = await ensureBridgeHandshakeSession({
         hostName: HOST_NAME,
         extensionId,
-        sendNativeMessage,
+        sendNativeMessage: sendNativeMessageViaPersistentPort,
         resolveBridgeSharedSecret: async () => pairingKeyMaterial.pairingKeyHex,
         resolveBridgePairingHandle: async () => pairingKeyMaterial.pairingHandle,
     });
@@ -112,7 +149,7 @@ export function useVault(): UseVaultResult {
         if (sessionRef.current === null) {
             throw new Error("No bridge session. Vault not ready.");
         }
-        const response = await sendNativeMessage(HOST_NAME, {
+        const response = await sendViaPort({
             ...message,
             sessionToken: sessionRef.current.sessionToken,
         });
@@ -138,7 +175,7 @@ export function useVault(): UseVaultResult {
             if (!mountedRef.current) return;
             sessionRef.current = session;
 
-            const resp = await sendNativeMessage(HOST_NAME, {
+            const resp = await sendViaPort({
                 type: "vault.status",
                 sessionToken: session.sessionToken,
             });
@@ -156,7 +193,7 @@ export function useVault(): UseVaultResult {
                     // Auto-unlock for keychain mode
                     setStatus({ state: "locked", keyMode: "keychain" });
                     try {
-                        const unlockResp = await sendNativeMessage(HOST_NAME, {
+                        const unlockResp = await sendViaPort({
                             type: "vault.unlock.keychain",
                             sessionToken: session.sessionToken,
                         });

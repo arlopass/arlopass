@@ -94,7 +94,11 @@ export function VaultTabContent() {
         )}
         {!loading && (
           <Stack gap={tokens.spacing.sectionGap}>
-            <VaultSecuritySection keyMode={keyMode} sendVaultMessage={sendVaultMessage} onKeyModeChange={setKeyMode} />
+            <VaultSecuritySection
+              keyMode={keyMode}
+              sendVaultMessage={sendVaultMessage}
+              onKeyModeChange={setKeyMode}
+            />
             <Divider color={tokens.color.border} />
             <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
               Stored credentials
@@ -134,7 +138,9 @@ function VaultSecuritySection({
   onKeyModeChange,
 }: {
   keyMode: "password" | "keychain" | null;
-  sendVaultMessage: (msg: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  sendVaultMessage: (
+    msg: Record<string, unknown>,
+  ) => Promise<Record<string, unknown>>;
   onKeyModeChange: (mode: "password" | "keychain") => void;
 }) {
   const [switching, setSwitching] = useState(false);
@@ -152,7 +158,9 @@ function VaultSecuritySection({
     try {
       const resp = await sendVaultMessage({ type: "vault.rekey.keychain" });
       if (resp["type"] === "error") {
-        setError(resp["message"] as string ?? "Failed to switch to keychain.");
+        setError(
+          (resp["message"] as string) ?? "Failed to switch to keychain.",
+        );
       } else {
         onKeyModeChange("keychain");
       }
@@ -170,7 +178,9 @@ function VaultSecuritySection({
     try {
       const resp = await sendVaultMessage({ type: "vault.rekey", password });
       if (resp["type"] === "error") {
-        setError(resp["message"] as string ?? "Failed to switch to password.");
+        setError(
+          (resp["message"] as string) ?? "Failed to switch to password.",
+        );
       } else {
         onKeyModeChange("password");
         setShowPasswordForm(false);
@@ -255,7 +265,11 @@ function VaultSecuritySection({
             placeholder="Re-enter password"
             value={confirm}
             onChange={(e) => setConfirm(e.currentTarget.value)}
-            error={confirm.length > 0 && !passwordsMatch ? "Passwords don't match" : undefined}
+            error={
+              confirm.length > 0 && !passwordsMatch
+                ? "Passwords don't match"
+                : undefined
+            }
           />
           <Group gap={8}>
             <Button
@@ -269,7 +283,12 @@ function VaultSecuritySection({
             <Button
               size="compact-xs"
               variant="subtle"
-              onClick={() => { setShowPasswordForm(false); setPassword(""); setConfirm(""); setError(null); }}
+              onClick={() => {
+                setShowPasswordForm(false);
+                setPassword("");
+                setConfirm("");
+                setError(null);
+              }}
             >
               Cancel
             </Button>
