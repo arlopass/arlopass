@@ -15,7 +15,6 @@ import {
   wrapPairingKeyMaterial,
 } from "../transport/bridge-pairing.js";
 
-const WALLET_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
 const WALLET_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 const TRANSPORT_MESSAGE_LISTENER_FLAG = "__arlopass.transport.listener.registered.v1";
 const TRANSPORT_STREAM_PORT_LISTENER_FLAG =
@@ -37,6 +36,21 @@ function makeStorageAdapter(
       return { ...state };
     },
   };
+}
+
+function createVaultMock(providers: Array<Record<string, unknown>> = []) {
+  return vi.fn().mockImplementation(async (msg: Record<string, unknown>) => {
+    switch (msg.type) {
+      case "vault.providers.list":
+        return { type: "vault.providers.list", providers };
+      case "vault.usage.flush":
+        return { type: "vault.usage.flush" };
+      case "vault.apps.list":
+        return { type: "vault.apps.list", appConnections: [] };
+      default:
+        return { type: "error", reasonCode: "request.invalid", message: `Unknown vault message type: ${String(msg.type)}` };
+    }
+  });
 }
 
 function makeEnvelope(
@@ -103,33 +117,45 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("returns provider.list results from wallet storage", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.ollama",
           name: "Ollama Local",
           type: "local",
+          connectorId: "ollama",
+          credentialId: "",
+          metadata: {},
+          models: ["llama3.2"],
           status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          createdAt: new Date().toISOString(),
         },
         {
           id: "provider.offline",
           name: "Offline",
           type: "local",
+          connectorId: "ollama",
+          credentialId: "",
+          metadata: {},
+          models: ["mistral"],
           status: "disconnected",
-          models: [{ id: "mistral", name: "Mistral" }],
+          createdAt: new Date().toISOString(),
         },
         {
           id: "provider.cloud-validation-only",
           name: "Cloud Validation Only",
           type: "cloud",
+          connectorId: "claude",
+          credentialId: "",
+          metadata: {},
+          models: ["claude-opus-4-6"],
           status: "attention",
-          models: [{ id: "claude-opus-4-6", name: "Claude Opus 4.6" }],
+          createdAt: new Date().toISOString(),
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
+    const sendVaultMessage = createVaultMock(vaultProviders);
 
-    const handler = createTransportMessageHandler({ storage });
+    const handler = createTransportMessageHandler({ storage, dependencies: { sendVaultMessage } });
     const result = await handler({
       channel: "arlopass.transport",
       action: "request",
@@ -151,20 +177,25 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("rejects session.create for cloud validation-only providers", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.cloud-validation-only",
           name: "Cloud Validation Only",
           type: "cloud",
+          connectorId: "claude",
+          credentialId: "",
+          metadata: {},
+          models: ["claude-opus-4-6"],
           status: "attention",
-          models: [{ id: "claude-opus-4-6", name: "Claude Opus 4.6" }],
+          createdAt: new Date().toISOString(),
         },
-      ],
+      ];
+    const storage = makeStorageAdapter({
       [WALLET_KEY_ACTIVE]: null,
     });
+    const sendVaultMessage = createVaultMock(vaultProviders);
 
-    const handler = createTransportMessageHandler({ storage });
+    const handler = createTransportMessageHandler({ storage, dependencies: { sendVaultMessage } });
     const result = await handler({
       channel: "arlopass.transport",
       action: "request",
@@ -185,20 +216,25 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("handles session.create provider selection and persists active provider", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.ollama",
           name: "Ollama Local",
           type: "local",
+          connectorId: "ollama",
+          credentialId: "",
+          metadata: {},
+          models: ["llama3.2"],
           status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          createdAt: new Date().toISOString(),
         },
-      ],
+      ];
+    const storage = makeStorageAdapter({
       [WALLET_KEY_ACTIVE]: null,
     });
+    const sendVaultMessage = createVaultMock(vaultProviders);
 
-    const handler = createTransportMessageHandler({ storage });
+    const handler = createTransportMessageHandler({ storage, dependencies: { sendVaultMessage } });
     const result = await handler({
       channel: "arlopass.transport",
       action: "request",
@@ -230,18 +266,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("routes local chat.completions through Ollama metadata endpoint", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.ollama",
           name: "Ollama Local",
           type: "local",
-          status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          connectorId: "ollama",
+          credentialId: "",
           metadata: { baseUrl: "http://localhost:11434" },
+          models: ["llama3.2"],
+          status: "connected",
+          createdAt: new Date().toISOString(),
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const fetchImpl = vi.fn(async () => {
       return new Response(
@@ -257,7 +295,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { fetchImpl },
+      dependencies: { fetchImpl, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     const result = await handler({
@@ -283,18 +321,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("falls back from localhost to 127.0.0.1 for Ollama chat connectivity", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.ollama",
           name: "Ollama Local",
           type: "local",
-          status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          connectorId: "ollama",
+          credentialId: "",
           metadata: { baseUrl: "http://localhost:11434" },
+          models: ["llama3.2"],
+          status: "connected",
+          createdAt: new Date().toISOString(),
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
       const endpoint = String(input);
@@ -315,7 +355,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { fetchImpl },
+      dependencies: { fetchImpl, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     const result = await handler({
@@ -337,14 +377,16 @@ describe("createTransportMessageHandler", () => {
 
   it("routes cloud chat completion through native cloud.chat.execute", async () => {
     const storedProviderId = "provider.arlopass-cloud-anthropic.test-1";
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: storedProviderId,
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-test-1",
             providerId: "claude-subscription",
@@ -357,8 +399,8 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-test-1",
           },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (_hostName: string, message: Record<string, unknown>) => {
@@ -400,6 +442,7 @@ describe("createTransportMessageHandler", () => {
         sendNativeMessage,
         extensionId: "ext.runtime.transport",
         resolveBridgeSharedSecret: async () => "ab".repeat(32),
+        sendVaultMessage: createVaultMock(vaultProviders),
       },
     });
     const result = await handler({
@@ -453,14 +496,16 @@ describe("createTransportMessageHandler", () => {
 
   it("forwards request timeout budget to cloud.chat.execute", async () => {
     const storedProviderId = "provider.arlopass-cloud-anthropic.timeout";
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: storedProviderId,
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-timeout",
             providerId: "claude-subscription",
@@ -473,8 +518,8 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-timeout",
           },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (_hostName: string, message: Record<string, unknown>) => {
@@ -516,6 +561,7 @@ describe("createTransportMessageHandler", () => {
         sendNativeMessage,
         extensionId: "ext.runtime.transport",
         resolveBridgeSharedSecret: async () => "ab".repeat(32),
+        sendVaultMessage: createVaultMock(vaultProviders),
       },
     });
     await handler({
@@ -541,14 +587,16 @@ describe("createTransportMessageHandler", () => {
 
   it("hydrates missing cloud binding metadata via cloud.connection.validate before cloud.chat.execute", async () => {
     const storedProviderId = "provider.arlopass-cloud-anthropic.no-policy";
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: storedProviderId,
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-no-policy",
             providerId: "claude-subscription",
@@ -559,8 +607,8 @@ describe("createTransportMessageHandler", () => {
             region: "us-east-1",
           },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (_hostName: string, message: Record<string, unknown>) => {
@@ -612,6 +660,7 @@ describe("createTransportMessageHandler", () => {
         sendNativeMessage,
         extensionId: "ext.runtime.transport",
         resolveBridgeSharedSecret: async () => "ab".repeat(32),
+        sendVaultMessage: createVaultMock(vaultProviders),
       },
     });
     await handler({
@@ -644,14 +693,16 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("surfaces policy.denied from bridge cloud execution", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.claude",
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-test-2",
             methodId: "anthropic.api_key",
@@ -662,8 +713,8 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-test-2",
           },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (_hostName: string, message: Record<string, unknown>) => {
@@ -701,6 +752,7 @@ describe("createTransportMessageHandler", () => {
         sendNativeMessage,
         extensionId: "ext.runtime.transport",
         resolveBridgeSharedSecret: async () => "cd".repeat(32),
+        sendVaultMessage: createVaultMock(vaultProviders),
       },
     });
     const result = await handler({
@@ -725,14 +777,16 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("surfaces auth.expired from bridge cloud execution", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.claude",
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-test-auth-expired",
             methodId: "anthropic.api_key",
@@ -743,8 +797,8 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-test-auth-expired",
           },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (_hostName: string, message: Record<string, unknown>) => {
@@ -782,6 +836,7 @@ describe("createTransportMessageHandler", () => {
         sendNativeMessage,
         extensionId: "ext.runtime.transport",
         resolveBridgeSharedSecret: async () => "ef".repeat(32),
+        sendVaultMessage: createVaultMock(vaultProviders),
       },
     });
     const result = await handler({
@@ -806,14 +861,16 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("renegotiates handshake once when cloud execution reports unknown or expired handshake token", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.claude.rehandshake",
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-test-rehandshake",
             providerId: "claude-subscription",
@@ -825,8 +882,8 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-rehandshake",
           },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     let verifyCallCount = 0;
     let executeCallCount = 0;
@@ -881,6 +938,7 @@ describe("createTransportMessageHandler", () => {
         sendNativeMessage,
         extensionId: "ext.runtime.transport",
         resolveBridgeSharedSecret: async () => "aa".repeat(32),
+        sendVaultMessage: createVaultMock(vaultProviders),
       },
     });
     const result = await handler({
@@ -918,18 +976,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("uses bound global fetch when dependencies.fetchImpl is not provided", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.ollama",
           name: "Ollama Local",
           type: "local",
+          connectorId: "ollama",
+          credentialId: "",
+          models: ["llama3.2"],
           status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          createdAt: new Date().toISOString(),
           metadata: { baseUrl: "http://localhost:11434" },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const originalFetch = globalThis.fetch;
     const fetchSpy = vi.fn(function (this: unknown, input: RequestInfo | URL) {
@@ -953,7 +1013,7 @@ describe("createTransportMessageHandler", () => {
 
     globalThis.fetch = fetchSpy;
     try {
-      const handler = createTransportMessageHandler({ storage });
+      const handler = createTransportMessageHandler({ storage, dependencies: { sendVaultMessage: createVaultMock(vaultProviders) } });
       const result = await handler({
         channel: "arlopass.transport",
         action: "request",
@@ -972,18 +1032,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("routes CLI chat.completions through native bridge execution", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.cli",
           name: "Local CLI Bridge",
           type: "cli",
+          connectorId: "copilot-cli",
+          credentialId: "",
+          models: ["gpt-5.3-codex"],
           status: "connected",
-          models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
+          createdAt: new Date().toISOString(),
           metadata: { nativeHostName: "com.arlopass.bridge.cli-1", cliType: "copilot-cli" },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (...args: [string, Record<string, unknown>]) => {
@@ -1002,7 +1064,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { sendNativeMessage },
+      dependencies: { sendNativeMessage, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     const result = await handler({
@@ -1037,18 +1099,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("maps native CLI execution timeout error to transport.timeout", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.cli",
           name: "Local CLI Bridge",
           type: "cli",
+          connectorId: "copilot-cli",
+          credentialId: "",
+          models: ["gpt-5.3-codex"],
           status: "connected",
-          models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
+          createdAt: new Date().toISOString(),
           metadata: { nativeHostName: "com.arlopass.bridge.cli-2" },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (...args: [string, Record<string, unknown>]) => {
@@ -1066,7 +1130,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { sendNativeMessage },
+      dependencies: { sendNativeMessage, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     const result = await handler({
@@ -1092,14 +1156,16 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("maps native cloud execution cancellation to transport.cancelled", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.claude.cancelled",
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-cancelled",
             methodId: "anthropic.api_key",
@@ -1110,8 +1176,8 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-cancelled",
           },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const sendNativeMessage = vi.fn(
       async (_hostName: string, message: Record<string, unknown>) => {
@@ -1150,6 +1216,7 @@ describe("createTransportMessageHandler", () => {
         sendNativeMessage,
         extensionId: "ext.runtime.transport",
         resolveBridgeSharedSecret: async () => "ff".repeat(32),
+        sendVaultMessage: createVaultMock(vaultProviders),
       },
     });
 
@@ -1174,18 +1241,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("issues one native execute call per CLI request", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.cli",
           name: "Local CLI Bridge",
           type: "cli",
+          connectorId: "copilot-cli",
+          credentialId: "",
+          models: ["gpt-5.3-codex"],
           status: "connected",
-          models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
+          createdAt: new Date().toISOString(),
           metadata: { nativeHostName: "com.arlopass.bridge.cli-cache", cliType: "copilot-cli" },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     let responseIndex = 0;
     const sendNativeMessage = vi.fn(
@@ -1206,7 +1275,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { sendNativeMessage },
+      dependencies: { sendNativeMessage, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     await handler({
@@ -1242,18 +1311,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("sends cached resumeSessionId for subsequent CLI requests", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.cli",
           name: "Local CLI Bridge",
           type: "cli",
+          connectorId: "copilot-cli",
+          credentialId: "",
+          models: ["gpt-5.3-codex"],
           status: "connected",
-          models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
+          createdAt: new Date().toISOString(),
           metadata: { nativeHostName: "com.arlopass.bridge.cli-resume", cliType: "copilot-cli" },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     let responseIndex = 0;
     const sendNativeMessage = vi.fn(
@@ -1275,7 +1346,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { sendNativeMessage },
+      dependencies: { sendNativeMessage, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     await handler({
@@ -1315,18 +1386,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("returns one chunk plus done for non-incremental request-stream chat.stream responses", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.ollama",
           name: "Ollama Local",
           type: "local",
+          connectorId: "ollama",
+          credentialId: "",
+          models: ["llama3.2"],
           status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          createdAt: new Date().toISOString(),
           metadata: { baseUrl: "http://localhost:11434" },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const longResponse =
       "Streaming path now routes through request-stream without synthetic chunk slicing. ".repeat(
@@ -1349,7 +1422,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { fetchImpl },
+      dependencies: { fetchImpl, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     const result = await handler({
@@ -1387,18 +1460,20 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("returns provider-driven incremental deltas for request-stream chat.stream action", async () => {
-    const storage = makeStorageAdapter({
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.ollama",
           name: "Ollama Local",
           type: "local",
+          connectorId: "ollama",
+          credentialId: "",
+          models: ["llama3.2"],
           status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
+          createdAt: new Date().toISOString(),
           metadata: { baseUrl: "http://localhost:11434" },
         },
-      ],
-    });
+      ];
+    const storage = makeStorageAdapter({});
 
     const encoder = new TextEncoder();
     const fetchImpl = vi.fn(async () => {
@@ -1440,7 +1515,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({
       storage,
-      dependencies: { fetchImpl },
+      dependencies: { fetchImpl, sendVaultMessage: createVaultMock(vaultProviders) },
     });
 
     const result = await handler({
@@ -1537,14 +1612,16 @@ describe("createTransportMessageHandler", () => {
       },
     );
 
-    const storageState: Record<string, unknown> = {
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.claude",
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-default",
             methodId: "anthropic.api_key",
@@ -1556,7 +1633,9 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-default",
           },
         },
-      ],
+      ];
+
+    const storageState: Record<string, unknown> = {
       [WALLET_KEY_ACTIVE]: { providerId: "provider.claude", modelId: "claude-sonnet-4-5" },
       [BRIDGE_PAIRING_STATE_STORAGE_KEY]: wrappedPairingState,
     };
@@ -1584,7 +1663,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
 
-    registerDefaultTransportMessageListener();
+    registerDefaultTransportMessageListener({ sendVaultMessage: createVaultMock(vaultProviders) });
     expect(runtime.onMessage.addListener).toHaveBeenCalledTimes(1);
     const listener = runtime.onMessage.addListener.mock.calls[0]?.[0] as
       | ((message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => boolean)
@@ -1686,14 +1765,16 @@ describe("createTransportMessageHandler", () => {
       },
     );
 
-    const storageState: Record<string, unknown> = {
-      [WALLET_KEY_PROVIDERS]: [
+    const vaultProviders = [
         {
           id: "provider.claude",
           name: "Claude Subscription",
           type: "cloud",
+          connectorId: "claude-subscription",
+          credentialId: "",
+          models: ["claude-sonnet-4-5"],
           status: "connected",
-          models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
+          createdAt: new Date().toISOString(),
           metadata: {
             nativeHostName: "com.arlopass.bridge.cloud-default",
             methodId: "anthropic.api_key",
@@ -1705,7 +1786,9 @@ describe("createTransportMessageHandler", () => {
             endpointProfileHash: "sha256:endpoint-profile-cloud-default",
           },
         },
-      ],
+      ];
+
+    const storageState: Record<string, unknown> = {
       [WALLET_KEY_ACTIVE]: { providerId: "provider.claude", modelId: "claude-sonnet-4-5" },
       [BRIDGE_PAIRING_STATE_STORAGE_KEY]: wrappedPairingState,
     };
@@ -1733,7 +1816,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
 
-    registerDefaultTransportMessageListener();
+    registerDefaultTransportMessageListener({ sendVaultMessage: createVaultMock(vaultProviders) });
     const listener = runtime.onMessage.addListener.mock.calls[0]?.[0] as
       | ((message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => boolean)
       | undefined;
@@ -1831,17 +1914,20 @@ describe("registerDefaultTransportStreamPortListener", () => {
   }
 
   it("streams start/chunk/done events over runtime port", async () => {
+    const vaultProviders = [
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        status: "connected",
+        models: ["llama3.2"],
+        metadata: { baseUrl: "http://localhost:11434" },
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storageState: Record<string, unknown> = {
-      [WALLET_KEY_PROVIDERS]: [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
-          metadata: { baseUrl: "http://localhost:11434" },
-        },
-      ],
       [WALLET_KEY_ACTIVE]: {
         providerId: "provider.ollama",
         modelId: "llama3.2",
@@ -1904,7 +1990,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     });
 
     delete (globalThis as Record<string, unknown>)[TRANSPORT_STREAM_PORT_LISTENER_FLAG];
-    registerDefaultTransportStreamPortListener();
+    registerDefaultTransportStreamPortListener({ sendVaultMessage: createVaultMock(vaultProviders) });
     expect(runtime.onConnect.addListener).toHaveBeenCalledTimes(1);
 
     const connectListener = runtime.onConnect.addListener.mock.calls[0]?.[0] as
@@ -1974,20 +2060,23 @@ describe("registerDefaultTransportStreamPortListener", () => {
   });
 
   it("emits cancelled when stream receives a cancel action", async () => {
-    const storageState: Record<string, unknown> = {
-      [WALLET_KEY_PROVIDERS]: [
-        {
-          id: "provider.cli",
-          name: "CLI Bridge",
-          type: "cli",
-          status: "connected",
-          models: [{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" }],
-          metadata: {
-            nativeHostName: "com.arlopass.bridge",
-            cliType: "copilot-cli",
-          },
+    const vaultProviders = [
+      {
+        id: "provider.cli",
+        name: "CLI Bridge",
+        type: "cli",
+        connectorId: "copilot-cli",
+        credentialId: "",
+        status: "connected",
+        models: ["gpt-5.3-codex"],
+        metadata: {
+          nativeHostName: "com.arlopass.bridge",
+          cliType: "copilot-cli",
         },
-      ],
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    const storageState: Record<string, unknown> = {
       [WALLET_KEY_ACTIVE]: {
         providerId: "provider.cli",
         modelId: "gpt-5.3-codex",
@@ -2020,7 +2109,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     });
 
     delete (globalThis as Record<string, unknown>)[TRANSPORT_STREAM_PORT_LISTENER_FLAG];
-    registerDefaultTransportStreamPortListener();
+    registerDefaultTransportStreamPortListener({ sendVaultMessage: createVaultMock(vaultProviders) });
     expect(runtime.onConnect.addListener).toHaveBeenCalledTimes(1);
     const connectListener = runtime.onConnect.addListener.mock.calls[0]?.[0] as
       | ((port: unknown) => void)
@@ -2074,17 +2163,20 @@ describe("registerDefaultTransportStreamPortListener", () => {
   });
 
   it("aborts and cleans up in-flight stream when posting a chunk to the port fails", async () => {
+    const vaultProviders = [
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        status: "connected",
+        models: ["llama3.2"],
+        metadata: { baseUrl: "http://localhost:11434" },
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storageState: Record<string, unknown> = {
-      [WALLET_KEY_PROVIDERS]: [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
-          metadata: { baseUrl: "http://localhost:11434" },
-        },
-      ],
       [WALLET_KEY_ACTIVE]: {
         providerId: "provider.ollama",
         modelId: "llama3.2",
@@ -2148,7 +2240,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
 
     const reportError = vi.fn();
     delete (globalThis as Record<string, unknown>)[TRANSPORT_STREAM_PORT_LISTENER_FLAG];
-    registerDefaultTransportStreamPortListener({ reportError });
+    registerDefaultTransportStreamPortListener({ reportError, sendVaultMessage: createVaultMock(vaultProviders) });
     expect(runtime.onConnect.addListener).toHaveBeenCalledTimes(1);
 
     const connectListener = runtime.onConnect.addListener.mock.calls[0]?.[0] as
@@ -2232,17 +2324,20 @@ describe("registerDefaultTransportStreamPortListener", () => {
   });
 
   it("suppresses stream terminal events after port disconnect teardown", async () => {
+    const vaultProviders = [
+      {
+        id: "provider.ollama",
+        name: "Ollama Local",
+        type: "local",
+        connectorId: "ollama",
+        credentialId: "",
+        status: "connected",
+        models: ["llama3.2"],
+        metadata: { baseUrl: "http://localhost:11434" },
+        createdAt: new Date().toISOString(),
+      },
+    ];
     const storageState: Record<string, unknown> = {
-      [WALLET_KEY_PROVIDERS]: [
-        {
-          id: "provider.ollama",
-          name: "Ollama Local",
-          type: "local",
-          status: "connected",
-          models: [{ id: "llama3.2", name: "Llama 3.2" }],
-          metadata: { baseUrl: "http://localhost:11434" },
-        },
-      ],
       [WALLET_KEY_ACTIVE]: {
         providerId: "provider.ollama",
         modelId: "llama3.2",
@@ -2311,7 +2406,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
 
     const reportError = vi.fn();
     delete (globalThis as Record<string, unknown>)[TRANSPORT_STREAM_PORT_LISTENER_FLAG];
-    registerDefaultTransportStreamPortListener({ reportError });
+    registerDefaultTransportStreamPortListener({ reportError, sendVaultMessage: createVaultMock(vaultProviders) });
     expect(runtime.onConnect.addListener).toHaveBeenCalledTimes(1);
 
     const connectListener = runtime.onConnect.addListener.mock.calls[0]?.[0] as

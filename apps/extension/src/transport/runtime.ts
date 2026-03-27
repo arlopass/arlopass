@@ -2771,6 +2771,7 @@ const TRANSPORT_STREAM_PORT_LISTENER_FLAG =
 
 export function registerDefaultTransportMessageListener(options: {
   reportError?: (error: Error) => void;
+  sendVaultMessage?: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
 } = {}): void {
   const reportError =
     options.reportError ??
@@ -2796,10 +2797,13 @@ export function registerDefaultTransportMessageListener(options: {
   }
 
   const storage = createChromeStorageAdapter(runtime, storageLocal);
-  const dependencies = createDefaultTransportRuntimeDependencies({
-    runtime,
-    storage,
-  });
+  const dependencies: RuntimeDependencies = {
+    ...createDefaultTransportRuntimeDependencies({
+      runtime,
+      storage,
+    }),
+    ...(options.sendVaultMessage !== undefined ? { sendVaultMessage: options.sendVaultMessage } : {}),
+  };
   const handleTransportMessage = createTransportMessageHandler({
     storage,
     dependencies,
@@ -2846,6 +2850,7 @@ export function registerDefaultTransportMessageListener(options: {
 
 export function registerDefaultTransportStreamPortListener(options: {
   reportError?: (error: Error) => void;
+  sendVaultMessage?: (message: Record<string, unknown>) => Promise<Record<string, unknown>>;
 } = {}): void {
   const reportError =
     options.reportError ??
@@ -2888,6 +2893,7 @@ export function registerDefaultTransportStreamPortListener(options: {
   const extensionId = dependencies.extensionId;
   const resolveBridgeSharedSecret = dependencies.resolveBridgeSharedSecret;
   const resolveBridgePairingHandle = dependencies.resolveBridgePairingHandle;
+  const sendVaultMessage = options.sendVaultMessage;
 
   runtime.onConnect.addListener((port) => {
     if (!isTransportStreamPort(port)) {
@@ -2997,6 +3003,9 @@ export function registerDefaultTransportStreamPortListener(options: {
               : {}),
             ...(typeof extensionId === "string" && extensionId.trim().length > 0
               ? { extensionId: extensionId.trim() }
+              : {}),
+            ...(sendVaultMessage !== undefined
+              ? { sendVaultMessage }
               : {}),
           },
           now,
