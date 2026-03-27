@@ -1,16 +1,68 @@
+@import "tailwindcss";
+
+/* ─── Dark mode via Mantine's data attribute ────────────────────── */
+
+@custom-variant dark (&:where([data-mantine-color-scheme="dark"], [data-mantine-color-scheme="dark"] *));
+
+/* ─── Tailwind Theme: Map Arlopass Design Tokens ─────────────────── */
+
+@theme {
+  /* Colors */
+  --color-brand: #c2410c;
+  --color-brand-hover: #9a3412;
+  --color-brand-subtle: #fff7ed;
+  --color-brand-subtle-dark: #2c1a0e;
+  --color-amber: #d97706;
+  --color-amber-hover: #b45309;
+  --color-success: #4d7c0f;
+  --color-success-subtle: #1a2e05;
+  --color-warning: #ca8a04;
+  --color-warning-subtle: #2e2204;
+  --color-danger: #b91c1c;
+  --color-danger-subtle: #2e0505;
+
+  /* Surfaces */
+  --color-base: var(--ap-bg-base);
+  --color-surface: var(--ap-bg-surface);
+  --color-elevated: var(--ap-bg-elevated);
+  --color-code-bg: var(--ap-bg-code);
+
+  /* Text */
+  --color-text-primary: var(--ap-text-primary);
+  --color-text-body: var(--ap-text-body);
+  --color-text-secondary: var(--ap-text-secondary);
+  --color-text-tertiary: var(--ap-text-tertiary);
+  --color-text-link: var(--ap-text-link);
+
+  /* Borders */
+  --color-border: var(--ap-border);
+  --color-border-strong: var(--ap-border-strong);
+
+  /* Fonts */
+  --font-sans:
+    "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
 /* ─── Geist Fonts ───────────────────────────────────────────────── */
 
 @font-face {
-  font-family: 'Geist Sans';
-  src: url('geist/dist/fonts/geist-sans/Geist-Variable.woff2') format('woff2');
+  font-family: "Geist Sans";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('geist/dist/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2');
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMono-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -22,26 +74,28 @@
   color-scheme: dark;
 
   /* Brand signature (constant across themes) */
-  --ap-brand: #C2410C;
-  --ap-brand-hover: #9A3412;
-  --ap-brand-subtle: #FFF7ED;
-  --ap-brand-subtle-dark: #2C1A0E;
+  --ap-brand: #c2410c;
+  --ap-brand-hover: #9a3412;
+  --ap-brand-subtle: #fff7ed;
+  --ap-brand-subtle-dark: #2c1a0e;
 
   /* Secondary accent */
-  --ap-amber: #D97706;
-  --ap-amber-hover: #B45309;
+  --ap-amber: #d97706;
+  --ap-amber-hover: #b45309;
 
   /* Semantic */
-  --ap-success: #4D7C0F;
-  --ap-success-subtle: #F7FEE7;
-  --ap-warning: #CA8A04;
-  --ap-warning-subtle: #FEFCE8;
-  --ap-danger: #B91C1C;
-  --ap-danger-subtle: #FEF2F2;
+  --ap-success: #4d7c0f;
+  --ap-success-subtle: #f7fee7;
+  --ap-warning: #ca8a04;
+  --ap-warning-subtle: #fefce8;
+  --ap-danger: #b91c1c;
+  --ap-danger-subtle: #fef2f2;
 
   /* Font stacks */
-  --ap-font-body: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --ap-font-code: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ap-font-body:
+    "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --ap-font-code: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --ap-font-display: var(--ap-font-body);
 
   /* Type scale */
@@ -80,49 +134,49 @@
 
 :root,
 [data-mantine-color-scheme="dark"] {
-  --ap-bg-base: #1C1917;
+  --ap-bg-base: #1c1917;
   --ap-bg-surface: #292524;
-  --ap-bg-elevated: #3D3835;
-  --ap-bg-code: #1A1412;
+  --ap-bg-elevated: #3d3835;
+  --ap-bg-code: #1a1412;
 
-  --ap-border: #44403C;
-  --ap-border-strong: #57534E;
+  --ap-border: #44403c;
+  --ap-border-strong: #57534e;
 
-  --ap-text-primary: #FAFAF9;
-  --ap-text-body: #D6D3D1;
-  --ap-text-secondary: #A8A29E;
-  --ap-text-tertiary: #78716C;
+  --ap-text-primary: #fafaf9;
+  --ap-text-body: #d6d3d1;
+  --ap-text-secondary: #a8a29e;
+  --ap-text-tertiary: #78716c;
 
-  --ap-text-link: #C2410C;
-  --ap-text-link-hover: #D97706;
+  --ap-text-link: #c2410c;
+  --ap-text-link-hover: #d97706;
 
-  --ap-success-subtle: #1A2E05;
-  --ap-warning-subtle: #2E2204;
-  --ap-danger-subtle: #2E0505;
+  --ap-success-subtle: #1a2e05;
+  --ap-warning-subtle: #2e2204;
+  --ap-danger-subtle: #2e0505;
 }
 
 /* ─── Light Theme ───────────────────────────────────────────────── */
 
 [data-mantine-color-scheme="light"] {
-  --ap-bg-base: #FAFAF9;
-  --ap-bg-surface: #FFFFFF;
-  --ap-bg-elevated: #FFFFFF;
-  --ap-bg-code: #1C1917;
+  --ap-bg-base: #fafaf9;
+  --ap-bg-surface: #ffffff;
+  --ap-bg-elevated: #ffffff;
+  --ap-bg-code: #1c1917;
 
-  --ap-border: #E7E5E4;
-  --ap-border-strong: #D6D3D1;
+  --ap-border: #e7e5e4;
+  --ap-border-strong: #d6d3d1;
 
-  --ap-text-primary: #1C1917;
+  --ap-text-primary: #1c1917;
   --ap-text-body: #292524;
-  --ap-text-secondary: #78716C;
-  --ap-text-tertiary: #A8A29E;
+  --ap-text-secondary: #78716c;
+  --ap-text-tertiary: #a8a29e;
 
-  --ap-text-link: #C2410C;
-  --ap-text-link-hover: #9A3412;
+  --ap-text-link: #c2410c;
+  --ap-text-link-hover: #9a3412;
 
-  --ap-success-subtle: #F7FEE7;
-  --ap-warning-subtle: #FEFCE8;
-  --ap-danger-subtle: #FEF2F2;
+  --ap-success-subtle: #f7fee7;
+  --ap-warning-subtle: #fefce8;
+  --ap-danger-subtle: #fef2f2;
 }
 
 /* ─── Base Styles ───────────────────────────────────────────────── */
@@ -167,7 +221,7 @@ body {
   overflow-x: auto;
   font-size: 13px;
   margin: 0.5em 0;
-  color: #D6D3D1;
+  color: #d6d3d1;
 }
 .chat-markdown code {
   font-family: var(--ap-font-code);
