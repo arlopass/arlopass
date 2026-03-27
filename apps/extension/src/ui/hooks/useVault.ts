@@ -81,17 +81,16 @@ async function establishSession(): Promise<SessionRef> {
 
     const pairingKeyMaterial = await unwrapPairingKeyMaterial({ pairingState, runtimeId: extensionId });
 
-    const resolveBridgePairingHandle: ((hostName: string) => Promise<string | undefined | null>) | undefined =
-        pairingKeyMaterial !== null && pairingKeyMaterial !== undefined
-            ? async () => pairingKeyMaterial.pairingHandle
-            : undefined;
+    if (pairingKeyMaterial === undefined || pairingKeyMaterial === null) {
+        throw new Error("Failed to unwrap pairing key material.");
+    }
 
     const session = await ensureBridgeHandshakeSession({
         hostName: HOST_NAME,
         extensionId,
         sendNativeMessage,
-        resolveBridgeSharedSecret: async () => null,
-        ...(resolveBridgePairingHandle !== undefined ? { resolveBridgePairingHandle } : {}),
+        resolveBridgeSharedSecret: async () => pairingKeyMaterial.pairingKeyHex,
+        resolveBridgePairingHandle: async () => pairingKeyMaterial.pairingHandle,
     });
 
     return { sessionToken: session.sessionToken };
