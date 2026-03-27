@@ -2,7 +2,7 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, StepList, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const stepStream = `import { useConversation } from "@byom-ai/react";
+const stepStream = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, isStreaming } = useConversation();
@@ -18,7 +18,7 @@ function Chat() {
   // await send(text);
 }`;
 
-const stepStreamingContent = `import { useConversation } from "@byom-ai/react";
+const stepStreamingContent = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, streamingContent, isStreaming } = useConversation();
@@ -55,7 +55,7 @@ const stepIsStreaming = `function ChatInput({ onSend }: { onSend: (text: string)
   );
 }`;
 
-const stepStop = `import { useConversation } from "@byom-ai/react";
+const stepStop = `import { useConversation } from "@arlopass/react";
 
 function ChatControls() {
   const { isStreaming, stop } = useConversation();
@@ -71,7 +71,7 @@ function ChatControls() {
   );
 }`;
 
-const stepOnDelta = `import { useConversation } from "@byom-ai/react";
+const stepOnDelta = `import { useConversation } from "@arlopass/react";
 import { useRef } from "react";
 
 function Chat() {
@@ -99,10 +99,10 @@ function Chat() {
 
 const fullExample = `import { useState } from "react";
 import {
-  BYOMProvider,
+  ArlopassProvider,
   ChatReadyGate,
   useConversation,
-} from "@byom-ai/react";
+} from "@arlopass/react";
 
 function Chat() {
   const {
@@ -163,19 +163,19 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="streaming-demo">
+    <ArlopassProvider appId="streaming-demo">
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
-        noProvider={<p>Select a provider in the BYOM extension.</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
         error={(err) => <p>Error: {err.message}</p>}
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const comparisonReact = `import { useConversation } from "@byom-ai/react";
+const comparisonReact = `import { useConversation } from "@arlopass/react";
 
 const { messages, stream, streamingContent, isStreaming, stop } =
   useConversation();
@@ -186,9 +186,9 @@ await stream("Explain React hooks");
 // Stop mid-stream
 stop();`;
 
-const comparisonWeb = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const comparisonWeb = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "streaming-demo" });
 
 const convo = new ConversationManager({ client });
@@ -228,8 +228,8 @@ export default function StreamingResponses() {
           onClick={() => navigate("tutorials/first-chat-app")}
         >
           First Chat App
-        </Text>
-        {" "}tutorial. Complete that first if you haven't already.
+        </Text>{" "}
+        tutorial. Complete that first if you haven't already.
       </Callout>
 
       <StepList
@@ -240,9 +240,9 @@ export default function StreamingResponses() {
               <Stack gap="xs">
                 <Text fz="sm">
                   The useConversation hook provides two methods for sending
-                  messages: stream() delivers tokens in real time, while
-                  send() waits for the complete response. Use stream() for
-                  interactive chat.
+                  messages: stream() delivers tokens in real time, while send()
+                  waits for the complete response. Use stream() for interactive
+                  chat.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepStream} />
               </Stack>
@@ -266,8 +266,8 @@ export default function StreamingResponses() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  isStreaming is true while a response is being generated.
-                  Use it to disable inputs and show loading indicators.
+                  isStreaming is true while a response is being generated. Use
+                  it to disable inputs and show loading indicators.
                 </Text>
                 <CodeBlock title="ChatInput.tsx" code={stepIsStreaming} />
               </Stack>
@@ -278,8 +278,8 @@ export default function StreamingResponses() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Call stop() to abort the current stream. The partial
-                  response is preserved in the messages array — nothing is lost.
+                  Call stop() to abort the current stream. The partial response
+                  is preserved in the messages array — nothing is lost.
                 </Text>
                 <CodeBlock title="ChatControls.tsx" code={stepStop} />
               </Stack>
@@ -291,8 +291,8 @@ export default function StreamingResponses() {
               <Stack gap="xs">
                 <Text fz="sm">
                   For custom token processing (word counting, syntax
-                  highlighting, etc.), subscribe to "stream" events. Each
-                  delta gives you the latest chunk of text.
+                  highlighting, etc.), subscribe to "stream" events. Each delta
+                  gives you the latest chunk of text.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepOnDelta} />
               </Stack>

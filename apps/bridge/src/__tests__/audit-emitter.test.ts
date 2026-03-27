@@ -10,7 +10,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 
-import { AuditSchemaError } from "@byom-ai/audit";
+import { AuditSchemaError } from "@arlopass/audit";
 
 import {
   AuditEmitter,
@@ -64,7 +64,7 @@ describe("AuditEmitter.emit", () => {
   it("queues events and exports asynchronously", async () => {
     const { exporter: exp1, received: r1 } = captureExporter();
     const { exporter: exp2, received: r2 } = captureExporter();
-    const emitter = new AuditEmitter({ onLog: () => {} });
+    const emitter = new AuditEmitter({ onLog: () => { } });
     emitter.addExporter(exp1);
     emitter.addExporter(exp2);
 
@@ -80,7 +80,7 @@ describe("AuditEmitter.emit", () => {
 
   it("passes metadata through to the exported event", async () => {
     const { exporter, received } = captureExporter();
-    const emitter = new AuditEmitter({ onLog: () => {} });
+    const emitter = new AuditEmitter({ onLog: () => { } });
     emitter.addExporter(exporter);
 
     emitter.emit({
@@ -197,7 +197,7 @@ describe("AuditEmitter.emit", () => {
     const healthyExporter: AuditExporter = {
       export: vi.fn(),
     };
-    const emitter = new AuditEmitter({ onLog: () => {} });
+    const emitter = new AuditEmitter({ onLog: () => { } });
     emitter.addExporter(stalledExporter);
     emitter.addExporter(healthyExporter);
 
@@ -218,11 +218,11 @@ describe("AuditEmitter.emit", () => {
     const emitter = new AuditEmitter({
       maxQueueSize: 2,
       maxAttempts: 1,
-      onLog: () => {},
+      onLog: () => { },
       onExportError,
     });
     emitter.addExporter({
-      export: () => new Promise<void>(() => {}),
+      export: () => new Promise<void>(() => { }),
     });
 
     expect(() => {
@@ -242,14 +242,14 @@ describe("AuditEmitter.emit", () => {
   });
 
   it("works with zero exporters registered", async () => {
-    const emitter = new AuditEmitter({ onLog: () => {} });
+    const emitter = new AuditEmitter({ onLog: () => { } });
     expect(() => emitter.emit(validFields())).not.toThrow();
     await emitter.waitForIdle();
     expect(emitter.getDiagnostics().queueDepth).toBe(0);
   });
 
   it("throws AuditSchemaError when required fields are missing", () => {
-    const emitter = new AuditEmitter({ onLog: () => {} });
+    const emitter = new AuditEmitter({ onLog: () => { } });
     const incomplete = { ...validFields(), correlationId: "" } as AuditEventFields;
     expect(() => emitter.emit(incomplete)).toThrow(AuditSchemaError);
   });
@@ -262,7 +262,7 @@ describe("AuditEmitter.emitAsync", () => {
     const emitter = new AuditEmitter({
       retryBaseDelayMs: 0,
       maxRetryDelayMs: 0,
-      onLog: () => {},
+      onLog: () => { },
     });
     emitter.addExporter(exp1);
     emitter.addExporter(exp2);
@@ -280,7 +280,7 @@ describe("AuditEmitter.emitAsync", () => {
       maxAttempts: 3,
       retryBaseDelayMs: 0,
       maxRetryDelayMs: 0,
-      onLog: () => {},
+      onLog: () => { },
       onExportError,
     });
     emitter.addExporter({
@@ -298,7 +298,7 @@ describe("AuditEmitter.emitAsync", () => {
   });
 
   it("throws AuditSchemaError before export when fields are invalid", async () => {
-    const emitter = new AuditEmitter({ onLog: () => {} });
+    const emitter = new AuditEmitter({ onLog: () => { } });
     const incomplete = { ...validFields(), correlationId: "" } as AuditEventFields;
     await expect(emitter.emitAsync(incomplete)).rejects.toThrow(AuditSchemaError);
   });
@@ -306,7 +306,7 @@ describe("AuditEmitter.emitAsync", () => {
 
 describe("AuditEmitter.exporterCount", () => {
   it("reflects the number of registered exporters", () => {
-    const emitter = new AuditEmitter({ onLog: () => {} });
+    const emitter = new AuditEmitter({ onLog: () => { } });
     expect(emitter.exporterCount).toBe(0);
 
     emitter.addExporter({ export: vi.fn() });

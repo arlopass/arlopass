@@ -1,10 +1,10 @@
-# @byom-ai/bridge
+# @arlopass/bridge
 
-Local native messaging daemon that routes requests between the BYOM AI browser extension and provider adapters.
+Local native messaging daemon that routes requests between the Arlopass browser extension and provider adapters.
 
 ## Overview
 
-The bridge is the authoritative enforcement point for the BYOM security model. It runs on the user's machine, communicates with the extension via Chrome's Native Messaging protocol (stdio), and dispatches requests to the appropriate adapter (Ollama, Claude, CLI tools, cloud providers).
+The bridge is the authoritative enforcement point for the Arlopass security model. It runs on the user's machine, communicates with the extension via Chrome's Native Messaging protocol (stdio), and dispatches requests to the appropriate adapter (Ollama, Claude, CLI tools, cloud providers).
 
 ## Responsibilities
 
@@ -43,8 +43,8 @@ The bridge generates its own signing key automatically on first run and persists
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `BYOM_BRIDGE_PAIRING_STATE_PATH` | No | Override path for pairing state file |
-| `BYOM_BRIDGE_HANDSHAKE_STATE_PATH` | No | Override path for handshake state file |
+| `ARLOPASS_BRIDGE_PAIRING_STATE_PATH` | No | Override path for pairing state file |
+| `ARLOPASS_BRIDGE_HANDSHAKE_STATE_PATH` | No | Override path for handshake state file |
 
 ### Native Messaging Host Registration
 
@@ -54,7 +54,7 @@ The bridge must be registered as a Chrome native messaging host:
 npm run dev:register-native-host
 ```
 
-This creates the `com.byom.bridge` host manifest and registers it in the Chrome NativeMessagingHosts registry.
+This creates the `com.arlopass.bridge` host manifest and registers it in the Chrome NativeMessagingHosts registry.
 
 ## Project Structure
 
@@ -75,7 +75,7 @@ src/
 
 ## Dependencies
 
-- `@byom-ai/protocol` — Envelope validation and error taxonomy
-- `@byom-ai/policy` — Policy bundle evaluation
-- `@byom-ai/audit` — Audit event recording
-- `@byom-ai/telemetry` — Request metrics and tracing
+- `@arlopass/protocol` — Envelope validation and error taxonomy
+- `@arlopass/policy` — Policy bundle evaluation
+- `@arlopass/audit` — Audit event recording
+- `@arlopass/telemetry` — Request metrics and tracing

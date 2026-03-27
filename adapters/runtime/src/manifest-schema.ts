@@ -1,4 +1,4 @@
-import { isProtocolCapability, type ProtocolCapability } from "@byom-ai/protocol";
+import { isProtocolCapability, type ProtocolCapability } from "@arlopass/protocol";
 
 import {
   ManifestValidationError,

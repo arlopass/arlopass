@@ -15,13 +15,13 @@ import {
   TelemetryMetrics,
   TELEMETRY_METRIC_NAMES,
   type MetricPoint,
-} from "@byom-ai/telemetry";
+} from "@arlopass/telemetry";
 
 // ---------------------------------------------------------------------------
 // Minimal mock bridge transport (no network, no process)
 // ---------------------------------------------------------------------------
 
-type BridgeMessage = { type: string; [k: string]: unknown };
+type BridgeMessage = { type: string;[k: string]: unknown };
 type HandleFn = (msg: BridgeMessage) => BridgeMessage;
 
 class MockBridgeProcess {
@@ -83,7 +83,7 @@ class BridgeClient {
     const startMs = Date.now();
     const meta = {
       correlationId: `bridge.${msg.type}`,
-      origin: "https://app.byom.local",
+      origin: "https://app.arlopass.local",
       providerId: "bridge",
       messageType: msg.type,
     };

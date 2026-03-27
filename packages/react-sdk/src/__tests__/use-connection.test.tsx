@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { type ReactNode } from "react";
-import { BYOMProvider } from "../provider/byom-provider.js";
+import { ArlopassProvider } from "../provider/arlopass-provider.js";
 import { useConnection } from "../hooks/use-connection.js";
 
 function createWrapper(autoConnect = false) {
@@ -9,17 +9,19 @@ function createWrapper(autoConnect = false) {
     request: vi.fn().mockResolvedValue({ envelope: {} }),
     stream: vi.fn(),
   };
-  (window as unknown as Record<string, unknown>).byom = mockTransport;
+  (window as unknown as Record<string, unknown>).arlopass = mockTransport;
   return {
     wrapper: ({ children }: { children: ReactNode }) => (
-      <BYOMProvider appId="test" autoConnect={autoConnect}>{children}</BYOMProvider>
+      <ArlopassProvider appId="test" autoConnect={autoConnect}>
+        {children}
+      </ArlopassProvider>
     ),
     mockTransport,
   };
 }
 
 afterEach(() => {
-  delete (window as unknown as Record<string, unknown>).byom;
+  delete (window as unknown as Record<string, unknown>).arlopass;
 });
 
 describe("useConnection", () => {
@@ -40,8 +42,10 @@ describe("useConnection", () => {
     expect(typeof result.current.disconnect).toBe("function");
   });
 
-  it("throws when used outside BYOMProvider", () => {
-    expect(() => { renderHook(() => useConnection()); }).toThrow("BYOM hooks must be used within a <BYOMProvider>");
+  it("throws when used outside ArlopassProvider", () => {
+    expect(() => {
+      renderHook(() => useConnection());
+    }).toThrow("Arlopass hooks must be used within a <ArlopassProvider>");
   });
 
   it("retry is null when no error", () => {

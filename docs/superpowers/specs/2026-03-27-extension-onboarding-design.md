@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-A warm, guided onboarding flow for first-time BYOM extension users. Targets non-technical users who want to use AI on the web. The flow introduces BYOM, checks for/installs the Bridge, guides through first provider setup, and celebrates success with a quick tour.
+A warm, guided onboarding flow for first-time Arlopass extension users. Targets non-technical users who want to use AI on the web. The flow introduces Arlopass, checks for/installs the Bridge, guides through first provider setup, and celebrates success with a quick tour.
 
 **Audience:** Non-technical browser users, not developers.
 **Tone:** Warm and guiding — encouraging, simple language, no jargon, time estimates, progress indicators.
@@ -19,7 +19,7 @@ A warm, guided onboarding flow for first-time BYOM extension users. Targets non-
 ## 2. Flow Summary
 
 ```
-Step 1: Welcome         (popup)    → Intro card: what is BYOM, value props
+Step 1: Welcome         (popup)    → Intro card: what is Arlopass, value props
 Step 2: Bridge Check    (popup)    → Auto-detect bridge, show status
 Step 3: Bridge Install  (options)  → OS-specific guided installation
 Step 4: Add Provider    (options)  → Existing AddProviderWizard (reused)
@@ -37,7 +37,7 @@ Step 5: Success + Tour  (popup)    → Celebration + 3 tip cards
 
 ### Persistence
 
-Onboarding state in `chrome.storage.local` key `byom.onboarding.setup`:
+Onboarding state in `chrome.storage.local` key `arlopass.onboarding.setup`:
 
 ```ts
 type OnboardingSetupState = {
@@ -51,7 +51,7 @@ Note: this is distinct from the existing `onboarding-state.ts` which manages the
 
 If user closes popup mid-onboarding, resume from `currentStep` on next open.
 
-**Storage recovery:** If `byom.onboarding.setup` is missing, corrupted, or has invalid `currentStep`, fall back to state detection (check bridge + providers). If `chrome.storage.local` is cleared externally, the onboarding restarts — this is safe since the bridge and providers still exist and will be detected.
+**Storage recovery:** If `arlopass.onboarding.setup` is missing, corrupted, or has invalid `currentStep`, fall back to state detection (check bridge + providers). If `chrome.storage.local` is cleared externally, the onboarding restarts — this is safe since the bridge and providers still exist and will be detected.
 
 ### Back navigation
 
@@ -70,20 +70,20 @@ All steps support going back:
 
 ### Mobile / unsupported platforms
 
-If `navigator.platform` indicates iOS, Android, or another non-desktop platform, show a message: "BYOM requires a desktop browser (Chrome, Firefox, or Edge). Visit byomai.com on your computer to get started." No installation flow.
+If `navigator.platform` indicates iOS, Android, or another non-desktop platform, show a message: "Arlopass requires a desktop browser (Chrome, Firefox, or Edge). Visit arlopassai.com on your computer to get started." No installation flow.
 
 ---
 
 ## 3. Step 1 — Welcome (Popup)
 
-**Purpose:** Introduce BYOM. Build trust and excitement. Set expectations.
+**Purpose:** Introduce Arlopass. Build trust and excitement. Set expectations.
 
 ### Content
 
 - **Icon:** `IconShieldCheck` (Tabler), 48px, color `#202225`
-- **Heading:** "Welcome to BYOM" (16px semibold)
+- **Heading:** "Welcome to Arlopass" (16px semibold)
 - **Subheading:** "Your AI Wallet" (12px regular, `#808796`)
-- **Description:** "BYOM lets you use AI on any website — with your own providers, your own models, and your own rules." (12px regular)
+- **Description:** "Arlopass lets you use AI on any website — with your own providers, your own models, and your own rules." (12px regular)
 
 ### Three value prop cards
 
@@ -113,7 +113,7 @@ Each card: `#f8f9fa` background, `1px solid #dfe1e8` border, 12px padding, 4px b
 
 ### Detection
 
-Call `chrome.runtime.sendNativeMessage("com.byom.bridge", { type: "ping" })`:
+Call `chrome.runtime.sendNativeMessage("com.arlopass.bridge", { type: "ping" })`:
 - Response received → bridge installed (parse version from response if available)
 - Error → bridge not installed
 
@@ -128,19 +128,19 @@ Detection runs automatically on mount (no user action).
 **Detecting:**
 - Heading: "Checking your setup…"
 - `<Loader size="sm">` spinner, color `#202225`
-- Description: "Looking for the BYOM Bridge on your computer."
+- Description: "Looking for the Arlopass Bridge on your computer."
 
 **Bridge found (happy path):**
 - Icon: `IconCircleCheck`, green/teal color
 - Heading: "Bridge connected"
-- Status card: "✓ BYOM Bridge v{version} — Running on your computer"
+- Status card: "✓ Arlopass Bridge v{version} — Running on your computer"
 - Description: "Everything looks good. Let's connect your first AI provider."
 - Button: "Continue →" (primary)
 - Auto-advance to Step 4 after 1.5 seconds
 
 **Bridge not found:**
 - Heading: "Bridge not found"
-- Description: "The BYOM Bridge is a small helper app that runs on your computer. It connects the extension to your AI providers securely."
+- Description: "The Arlopass Bridge is a small helper app that runs on your computer. It connects the extension to your AI providers securely."
 - Primary button: "Install the Bridge →" — opens options page at Step 3
 - Secondary button (outline): "I already installed it — Check again ↻" — re-runs detection
 
@@ -166,9 +166,9 @@ Use `navigator.platform` / `navigator.userAgent` to detect Windows, macOS, Linux
 ### Windows instructions
 
 **① Download**
-- Button: "Download BYOM Bridge for Windows" with file size
-- URL: `https://github.com/AltClick/byom-web/releases/latest/download/byom-bridge-win-x64.exe`
-- Label below: "byom-bridge-win-x64.exe · ~12 MB"
+- Button: "Download Arlopass Bridge for Windows" with file size
+- URL: `https://github.com/AltClick/arlopass/releases/latest/download/arlopass-bridge-win-x64.exe`
+- Label below: "arlopass-bridge-win-x64.exe · ~12 MB"
 
 **② Run the installer**
 - "Open your Downloads folder and double-click the file."
@@ -180,7 +180,7 @@ Use `navigator.platform` / `navigator.userAgent` to detect Windows, macOS, Linux
 ### macOS / Linux instructions
 
 **① Copy and run this command**
-- Code block with copy button: `curl -fsSL https://byomai.com/install.sh | sh`
+- Code block with copy button: `curl -fsSL https://arlopassai.com/install.sh | sh`
 - How to open Terminal:
   - macOS: "Press ⌘ + Space, type 'Terminal', press Enter"
   - Linux: "Press Ctrl + Alt + T"
@@ -230,7 +230,7 @@ Collapsible section with common issues:
 
 - Icon: `IconConfetti` (Tabler), 48px
 - Heading: "You're all set!" (16px semibold)
-- Description: "BYOM is ready to use. Here are a few things to know before you start."
+- Description: "Arlopass is ready to use. Here are a few things to know before you start."
 - Button: "Next →" (primary)
 - "Skip tour" link in top-right (10px, `#808796`)
 
@@ -251,7 +251,7 @@ Each tip: icon (48px), heading (14px semibold), description (12px regular, `#808
 **Tip 3: Wallet**
 - Icon: `IconWallet`
 - Heading: "Your AI wallet"
-- Copy: "Click the BYOM icon anytime to see your providers, connected apps, and usage. You can add more providers, revoke access, or change settings whenever you want."
+- Copy: "Click the Arlopass icon anytime to see your providers, connected apps, and usage. You can add more providers, revoke access, or change settings whenever you want."
 
 ### Navigation
 
@@ -262,7 +262,7 @@ Each tip: icon (48px), heading (14px semibold), description (12px regular, `#808
 
 ### Completion
 
-- "Done ✓" button sets `chrome.storage.local` `byom.onboarding.completed = true`
+- "Done ✓" button sets `chrome.storage.local` `arlopass.onboarding.completed = true`
 - Transitions to normal wallet view
 - Onboarding never shows again unless storage is cleared
 
@@ -282,7 +282,7 @@ Bridge
 
 ### Behavior
 
-1. Confirmation dialog: "This will remove the BYOM Bridge from your computer. You'll need to reinstall it to use BYOM again."
+1. Confirmation dialog: "This will remove the Arlopass Bridge from your computer. You'll need to reinstall it to use Arlopass again."
 2. On confirm: the extension sends a message to the bridge to execute `--uninstall`
 3. Bridge `--uninstall` flag: removes binary, native messaging host manifests (Chrome, Firefox, Edge), and Windows registry entries
 4. After uninstall: settings page shows "Bridge not installed" state with "Install Bridge" button
@@ -290,14 +290,14 @@ Bridge
 ### Implementation note
 
 The `--uninstall` flag must be added to the bridge binary. It should:
-- **Windows:** Delete binary from `%LOCALAPPDATA%\BYOM\bin\`, remove registry keys for all browsers
+- **Windows:** Delete binary from `%LOCALAPPDATA%\Arlopass\bin\`, remove registry keys for all browsers
 - **macOS:** Delete binary from `~/.local/bin/`, remove JSON manifests from `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/` and `~/.mozilla/native-messaging-hosts/`
 - **Linux:** Delete binary from `~/.local/bin/`, remove JSON manifests from `~/.config/google-chrome/NativeMessagingHosts/` and `~/.mozilla/native-messaging-hosts/`
 
 ### Error handling
 
 - If uninstall command fails (bridge process not responding): show error message "Couldn't remove the Bridge automatically. You can delete it manually from {path}." with the OS-specific path.
-- If bridge is missing but extension is enabled (bridge was removed outside BYOM): settings page shows "Bridge not installed" with "Install Bridge" button. The onboarding does NOT re-trigger — the user is past onboarding. They can reinstall from settings.
+- If bridge is missing but extension is enabled (bridge was removed outside Arlopass): settings page shows "Bridge not installed" with "Install Bridge" button. The onboarding does NOT re-trigger — the user is past onboarding. They can reinstall from settings.
 - If bridge crashes/disconnects after setup is complete: the normal wallet view shows a connection warning banner (not the onboarding flow). Onboarding only triggers when `completed` is false.
 
 ---

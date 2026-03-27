@@ -1,4 +1,4 @@
-import type { ChatMessage } from "@byom-ai/web-sdk";
+import type { ChatMessage } from "@arlopass/web-sdk";
 import type { UsageReport } from "./token-usage-types.js";
 
 const CHARS_PER_TOKEN = 4;

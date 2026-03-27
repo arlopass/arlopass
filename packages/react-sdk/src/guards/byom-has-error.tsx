@@ -1,15 +1,18 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
 import { useStoreSnapshot } from "../hooks/use-store.js";
 import { useConnection } from "../hooks/use-connection.js";
 
 type Props = Readonly<{
-  children: (props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode;
+  children: (props: {
+    error: ArlopassSDKError;
+    retry: (() => Promise<void>) | null;
+  }) => ReactNode;
 }>;
 
-export function BYOMHasError({ children }: Props): ReactNode {
+export function ArlopassHasError({ children }: Props): ReactNode {
   const snapshot = useStoreSnapshot();
   const { retry } = useConnection();
 

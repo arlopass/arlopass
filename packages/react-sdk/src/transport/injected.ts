@@ -1,12 +1,12 @@
-import type { BYOMTransport } from "@byom-ai/web-sdk";
+import type { ArlopassTransport } from "@arlopass/web-sdk";
 
-export function getInjectedTransport(): BYOMTransport | null {
+export function getInjectedTransport(): ArlopassTransport | null {
     if (
         typeof window !== "undefined" &&
-        window.byom !== undefined &&
-        typeof window.byom.request === "function"
+        window.arlopass !== undefined &&
+        typeof window.arlopass.request === "function"
     ) {
-        return window.byom as BYOMTransport;
+        return window.arlopass as ArlopassTransport;
     }
     return null;
 }

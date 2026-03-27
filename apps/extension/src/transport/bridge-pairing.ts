@@ -1,6 +1,6 @@
 const TEXT_ENCODER = new TextEncoder();
 
-export const BRIDGE_PAIRING_STATE_STORAGE_KEY = "byom.wallet.bridgePairing.v1";
+export const BRIDGE_PAIRING_STATE_STORAGE_KEY = "arlopass.wallet.bridgePairing.v1";
 export const BRIDGE_PAIRING_WRAP_VERSION = 1 as const;
 export const BRIDGE_PAIRING_WRAP_PBKDF2_ITERATIONS = 150_000;
 export const BRIDGE_PAIRING_WRAP_SALT_BYTE_LENGTH = 16;
@@ -94,7 +94,7 @@ function toPairingTranscript(input: Readonly<{
   extensionPublicKey: string;
 }>): string {
   return [
-    "byom.bridge.pairing.v1",
+    "arlopass.bridge.pairing.v1",
     input.pairingSessionId,
     input.extensionId,
     input.hostName,
@@ -109,7 +109,7 @@ function toWrapAdditionalData(input: Readonly<{
   hostName: string;
 }>): Uint8Array {
   return TEXT_ENCODER.encode(
-    `byom.bridge.wrap.v1|${input.pairingHandle}|${input.extensionId}|${input.hostName}`,
+    `arlopass.bridge.wrap.v1|${input.pairingHandle}|${input.extensionId}|${input.hostName}`,
   );
 }
 
@@ -201,7 +201,7 @@ async function deriveWrapKey(input: Readonly<{
   const subtle = await requireSubtleCrypto();
   const material = await subtle.importKey(
     "raw",
-    TEXT_ENCODER.encode(`byom.bridge.wrap.v1|${input.runtimeId}`),
+    TEXT_ENCODER.encode(`arlopass.bridge.wrap.v1|${input.runtimeId}`),
     "PBKDF2",
     false,
     ["deriveKey"],
@@ -287,22 +287,22 @@ export function parsePairingBeginPayload(payload: unknown): PairingBeginPayload 
     createdAt,
     expiresAt,
     ...(typeof payload["oneTimeCode"] === "string" &&
-    payload["oneTimeCode"].trim().length === codeLength
+      payload["oneTimeCode"].trim().length === codeLength
       ? {
-          oneTimeCode: payload["oneTimeCode"].trim().toUpperCase(),
-        }
+        oneTimeCode: payload["oneTimeCode"].trim().toUpperCase(),
+      }
       : {}),
     ...(typeof payload["codeRetrievalHint"] === "string" &&
-    payload["codeRetrievalHint"].trim().length > 0
+      payload["codeRetrievalHint"].trim().length > 0
       ? {
-          codeRetrievalHint: payload["codeRetrievalHint"].trim(),
-        }
+        codeRetrievalHint: payload["codeRetrievalHint"].trim(),
+      }
       : {}),
     ...(typeof payload["supersedesPairingHandle"] === "string" &&
-    payload["supersedesPairingHandle"].trim().length > 0
+      payload["supersedesPairingHandle"].trim().length > 0
       ? {
-          supersedesPairingHandle: payload["supersedesPairingHandle"].trim(),
-        }
+        supersedesPairingHandle: payload["supersedesPairingHandle"].trim(),
+      }
       : {}),
   };
 }
@@ -488,7 +488,7 @@ export function parseBridgePairingState(value: unknown): BridgePairingState | un
     wrapIterations,
     createdAt,
     ...(typeof value["rotatedFromPairingHandle"] === "string" &&
-    value["rotatedFromPairingHandle"].trim().length > 0
+      value["rotatedFromPairingHandle"].trim().length > 0
       ? { rotatedFromPairingHandle: value["rotatedFromPairingHandle"].trim() }
       : {}),
   };

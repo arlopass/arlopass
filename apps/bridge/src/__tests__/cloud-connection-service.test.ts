@@ -26,7 +26,7 @@ function createAdapter(): CloudControlPlaneAdapter {
     validateConnection: vi.fn(async () => ({
       ok: true,
     })),
-    revokeConnection: vi.fn(async () => {}),
+    revokeConnection: vi.fn(async () => { }),
     discover: vi.fn(async () => ({
       models: [{ id: "claude-sonnet-4-5" }],
       capabilities: ["chat.completions", "chat.stream"],
@@ -238,7 +238,7 @@ describe("CloudConnectionService", () => {
   });
 
   it("persists connection-handle epoch state across service instances", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-cloud-conn-state-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-cloud-conn-state-"));
     const stateFilePath = join(tempRoot, "cloud-connection-state.json");
     try {
       const adapterOne = createAdapter();
@@ -284,7 +284,7 @@ describe("CloudConnectionService", () => {
   });
 
   it("surfaces corrupted persisted state and continues live operation in-memory", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-cloud-conn-state-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-cloud-conn-state-"));
     const stateFilePath = join(tempRoot, "cloud-connection-state.json");
     writeFileSync(stateFilePath, "{invalid-json", { encoding: "utf8" });
     const persistenceFailures: CloudConnectionPersistenceFailure[] = [];
@@ -336,7 +336,7 @@ describe("CloudConnectionService", () => {
   });
 
   it("recovers epoch state from temp file when primary state file is missing", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-cloud-conn-state-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-cloud-conn-state-"));
     const stateFilePath = join(tempRoot, "cloud-connection-state.json");
     const tempStateFilePath = `${stateFilePath}.tmp`;
     try {
@@ -390,7 +390,7 @@ describe("CloudConnectionService", () => {
   });
 
   it("rehydrates connection input for stateless execute across service instances", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-cloud-conn-state-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-cloud-conn-state-"));
     const stateFilePath = join(tempRoot, "cloud-connection-state.json");
     try {
       const bindingContext = createBindingContext();
@@ -453,7 +453,7 @@ describe("CloudConnectionService", () => {
   });
 
   it("fails closed for legacy persisted connection records missing credentialRef", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-cloud-conn-state-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-cloud-conn-state-"));
     const stateFilePath = join(tempRoot, "cloud-connection-state.json");
     try {
       const bindingContext = createBindingContext();
@@ -507,7 +507,7 @@ describe("CloudConnectionService", () => {
   });
 
   it("tracks persistence lock contention failures without breaking live flow", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-cloud-conn-state-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-cloud-conn-state-"));
     const stateFilePath = join(tempRoot, "cloud-connection-state.json");
     const lockFilePath = `${stateFilePath}.lock`;
     writeFileSync(lockFilePath, "busy", { encoding: "utf8" });

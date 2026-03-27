@@ -2,7 +2,7 @@ import type {
   CanonicalEnvelope,
   ProtocolCapability,
   ProtocolReasonCode,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 export const SDK_PROTOCOL_VERSION = "1.0.0";
 export const SDK_ENVELOPE_NONCE = "AQIDBAUGBwgJCgsMDQ4PEA";

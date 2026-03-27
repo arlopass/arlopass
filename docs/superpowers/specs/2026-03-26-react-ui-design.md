@@ -1,37 +1,37 @@
-# @byom-ai/react-ui — React Components Library Design Spec
+# @arlopass/react-ui — React Components Library Design Spec
 
 **Date:** 2026-03-26
 **Status:** Approved
-**Packages:** `@byom-ai/react-ui` (npm primitives) + `@byom-ai/ui` (registry blocks)
+**Packages:** `@arlopass/react-ui` (npm primitives) + `@arlopass/ui` (registry blocks)
 **Locations:** `packages/react-ui/` + `packages/ui-registry/`
 
 ---
 
 ## 1. Overview
 
-A headless React component library built on `@byom-ai/react` that provides composable, unstyled UI primitives for AI chat interfaces, plus a registry of Tailwind-styled blocks that developers copy into their projects (shadcn model).
+A headless React component library built on `@arlopass/react` that provides composable, unstyled UI primitives for AI chat interfaces, plus a registry of Tailwind-styled blocks that developers copy into their projects (shadcn model).
 
 **Dependency chain:**
 ```
-@byom-ai/react-ui  →  @byom-ai/react  →  @byom-ai/web-sdk  →  @byom-ai/protocol
+@arlopass/react-ui  →  @arlopass/react  →  @arlopass/web-sdk  →  @arlopass/protocol
      (primitives)       (hooks/guards)      (core client)         (envelope types)
 
-@byom-ai/ui (registry CLI)
+@arlopass/ui (registry CLI)
      → copies block source files into developer's project
-     → blocks import from @byom-ai/react-ui + @byom-ai/react
+     → blocks import from @arlopass/react-ui + @arlopass/react
 ```
 
 **Four pillars:** robustness, reliability, extensibility, airtight security.
 
 **Target:** React 18+ (peer dependency `^18.0.0 || ^19.0.0`).
 
-**Client-only library.** All components use browser APIs and `@byom-ai/react` hooks which require `'use client'`. All entry points include `'use client'` directives for RSC compatibility. Not compatible with pure React Server Components.
+**Client-only library.** All components use browser APIs and `@arlopass/react` hooks which require `'use client'`. All entry points include `'use client'` directives for RSC compatibility. Not compatible with pure React Server Components.
 
 ---
 
 ## 2. Distribution Model — Hybrid
 
-### npm package: `@byom-ai/react-ui`
+### npm package: `@arlopass/react-ui`
 - Headless, completely unstyled compound components
 - Semantic HTML with `data-*` attributes for state
 - Dot notation namespace API (`Chat.Root`, `Chat.Messages`, etc.)
@@ -39,11 +39,11 @@ A headless React component library built on `@byom-ai/react` that provides compo
 - Zero CSS shipped — developers style with their own approach
 - Auto-updated via npm — breaking changes follow semver
 
-### Registry: `@byom-ai/ui`
-- CLI tool: `npx @byom-ai/ui add chat`
+### Registry: `@arlopass/ui`
+- CLI tool: `npx @arlopass/ui add chat`
 - Copies Tailwind-styled source files into the developer's project
 - Full ownership — developers modify freely
-- Blocks import from `@byom-ai/react-ui` + `@byom-ai/react`
+- Blocks import from `@arlopass/react-ui` + `@arlopass/react`
 - Dependency resolution — `chatbot` auto-installs `chat`
 
 ---
@@ -70,7 +70,7 @@ The core component. Manages a full conversation with streaming, tool calling, an
 
 **Chat.Root props (uncontrolled mode):**
 
-These map directly to `UseConversationOptions` from `@byom-ai/react`:
+These map directly to `UseConversationOptions` from `@arlopass/react`:
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
@@ -93,13 +93,13 @@ These map directly to `UseConversationOptions` from `@byom-ai/react`:
 | `isSending` | `boolean` | Whether a send is in flight (non-streaming) |
 | `onSend` | `(text: string) => Promise<string>` | Send/stream handler |
 | `onStop` | `() => void` | Stop handler |
-| `error` | `BYOMSDKError \| null` | Current error |
+| `error` | `ArlopassSDKError \| null` | Current error |
 
 **All parts also accept:** `className`, `style`, `ref`, `id`, `data-*`, `aria-*` — forwarded to the rendered HTML element.
 
 **Uncontrolled usage:**
 ```tsx
-import { Chat } from '@byom-ai/react-ui'
+import { Chat } from '@arlopass/react-ui'
 
 <Chat.Root systemPrompt="You are a helpful assistant.">
   <Chat.EmptyState>
@@ -231,7 +231,7 @@ Both are read-only display components. They render the tool name, arguments, and
 Single component (not compound).
 
 ```tsx
-// Uncontrolled — reads from BYOMProvider context
+// Uncontrolled — reads from ArlopassProvider context
 <ConnectionStatus />
 
 // Controlled
@@ -342,17 +342,17 @@ Focus management: input auto-focuses after send completes.
 ### CLI
 
 ```bash
-npx @byom-ai/ui add chat              # Install one block
-npx @byom-ai/ui add chat chatbot      # Install multiple (resolves deps)
-npx @byom-ai/ui add --all             # Install all blocks
-npx @byom-ai/ui list                  # List available blocks
+npx @arlopass/ui add chat              # Install one block
+npx @arlopass/ui add chat chatbot      # Install multiple (resolves deps)
+npx @arlopass/ui add --all             # Install all blocks
+npx @arlopass/ui list                  # List available blocks
 ```
 
 **CLI flags:**
 
 | Flag | Description |
 |---|---|
-| `--out <dir>` | Output directory (default: `src/components/byom/`) |
+| `--out <dir>` | Output directory (default: `src/components/arlopass/`) |
 | `--force, -f` | Overwrite existing files without prompting |
 | `--dry-run` | Show what would be installed without writing files |
 
@@ -362,18 +362,18 @@ npx @byom-ai/ui list                  # List available blocks
 
 **Dependency resolution:** Topologically sorted — if `chatbot` depends on `chat`, `chat` is installed first. Circular dependencies are rejected at build time.
 
-**Config file:** `byom-ui.json` (optional, discovered in project root):
+**Config file:** `arlopass-ui.json` (optional, discovered in project root):
 
 ```json
 {
-  "outDir": "src/components/byom",
+  "outDir": "src/components/arlopass",
   "overwrite": false
 }
 ```
 
 If no config file exists, defaults are used. CLI flags override config file values.
 
-**Default output directory:** `src/components/byom/`
+**Default output directory:** `src/components/arlopass/`
 
 ### registry.json format
 
@@ -385,7 +385,7 @@ If no config file exists, defaults are used. CLI flags override config file valu
       "name": "Chat",
       "description": "Complete chat interface with messages, streaming, and input",
       "dependencies": [],
-      "peerDependencies": ["@byom-ai/react-ui", "@byom-ai/react"],
+      "peerDependencies": ["@arlopass/react-ui", "@arlopass/react"],
       "files": ["chat.tsx"]
     },
     {
@@ -393,7 +393,7 @@ If no config file exists, defaults are used. CLI flags override config file valu
       "name": "Chatbot Widget",
       "description": "Floating chatbot bubble with expandable chat panel",
       "dependencies": ["chat"],
-      "peerDependencies": ["@byom-ai/react-ui", "@byom-ai/react"],
+      "peerDependencies": ["@arlopass/react-ui", "@arlopass/react"],
       "files": ["chatbot.tsx"]
     }
   ]
@@ -405,7 +405,7 @@ If no config file exists, defaults are used. CLI flags override config file valu
 - All blocks use **Tailwind CSS** classes
 - No CSS-in-JS, no module CSS — plain className strings
 - Developers modify classes freely after copying
-- Blocks import from `@byom-ai/react-ui` for compound components and `@byom-ai/react` for hooks/guards
+- Blocks import from `@arlopass/react-ui` for compound components and `@arlopass/react` for hooks/guards
 
 ---
 
@@ -416,7 +416,7 @@ If no config file exists, defaults are used. CLI flags override config file valu
 - **No inline event handlers from user props** — all events go through React synthetic events
 - **Registry blocks are auditable source code** — developers inspect before adding
 - **Content sanitization documented** — primitives render text safely; developers opt into HTML explicitly
-- **No credential handling** — all credential management stays in the extension/bridge layer via `@byom-ai/react`
+- **No credential handling** — all credential management stays in the extension/bridge layer via `@arlopass/react`
 
 ---
 
@@ -509,7 +509,7 @@ If no config file exists, defaults are used. CLI flags override config file valu
 
 ### Package exports
 
-**@byom-ai/react-ui:**
+**@arlopass/react-ui:**
 ```json
 {
   "exports": {
@@ -517,27 +517,27 @@ If no config file exists, defaults are used. CLI flags override config file valu
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
-    "@byom-ai/react": ">=0.1.0"
+    "@arlopass/react": ">=0.1.0"
   }
 }
 ```
 
-**@byom-ai/ui:**
+**@arlopass/ui:**
 ```json
 {
-  "bin": { "byom-ui": "./bin/cli.js" }
+  "bin": { "arlopass-ui": "./bin/cli.js" }
 }
 ```
 
 ## 8. Exports
 
-**From `@byom-ai/react-ui`:**
+**From `@arlopass/react-ui`:**
 - Components: `Chat`, `Message`, `StreamingText`, `ProviderPicker`, `ToolActivity`, `ConnectionStatus`
 
-**Types are NOT re-exported from react-ui.** Developers import types from `@byom-ai/react`:
+**Types are NOT re-exported from react-ui.** Developers import types from `@arlopass/react`:
 ```ts
-import type { TrackedChatMessage, ToolDefinition, MessageId, ToolCallInfo } from '@byom-ai/react'
-import type { BYOMSDKError, ProviderDescriptor, SelectProviderInput } from '@byom-ai/react'
+import type { TrackedChatMessage, ToolDefinition, MessageId, ToolCallInfo } from '@arlopass/react'
+import type { ArlopassSDKError, ProviderDescriptor, SelectProviderInput } from '@arlopass/react'
 ```
 
 This avoids duplicate type definitions and keeps react-ui focused on components.
@@ -547,7 +547,7 @@ This avoids duplicate type definitions and keeps react-ui focused on components.
 ## 9. Testing Strategy
 
 - **Vitest + @testing-library/react** with jsdom
-- **`MockBYOMProvider`** from `@byom-ai/react/testing` for all tests
+- **`MockArlopassProvider`** from `@arlopass/react/testing` for all tests
 - **Test matrix per compound component:**
   - Renders without errors
   - Uncontrolled mode: auto-creates conversation, responds to interactions

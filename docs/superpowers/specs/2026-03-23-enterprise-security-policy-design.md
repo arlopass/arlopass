@@ -3,7 +3,7 @@
 ## Metadata
 - **Date:** 2026-03-23
 - **Status:** Draft for review
-- **Program:** BYOM AI SDK
+- **Program:** Arlopass SDK
 - **Pillars:** Security, Reliability, Robustness
 
 ---

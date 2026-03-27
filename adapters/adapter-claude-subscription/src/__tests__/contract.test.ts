@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type CloudAdapterContractV2,
   MANIFEST_SCHEMA_VERSION,
-} from "@byom-ai/adapter-runtime";
+} from "@arlopass/adapter-runtime";
 import {
   AuthError,
   PermissionError,
@@ -11,7 +11,7 @@ import {
   TimeoutError,
   TransientNetworkError,
   isProtocolError,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 import { buildAuthHeaders, ClaudeSubscriptionAdapter, CLAUDE_SUBSCRIPTION_MANIFEST } from "../index.js";
 import type { ClaudeAuthConfig } from "../auth.js";

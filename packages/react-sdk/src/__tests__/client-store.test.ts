@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { buildSnapshot, snapshotsEqual, createInitialSnapshot } from "../store/snapshot.js";
 import { Subscriptions } from "../store/subscriptions.js";
 import { ClientStore } from "../store/client-store.js";
-import type { BYOMClient } from "@byom-ai/web-sdk";
+import type { ArlopassClient } from "@arlopass/web-sdk";
 
 function createMockClient(overrides: {
     state?: string;
@@ -21,7 +21,7 @@ function createMockClient(overrides: {
             send: vi.fn(),
             stream: vi.fn(),
         },
-    } as unknown as BYOMClient;
+    } as unknown as ArlopassClient;
 }
 
 describe("snapshot", () => {
@@ -150,7 +150,7 @@ describe("ClientStore", () => {
     it("setError updates snapshot error field", () => {
         const client = createMockClient();
         const store = new ClientStore(client);
-        const error = new Error("test") as unknown as import("@byom-ai/web-sdk").BYOMSDKError;
+        const error = new Error("test") as unknown as import("@arlopass/web-sdk").ArlopassSDKError;
         store.setError(error);
         expect(store.getSnapshot().error).toBe(error);
         store.destroy();

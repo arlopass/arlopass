@@ -1,9 +1,9 @@
-# @byom-ai/adapter-claude-subscription
+# @arlopass/adapter-claude-subscription
 
-Connect to [Anthropic Claude](https://www.anthropic.com/) via API key or OAuth2 device flow through the BYOM wallet.
+Connect to [Anthropic Claude](https://www.anthropic.com/) via API key or OAuth2 device flow through the Arlopass wallet.
 
 ```ts
-import { ClaudeSubscriptionAdapter } from "@byom-ai/adapter-claude-subscription";
+import { ClaudeSubscriptionAdapter } from "@arlopass/adapter-claude-subscription";
 
 const adapter = new ClaudeSubscriptionAdapter({
   auth: { authType: "api_key", apiKey: process.env.ANTHROPIC_API_KEY! },
@@ -16,7 +16,7 @@ const models = await adapter.listModels();
 console.log(models); // ["claude-opus-4-5", "claude-sonnet-4-5", ...]
 
 const sessionId = await adapter.createSession({ model: "claude-sonnet-4-5" });
-const response = await adapter.sendMessage(sessionId, "Hello from BYOM");
+const response = await adapter.sendMessage(sessionId, "Hello from Arlopass");
 console.log(response);
 ```
 
@@ -122,5 +122,5 @@ Provider ID `claude-subscription`, auth type `oauth2`, risk level `medium`, egre
 
 ### Dependencies
 
-- `@byom-ai/adapter-runtime` — Adapter contract and cloud connection types
-- `@byom-ai/protocol` — Envelope and error types
+- `@arlopass/adapter-runtime` — Adapter contract and cloud connection types
+- `@arlopass/protocol` — Envelope and error types

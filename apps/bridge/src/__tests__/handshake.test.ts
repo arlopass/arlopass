@@ -242,7 +242,7 @@ describe("HandshakeManager.cleanupExpiredChallenges", () => {
 
 describe("HandshakeManager persisted state", () => {
   it("allows challenge verify across manager instances when state persistence is enabled", () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-handshake-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-handshake-"));
     const stateFilePath = join(tempRoot, "handshake-state.json");
 
     try {

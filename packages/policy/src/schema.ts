@@ -1,4 +1,4 @@
-import { isProtocolCapability, type ProtocolCapability } from "@byom-ai/protocol";
+import { isProtocolCapability, type ProtocolCapability } from "@arlopass/protocol";
 
 export const POLICY_BUNDLE_SCHEMA_VERSION = "1.0.0";
 export const POLICY_SIGNATURE_ALGORITHM = "ed25519";

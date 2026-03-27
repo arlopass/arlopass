@@ -1,5 +1,5 @@
 {
-  "name": "@byom-ai/bridge",
+  "name": "@arlopass/bridge",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "apps/bridge"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/apps/bridge#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/apps/bridge#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
   "bin": {
-    "byom-bridge": "./dist/main.js"
+    "arlopass-bridge": "./dist/main.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,9 +31,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@byom-ai/audit": "0.1.0",
-    "@byom-ai/policy": "0.1.0",
-    "@byom-ai/protocol": "0.1.0",
-    "@byom-ai/telemetry": "0.1.0"
+    "@arlopass/audit": "0.1.0",
+    "@arlopass/policy": "0.1.0",
+    "@arlopass/protocol": "0.1.0",
+    "@arlopass/telemetry": "0.1.0"
   }
 }

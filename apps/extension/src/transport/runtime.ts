@@ -9,7 +9,7 @@ import {
   parseEnvelope,
   type CanonicalEnvelope,
   type ProtocolErrorDetailValue,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 import type {
   ChatMessage,
   ChatSendPayload,
@@ -20,7 +20,7 @@ import type {
   ProviderListResponsePayload,
   SelectProviderPayload,
   SelectProviderResponsePayload,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 import { ensureBridgeHandshakeSession } from "./bridge-handshake.js";
 import {
   BRIDGE_PAIRING_STATE_STORAGE_KEY,
@@ -35,11 +35,11 @@ import type { UsageReport } from "../usage/token-usage-types.js";
 import { estimateUsageReport } from "../usage/token-estimation.js";
 import { TokenUsageService } from "../usage/token-usage-service.js";
 
-const WALLET_KEY_PROVIDERS = "byom.wallet.providers.v1";
-const WALLET_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
+const WALLET_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
+const WALLET_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 const RESPONSE_TTL_MS = 60_000;
-const TRANSPORT_STREAM_CHANNEL = "byom.transport.stream";
-const TRANSPORT_STREAM_PORT_NAME = "byom.transport.stream.v1";
+const TRANSPORT_STREAM_CHANNEL = "arlopass.transport.stream";
+const TRANSPORT_STREAM_PORT_NAME = "arlopass.transport.stream.v1";
 
 const DEFAULT_CAPABILITIES = [
   "provider.list",
@@ -93,7 +93,7 @@ export type WalletStorageAdapter = Readonly<{
 type SupportedTransportAction = "request" | "request-stream" | "disconnect";
 
 export type TransportMessageEnvelope = Readonly<{
-  channel: "byom.transport";
+  channel: "arlopass.transport";
   action: SupportedTransportAction;
   request?: Readonly<{
     envelope: unknown;
@@ -1287,8 +1287,8 @@ class PersistentBridgePort {
   }
 }
 
-const BRIDGE_PORT_SINGLETON_KEY = "__byom.bridge.persistent_port.v1";
-const DEFAULT_BRIDGE_HOST_NAME = "com.byom.bridge";
+const BRIDGE_PORT_SINGLETON_KEY = "__arlopass.bridge.persistent_port.v1";
+const DEFAULT_BRIDGE_HOST_NAME = "com.arlopass.bridge";
 
 function getSharedBridgePort(): PersistentBridgePort | undefined {
   if (
@@ -1374,8 +1374,8 @@ async function runCliBridgeCompletion(options: {
   ) => Promise<unknown>;
 }): Promise<string> {
   const hostName = normalizeText(
-    options.provider.metadata["nativeHostName"] ?? "com.byom.bridge",
-    "com.byom.bridge",
+    options.provider.metadata["nativeHostName"] ?? "com.arlopass.bridge",
+    "com.arlopass.bridge",
   );
   const cliType = normalizeText(
     options.provider.metadata["cliType"] ?? "copilot-cli",
@@ -1602,8 +1602,8 @@ async function runCliBridgeCompletionStream(options: {
   // With a persistent bridge port, perform handshake and then send a
   // streaming CLI request. Intermediate chunks arrive via onChunk.
   const hostName = normalizeText(
-    options.provider.metadata["nativeHostName"] ?? "com.byom.bridge",
-    "com.byom.bridge",
+    options.provider.metadata["nativeHostName"] ?? "com.arlopass.bridge",
+    "com.arlopass.bridge",
   );
   const cliType = normalizeText(
     options.provider.metadata["cliType"] ?? "copilot-cli",
@@ -2042,8 +2042,8 @@ async function dispatchTransportRequest(options: {
   const snapshot = await readWalletSnapshot(options.storage);
 
   // Load the connected app for this origin to enforce access controls
-  const appsRaw = await options.storage.get(["byom.wallet.apps.v1"]);
-  const apps = Array.isArray(appsRaw["byom.wallet.apps.v1"]) ? appsRaw["byom.wallet.apps.v1"] as unknown[] : [];
+  const appsRaw = await options.storage.get(["arlopass.wallet.apps.v1"]);
+  const apps = Array.isArray(appsRaw["arlopass.wallet.apps.v1"]) ? appsRaw["arlopass.wallet.apps.v1"] as unknown[] : [];
   const connectedApp = apps.find((a): a is Record<string, unknown> =>
     isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && a["status"] === "active"
   ) ?? null;
@@ -2085,8 +2085,8 @@ async function dispatchTransportRequest(options: {
         // If the origin is not already an approved connected app, trigger the
         // popup onboarding wizard and wait for the user's decision.
         if (connectedApp === null) {
-          const PENDING_KEY = "byom.wallet.pendingConnection.v1";
-          const RESULT_KEY = "byom.wallet.connectionResult.v1";
+          const PENDING_KEY = "arlopass.wallet.pendingConnection.v1";
+          const RESULT_KEY = "arlopass.wallet.connectionResult.v1";
 
           await options.storage.set({
             [PENDING_KEY]: {
@@ -2321,8 +2321,8 @@ async function resolveTransportStreamEnvelopeIterable(options: {
   const snapshot = await readWalletSnapshot(options.storage);
 
   // Enforce app-level access control for streams
-  const streamAppsRaw = await options.storage.get(["byom.wallet.apps.v1"]);
-  const streamApps = Array.isArray(streamAppsRaw["byom.wallet.apps.v1"]) ? streamAppsRaw["byom.wallet.apps.v1"] as unknown[] : [];
+  const streamAppsRaw = await options.storage.get(["arlopass.wallet.apps.v1"]);
+  const streamApps = Array.isArray(streamAppsRaw["arlopass.wallet.apps.v1"]) ? streamAppsRaw["arlopass.wallet.apps.v1"] as unknown[] : [];
   const streamApp = streamApps.find((a): a is Record<string, unknown> =>
     isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && a["status"] === "active"
   ) ?? null;
@@ -2450,7 +2450,7 @@ function isTransportMessageEnvelope(
 ): message is TransportMessageEnvelope {
   return (
     isRecord(message) &&
-    message["channel"] === "byom.transport" &&
+    message["channel"] === "arlopass.transport" &&
     (message["action"] === "request" ||
       message["action"] === "request-stream" ||
       message["action"] === "disconnect")
@@ -2711,9 +2711,9 @@ function createDefaultTransportRuntimeDependencies(options: {
 }
 
 type ExtensionGlobalState = typeof globalThis & Record<string, unknown>;
-const TRANSPORT_MESSAGE_LISTENER_FLAG = "__byom.transport.listener.registered.v1";
+const TRANSPORT_MESSAGE_LISTENER_FLAG = "__arlopass.transport.listener.registered.v1";
 const TRANSPORT_STREAM_PORT_LISTENER_FLAG =
-  "__byom.transport.stream-port.listener.registered.v1";
+  "__arlopass.transport.stream-port.listener.registered.v1";
 
 export function registerDefaultTransportMessageListener(options: {
   reportError?: (error: Error) => void;
@@ -2721,7 +2721,7 @@ export function registerDefaultTransportMessageListener(options: {
   const reportError =
     options.reportError ??
     ((error: Error) => {
-      console.error("BYOM transport message handler failed", error);
+      console.error("Arlopass transport message handler failed", error);
     });
 
   if (typeof chrome === "undefined") {
@@ -2796,7 +2796,7 @@ export function registerDefaultTransportStreamPortListener(options: {
   const reportError =
     options.reportError ??
     ((error: Error) => {
-      console.error("BYOM transport stream port handler failed", error);
+      console.error("Arlopass transport stream port handler failed", error);
     });
 
   if (typeof chrome === "undefined") {

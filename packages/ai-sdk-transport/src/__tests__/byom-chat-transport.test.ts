@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { BYOMChatTransport } from "../byom-chat-transport.js";
+import { ArlopassChatTransport } from "../arlopass-chat-transport.js";
 
 function createMockClient(overrides: Record<string, any> = {}) {
     return {
@@ -31,10 +31,10 @@ const trivialMessages = [
     },
 ];
 
-describe("BYOMChatTransport", () => {
+describe("ArlopassChatTransport", () => {
     it("uses the provided client in BYOB mode", async () => {
         const client = createMockClient();
-        const transport = new BYOMChatTransport({ client });
+        const transport = new ArlopassChatTransport({ client });
 
         const stream = await transport.sendMessages({
             trigger: "submit-message",
@@ -49,8 +49,8 @@ describe("BYOMChatTransport", () => {
         expect(stream).toBeInstanceOf(ReadableStream);
     });
 
-    it("throws when extension is not installed (auto-connect, no window.byom)", async () => {
-        const transport = new BYOMChatTransport({ appId: "test" });
+    it("throws when extension is not installed (auto-connect, no window.arlopass)", async () => {
+        const transport = new ArlopassChatTransport({ appId: "test" });
 
         await expect(
             transport.sendMessages({
@@ -60,12 +60,12 @@ describe("BYOMChatTransport", () => {
                 messages: trivialMessages,
                 abortSignal: undefined,
             } as any),
-        ).rejects.toThrow(/BYOM extension not detected/);
+        ).rejects.toThrow(/Arlopass extension not detected/);
     });
 
     it("throws when no provider is selected", async () => {
         const client = createMockClient({ selectedProvider: undefined });
-        const transport = new BYOMChatTransport({ client });
+        const transport = new ArlopassChatTransport({ client });
 
         await expect(
             transport.sendMessages({
@@ -80,7 +80,7 @@ describe("BYOMChatTransport", () => {
 
     it("reuses the client across multiple calls (BYOB mode)", async () => {
         const client = createMockClient();
-        const transport = new BYOMChatTransport({ client });
+        const transport = new ArlopassChatTransport({ client });
 
         await transport.sendMessages({
             trigger: "submit-message",
@@ -112,7 +112,7 @@ describe("BYOMChatTransport", () => {
     it("passes abort signal to the stream", async () => {
         const controller = new AbortController();
         const client = createMockClient();
-        const transport = new BYOMChatTransport({ client });
+        const transport = new ArlopassChatTransport({ client });
 
         const stream = await transport.sendMessages({
             trigger: "submit-message",
@@ -128,7 +128,7 @@ describe("BYOMChatTransport", () => {
     });
 
     it("reconnectToStream returns null", async () => {
-        const transport = new BYOMChatTransport({ client: createMockClient() });
+        const transport = new ArlopassChatTransport({ client: createMockClient() });
         const result = await transport.reconnectToStream({
             chatId: "chat1",
         } as any);
@@ -137,7 +137,7 @@ describe("BYOMChatTransport", () => {
 
     it("converts UIMessages to ChatMessages before streaming", async () => {
         const client = createMockClient();
-        const transport = new BYOMChatTransport({ client });
+        const transport = new ArlopassChatTransport({ client });
 
         await transport.sendMessages({
             trigger: "submit-message",

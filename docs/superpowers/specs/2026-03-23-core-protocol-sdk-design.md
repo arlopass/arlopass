@@ -3,18 +3,18 @@
 ## Metadata
 - **Date:** 2026-03-23
 - **Status:** Draft for review
-- **Program:** BYOM AI SDK
+- **Program:** Arlopass SDK
 - **Pillars:** Security, Reliability, Robustness
 
 ---
 
 ## 1) Problem and Scope
 
-The platform needs a canonical protocol and app-facing SDK so every client app can talk to the BYOM stack safely and consistently. Without a strict contract, extension, bridge, and adapters will diverge and become insecure.
+The platform needs a canonical protocol and app-facing SDK so every client app can talk to the Arlopass stack safely and consistently. Without a strict contract, extension, bridge, and adapters will diverge and become insecure.
 
 ### In Scope
-- Shared protocol package (`@byom-ai/protocol`)
-- App-facing SDK (`@byom-ai/web-sdk`)
+- Shared protocol package (`@arlopass/protocol`)
+- App-facing SDK (`@arlopass/web-sdk`)
 - Message schemas, version negotiation, error taxonomy
 - Session lifecycle, streaming abstractions, typed events
 

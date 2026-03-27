@@ -10,7 +10,7 @@
 
 ## 1) Problem
 
-The extension currently treats CLI providers as connected but cannot execute chat requests. This creates a broken production path (`provider.unavailable`) and makes BYOM unreliable for local CLI-backed providers.
+The extension currently treats CLI providers as connected but cannot execute chat requests. This creates a broken production path (`provider.unavailable`) and makes Arlopass unreliable for local CLI-backed providers.
 
 We need an enterprise-grade CLI execution system that:
 - Executes user chat prompts through a local CLI runtime (first-class target: GitHub Copilot CLI).
@@ -101,11 +101,11 @@ We need an enterprise-grade CLI execution system that:
 - `maxTimeoutMs`: `120_000`; `minTimeoutMs`: `5_000`; default `30_000`.
 - `maxStdoutBytes`: `524_288` (512 KiB).
 - `maxStderrBytes`: `65_536` (64 KiB, for diagnostics).
-- `maxConcurrentExecutions`: default `3`, configurable via `BYOM_CLI_MAX_CONCURRENT`, clamped to `[1, 16]`.
+- `maxConcurrentExecutions`: default `3`, configurable via `ARLOPASS_CLI_MAX_CONCURRENT`, clamped to `[1, 16]`.
 
 #### Binary discovery and pinning
 - Resolved once at bridge startup:
-  1. `BYOM_COPILOT_CLI_PATH` (absolute or PATH-resolvable command).
+  1. `ARLOPASS_COPILOT_CLI_PATH` (absolute or PATH-resolvable command).
   2. fallback command: `copilot`.
 - Startup probe: `<resolvedCommand> --version`.
 - If probe fails, bridge stays running but CLI execution requests return explicit `provider.unavailable` with details.
@@ -261,7 +261,7 @@ All bridge responses (success and error) must preserve `correlationId`.
   - no `assistant.message` content found
   - concurrency cap enforcement
   - unknown flag failure path for tool-restriction arg
-  - binary discovery failure path (`BYOM_COPILOT_CLI_PATH`)
+  - binary discovery failure path (`ARLOPASS_COPILOT_CLI_PATH`)
 
 ### Extension runtime tests
 - CLI completion success path via mocked native response.

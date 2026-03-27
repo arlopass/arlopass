@@ -28,7 +28,7 @@ const TIPS: TipCard[] = [
   {
     icon: IconWallet,
     heading: "Your AI wallet",
-    copy: "Click the BYOM icon anytime to see your providers, connected apps, and usage. You can add more providers, revoke access, or change settings whenever you want.",
+    copy: "Click the Arlopass icon anytime to see your providers, connected apps, and usage. You can add more providers, revoke access, or change settings whenever you want.",
   },
 ];
 

@@ -1,11 +1,11 @@
-# BYOM AI
+# Arlopass
 
 Let web applications use your AI providers — local models, paid subscriptions, CLI tools — without exposing your credentials.
 
 ```ts
-import { BYOMClient } from "@byom-ai/web-sdk";
+import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom, origin: location.origin });
+const client = new ArlopassClient({ transport: window.arlopass, origin: location.origin });
 
 await client.connect({ appId: "com.acme.app" });
 
@@ -23,9 +23,9 @@ console.log(reply.message.content);
 await client.disconnect();
 ```
 
-The BYOM extension injects a transport at `window.byom`. The web app never sees your API keys or tokens — they stay on your machine, routed through a local bridge to your chosen provider.
+The Arlopass extension injects a transport at `window.arlopass`. The web app never sees your API keys or tokens — they stay on your machine, routed through a local bridge to your chosen provider.
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/byom-ai/byom-web/build.yml?style=flat-square&label=Build)](https://github.com/byom-ai/byom-web/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/arlopass/arlopass/build.yml?style=flat-square&label=Build)](https://github.com/arlopass/arlopass/actions)
 [![Node.js](https://img.shields.io/badge/Node.js->=20-3c873a?style=flat-square)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
@@ -36,8 +36,8 @@ The BYOM extension injects a transport at `window.byom`. The web app never sees 
 
 ## How it works
 
-1. A web app requests AI capabilities through `@byom-ai/web-sdk`
-2. The BYOM browser extension prompts the user for consent
+1. A web app requests AI capabilities through `@arlopass/web-sdk`
+2. The Arlopass browser extension prompts the user for consent
 3. The user selects a provider and model from their connected accounts
 4. Requests route through a local bridge to the chosen provider
 5. Policy, audit, and telemetry are enforced at every trust boundary
@@ -47,11 +47,11 @@ The BYOM extension injects a transport at `window.byom`. The web app never sees 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Web Application                      │
-│                     @byom-ai/web-sdk                        │
+│                     @arlopass/web-sdk                        │
 └──────────────────────────┬──────────────────────────────────┘
-                           │ window.byom (injected transport)
+                           │ window.arlopass (injected transport)
 ┌──────────────────────────▼──────────────────────────────────┐
-│                   BYOM AI Wallet Extension                  │
+│                   Arlopass Wallet Extension                  │
 │        Consent UI · Permission Store · Policy Preflight     │
 └──────────────────────────┬──────────────────────────────────┘
                            │ Chrome Native Messaging (stdio)
@@ -78,8 +78,8 @@ The BYOM extension injects a transport at `window.byom`. The web app never sees 
 Requires [Node.js 20+](https://nodejs.org/download/) and [Chrome](https://www.google.com/chrome/) (or Chromium).
 
 ```bash
-git clone https://github.com/byom-ai/byom-web.git
-cd byom-web
+git clone https://github.com/arlopass/arlopass.git
+cd arlopass
 npm ci
 ```
 
@@ -106,7 +106,7 @@ This installs dependencies, starts build watchers, launches the bridge, and regi
 
 ### Load the Extension
 
-1. Build: `npm run build -w @byom-ai/extension`
+1. Build: `npm run build -w @arlopass/extension`
 2. Open `chrome://extensions`, enable **Developer mode**
 3. Click **Load unpacked**, select `apps/extension`
 
@@ -133,7 +133,7 @@ for await (const event of client.chat.stream({
 Skip the extension and talk to a provider directly:
 
 ```ts
-import { OllamaAdapter } from "@byom-ai/adapter-ollama";
+import { OllamaAdapter } from "@arlopass/adapter-ollama";
 
 const adapter = new OllamaAdapter({ baseUrl: "http://localhost:11434" });
 const models = await adapter.listModels();
@@ -145,14 +145,14 @@ await adapter.shutdown();
 
 ## Custom Transport
 
-If you don't use the browser extension, supply your own `BYOMTransport`:
+If you don't use the browser extension, supply your own `ArlopassTransport`:
 
 ```ts
-import { BYOMClient, type BYOMTransport } from "@byom-ai/web-sdk";
+import { ArlopassClient, type ArlopassTransport } from "@arlopass/web-sdk";
 
-const transport: BYOMTransport = {
+const transport: ArlopassTransport = {
   async request(req) {
-    const res = await fetch("/api/byom", {
+    const res = await fetch("/api/arlopass", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(req),
@@ -160,7 +160,7 @@ const transport: BYOMTransport = {
     return { envelope: await res.json() };
   },
   async stream(req) {
-    const res = await fetch("/api/byom/stream", {
+    const res = await fetch("/api/arlopass/stream", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(req),
@@ -179,7 +179,7 @@ const transport: BYOMTransport = {
   },
 };
 
-const client = new BYOMClient({ transport, origin: location.origin });
+const client = new ArlopassClient({ transport, origin: location.origin });
 
 ## Packages
 
@@ -189,32 +189,32 @@ This monorepo is organized into three workspace groups:
 
 | Package | Description |
 |---------|-------------|
-| [`@byom-ai/protocol`](packages/protocol/) | Envelope format, capability model, version negotiation, error codes |
-| [`@byom-ai/web-sdk`](packages/web-sdk/) | `BYOMClient` — connect, chat, stream, state machine |
-| [`@byom-ai/policy`](packages/policy/) | Policy evaluation — allow/deny rules, signed bundles, ed25519 verification |
-| [`@byom-ai/audit`](packages/audit/) | Audit events, JSONL and OTLP exporters, field redaction |
-| [`@byom-ai/telemetry`](packages/telemetry/) | Metrics, tracing, and sensitive-data redaction |
+| [`@arlopass/protocol`](packages/protocol/) | Envelope format, capability model, version negotiation, error codes |
+| [`@arlopass/web-sdk`](packages/web-sdk/) | `ArlopassClient` — connect, chat, stream, state machine |
+| [`@arlopass/policy`](packages/policy/) | Policy evaluation — allow/deny rules, signed bundles, ed25519 verification |
+| [`@arlopass/audit`](packages/audit/) | Audit events, JSONL and OTLP exporters, field redaction |
+| [`@arlopass/telemetry`](packages/telemetry/) | Metrics, tracing, and sensitive-data redaction |
 
 ### Adapters (`adapters/`)
 
 | Package | Provider | Status |
 |---------|----------|--------|
-| [`@byom-ai/adapter-ollama`](adapters/adapter-ollama/) | Local Ollama models | Implemented |
-| [`@byom-ai/adapter-claude-subscription`](adapters/adapter-claude-subscription/) | Anthropic Claude API | Auth in progress |
-| [`@byom-ai/adapter-local-cli-bridge`](adapters/adapter-local-cli-bridge/) | Local CLI tools (Copilot CLI, Claude Desktop) | Implemented |
-| [`@byom-ai/adapter-amazon-bedrock`](adapters/adapter-amazon-bedrock/) | Amazon Bedrock | Planned |
-| [`@byom-ai/adapter-google-vertex-ai`](adapters/adapter-google-vertex-ai/) | Google Vertex AI | Planned |
-| [`@byom-ai/adapter-microsoft-foundry`](adapters/adapter-microsoft-foundry/) | Azure AI Foundry | Planned |
-| [`@byom-ai/adapter-runtime`](adapters/runtime/) | Adapter host lifecycle, sandbox, health checks, manifest validation |
-| [`@byom-ai/adapter-tooling`](adapters/tooling/) | Development utilities for building adapters |
+| [`@arlopass/adapter-ollama`](adapters/adapter-ollama/) | Local Ollama models | Implemented |
+| [`@arlopass/adapter-claude-subscription`](adapters/adapter-claude-subscription/) | Anthropic Claude API | Auth in progress |
+| [`@arlopass/adapter-local-cli-bridge`](adapters/adapter-local-cli-bridge/) | Local CLI tools (Copilot CLI, Claude Desktop) | Implemented |
+| [`@arlopass/adapter-amazon-bedrock`](adapters/adapter-amazon-bedrock/) | Amazon Bedrock | Planned |
+| [`@arlopass/adapter-google-vertex-ai`](adapters/adapter-google-vertex-ai/) | Google Vertex AI | Planned |
+| [`@arlopass/adapter-microsoft-foundry`](adapters/adapter-microsoft-foundry/) | Azure AI Foundry | Planned |
+| [`@arlopass/adapter-runtime`](adapters/runtime/) | Adapter host lifecycle, sandbox, health checks, manifest validation |
+| [`@arlopass/adapter-tooling`](adapters/tooling/) | Development utilities for building adapters |
 
 ### Applications (`apps/`)
 
 | Package | Description |
 |---------|-------------|
-| [`@byom-ai/bridge`](apps/bridge/) | Native messaging daemon — routes requests between extension and adapters |
-| [`@byom-ai/extension`](apps/extension/) | Chrome Manifest V3 extension — consent UI, permissions, provider selection |
-| [`@byom-ai/examples-web`](apps/examples-web/) | React + Mantine demo app with all SDK integration patterns |
+| [`@arlopass/bridge`](apps/bridge/) | Native messaging daemon — routes requests between extension and adapters |
+| [`@arlopass/extension`](apps/extension/) | Chrome Manifest V3 extension — consent UI, permissions, provider selection |
+| [`@arlopass/examples-web`](apps/examples-web/) | React + Mantine demo app with all SDK integration patterns |
 
 ### Operations (`ops/`)
 
@@ -245,7 +245,7 @@ This monorepo is organized into three workspace groups:
 npm test
 
 # Specific workspace
-npm run test -w @byom-ai/web-sdk
+npm run test -w @arlopass/web-sdk
 
 # Watch mode
 npx vitest --workspace vitest.workspace.ts
@@ -278,7 +278,7 @@ For the extension to communicate with the local bridge, register the native mess
 npm run dev:register-native-host
 ```
 
-Or manually create a `com.byom.bridge.json` manifest pointing to your bridge executable and register it in the Chrome NativeMessagingHosts registry key.
+Or manually create a `com.arlopass.bridge.json` manifest pointing to your bridge executable and register it in the Chrome NativeMessagingHosts registry key.
 
 ## Security
 
@@ -297,10 +297,10 @@ Or manually create a `com.byom.bridge.json` manifest pointing to your bridge exe
 
 | Problem | Solution |
 |---------|---------|
-| Extension can't connect to bridge | Verify `com.byom.bridge` native host is registered. Run `npm run dev:register-native-host` and reload the extension. |
-| `auth.invalid` during handshake | Extension and bridge may have stale pairing state — delete `%LOCALAPPDATA%\BYOM\bridge\state` and re-pair. |
+| Extension can't connect to bridge | Verify `com.arlopass.bridge` native host is registered. Run `npm run dev:register-native-host` and reload the extension. |
+| `auth.invalid` during handshake | Extension and bridge may have stale pairing state — delete `%LOCALAPPDATA%\Arlopass\bridge\state` and re-pair. |
 | Popup shows no providers | Seed demo providers via the extension options page or service worker console. See the [usage guide](RUNNING_AND_USAGE_GUIDE.md#7-how-to-use-current-extension-wallet-ui). |
-| `window.byom` is undefined | Reload the unpacked extension, refresh the target tab, and verify the extension has site access for that origin. |
+| `window.arlopass` is undefined | Reload the unpacked extension, refresh the target tab, and verify the extension has site access for that origin. |
 
 For detailed setup, production deployment, and advanced usage patterns, see the [Running & Usage Guide](RUNNING_AND_USAGE_GUIDE.md).
 
@@ -309,7 +309,7 @@ For detailed setup, production deployment, and advanced usage patterns, see the 
 | Component | Status |
 |-----------|--------|
 | Protocol & Envelope | Complete |
-| Web SDK (BYOMClient) | Core API complete |
+| Web SDK (ArlopassClient) | Core API complete |
 | Policy Engine | Schema ready, evaluator in progress |
 | Audit & Telemetry | Core schema and metrics defined |
 | Adapter Runtime | Host lifecycle, sandbox, loader ready |

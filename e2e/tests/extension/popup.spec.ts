@@ -19,7 +19,7 @@ test.describe("Extension Popup", () => {
     // ── Rendering ──
 
     test("renders popup header with branding", async () => {
-        await expect(popup.title).toHaveText("BYOM Wallet");
+        await expect(popup.title).toHaveText("Arlopass Wallet");
         await expect(popup.statusChip).toBeVisible();
         await expect(popup.header).toBeVisible();
     });
@@ -258,13 +258,13 @@ test.describe("Extension Popup", () => {
     }) => {
         await seedWalletError(context, {
             message: "Provider unavailable",
-            code: "BYOM_PROVIDER_UNAVAILABLE",
+            code: "ARLOPASS_PROVIDER_UNAVAILABLE",
         });
         await popup.goto(extensionId);
 
         await expect(popup.errorBanner).toBeVisible();
         await expect(popup.errorBanner).toContainText("Provider unavailable");
-        await expect(popup.errorBanner).toContainText("BYOM_PROVIDER_UNAVAILABLE");
+        await expect(popup.errorBanner).toContainText("ARLOPASS_PROVIDER_UNAVAILABLE");
     });
 
     test("does not show error banner when no error exists", async () => {
@@ -314,7 +314,7 @@ test.describe("Extension Popup", () => {
         // Seed invalid provider data to trigger warnings
         await context.serviceWorkers()[0]?.evaluate(async () => {
             await chrome.storage.local.set({
-                "byom.wallet.providers.v1": [
+                "arlopass.wallet.providers.v1": [
                     { id: "good", name: "Good", type: "cloud", status: "connected", models: [] },
                     { broken: true }, // missing required fields
                     { id: "no-name", type: "cloud", status: "connected", models: [] }, // missing name

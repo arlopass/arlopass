@@ -13,7 +13,7 @@
 import { generateKeyPairSync, sign } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
-import type { CanonicalEnvelope } from "@byom-ai/protocol";
+import type { CanonicalEnvelope } from "@arlopass/protocol";
 import {
   POLICY_DECISION_TYPES,
   parsePolicyBundle,
@@ -21,7 +21,7 @@ import {
   canonicalizePolicyBundle,
   createPolicyBundleDigest,
   type SignedPolicyBundle,
-} from "@byom-ai/policy";
+} from "@arlopass/policy";
 
 import { PreflightEvaluator } from "../policy/preflight-evaluator.js";
 

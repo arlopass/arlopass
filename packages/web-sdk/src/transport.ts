@@ -1,11 +1,11 @@
-import { BYOMTimeoutError } from "./errors.js";
+import { ArlopassTimeoutError } from "./errors.js";
 import type {
   TransportRequest,
   TransportResponse,
   TransportStream,
 } from "./types.js";
 
-export interface BYOMTransport {
+export interface ArlopassTransport {
   request<TRequestPayload, TResponsePayload>(
     request: TransportRequest<TRequestPayload>,
   ): Promise<TransportResponse<TResponsePayload>>;
@@ -48,7 +48,7 @@ export async function withTimeout<T>(
     races.push(
       new Promise<T>((_resolve, reject) => {
         timeoutHandle = setTimeout(() => {
-          reject(new BYOMTimeoutError(timeoutMessage));
+          reject(new ArlopassTimeoutError(timeoutMessage));
         }, timeoutMs);
       }),
     );

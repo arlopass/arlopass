@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { MANIFEST_SCHEMA_VERSION, type CloudAdapterContractV2 } from "@byom-ai/adapter-runtime";
+import { MANIFEST_SCHEMA_VERSION, type CloudAdapterContractV2 } from "@arlopass/adapter-runtime";
 
 import { MicrosoftFoundryAdapter, MICROSOFT_FOUNDRY_MANIFEST } from "../index.js";
 
@@ -284,7 +284,7 @@ describe("MicrosoftFoundryAdapter – cloud contract v2", () => {
 
     const output = await adapter.sendMessage(
       sessionId,
-      "Explain how BYOM protects provider credentials.",
+      "Explain how Arlopass protects provider credentials.",
     );
 
     expect(output).toBe("Credential isolation uses bridge-only refs.");
@@ -309,7 +309,7 @@ describe("MicrosoftFoundryAdapter – cloud contract v2", () => {
     };
     expect(payload.model).toBe("gpt-4o-mini");
     expect(payload.messages?.at(-1)?.content).toBe(
-      "Explain how BYOM protects provider credentials.",
+      "Explain how Arlopass protects provider credentials.",
     );
   });
 });

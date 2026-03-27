@@ -85,9 +85,9 @@ type ProviderEditState = Readonly<{
   providerName: string;
 }>;
 
-const STORAGE_KEY_PROVIDERS = "byom.wallet.providers.v1";
-const STORAGE_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
-const STORAGE_KEY_LAST_ERROR = "byom.wallet.ui.lastError.v1";
+const STORAGE_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
+const STORAGE_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
+const STORAGE_KEY_LAST_ERROR = "arlopass.wallet.ui.lastError.v1";
 const PROVIDER_ID_PREFIX = "provider";
 const NATIVE_MESSAGE_TIMEOUT_MS = 15_000;
 const DEFAULT_CLOUD_POLICY_VERSION = "policy.unknown";
@@ -480,8 +480,8 @@ async function validateCloudConnectionViaExistingHandle(options: Readonly<{
 }>): Promise<ConnectionTestResult> {
   const metadata = options.provider.metadata ?? {};
   const nativeHostName = normalizeText(
-    options.fieldValues["nativeHostName"] ?? metadata["nativeHostName"] ?? "com.byom.bridge",
-    "com.byom.bridge",
+    options.fieldValues["nativeHostName"] ?? metadata["nativeHostName"] ?? "com.arlopass.bridge",
+    "com.arlopass.bridge",
   );
   const providerId = normalizeText(
     options.fieldValues["providerId"] ?? metadata["providerId"] ?? "",
@@ -1254,7 +1254,7 @@ const LOCAL_CONNECTORS: readonly ConnectorDefinition[] = [
 const CLOUD_CONNECTORS: readonly ConnectorDefinition[] = createCloudConnectors({
   sendNativeMessage,
   formatNativeHostRuntimeError,
-  defaultNativeHostName: "com.byom.bridge",
+  defaultNativeHostName: "com.arlopass.bridge",
 });
 
 const CLI_CONNECTOR: ConnectorDefinition = {
@@ -1267,10 +1267,10 @@ const CLI_CONNECTOR: ConnectorDefinition = {
       key: "nativeHostName",
       label: "Native Host Name",
       type: "text",
-      defaultValue: "com.byom.bridge",
+      defaultValue: "com.arlopass.bridge",
       required: true,
       maxLength: 120,
-      placeholder: "com.byom.bridge",
+      placeholder: "com.arlopass.bridge",
     },
     {
       key: "cliType",
@@ -1298,7 +1298,7 @@ const CLI_CONNECTOR: ConnectorDefinition = {
     },
   ],
   async testConnection(config): Promise<ConnectionTestResult> {
-    const hostName = normalizeText(config["nativeHostName"] ?? "com.byom.bridge", "com.byom.bridge");
+    const hostName = normalizeText(config["nativeHostName"] ?? "com.arlopass.bridge", "com.arlopass.bridge");
     const cliClient = cliClientById(config["cliType"]);
     if (!/^[a-z0-9]+(\.[a-z0-9-]+)+$/.test(hostName)) {
       return {
@@ -1357,8 +1357,8 @@ const CLI_CONNECTOR: ConnectorDefinition = {
   },
   sanitizeMetadata(config): Readonly<Record<string, string>> {
     const hostName = normalizeText(
-      config["nativeHostName"] ?? "com.byom.bridge",
-      "com.byom.bridge",
+      config["nativeHostName"] ?? "com.arlopass.bridge",
+      "com.arlopass.bridge",
     );
     const cliClient = cliClientById(config["cliType"]);
     const selectedModelId = normalizeText(config["modelId"] ?? "", "");
@@ -1465,7 +1465,7 @@ async function syncCliThinkingSelector(form: HTMLFormElement): Promise<void> {
   }
 
   setSelectLoadingState(thinkingField, "Loading thinking levels...");
-  const hostName = normalizeText(hostNameField.value, "com.byom.bridge");
+  const hostName = normalizeText(hostNameField.value, "com.arlopass.bridge");
   const cliType = cliClientById(cliTypeField.value).id;
   const previousThinkingLevel = normalizeText(thinkingField.value, "");
   try {
@@ -1513,7 +1513,7 @@ async function syncCliModelSelector(form: HTMLFormElement): Promise<void> {
   }
 
   const syncId = ++cliModelSyncCounter;
-  const hostName = normalizeText(hostNameField.value, "com.byom.bridge");
+  const hostName = normalizeText(hostNameField.value, "com.arlopass.bridge");
   const cliClient = cliClientById(cliTypeField.value);
   const previousModelId = normalizeText(modelField.value, "");
   setSelectLoadingState(modelField, "Loading models...");
@@ -2613,8 +2613,8 @@ async function onSaveProvider(
     provider = await hydrateCliProviderMetadata({
       provider,
       hostName: normalizeText(
-        fieldValues["nativeHostName"] ?? "com.byom.bridge",
-        "com.byom.bridge",
+        fieldValues["nativeHostName"] ?? "com.arlopass.bridge",
+        "com.arlopass.bridge",
       ),
       cliType: cliClientById(fieldValues["cliType"]).id,
       selectedModelId: normalizeText(fieldValues["modelId"] ?? "", ""),
@@ -2729,7 +2729,7 @@ document.addEventListener("DOMContentLoaded", () => {
     !(modelDiscoveryStateNode instanceof HTMLElement) ||
     !(providersContainer instanceof HTMLElement)
   ) {
-    console.error("BYOM Wallet options page failed to initialize required elements.");
+    console.error("Arlopass Wallet options page failed to initialize required elements.");
     return;
   }
 

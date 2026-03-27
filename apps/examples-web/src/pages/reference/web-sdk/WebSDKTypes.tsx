@@ -22,7 +22,7 @@ const importLine = `import type {
   TransportRequest,
   TransportResponse,
   TransportStream,
-} from "@byom-ai/web-sdk";`;
+} from "@arlopass/web-sdk";`;
 
 const toolImport = `import type {
   ToolDefinition,
@@ -35,9 +35,9 @@ const toolImport = `import type {
   ToolPrimingMatchEvent,
   ToolPrimingEndEvent,
   ConversationStreamEvent,
-} from "@byom-ai/web-sdk";`;
+} from "@arlopass/web-sdk";`;
 
-const transportImport = `import type { BYOMTransport } from "@byom-ai/web-sdk";`;
+const transportImport = `import type { ArlopassTransport } from "@arlopass/web-sdk";`;
 
 // Core types
 const chatRoleDef = `type ChatRole = "system" | "user" | "assistant";`;
@@ -113,7 +113,7 @@ const listProvidersResultDef = `type ListProvidersResult = Readonly<{
 }>;`;
 
 // Transport types
-const transportDef = `interface BYOMTransport {
+const transportDef = `interface ArlopassTransport {
   request<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportResponse<TRes>>;
   stream<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportStream<TRes>>;
   disconnect?(sessionId: string): Promise<void>;
@@ -207,7 +207,7 @@ export default function WebSDKTypes() {
     <Stack gap="lg">
       <Title order={2}>Types</Title>
       <Text>
-        All types exported from <InlineCode>@byom-ai/web-sdk</InlineCode>.
+        All types exported from <InlineCode>@arlopass/web-sdk</InlineCode>.
       </Text>
 
       <CodeBlock code={importLine} language="tsx" />
@@ -240,7 +240,7 @@ export default function WebSDKTypes() {
       <Title order={4}>ContextWindowInfo</Title>
       <CodeBlock code={contextWindowInfoDef} language="tsx" />
       <Text fz="sm">
-        Returned by <InlineCode>BYOMClient.getContextInfo()</InlineCode> and{" "}
+        Returned by <InlineCode>ArlopassClient.getContextInfo()</InlineCode> and{" "}
         <InlineCode>ConversationManager.getContextInfo()</InlineCode>. Use{" "}
         <InlineCode>usageRatio</InlineCode> for progress bars and{" "}
         <InlineCode>remainingTokens</InlineCode> for "context full" warnings.
@@ -281,7 +281,7 @@ export default function WebSDKTypes() {
 
       <CodeBlock code={transportImport} language="tsx" />
 
-      <Title order={4}>BYOMTransport</Title>
+      <Title order={4}>ArlopassTransport</Title>
       <CodeBlock code={transportDef} language="tsx" />
 
       <Title order={4}>TransportRequest</Title>

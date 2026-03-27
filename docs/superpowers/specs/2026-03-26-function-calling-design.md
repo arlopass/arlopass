@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26
 **Status:** Approved
-**Scope:** `@byom-ai/web-sdk` — tool/function calling via `ConversationManager`
+**Scope:** `@arlopass/web-sdk` — tool/function calling via `ConversationManager`
 
 ---
 
@@ -66,7 +66,7 @@ type ToolResult = Readonly<{
 
 ```typescript
 type ConversationManagerOptions = {
-  client: BYOMClient;
+  client: ArlopassClient;
   maxTokens?: number;
   reserveOutputTokens?: number;
   systemPrompt?: string;

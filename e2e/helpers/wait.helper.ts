@@ -17,15 +17,15 @@ export async function waitForLoadingComplete(
 }
 
 /**
- * Wait for `window.byom` to be defined in the page context.
+ * Wait for `window.arlopass` to be defined in the page context.
  */
-export async function waitForByomTransport(
+export async function waitForArlopassTransport(
     page: Page,
     timeoutMs = 10_000,
 ): Promise<boolean> {
     try {
         await page.waitForFunction(
-            () => typeof (window as unknown as Record<string, unknown>).byom !== "undefined",
+            () => typeof (window as unknown as Record<string, unknown>).arlopass !== "undefined",
             undefined,
             { timeout: timeoutMs },
         );

@@ -1,14 +1,14 @@
 /**
- * Connected app storage for the BYOM extension.
+ * Connected app storage for the Arlopass extension.
  *
  * Each connected app represents a web origin that the user has approved
  * to use the wallet's providers and models. Apps survive browser restarts
  * and are persisted in chrome.storage.local.
  *
- * Storage key: `byom.wallet.apps.v1`
+ * Storage key: `arlopass.wallet.apps.v1`
  */
 
-const STORAGE_KEY = "byom.wallet.apps.v1";
+const STORAGE_KEY = "arlopass.wallet.apps.v1";
 const MAX_APPS = 100;
 
 export type AppPermissions = {

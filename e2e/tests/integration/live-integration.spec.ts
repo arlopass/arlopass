@@ -2,7 +2,7 @@ import { test, expect } from "../../fixtures/test";
 import { ExtensionPopupPage } from "../../pages/extension-popup.page";
 import { ExtensionOptionsPage } from "../../pages/extension-options.page";
 import { ExamplesAppPage } from "../../pages/examples-app.page";
-import { waitForByomTransport } from "../../helpers/wait.helper";
+import { waitForArlopassTransport } from "../../helpers/wait.helper";
 import {
     isLiveIntegrationEnabled,
     isProviderEnabled,
@@ -103,7 +103,7 @@ for (const { id, label, flag } of CONNECTORS) {
             const app = new ExamplesAppPage(webPage);
 
             await test.step("connect to webapp via injected transport", async () => {
-                const hasTransport = await waitForByomTransport(webPage, 10_000);
+                const hasTransport = await waitForArlopassTransport(webPage, 10_000);
                 expect(hasTransport).toBe(true);
 
                 await app.selectTransportProfile("Injected");

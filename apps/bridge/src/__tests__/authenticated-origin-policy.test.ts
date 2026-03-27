@@ -17,7 +17,7 @@ describe("authenticated-origin-policy", () => {
 
   it("allows explicitly configured non-loopback origins", () => {
     const policy = createAuthenticatedOriginPolicyFromEnv({
-      BYOM_BRIDGE_AUTHENTICATED_ORIGINS: "https://app.example.com, https://staging.example.com",
+      ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS: "https://app.example.com, https://staging.example.com",
     });
 
     expect(policy.authenticatedOriginMatcher("https://app.example.com")).toBe(true);
@@ -28,7 +28,7 @@ describe("authenticated-origin-policy", () => {
   it("derives chrome-extension origins from explicit extension IDs", () => {
     const extensionId = "abcdefghijklmnopabcdefghijklmnop";
     const policy = createAuthenticatedOriginPolicyFromEnv({
-      BYOM_BRIDGE_AUTHENTICATED_EXTENSION_IDS: extensionId,
+      ARLOPASS_BRIDGE_AUTHENTICATED_EXTENSION_IDS: extensionId,
     });
 
     expect(policy.authenticatedOrigins.has(`chrome-extension://${extensionId}`)).toBe(
@@ -41,7 +41,7 @@ describe("authenticated-origin-policy", () => {
 
   it("does not implicitly trust wildcard origin entries", () => {
     const policy = createAuthenticatedOriginPolicyFromEnv({
-      BYOM_BRIDGE_AUTHENTICATED_ORIGINS: "*",
+      ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS: "*",
     });
 
     expect(policy.authenticatedOriginMatcher("https://app.example.com")).toBe(false);
@@ -49,7 +49,7 @@ describe("authenticated-origin-policy", () => {
 
   it("supports disabling default loopback allowances explicitly", () => {
     const policy = createAuthenticatedOriginPolicyFromEnv({
-      BYOM_BRIDGE_ALLOW_LOOPBACK_ORIGINS: "false",
+      ARLOPASS_BRIDGE_ALLOW_LOOPBACK_ORIGINS: "false",
     });
 
     expect(policy.authenticatedOriginMatcher("http://127.0.0.1:4172")).toBe(false);

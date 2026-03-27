@@ -6,8 +6,8 @@ import {
   type PolicyDecision,
   type PolicyEvaluationContext,
   type PolicyEvaluationOptions,
-} from "@byom-ai/policy";
-import type { CanonicalEnvelope } from "@byom-ai/protocol";
+} from "@arlopass/policy";
+import type { CanonicalEnvelope } from "@arlopass/protocol";
 
 export type PreflightEvaluatorOptions = Pick<
   PolicyEvaluationOptions,

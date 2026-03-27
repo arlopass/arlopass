@@ -14,12 +14,12 @@
  */
 import { describe, expect, it, vi } from "vitest";
 
-import { PermissionError } from "@byom-ai/protocol";
-import type { CanonicalEnvelope } from "@byom-ai/protocol";
+import { PermissionError } from "@arlopass/protocol";
+import type { CanonicalEnvelope } from "@arlopass/protocol";
 import type {
-  BYOMTransport,
+  ArlopassTransport,
   TransportResponse,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
 import {
   ExtensionBackgroundService,
@@ -108,19 +108,19 @@ function makeFakeResponseEnvelope(): CanonicalEnvelope<null> {
 }
 
 /** Transport that immediately returns a fake response. */
-function makeSuccessTransport(): BYOMTransport {
+function makeSuccessTransport(): ArlopassTransport {
   const fakeResponse: TransportResponse<null> = {
     envelope: makeFakeResponseEnvelope(),
   };
   return {
     request: vi.fn().mockResolvedValue(fakeResponse),
-    stream: vi.fn().mockResolvedValue((async function* () {})()),
+    stream: vi.fn().mockResolvedValue((async function* () { })()),
   };
 }
 
 /** Transport whose request() resolves only when the caller calls resolve(). */
 function makeControllableTransport(): {
-  transport: BYOMTransport;
+  transport: ArlopassTransport;
   resolve: (value: TransportResponse<null>) => void;
   reject: (err: Error) => void;
 } {
@@ -131,9 +131,9 @@ function makeControllableTransport(): {
     reject = rej;
   });
 
-  const transport: BYOMTransport = {
+  const transport: ArlopassTransport = {
     request: () => deferred as Promise<TransportResponse<never>>,
-    stream: vi.fn().mockResolvedValue((async function* () {})()),
+    stream: vi.fn().mockResolvedValue((async function* () { })()),
   };
 
   return { transport, resolve, reject };
@@ -163,13 +163,13 @@ type ServiceHarness = Readonly<{
   service: ExtensionBackgroundService;
   events: ExtensionEventEmitter<ExtensionEventMap>;
   clock: DeterministicClock;
-  transport: BYOMTransport;
+  transport: ArlopassTransport;
   consentController: ConsentController;
 }>;
 
 function buildHarness(
   consentAdapter: ConsentPromptAdapter,
-  transport: BYOMTransport = makeSuccessTransport(),
+  transport: ArlopassTransport = makeSuccessTransport(),
   grantSynchronizer?: BridgeGrantSynchronizer,
   clock = createClock(),
 ): ServiceHarness {
@@ -588,8 +588,8 @@ describe("ExtensionBackgroundService — in-flight revocation", () => {
 // Wallet message handler helpers
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY_PROVIDERS = "byom.wallet.providers.v1";
-const STORAGE_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
+const STORAGE_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
+const STORAGE_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 
 type FakeStorageState = Record<string, unknown>;
 
@@ -636,7 +636,7 @@ describe("createWalletMessageHandler — wallet.setActiveProvider", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveProvider",
       requestId: "req.001",
       payload: { providerId: "ollama" },
@@ -651,7 +651,7 @@ describe("createWalletMessageHandler — wallet.setActiveProvider", () => {
     const handle = createWalletMessageHandler({ storage });
 
     await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveProvider",
       requestId: "req.002",
       payload: { providerId: "ollama", modelId: "llama3" },
@@ -668,7 +668,7 @@ describe("createWalletMessageHandler — wallet.setActiveProvider", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveProvider",
       requestId: "req.003",
       payload: {},
@@ -694,7 +694,7 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveModel",
       requestId: "req.010",
       payload: { providerId: "ollama", modelId: "llama3" },
@@ -720,7 +720,7 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveModel",
       requestId: "req.011",
       payload: { providerId: "ollama", modelId: "mistral" },
@@ -740,7 +740,7 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveModel",
       requestId: "req.012",
       payload: { providerId: "unknown-provider", modelId: "llama3" },
@@ -756,7 +756,7 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveModel",
       requestId: "req.013",
       payload: { providerId: "ollama", modelId: "unknown-model" },
@@ -770,7 +770,7 @@ describe("createWalletMessageHandler — wallet.setActiveModel", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveModel",
       requestId: "req.014",
       payload: { providerId: "ollama" },
@@ -793,7 +793,7 @@ describe("createWalletMessageHandler — wallet.revokeProvider", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.revokeProvider",
       requestId: "req.020",
       payload: { providerId: "ollama" },
@@ -812,7 +812,7 @@ describe("createWalletMessageHandler — wallet.revokeProvider", () => {
     const handle = createWalletMessageHandler({ storage });
 
     await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.revokeProvider",
       requestId: "req.021",
       payload: { providerId: "ollama" },
@@ -829,7 +829,7 @@ describe("createWalletMessageHandler — wallet.revokeProvider", () => {
     const handle = createWalletMessageHandler({ storage });
 
     await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.revokeProvider",
       requestId: "req.022",
       payload: { providerId: "ollama" },
@@ -843,7 +843,7 @@ describe("createWalletMessageHandler — wallet.revokeProvider", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.revokeProvider",
       requestId: "req.023",
       payload: {},
@@ -864,7 +864,7 @@ describe("createWalletMessageHandler — wallet.openConnectFlow", () => {
     const handle = createWalletMessageHandler({ storage, openOptionsPage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.openConnectFlow",
       requestId: "req.030",
       payload: {},
@@ -879,7 +879,7 @@ describe("createWalletMessageHandler — wallet.openConnectFlow", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.openConnectFlow",
       requestId: "req.031",
       payload: {},
@@ -902,7 +902,7 @@ describe("createWalletMessageHandler — routing", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.unknownAction",
       requestId: "req.040",
       payload: {},
@@ -939,7 +939,7 @@ describe("createWalletMessageHandler — routing", () => {
     const handle = createWalletMessageHandler({ storage });
 
     const result = await handle({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.setActiveProvider",
       payload: { providerId: "ollama" },
     });
@@ -1018,7 +1018,7 @@ async function flushMicrotasks(): Promise<void> {
 }
 
 describe("registerDefaultWalletMessageListener", () => {
-  const LISTENER_FLAG_KEY = "__byom.wallet.listener.registered.v1";
+  const LISTENER_FLAG_KEY = "__arlopass.wallet.listener.registered.v1";
 
   it("registers once and routes wallet.openConnectFlow to chrome.runtime.openOptionsPage", async () => {
     const { chromeMock, addListener, openOptionsPage, getListener } = makeChromeHarness();
@@ -1037,7 +1037,7 @@ describe("registerDefaultWalletMessageListener", () => {
       const sendResponse = vi.fn();
       const keepAlive = listener?.(
         {
-          channel: "byom.wallet",
+          channel: "arlopass.wallet",
           action: "wallet.openConnectFlow",
           requestId: "req.bootstrap.001",
           payload: {},

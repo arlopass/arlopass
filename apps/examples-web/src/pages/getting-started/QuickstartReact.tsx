@@ -2,19 +2,19 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, StepList, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const stepInstall = `npm install @byom-ai/react`;
+const stepInstall = `npm install @arlopass/react`;
 
-const stepProvider = `import { BYOMProvider } from "@byom-ai/react";
+const stepProvider = `import { ArlopassProvider } from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="my-app">
+    <ArlopassProvider appId="my-app">
       <YourApp />
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const stepGate = `import { ChatReadyGate } from "@byom-ai/react";
+const stepGate = `import { ChatReadyGate } from "@arlopass/react";
 
 function YourApp() {
   return (
@@ -28,7 +28,7 @@ function YourApp() {
   );
 }`;
 
-const stepHook = `import { useConversation } from "@byom-ai/react";
+const stepHook = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, isStreaming } = useConversation();
@@ -43,7 +43,7 @@ function Chat() {
 }`;
 
 const stepUI = `import { useState } from "react";
-import { useConversation } from "@byom-ai/react";
+import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, isStreaming } = useConversation();
@@ -84,7 +84,7 @@ function Chat() {
 }`;
 
 const fullExample = `import { useState } from "react";
-import { BYOMProvider, ChatReadyGate, useConversation } from "@byom-ai/react";
+import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, isStreaming } = useConversation();
@@ -126,19 +126,19 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="my-app">
+    <ArlopassProvider appId="my-app">
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
-        noProvider={<p>Select a provider in the BYOM extension.</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
         error={(err) => <p>Error: {err.message}</p>}
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const comparisonReact = `import { useConversation } from "@byom-ai/react";
+const comparisonReact = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, isStreaming } = useConversation();
@@ -150,9 +150,9 @@ function Chat() {
   }
 }`;
 
-const comparisonWeb = `import { BYOMClient } from "@byom-ai/web-sdk";
+const comparisonWeb = `import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 const providers = await client.listProviders();
@@ -181,12 +181,12 @@ export default function QuickstartReact() {
             ),
           },
           {
-            title: "Wrap your app in BYOMProvider",
+            title: "Wrap your app in ArlopassProvider",
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  The provider connects to the browser extension and manages
-                  the AI client lifecycle.
+                  The provider connects to the browser extension and manages the
+                  AI client lifecycle.
                 </Text>
                 <CodeBlock title="App.tsx" code={stepProvider} />
               </Stack>
@@ -210,8 +210,7 @@ export default function QuickstartReact() {
               <Stack gap="xs">
                 <Text fz="sm">
                   The hook gives you the message list, a streaming send
-                  function, and status flags. No manual state management
-                  needed.
+                  function, and status flags. No manual state management needed.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepHook} />
               </Stack>

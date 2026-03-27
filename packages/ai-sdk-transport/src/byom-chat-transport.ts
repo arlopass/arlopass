@@ -1,17 +1,17 @@
 import {
-    BYOMClient,
-    type BYOMTransport,
-} from "@byom-ai/web-sdk";
+    ArlopassClient,
+    type ArlopassTransport,
+} from "@arlopass/web-sdk";
 import { convertMessages } from "./convert-messages.js";
 import { convertStream } from "./convert-stream.js";
 
-export type BYOMChatTransportOptions = Readonly<{
+export type ArlopassChatTransportOptions = Readonly<{
     appId?: string;
     appSuffix?: string;
     appName?: string;
     appDescription?: string;
     appIcon?: string;
-    client?: BYOMClient;
+    client?: ArlopassClient;
     timeoutMs?: number;
 }>;
 
@@ -40,17 +40,17 @@ type UIMessageChunkLike =
     | { type: "error"; errorText: string }
     | { type: "abort"; reason?: string };
 
-function getInjectedTransport(): BYOMTransport | undefined {
+function getInjectedTransport(): ArlopassTransport | undefined {
     if (typeof window === "undefined") return undefined;
-    return (window as Window & { byom?: BYOMTransport }).byom;
+    return (window as Window & { arlopass?: ArlopassTransport }).arlopass;
 }
 
-export class BYOMChatTransport {
-    readonly #options: BYOMChatTransportOptions;
-    #client: BYOMClient | undefined;
-    #connectPromise: Promise<BYOMClient> | undefined;
+export class ArlopassChatTransport {
+    readonly #options: ArlopassChatTransportOptions;
+    #client: ArlopassClient | undefined;
+    #connectPromise: Promise<ArlopassClient> | undefined;
 
-    constructor(options: BYOMChatTransportOptions = {}) {
+    constructor(options: ArlopassChatTransportOptions = {}) {
         this.#options = options;
         if (options.client !== undefined) {
             this.#client = options.client;
@@ -64,7 +64,7 @@ export class BYOMChatTransport {
 
         if (client.selectedProvider === undefined) {
             throw new Error(
-                "No provider selected. Open the BYOM extension and choose a model.",
+                "No provider selected. Open the Arlopass extension and choose a model.",
             );
         }
 
@@ -85,7 +85,7 @@ export class BYOMChatTransport {
         return null;
     }
 
-    async #ensureClient(): Promise<BYOMClient> {
+    async #ensureClient(): Promise<ArlopassClient> {
         if (this.#client !== undefined) return this.#client;
 
         if (this.#connectPromise !== undefined) return this.#connectPromise;
@@ -100,18 +100,18 @@ export class BYOMChatTransport {
         }
     }
 
-    async #autoConnect(): Promise<BYOMClient> {
+    async #autoConnect(): Promise<ArlopassClient> {
         const transport = getInjectedTransport();
         if (transport === undefined) {
             throw new Error(
-                "BYOM extension not detected. Install it from https://byomai.com to use AI models.",
+                "Arlopass extension not detected. Install it from https://arlopassai.com to use AI models.",
             );
         }
 
         const timeoutMs = this.#options.timeoutMs ?? 120_000;
         const origin =
             typeof window !== "undefined" ? window.location.origin : undefined;
-        const client = new BYOMClient({
+        const client = new ArlopassClient({
             transport,
             ...(origin !== undefined ? { origin } : {}),
             timeoutMs,

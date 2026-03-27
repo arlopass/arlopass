@@ -1,4 +1,4 @@
-import { BYOMInvalidStateTransitionError } from "./errors.js";
+import { ArlopassInvalidStateTransitionError } from "./errors.js";
 import type { ClientState } from "./types.js";
 
 export const STATE_TRANSITIONS: Readonly<Record<ClientState, readonly ClientState[]>> = {
@@ -15,7 +15,7 @@ export type StateTransition = Readonly<{
   to: ClientState;
 }>;
 
-export class BYOMStateMachine {
+export class ArlopassStateMachine {
   #state: ClientState;
   #history: StateTransition[];
 
@@ -38,7 +38,7 @@ export class BYOMStateMachine {
 
   transition(to: ClientState): ClientState {
     if (!this.canTransition(to)) {
-      throw new BYOMInvalidStateTransitionError(
+      throw new ArlopassInvalidStateTransitionError(
         `Invalid state transition from "${this.#state}" to "${to}".`,
         {
           details: {

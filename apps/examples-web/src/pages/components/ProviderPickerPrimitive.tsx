@@ -25,23 +25,23 @@ const parts = [
   },
 ];
 
-const uncontrolledExample = `import { BYOMProvider } from "@byom-ai/react";
-import { ProviderPicker } from "@byom-ai/react-ui";
+const uncontrolledExample = `import { ArlopassProvider } from "@arlopass/react";
+import { ProviderPicker } from "@arlopass/react-ui";
 
 function Picker() {
   return (
-    <BYOMProvider>
+    <ArlopassProvider>
       <ProviderPicker.Root>
         <ProviderPicker.ProviderSelect />
         <ProviderPicker.ModelSelect />
         <ProviderPicker.SubmitButton>Connect</ProviderPicker.SubmitButton>
       </ProviderPicker.Root>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const controlledExample = `import { useProviders } from "@byom-ai/react";
-import { ProviderPicker } from "@byom-ai/react-ui";
+const controlledExample = `import { useProviders } from "@arlopass/react";
+import { ProviderPicker } from "@arlopass/react-ui";
 
 function ControlledPicker() {
   const { providers, selectedProvider, selectProvider, isLoading, error } =
@@ -84,7 +84,7 @@ const controlledRootProps = [
   },
   {
     name: "error",
-    type: "BYOMSDKError | null",
+    type: "ArlopassSDKError | null",
     description: "Error from the last provider operation.",
   },
   {
@@ -125,7 +125,7 @@ export default function ProviderPickerPrimitive() {
       </div>
 
       <CodeBlock
-        code={`import { ProviderPicker } from "@byom-ai/react-ui";`}
+        code={`import { ProviderPicker } from "@arlopass/react-ui";`}
         language="tsx"
       />
 
@@ -158,7 +158,7 @@ export default function ProviderPickerPrimitive() {
       <Divider />
       <Title order={3}>Uncontrolled usage</Title>
       <Text>
-        Inside a <InlineCode>{"<BYOMProvider>"}</InlineCode>,{" "}
+        Inside a <InlineCode>{"<ArlopassProvider>"}</InlineCode>,{" "}
         <InlineCode>ProviderPicker.Root</InlineCode> automatically reads from{" "}
         <InlineCode>useProviders</InlineCode>. No props needed.
       </Text>

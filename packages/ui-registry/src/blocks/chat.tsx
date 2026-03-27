@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useEffect, type ReactNode } from "react";
-import { Chat, StreamingText, Message, ToolActivity } from "@byom-ai/react-ui";
+import { Chat, StreamingText, Message, ToolActivity } from "@arlopass/react-ui";
 
-export type BYOMChatProps = {
+export type ArlopassChatProps = {
   /** System prompt for the conversation */
   systemPrompt?: string;
   /** Placeholder text for the input */
@@ -16,13 +16,13 @@ export type BYOMChatProps = {
   className?: string;
 };
 
-export function BYOMChat({
+export function ArlopassChat({
   systemPrompt,
   placeholder = "Type a message…",
   emptyState,
   maxTokens,
   className,
-}: BYOMChatProps) {
+}: ArlopassChatProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -105,7 +105,11 @@ export function BYOMChat({
   );
 }
 
-function AutoScroll({ target }: { target: React.RefObject<HTMLDivElement | null> }) {
+function AutoScroll({
+  target,
+}: {
+  target: React.RefObject<HTMLDivElement | null>;
+}) {
   useEffect(() => {
     target.current?.scrollIntoView({ behavior: "smooth" });
   });

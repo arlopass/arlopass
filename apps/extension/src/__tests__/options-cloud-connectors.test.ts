@@ -28,7 +28,7 @@ describe("cloud connector helpers", () => {
   it("requires roleArn for bedrock.assume_role and treats externalId as optional", () => {
     const valid = validateCloudConnectorInput("cloud-bedrock", {
       methodId: "bedrock.assume_role",
-      roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+      roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
       externalId: "optional-external-id",
       region: "us-east-1",
       modelAccessPolicy: "allow-listed",
@@ -173,7 +173,7 @@ describe("cloud connector helpers", () => {
     const connector = createCloudOpenAiConnector({
       sendNativeMessage,
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
 
     const result = await connector.testConnection({
@@ -198,7 +198,7 @@ describe("cloud connector helpers", () => {
         },
       })),
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
 
     const fetchMock = vi.fn(async () =>
@@ -254,7 +254,7 @@ describe("cloud connector helpers", () => {
     const connector = createCloudFoundryConnector({
       sendNativeMessage,
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
 
     const result = await connector.testConnection({
@@ -284,7 +284,7 @@ describe("cloud connector helpers", () => {
         },
       })),
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
     const fetchMock = vi.fn(async () =>
       new Response(
@@ -321,7 +321,7 @@ describe("cloud connector helpers", () => {
         },
       })),
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
     const fetchMock = vi.fn(async () =>
       new Response(
@@ -349,31 +349,31 @@ describe("cloud connector helpers", () => {
 
   it("rejects Anthropic connection when bridge discover returns no models", async () => {
     const sendNativeMessage = vi.fn(async (_hostName: string, message: Record<string, unknown>) => {
-        if (message["type"] === "cloud.connection.complete") {
-          return {
-            ok: true as const,
-            response: {
-              type: "cloud.connection.complete",
-              connectionHandle:
-                "connh.provider.claude-subscription.anthropic.api_key.00000000-0000-4000-8000-000000000777.0.sig",
-            },
-          };
-        }
-        if (message["type"] === "cloud.models.discover") {
-          return {
-            ok: true as const,
-            response: {
-              type: "cloud.models.discover",
-              models: [],
-            },
-          };
-        }
-        throw new Error(`Unexpected message type: ${String(message["type"])}`);
-      });
+      if (message["type"] === "cloud.connection.complete") {
+        return {
+          ok: true as const,
+          response: {
+            type: "cloud.connection.complete",
+            connectionHandle:
+              "connh.provider.claude-subscription.anthropic.api_key.00000000-0000-4000-8000-000000000777.0.sig",
+          },
+        };
+      }
+      if (message["type"] === "cloud.models.discover") {
+        return {
+          ok: true as const,
+          response: {
+            type: "cloud.models.discover",
+            models: [],
+          },
+        };
+      }
+      throw new Error(`Unexpected message type: ${String(message["type"])}`);
+    });
     const connector = createCloudAnthropicConnector({
       sendNativeMessage,
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
     const result = await connector.testConnection({
       methodId: "anthropic.api_key",
@@ -400,7 +400,7 @@ describe("cloud connector helpers", () => {
         },
       })),
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
     const fetchMock = vi.fn(async () =>
       new Response(
@@ -434,7 +434,7 @@ describe("cloud connector helpers", () => {
         },
       })),
       formatNativeHostRuntimeError: (message) => message,
-      defaultNativeHostName: "com.byom.bridge",
+      defaultNativeHostName: "com.arlopass.bridge",
     });
     const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify({ data: [] }), {

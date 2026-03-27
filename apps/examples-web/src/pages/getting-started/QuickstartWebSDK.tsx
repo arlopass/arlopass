@@ -2,16 +2,16 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, StepList } from "../../components";
 import { navigate } from "../../router";
 
-const stepInstall = `npm install @byom-ai/web-sdk`;
+const stepInstall = `npm install @arlopass/web-sdk`;
 
-const stepCreateClient = `import { BYOMClient } from "@byom-ai/web-sdk";
+const stepCreateClient = `import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({
-  transport: window.byom,
+const client = new ArlopassClient({
+  transport: window.arlopass,
 });`;
 
 const stepConnect = `await client.connect({ appId: "my-app" });
-console.log("Connected to BYOM extension");`;
+console.log("Connected to Arlopass extension");`;
 
 const stepSelectProvider = `const providers = await client.listProviders();
 console.log("Available providers:", providers);
@@ -28,12 +28,12 @@ const stepSendMessage = `const response = await client.chat.send({
 
 console.log(response.content);`;
 
-const fullExample = `import { BYOMClient } from "@byom-ai/web-sdk";
+const fullExample = `import { ArlopassClient } from "@arlopass/web-sdk";
 
 async function main() {
   // 1. Create the client
-  const client = new BYOMClient({
-    transport: window.byom,
+  const client = new ArlopassClient({
+    transport: window.arlopass,
   });
 
   // 2. Connect to the extension
@@ -47,7 +47,7 @@ async function main() {
   const response = await client.chat.send({
     messages: [
       { role: "system", content: "You are a helpful assistant." },
-      { role: "user", content: "Explain BYOM in one sentence." },
+      { role: "user", content: "Explain Arlopass in one sentence." },
     ],
   });
 
@@ -95,7 +95,7 @@ export default function QuickstartWebSDK() {
                 <Text fz="sm">
                   The client needs a transport — the bridge to the browser
                   extension. The extension injects it at{" "}
-                  <code>window.byom</code>.
+                  <code>window.arlopass</code>.
                 </Text>
                 <CodeBlock title="client.ts" code={stepCreateClient} />
               </Stack>
@@ -106,9 +106,8 @@ export default function QuickstartWebSDK() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Call <code>connect()</code> with your app ID. This
-                  handshakes with the extension and verifies the user has it
-                  installed.
+                  Call <code>connect()</code> with your app ID. This handshakes
+                  with the extension and verifies the user has it installed.
                 </Text>
                 <CodeBlock title="client.ts" code={stepConnect} />
               </Stack>
@@ -142,9 +141,7 @@ export default function QuickstartWebSDK() {
       />
 
       <Title order={3}>Complete example</Title>
-      <Text>
-        Here's everything together in a single file you can run:
-      </Text>
+      <Text>Here's everything together in a single file you can run:</Text>
       <CodeBlock title="main.ts" code={fullExample} />
 
       <Callout type="info" title="Next steps">

@@ -1,8 +1,8 @@
 {
-  "name": "byom-web",
+  "name": "arlopass",
   "version": "0.1.0",
   "private": true,
-  "description": "BYOM AI monorepo workspace bootstrap",
+  "description": "Arlopass monorepo workspace bootstrap",
   "type": "module",
   "workspaces": [
     "packages/*",
@@ -16,8 +16,8 @@
     "dev:bridge": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode bridge",
     "dev:full": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode full",
     "dev:register-native-host": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\register-native-host.ps1",
-    "dev:examples": "npm run dev -w @byom-ai/examples-web",
-    "build:examples": "npm run build -w @byom-ai/examples-web",
+    "dev:examples": "npm run dev -w @arlopass/examples-web",
+    "build:examples": "npm run build -w @arlopass/examples-web",
     "dev:bash:setup": "bash ./scripts/dev/run-dev.sh setup",
     "dev:bash:validate": "bash ./scripts/dev/run-dev.sh validate",
     "dev:bash:watch": "bash ./scripts/dev/run-dev.sh watch",

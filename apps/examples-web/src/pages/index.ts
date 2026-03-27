@@ -41,7 +41,7 @@ const loaders: Record<string, () => Promise<PageModule>> = {
     "reference/web-sdk/types": () => import("./reference/web-sdk/WebSDKTypes.js"),
     "reference/web-sdk/error-codes": () => import("./reference/web-sdk/ErrorCodes.js"),
     // Concepts
-    "concepts/how-byom-works": () => import("./concepts/HowBYOMWorks.js"),
+    "concepts/how-arlopass-works": () => import("./concepts/HowArlopassWorks.js"),
     "concepts/transport-model": () => import("./concepts/TransportModel.js"),
     "concepts/state-management": () => import("./concepts/StateManagement.js"),
     "concepts/web-sdk-vs-react": () => import("./concepts/WebSDKvsReact.js"),

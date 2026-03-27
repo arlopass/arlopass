@@ -15,7 +15,7 @@ import {
   TelemetryMetrics,
   TELEMETRY_METRIC_NAMES,
   type MetricPoint,
-} from "@byom-ai/telemetry";
+} from "@arlopass/telemetry";
 
 // ---------------------------------------------------------------------------
 // Mock streaming pipeline
@@ -110,7 +110,7 @@ function makeStreamMeta(iteration: number) {
   return {
     correlationId: `corr.soak.${iteration}`,
     providerId: "provider.soak",
-    origin: "https://app.byom.local",
+    origin: "https://app.arlopass.local",
   };
 }
 

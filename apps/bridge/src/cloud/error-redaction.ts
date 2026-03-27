@@ -1,4 +1,4 @@
-import { normalizeReasonCode, type ProtocolReasonCode } from "@byom-ai/protocol";
+import { normalizeReasonCode, type ProtocolReasonCode } from "@arlopass/protocol";
 
 const REDACTED_VALUE = "[REDACTED]";
 const SENSITIVE_KEY_PATTERN =

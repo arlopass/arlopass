@@ -2,7 +2,7 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, StepList, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const stepUseProviders = `import { useProviders } from "@byom-ai/react";
+const stepUseProviders = `import { useProviders } from "@arlopass/react";
 
 function ProviderPicker() {
   const {
@@ -17,7 +17,7 @@ function ProviderPicker() {
   return <div>Provider picker</div>;
 }`;
 
-const stepConnection = `import { useConnection } from "@byom-ai/react";
+const stepConnection = `import { useConnection } from "@arlopass/react";
 
 function ProviderPicker() {
   const { isConnected, isConnecting } = useConnection();
@@ -116,11 +116,11 @@ async function handleModelChange(modelId: string) {
   });
 }`;
 
-const stepGate = `import { ChatReadyGate } from "@byom-ai/react";
+const stepGate = `import { ChatReadyGate } from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="provider-demo">
+    <ArlopassProvider appId="provider-demo">
       <ProviderPicker />
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
@@ -129,18 +129,18 @@ function App() {
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
 const fullExample = `import { useState } from "react";
 import {
-  BYOMProvider,
+  ArlopassProvider,
   ChatReadyGate,
   useConnection,
   useProviders,
   useConversation,
-} from "@byom-ai/react";
+} from "@arlopass/react";
 
 function ProviderPicker() {
   const { isConnected } = useConnection();
@@ -239,7 +239,7 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="provider-demo">
+    <ArlopassProvider appId="provider-demo">
       <ProviderPicker />
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
@@ -248,11 +248,11 @@ export default function App() {
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const comparisonReact = `import { useProviders } from "@byom-ai/react";
+const comparisonReact = `import { useProviders } from "@arlopass/react";
 
 const { providers, selectedProvider, selectProvider } = useProviders();
 
@@ -262,9 +262,9 @@ await selectProvider({
   modelId: "llama3",
 });`;
 
-const comparisonWeb = `import { BYOMClient } from "@byom-ai/web-sdk";
+const comparisonWeb = `import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 // List providers manually
@@ -289,8 +289,8 @@ export default function ProviderSelection() {
       <Title order={3}>What you'll build</Title>
       <Text>
         A pair of dropdown selectors that let the user pick from available AI
-        providers and models. The chat component stays blocked until a
-        provider is selected.
+        providers and models. The chat component stays blocked until a provider
+        is selected.
       </Text>
 
       <Callout type="info" title="Prerequisites">
@@ -302,8 +302,8 @@ export default function ProviderSelection() {
           onClick={() => navigate("tutorials/first-chat-app")}
         >
           First Chat App
-        </Text>
-        {" "}tutorial. You should be familiar with BYOMProvider and
+        </Text>{" "}
+        tutorial. You should be familiar with ArlopassProvider and
         ChatReadyGate.
       </Callout>
 
@@ -327,9 +327,9 @@ export default function ProviderSelection() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Use useConnection to check whether the extension is
-                  connected before rendering the provider picker. The
-                  providers list is empty until connected.
+                  Use useConnection to check whether the extension is connected
+                  before rendering the provider picker. The providers list is
+                  empty until connected.
                 </Text>
                 <CodeBlock title="ProviderPicker.tsx" code={stepConnection} />
               </Stack>
@@ -340,10 +340,13 @@ export default function ProviderSelection() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Map the providers array to select options. When the user
-                  picks a provider, auto-select its first model.
+                  Map the providers array to select options. When the user picks
+                  a provider, auto-select its first model.
                 </Text>
-                <CodeBlock title="ProviderPicker.tsx" code={stepProviderDropdown} />
+                <CodeBlock
+                  title="ProviderPicker.tsx"
+                  code={stepProviderDropdown}
+                />
               </Stack>
             ),
           },
@@ -355,7 +358,10 @@ export default function ProviderSelection() {
                   Find the selected provider object and list its models. The
                   model dropdown is disabled until a provider is selected.
                 </Text>
-                <CodeBlock title="ProviderPicker.tsx" code={stepModelDropdown} />
+                <CodeBlock
+                  title="ProviderPicker.tsx"
+                  code={stepModelDropdown}
+                />
               </Stack>
             ),
           },
@@ -367,7 +373,10 @@ export default function ProviderSelection() {
                   The selectProvider function takes a providerId and modelId.
                   When switching providers, auto-select the first model.
                 </Text>
-                <CodeBlock title="ProviderPicker.tsx" code={stepHandleSelection} />
+                <CodeBlock
+                  title="ProviderPicker.tsx"
+                  code={stepHandleSelection}
+                />
               </Stack>
             ),
           },
@@ -376,9 +385,9 @@ export default function ProviderSelection() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Place ChatReadyGate below the picker. Its noProvider
-                  fallback tells the user to pick a provider. The chat only
-                  renders once a provider is active.
+                  Place ChatReadyGate below the picker. Its noProvider fallback
+                  tells the user to pick a provider. The chat only renders once
+                  a provider is active.
                 </Text>
                 <CodeBlock title="App.tsx" code={stepGate} />
               </Stack>
@@ -395,8 +404,8 @@ export default function ProviderSelection() {
 
       <Title order={3}>React SDK vs Web SDK</Title>
       <Text>
-        The React SDK auto-fetches providers on connection and tracks
-        selection state. Here's the comparison:
+        The React SDK auto-fetches providers on connection and tracks selection
+        state. Here's the comparison:
       </Text>
       <CodeComparison
         reactSdk={{ title: "ProviderPicker.tsx", code: comparisonReact }}

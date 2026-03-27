@@ -1,4 +1,4 @@
-import type { ProtocolCapability } from "@byom-ai/protocol";
+import type { ProtocolCapability } from "@arlopass/protocol";
 import { describe, expect, it } from "vitest";
 
 import { ExtensionEventEmitter, type ExtensionEventMap } from "../events.js";

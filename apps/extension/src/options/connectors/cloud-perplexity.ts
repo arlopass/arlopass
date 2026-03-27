@@ -8,7 +8,7 @@ import type {
 
 export const CLOUD_PERPLEXITY_CONNECTOR_ID = "cloud-perplexity";
 
-const DEFAULT_NATIVE_HOST_NAME = "com.byom.bridge";
+const DEFAULT_NATIVE_HOST_NAME = "com.arlopass.bridge";
 const DEFAULT_PROVIDER_ID = "perplexity";
 const DEFAULT_METHOD_ID = "perplexity.api_key";
 const DEFAULT_BASE_URL = "https://api.perplexity.ai";
@@ -173,11 +173,11 @@ async function completeViaBridge(
   config: Readonly<Record<string, string>>,
 ): Promise<
   | Readonly<{
-      ok: true;
-      connectionHandle: string;
-      models: readonly ProviderModel[];
-      bindingMetadata: Readonly<Record<string, string>>;
-    }>
+    ok: true;
+    connectionHandle: string;
+    models: readonly ProviderModel[];
+    bindingMetadata: Readonly<Record<string, string>>;
+  }>
   | Readonly<{ ok: false; message: string }>
 > {
   const nativeHostName = normalizeText(

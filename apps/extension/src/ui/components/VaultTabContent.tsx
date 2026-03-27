@@ -65,7 +65,7 @@ export function VaultTabContent() {
       changes: Record<string, chrome.storage.StorageChange>,
       area: string,
     ) => {
-      if (area === "local" && "byom.wallet.credentials.v1" in changes) {
+      if (area === "local" && "arlopass.wallet.credentials.v1" in changes) {
         reload();
       }
     };

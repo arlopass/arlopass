@@ -1,17 +1,17 @@
-# BYOM AI Wallet — Run & Usage Guide
+# Arlopass Wallet — Run & Usage Guide
 
 This guide explains how to run the project in **development** and **production-like** modes, and how to use the current v0.1.0 components.
 
-It is written for the current monorepo state (`byom-web`) and reflects what is implemented today.
+It is written for the current monorepo state (`arlopass`) and reflects what is implemented today.
 
 ---
 
 ## 1) What this repository contains
 
-BYOM is split into focused workspaces:
+Arlopass is split into focused workspaces:
 
 - `packages\protocol` — canonical envelope, reason codes, version negotiation.
-- `packages\web-sdk` — app-facing `BYOMClient` API.
+- `packages\web-sdk` — app-facing `ArlopassClient` API.
 - `packages\policy`, `packages\audit`, `packages\telemetry` — enterprise controls.
 - `apps\bridge` — native messaging host core (handshake, grant sync/revoke, request checks).
 - `apps\extension` — browser extension wallet surface (popup/options UI + extension primitives).
@@ -26,9 +26,9 @@ BYOM is split into focused workspaces:
 - **npm** (workspaces are configured in root `package.json`).
 - **Google Chrome/Chromium** for extension testing.
 - Optional providers:
-  - Ollama (local) for `@byom-ai/adapter-ollama`
-  - Anthropic credentials for `@byom-ai/adapter-claude-subscription`
-  - Local CLI bridge executable for `@byom-ai/adapter-local-cli-bridge`
+  - Ollama (local) for `@arlopass/adapter-ollama`
+  - Anthropic credentials for `@arlopass/adapter-claude-subscription`
+  - Local CLI bridge executable for `@arlopass/adapter-local-cli-bridge`
 
 ---
 
@@ -122,9 +122,9 @@ npm run test
 Run a specific workspace:
 
 ```powershell
-npm run test -w @byom-ai/web-sdk
-npm run test -w @byom-ai/bridge
-npm run test -w @byom-ai/extension
+npm run test -w @arlopass/web-sdk
+npm run test -w @arlopass/bridge
+npm run test -w @arlopass/extension
 ```
 
 Watch mode (root):
@@ -136,8 +136,8 @@ npx vitest --workspace vitest.workspace.ts
 Watch mode (workspace build):
 
 ```powershell
-npm run build -w @byom-ai/bridge -- --watch
-npm run build -w @byom-ai/extension -- --watch
+npm run build -w @arlopass/bridge -- --watch
+npm run build -w @arlopass/extension -- --watch
 ```
 
 ### 4.2 Run the bridge locally
@@ -145,10 +145,10 @@ npm run build -w @byom-ai/extension -- --watch
 Build bridge:
 
 ```powershell
-npm run typecheck -w @byom-ai/bridge
+npm run typecheck -w @arlopass/bridge
 ```
 
-The bridge generates its own signing key on first run and persists it to `%LOCALAPPDATA%\BYOM\bridge\state\bridge-state.json`. No shared secret or manual configuration is needed.
+The bridge generates its own signing key on first run and persists it to `%LOCALAPPDATA%\Arlopass\bridge\state\bridge-state.json`. No shared secret or manual configuration is needed.
 
 Run:
 
@@ -161,7 +161,7 @@ node --loader .\scripts\dev\ts-js-specifier-loader.mjs .\apps\bridge\src\main.ts
 Build extension:
 
 ```powershell
-npm run build -w @byom-ai/extension
+npm run build -w @arlopass/extension
 ```
 
 Then:
@@ -169,7 +169,7 @@ Then:
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
-4. Select folder: `D:\projects\byom-web\apps\extension`
+4. Select folder: `D:\projects\arlopass\apps\extension`
 
 After TS changes, rebuild (or keep `--watch`) and click **Reload** on the extension card.
 
@@ -191,8 +191,8 @@ Open the printed local URL (default `http://127.0.0.1:4172`).
 
 The app demonstrates:
 
-- Connect/list/select/send/stream BYOM SDK flows
-- Extension injected transport (`window.byom`) vs mock fallback transport
+- Connect/list/select/send/stream Arlopass SDK flows
+- Extension injected transport (`window.arlopass`) vs mock fallback transport
 - Provider/model switching scenarios
 - Typed SDK error handling (policy denial, transient failure, timeout simulation)
 - Integration snippet for real app embedding
@@ -222,15 +222,15 @@ Reliability workflow reference: `.github\workflows\reliability-gates.yml`.
 
 ### 5.2 Bridge native messaging host registration (Windows)
 
-Host name is fixed: `com.byom.bridge`.
+Host name is fixed: `com.arlopass.bridge`.
 
-Create `com.byom.bridge.json`:
+Create `com.arlopass.bridge.json`:
 
 ```json
 {
-  "name": "com.byom.bridge",
-  "description": "BYOM AI Bridge — Secure native messaging host",
-  "path": "C:\\BYOM\\bridge\\byom-bridge.cmd",
+  "name": "com.arlopass.bridge",
+  "description": "Arlopass Bridge — Secure native messaging host",
+  "path": "C:\\Arlopass\\bridge\\arlopass-bridge.cmd",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://<your-extension-id>/"
@@ -243,7 +243,7 @@ Create `com.byom.bridge.json`:
 Register manifest path in registry:
 
 ```powershell
-reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.byom.bridge" /ve /t REG_SZ /d "C:\BYOM\bridge\com.byom.bridge.json" /f
+reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.arlopass.bridge" /ve /t REG_SZ /d "C:\Arlopass\bridge\com.arlopass.bridge.json" /f
 ```
 
 Then open extension options and run **Pair Bridge (One Click)**:
@@ -252,18 +252,18 @@ Then open extension options and run **Pair Bridge (One Click)**:
 2. If one-click auto-completion succeeds, pairing is done immediately.
 3. If manual fallback is required, read the one-time code from bridge output.
    - If the bridge is launched as the background native host on Windows dev setup, read it from:
-     `"%LOCALAPPDATA%\BYOM\bridge\logs\pairing-code.log"`
+     `"%LOCALAPPDATA%\Arlopass\bridge\logs\pairing-code.log"`
 4. Enter the code in **One-time Pairing Code** and click **Complete Pairing**.
 
 Pairing sessions/handles are persisted by the bridge at:
-`"%LOCALAPPDATA%\BYOM\bridge\state\pairing-state.json"` (dev native-host launcher default).
+`"%LOCALAPPDATA%\Arlopass\bridge\state\pairing-state.json"` (dev native-host launcher default).
 
 Handshake challenges are persisted by the bridge at:
-`"%LOCALAPPDATA%\BYOM\bridge\state\handshake-state.json"` (dev native-host launcher default).
+`"%LOCALAPPDATA%\Arlopass\bridge\state\handshake-state.json"` (dev native-host launcher default).
 This is required because `sendNativeMessage` can invoke a fresh native host process per request.
 
 Cloud connection-handle epoch state is persisted by the bridge at:
-`"%LOCALAPPDATA%\BYOM\bridge\state\cloud-connection-state.json"` (dev native-host launcher default).
+`"%LOCALAPPDATA%\Arlopass\bridge\state\cloud-connection-state.json"` (dev native-host launcher default).
 This keeps cloud chat execution resumable across native host process restarts in development.
 
 The extension stores a pairing handle plus wrapped key material; raw shared secrets are no longer entered manually.
@@ -274,43 +274,43 @@ Bridge cloud execution is fail-closed by default. Configure rollout through envi
 
 ```powershell
 # Global on/off gate (default false)
-$env:BYOM_CLOUD_BROKER_V2_ENABLED = "true"
+$env:ARLOPASS_CLOUD_BROKER_V2_ENABLED = "true"
 
 # Optional per-provider gates (default false)
-$env:BYOM_CLOUD_PROVIDER_ANTHROPIC_API_KEY_ENABLED = "true"
-$env:BYOM_CLOUD_PROVIDER_ANTHROPIC_OAUTH_ENABLED = "true"
-$env:BYOM_CLOUD_PROVIDER_FOUNDRY_ENABLED = "true"
-$env:BYOM_CLOUD_PROVIDER_VERTEX_ENABLED = "true"
-$env:BYOM_CLOUD_PROVIDER_BEDROCK_ENABLED = "true"
-$env:BYOM_CLOUD_PROVIDER_OPENAI_ENABLED = "true"
-$env:BYOM_CLOUD_PROVIDER_PERPLEXITY_ENABLED = "true"
-$env:BYOM_CLOUD_PROVIDER_GEMINI_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_ANTHROPIC_API_KEY_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_ANTHROPIC_OAUTH_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_FOUNDRY_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_VERTEX_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_BEDROCK_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_OPENAI_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_PERPLEXITY_ENABLED = "true"
+$env:ARLOPASS_CLOUD_PROVIDER_GEMINI_ENABLED = "true"
 
 # Optional explicit method allowlist CSV (in addition to provider gates)
-$env:BYOM_CLOUD_METHOD_ALLOWLIST = "anthropic.api_key,foundry.api_key,vertex.api_key,vertex.service_account,vertex.workload_identity_federation,bedrock.api_key,bedrock.assume_role,bedrock.aws_access_key,openai.api_key,perplexity.api_key,gemini.api_key,gemini.oauth_access_token"
+$env:ARLOPASS_CLOUD_METHOD_ALLOWLIST = "anthropic.api_key,foundry.api_key,vertex.api_key,vertex.service_account,vertex.workload_identity_federation,bedrock.api_key,bedrock.assume_role,bedrock.aws_access_key,openai.api_key,perplexity.api_key,gemini.api_key,gemini.oauth_access_token"
 
 # Optional canary allowlists (CSV). If either list is non-empty, unknown values are denied.
-$env:BYOM_CLOUD_CANARY_EXTENSION_IDS = "abcdefghijklmnopabcdefghijklmnop"
-$env:BYOM_CLOUD_CANARY_ORIGINS = "https://app.example.com,https://staging.example.com"
+$env:ARLOPASS_CLOUD_CANARY_EXTENSION_IDS = "abcdefghijklmnopabcdefghijklmnop"
+$env:ARLOPASS_CLOUD_CANARY_ORIGINS = "https://app.example.com,https://staging.example.com"
 
 # Authenticated-origin policy for signed bridge requests:
 # - loopback origins are trusted by default for local dev
 # - non-loopback origins are denied unless explicitly allowlisted
-$env:BYOM_BRIDGE_AUTHENTICATED_ORIGINS = "https://app.example.com,https://staging.example.com"
-$env:BYOM_BRIDGE_AUTHENTICATED_EXTENSION_IDS = "abcdefghijklmnopabcdefghijklmnop"
+$env:ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS = "https://app.example.com,https://staging.example.com"
+$env:ARLOPASS_BRIDGE_AUTHENTICATED_EXTENSION_IDS = "abcdefghijklmnopabcdefghijklmnop"
 
 # Optional: disable default loopback trust if your environment requires fully explicit origin auth
-$env:BYOM_BRIDGE_ALLOW_LOOPBACK_ORIGINS = "false"
+$env:ARLOPASS_BRIDGE_ALLOW_LOOPBACK_ORIGINS = "false"
 ```
 
-For backward compatibility with older env settings, `foundry.aad_client_credentials` in `BYOM_CLOUD_METHOD_ALLOWLIST` is normalized to `foundry.api_key` at runtime.
+For backward compatibility with older env settings, `foundry.aad_client_credentials` in `ARLOPASS_CLOUD_METHOD_ALLOWLIST` is normalized to `foundry.api_key` at runtime.
 
-Dev note: `scripts\dev\native-host\byom-bridge-native-host.cmd` now defaults these flags to enabled when they are unset, and sets `BYOM_BRIDGE_PREFER_WORKSPACE_ADAPTER_SOURCE=true` by default. This prevents stale workspace `dist` outputs from masking newer adapter source changes during local development.
+Dev note: `scripts\dev\native-host\arlopass-bridge-native-host.cmd` now defaults these flags to enabled when they are unset, and sets `ARLOPASS_BRIDGE_PREFER_WORKSPACE_ADAPTER_SOURCE=true` by default. This prevents stale workspace `dist` outputs from masking newer adapter source changes during local development.
 
 Rollback order:
 
 1. Disable provider-level flag(s) first (smallest blast radius).
-2. Disable `BYOM_CLOUD_BROKER_V2_ENABLED` for immediate global cloud deny.
+2. Disable `ARLOPASS_CLOUD_BROKER_V2_ENABLED` for immediate global cloud deny.
 
 ### 5.4 Extension package in production
 
@@ -326,25 +326,25 @@ Package from `apps\extension` with built `dist\` and static files:
 
 ## 6) How to use the SDK in a web app
 
-At app level, use `BYOMClient` with any object implementing `BYOMTransport`.
+At app level, use `ArlopassClient` with any object implementing `ArlopassTransport`.
 
 Important for current v0.1.0 state:
 
-- `@byom-ai/web-sdk` is fully usable as a library.
-- The extension now auto-injects `window.byom` on `http(s)` pages through its content-script bridge.
-- If `window.byom` is still missing, reload the unpacked extension, refresh the target tab, and verify the extension has site access for that origin.
+- `@arlopass/web-sdk` is fully usable as a library.
+- The extension now auto-injects `window.arlopass` on `http(s)` pages through its content-script bridge.
+- If `window.arlopass` is still missing, reload the unpacked extension, refresh the target tab, and verify the extension has site access for that origin.
 
-If your app already has a BYOM transport on `window.byom`, you can do:
+If your app already has a Arlopass transport on `window.arlopass`, you can do:
 
 ```ts
-import { BYOMClient, type BYOMTransport } from "@byom-ai/web-sdk";
+import { ArlopassClient, type ArlopassTransport } from "@arlopass/web-sdk";
 
-const transport = (window as Window & { byom?: BYOMTransport }).byom;
+const transport = (window as Window & { arlopass?: ArlopassTransport }).arlopass;
 if (transport === undefined) {
-  throw new Error("BYOM transport not available");
+  throw new Error("Arlopass transport not available");
 }
 
-const client = new BYOMClient({
+const client = new ArlopassClient({
   transport,
   origin: window.location.origin,
 });
@@ -381,12 +381,12 @@ for await (const event of client.chat.stream({
 If you do not rely on extension injection in your deployment, pass your own transport implementation:
 
 ```ts
-import type { BYOMTransport } from "@byom-ai/web-sdk";
+import type { ArlopassTransport } from "@arlopass/web-sdk";
 
-const transport: BYOMTransport = {
+const transport: ArlopassTransport = {
   async request(req) {
     // Call your backend/bridge transport here
-    return fetch("/api/byom/request", {
+    return fetch("/api/arlopass/request", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(req),
@@ -416,20 +416,20 @@ const transport: BYOMTransport = {
 
 Storage keys used by popup:
 
-- `byom.wallet.providers.v1`
-- `byom.wallet.activeProvider.v1`
-- `byom.wallet.ui.lastError.v1`
+- `arlopass.wallet.providers.v1`
+- `arlopass.wallet.activeProvider.v1`
+- `arlopass.wallet.ui.lastError.v1`
 
 The options page writes to storage keys:
 
-- `byom.wallet.providers.v1`
-- `byom.wallet.activeProvider.v1`
+- `arlopass.wallet.providers.v1`
+- `arlopass.wallet.activeProvider.v1`
 
 If needed, you can still seed demo state from extension service worker console:
 
 ```js
 chrome.storage.local.set({
-  "byom.wallet.providers.v1": [
+  "arlopass.wallet.providers.v1": [
     {
       id: "ollama",
       name: "Ollama",
@@ -451,7 +451,7 @@ chrome.storage.local.set({
       }
     }
   ],
-  "byom.wallet.activeProvider.v1": {
+  "arlopass.wallet.activeProvider.v1": {
     providerId: "ollama",
     modelId: "llama3.2"
   }
@@ -467,7 +467,7 @@ Then open extension popup to inspect state rendering and actions.
 ### Ollama adapter
 
 ```ts
-import { OllamaAdapter } from "@byom-ai/adapter-ollama";
+import { OllamaAdapter } from "@arlopass/adapter-ollama";
 
 const adapter = new OllamaAdapter({ baseUrl: "http://localhost:11434" });
 const models = await adapter.listModels();
@@ -480,7 +480,7 @@ await adapter.shutdown();
 ### Claude subscription adapter
 
 ```ts
-import { ClaudeSubscriptionAdapter } from "@byom-ai/adapter-claude-subscription";
+import { ClaudeSubscriptionAdapter } from "@arlopass/adapter-claude-subscription";
 
 const adapter = new ClaudeSubscriptionAdapter({
   auth: { authType: "api_key", apiKey: process.env.ANTHROPIC_API_KEY! },
@@ -490,10 +490,10 @@ const adapter = new ClaudeSubscriptionAdapter({
 ### Local CLI bridge adapter
 
 ```ts
-import { LocalCliBridgeAdapter } from "@byom-ai/adapter-local-cli-bridge";
+import { LocalCliBridgeAdapter } from "@arlopass/adapter-local-cli-bridge";
 
 const adapter = new LocalCliBridgeAdapter({
-  command: "C:\\BYOM\\cli-bridge\\bridge.exe",
+  command: "C:\\Arlopass\\cli-bridge\\bridge.exe",
   args: [],
 });
 ```
@@ -534,7 +534,7 @@ Operational docs:
 ### Bridge starts but extension cannot connect
 
 - Verify native messaging host registration key exists.
-- Verify manifest `name` is exactly `com.byom.bridge`.
+- Verify manifest `name` is exactly `com.arlopass.bridge`.
 - Verify extension ID is present in `allowed_origins`.
 - Verify the extension has an active pairing handle for the selected bridge host.
 - Run `npm run dev:register-native-host`, then reload the extension.
@@ -545,13 +545,13 @@ Operational docs:
 - Re-run **Pair Bridge** and complete with a fresh one-time code.
 - If needed, revoke old handle and rotate pairing in extension options.
 - If the bridge runs as background native host, fetch latest code lines with:
-  `Get-Content "$env:LOCALAPPDATA\BYOM\bridge\logs\pairing-code.log" -Tail 50`
+  `Get-Content "$env:LOCALAPPDATA\Arlopass\bridge\logs\pairing-code.log" -Tail 50`
 
 ### Bridge warns cloud adapter package `dist/index.js` is missing
 
 - Bridge now falls back to workspace adapter source entries when package `dist` artifacts are absent.
 - If warnings persist after pull/reload, run:
-  `npm run build -w @byom-ai/adapter-openai && npm run build -w @byom-ai/adapter-perplexity && npm run build -w @byom-ai/adapter-gemini`
+  `npm run build -w @arlopass/adapter-openai && npm run build -w @arlopass/adapter-perplexity && npm run build -w @arlopass/adapter-gemini`
 
 ### Popup shows no providers
 
@@ -576,5 +576,5 @@ npm run build
 - Wire end-to-end SDK request mediation through native messaging (beyond provider setup).
 - Persist provider secret material in OS secure storage via bridge/keychain integration.
 - Add bridge service installation scripts (Windows/macOS/Linux) and signed release artifacts.
-- Add example web app demonstrating `BYOMClient` + extension transport end-to-end.
+- Add example web app demonstrating `ArlopassClient` + extension transport end-to-end.
 

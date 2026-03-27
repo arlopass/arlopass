@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $extensionManifestPath = Join-Path $repoRoot "apps\extension\manifest.json"
-$hostLauncherPath = Join-Path $repoRoot "scripts\dev\native-host\byom-bridge-native-host.cmd"
+$hostLauncherPath = Join-Path $repoRoot "scripts\dev\native-host\arlopass-bridge-native-host.cmd"
 
 if (-not (Test-Path -LiteralPath $extensionManifestPath)) {
   throw "Extension manifest not found at: $extensionManifestPath"
@@ -68,13 +68,13 @@ if ($resolvedExtensionId -notmatch "^[a-p]{32}$") {
   throw "Invalid extension ID '$resolvedExtensionId'. Expected 32 lowercase characters in range a-p."
 }
 
-$hostManifestDirectory = Join-Path $env:LOCALAPPDATA "BYOM\bridge"
+$hostManifestDirectory = Join-Path $env:LOCALAPPDATA "Arlopass\bridge"
 $null = New-Item -Path $hostManifestDirectory -ItemType Directory -Force
 
-$hostManifestPath = Join-Path $hostManifestDirectory "com.byom.bridge.json"
+$hostManifestPath = Join-Path $hostManifestDirectory "com.arlopass.bridge.json"
 $nativeHostManifest = [ordered]@{
-  name = "com.byom.bridge"
-  description = "BYOM AI Bridge - Secure native messaging host"
+  name = "com.arlopass.bridge"
+  description = "Arlopass Bridge - Secure native messaging host"
   path = $hostLauncherPath
   type = "stdio"
   allowed_origins = @("chrome-extension://$resolvedExtensionId/")
@@ -87,8 +87,8 @@ $manifestJson = $nativeHostManifest | ConvertTo-Json -Depth 5
   [System.Text.UTF8Encoding]::new($false)
 )
 
-$chromeRegistryKey = "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.byom.bridge"
-$edgeRegistryKey = "HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.byom.bridge"
+$chromeRegistryKey = "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.arlopass.bridge"
+$edgeRegistryKey = "HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.arlopass.bridge"
 
 & reg add $chromeRegistryKey /ve /t REG_SZ /d $hostManifestPath /f | Out-Null
 & reg add $edgeRegistryKey /ve /t REG_SZ /d $hostManifestPath /f | Out-Null

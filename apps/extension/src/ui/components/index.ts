@@ -1,4 +1,4 @@
-export { byomTheme, tokens } from "./theme.js";
+export { arlopassTheme, tokens } from "./theme.js";
 export { PopupShell } from "./PopupShell.js";
 export { WalletHeader } from "./WalletHeader.js";
 export { WalletTabs } from "./WalletTabs.js";

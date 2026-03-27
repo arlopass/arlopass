@@ -3,7 +3,7 @@ import {
     estimateTokenCount,
     estimateInputTokens,
 } from "../usage/token-estimation.js";
-import type { ChatMessage } from "@byom-ai/web-sdk";
+import type { ChatMessage } from "@arlopass/web-sdk";
 
 describe("estimateTokenCount", () => {
     it("returns 1 for very short text", () => {

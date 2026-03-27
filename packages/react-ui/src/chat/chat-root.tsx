@@ -7,11 +7,11 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { useConversation } from "@byom-ai/react";
+import { useConversation } from "@arlopass/react";
 import type {
   TrackedChatMessage,
   MessageId,
-  BYOMSDKError,
+  ArlopassSDKError,
   ToolDefinition,
 } from "../types.js";
 import { createForwardRef } from "../utils/forward-ref.js";
@@ -35,7 +35,7 @@ type ControlledProps = {
   isSending?: boolean;
   onSend?: (content: string) => Promise<MessageId>;
   onStop?: () => void;
-  error?: BYOMSDKError | null;
+  error?: ArlopassSDKError | null;
 };
 
 type ChatRootProps = Omit<HTMLAttributes<HTMLDivElement>, "children"> &
@@ -44,7 +44,11 @@ type ChatRootProps = Omit<HTMLAttributes<HTMLDivElement>, "children"> &
     children: ReactNode;
   };
 
-function getDataState(error: BYOMSDKError | null, isStreaming: boolean, isSending: boolean): string {
+function getDataState(
+  error: ArlopassSDKError | null,
+  isStreaming: boolean,
+  isSending: boolean,
+): string {
   if (error) return "error";
   if (isStreaming) return "streaming";
   if (isSending) return "sending";
@@ -88,7 +92,15 @@ export const Root = createForwardRef<HTMLDivElement, ChatRootProps>(
       if (hideToolCalls !== undefined) opts.hideToolCalls = hideToolCalls;
       if (initialMessages !== undefined) opts.initialMessages = initialMessages;
       return opts as Parameters<typeof useConversation>[0];
-    }, [systemPrompt, tools, maxTokens, maxToolRounds, primeTools, hideToolCalls, initialMessages]);
+    }, [
+      systemPrompt,
+      tools,
+      maxTokens,
+      maxToolRounds,
+      primeTools,
+      hideToolCalls,
+      initialMessages,
+    ]);
 
     const hook = useConversation(hookOptions);
 
@@ -104,9 +116,7 @@ export const Root = createForwardRef<HTMLDivElement, ChatRootProps>(
     const isStreaming = isControlled
       ? (isStreamingProp ?? false)
       : hook.isStreaming;
-    const isSending = isControlled
-      ? (isSendingProp ?? false)
-      : hook.isSending;
+    const isSending = isControlled ? (isSendingProp ?? false) : hook.isSending;
     const error = isControlled ? (errorProp ?? null) : hook.error;
 
     const send = isControlled
@@ -116,7 +126,7 @@ export const Root = createForwardRef<HTMLDivElement, ChatRootProps>(
       ? (onSend ?? (async () => "" as MessageId))
       : hook.stream;
     const stop = isControlled ? (onStop ?? (() => {})) : hook.stop;
-    const clearMessages = isControlled ? (() => {}) : hook.clearMessages;
+    const clearMessages = isControlled ? () => {} : hook.clearMessages;
 
     const [inputValue, setInputValue] = useState("");
 

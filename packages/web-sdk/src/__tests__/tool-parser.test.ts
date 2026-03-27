@@ -202,7 +202,7 @@ describe("parseToolCalls — Strategy 5: param-key reverse mapping", () => {
   });
 
   it("matches JSON with extra junk fields from model", () => {
-    const text = '{"page_id": "streaming", "query": "BYOM stream"}';
+    const text = '{"page_id": "streaming", "query": "Arlopass stream"}';
     const result = parseToolCalls(text, names, toolDefs);
     expect(result.toolCalls).toHaveLength(1);
     // page_id matches navigate, query matches search — both have score 1

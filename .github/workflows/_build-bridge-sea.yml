@@ -22,23 +22,23 @@ jobs:
           - os: win
             arch: x64
             runner: windows-latest
-            binary: byom-bridge-win-x64.exe
+            binary: arlopass-bridge-win-x64.exe
           - os: macos
             arch: x64
             runner: macos-13
-            binary: byom-bridge-macos-x64
+            binary: arlopass-bridge-macos-x64
           - os: macos
             arch: arm64
             runner: macos-latest
-            binary: byom-bridge-macos-arm64
+            binary: arlopass-bridge-macos-arm64
           - os: linux
             arch: x64
             runner: ubuntu-latest
-            binary: byom-bridge-linux-x64
+            binary: arlopass-bridge-linux-x64
           - os: linux
             arch: arm64
             runner: ubuntu-latest
-            binary: byom-bridge-linux-arm64
+            binary: arlopass-bridge-linux-arm64
     steps:
       - uses: actions/checkout@v4
 

@@ -2,7 +2,7 @@ import {
   isProtocolCapability,
   type ProtocolCapability,
   type ProtocolReasonCode,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 import {
   POLICY_DECISION_MACHINE_CODES,

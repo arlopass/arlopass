@@ -90,7 +90,7 @@ export default defineConfig({
     ],
 
     webServer: {
-        command: "npm run build:examples && npm run preview -w @byom-ai/examples-web",
+        command: "npm run build:examples && npm run preview -w @arlopass/examples-web",
         url: "http://localhost:4173",
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,

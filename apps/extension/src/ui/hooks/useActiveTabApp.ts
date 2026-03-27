@@ -65,7 +65,7 @@ export function useActiveTabApp(): { activeApp: ActiveTabApp | null; loading: bo
 
         // Re-check when app storage changes
         const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
-            if (area === "local" && "byom.wallet.apps.v1" in changes) {
+            if (area === "local" && "arlopass.wallet.apps.v1" in changes) {
                 void detect();
             }
         };

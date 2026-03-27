@@ -66,11 +66,11 @@ jobs:
       - name: Zip extension
         run: |
           cd "apps/extension/dist/${{ matrix.target }}"
-          zip -r "../../../../byom-extension-${{ matrix.target }}.zip" .
+          zip -r "../../../../arlopass-extension-${{ matrix.target }}.zip" .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: extension-${{ matrix.target }}
-          path: byom-extension-${{ matrix.target }}.zip
+          path: arlopass-extension-${{ matrix.target }}.zip
           retention-days: 5

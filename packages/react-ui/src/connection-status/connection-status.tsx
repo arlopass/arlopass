@@ -1,7 +1,7 @@
 "use client";
 
 import { type HTMLAttributes, type ReactNode, type Ref } from "react";
-import { useConnection } from "@byom-ai/react";
+import { useConnection } from "@arlopass/react";
 import type { ClientState } from "../types.js";
 import { createForwardRef } from "../utils/forward-ref.js";
 

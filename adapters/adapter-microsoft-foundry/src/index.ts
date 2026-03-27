@@ -13,7 +13,7 @@ import {
   type RevokeCredentialRefInput,
   type ValidateCredentialRefInput,
   type ValidationResult,
-} from "@byom-ai/adapter-runtime";
+} from "@arlopass/adapter-runtime";
 import {
   type ProtocolCapability,
   AuthError,
@@ -21,7 +21,7 @@ import {
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 export const FOUNDRY_CONNECTION_METHOD_IDS = {
   API_KEY: "foundry.api_key",
@@ -61,7 +61,7 @@ export const MICROSOFT_FOUNDRY_MANIFEST: AdapterManifest = {
     { host: "services.ai.azure.com", protocol: "https" },
   ],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 const FOUNDRY_DEFAULT_MODEL = "gpt-4o-mini";

@@ -2,7 +2,7 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, ApiTable, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const retryableReact = `import { useConnection, useConversation } from "@byom-ai/react";
+const retryableReact = `import { useConnection, useConversation } from "@arlopass/react";
 
 function Chat() {
   const connection = useConnection();
@@ -44,15 +44,15 @@ function Chat() {
   );
 }`;
 
-const retryableWeb = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
+const retryableWeb = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 
 try {
   await client.connect({ appId: "my-app" });
 } catch (err) {
-  const sdkError = err as BYOMSDKError;
+  const sdkError = err as ArlopassSDKError;
   console.error(sdkError.machineCode, sdkError.message);
   if (sdkError.retryable) {
     // Safe to retry — transient network issue or timeout
@@ -70,7 +70,7 @@ try {
     if (event.type === "delta") process.stdout.write(event.content);
   }
 } catch (err) {
-  const sdkError = err as BYOMSDKError;
+  const sdkError = err as ArlopassSDKError;
   if (sdkError.retryable) {
     // Retry the stream
     for await (const event of convo.stream("Hello!")) {
@@ -79,7 +79,7 @@ try {
   }
 }`;
 
-const errorBoundaryExample = `import { BYOMProvider, BYOMErrorBoundary } from "@byom-ai/react";
+const errorBoundaryExample = `import { ArlopassProvider, ArlopassErrorBoundary } from "@arlopass/react";
 
 function ErrorFallback({
   error,
@@ -99,27 +99,27 @@ function ErrorFallback({
 
 export default function App() {
   return (
-    <BYOMProvider appId="my-app">
-      <BYOMErrorBoundary
+    <ArlopassProvider appId="my-app">
+      <ArlopassErrorBoundary
         fallback={(props) => <ErrorFallback {...props} />}
         onError={(error, errorInfo) => {
           // Log to your error tracking service
-          console.error("BYOM Error:", error, errorInfo);
+          console.error("Arlopass Error:", error, errorInfo);
         }}
       >
         <Chat />
-      </BYOMErrorBoundary>
-    </BYOMProvider>
+      </ArlopassErrorBoundary>
+    </ArlopassProvider>
   );
 }`;
 
-const hasErrorGuard = `import { BYOMHasError } from "@byom-ai/react";
+const hasErrorGuard = `import { ArlopassHasError } from "@arlopass/react";
 
 function AppHeader() {
   return (
     <header>
       <h1>My App</h1>
-      <BYOMHasError>
+      <ArlopassHasError>
         {({ error, retry }) => (
           <div style={{ color: "red", padding: 8 }}>
             Error: {error.message}
@@ -130,16 +130,16 @@ function AppHeader() {
             )}
           </div>
         )}
-      </BYOMHasError>
+      </ArlopassHasError>
     </header>
   );
 }`;
 
-const onErrorCallback = `import { BYOMProvider } from "@byom-ai/react";
+const onErrorCallback = `import { ArlopassProvider } from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider
+    <ArlopassProvider
       appId="my-app"
       onError={(error) => {
         // Global error handler — fires for all SDK errors
@@ -152,48 +152,49 @@ function App() {
       }}
     >
       <Chat />
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
 const errorCodesData = [
   {
-    name: "BYOM_PROTOCOL_TIMEOUT",
+    name: "ARLOPASS_PROTOCOL_TIMEOUT",
     type: "retryable",
     description: "Request timed out — transient network issue",
   },
   {
-    name: "BYOM_PROTOCOL_TRANSIENT_NETWORK",
+    name: "ARLOPASS_PROTOCOL_TRANSIENT_NETWORK",
     type: "retryable",
     description: "Temporary network failure",
   },
   {
-    name: "BYOM_PROTOCOL_AUTH_FAILED",
+    name: "ARLOPASS_PROTOCOL_AUTH_FAILED",
     type: "fatal",
     description: "Authentication failed — invalid or expired credentials",
   },
   {
-    name: "BYOM_PROTOCOL_PERMISSION_DENIED",
+    name: "ARLOPASS_PROTOCOL_PERMISSION_DENIED",
     type: "fatal",
     description: "Insufficient permissions for the requested operation",
   },
   {
-    name: "BYOM_PROTOCOL_POLICY_VIOLATION",
+    name: "ARLOPASS_PROTOCOL_POLICY_VIOLATION",
     type: "fatal",
     description: "Request violates a configured policy",
   },
   {
-    name: "BYOM_SDK_TRANSPORT_ERROR",
+    name: "ARLOPASS_SDK_TRANSPORT_ERROR",
     type: "varies",
     description: "Transport-level error — check retryable flag",
   },
   {
-    name: "BYOM_SDK_INVALID_STATE_OPERATION",
+    name: "ARLOPASS_SDK_INVALID_STATE_OPERATION",
     type: "fatal",
-    description: "Operation attempted in wrong state (e.g. chat before connect)",
+    description:
+      "Operation attempted in wrong state (e.g. chat before connect)",
   },
   {
-    name: "BYOM_SDK_PROTOCOL_VIOLATION",
+    name: "ARLOPASS_SDK_PROTOCOL_VIOLATION",
     type: "fatal",
     description: "Malformed envelope or protocol mismatch",
   },
@@ -201,12 +202,12 @@ const errorCodesData = [
 
 const fullExample = `import { useState } from "react";
 import {
-  BYOMProvider,
-  BYOMErrorBoundary,
-  BYOMChatReadyGate,
-  BYOMHasError,
+  ArlopassProvider,
+  ArlopassErrorBoundary,
+  ArlopassChatReadyGate,
+  ArlopassHasError,
   useConversation,
-} from "@byom-ai/react";
+} from "@arlopass/react";
 
 function Chat() {
   const {
@@ -232,7 +233,7 @@ function Chat() {
 
   return (
     <div style={{ maxWidth: 600, margin: "0 auto" }}>
-      <BYOMHasError>
+      <ArlopassHasError>
         {({ error: connError, retry: connRetry }) => (
           <div style={{ padding: 8, background: "#fee", border: "1px solid red" }}>
             <strong>Error:</strong> {connError.message}
@@ -243,7 +244,7 @@ function Chat() {
             )}
           </div>
         )}
-      </BYOMHasError>
+      </ArlopassHasError>
 
       {error && (
         <div style={{ padding: 8, background: "#fff3cd", border: "1px solid orange" }}>
@@ -291,13 +292,13 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider
+    <ArlopassProvider
       appId="error-handling-app"
       onError={(error) => {
         console.error(\`[\${error.machineCode}] \${error.message}\`);
       }}
     >
-      <BYOMErrorBoundary
+      <ArlopassErrorBoundary
         fallback={({ error, resetErrorBoundary }) => (
           <div style={{ padding: 32, textAlign: "center" }}>
             <h2>Something went wrong</h2>
@@ -306,9 +307,9 @@ export default function App() {
           </div>
         )}
       >
-        <BYOMChatReadyGate
+        <ArlopassChatReadyGate
           connectingFallback={<p>Connecting...</p>}
-          providerFallback={<p>Select a provider in the BYOM extension.</p>}
+          providerFallback={<p>Select a provider in the Arlopass extension.</p>}
           errorFallback={({ error, retry }) => (
             <div>
               <p>Failed to connect: {error.message}</p>
@@ -317,9 +318,9 @@ export default function App() {
           )}
         >
           <Chat />
-        </BYOMChatReadyGate>
-      </BYOMErrorBoundary>
-    </BYOMProvider>
+        </ArlopassChatReadyGate>
+      </ArlopassErrorBoundary>
+    </ArlopassProvider>
   );
 }`;
 
@@ -336,44 +337,44 @@ export default function ErrorHandling() {
 
       <Title order={3}>Retryable vs non-retryable errors</Title>
       <Text>
-        Every <code>BYOMSDKError</code> has a <code>retryable</code> boolean.
-        Timeouts and transient network errors are retryable. Auth failures,
-        policy violations, and state errors are not. Both hooks and the web SDK
-        expose a <code>retry()</code> function that replays the last failed
-        operation when the error is retryable.
+        Every <code>ArlopassSDKError</code> has a <code>retryable</code>{" "}
+        boolean. Timeouts and transient network errors are retryable. Auth
+        failures, policy violations, and state errors are not. Both hooks and
+        the web SDK expose a <code>retry()</code> function that replays the last
+        failed operation when the error is retryable.
       </Text>
       <CodeComparison
         reactSdk={{ title: "RetryableErrors.tsx", code: retryableReact }}
         webSdk={{ title: "retryable-errors.ts", code: retryableWeb }}
       />
 
-      <Title order={3}>BYOMErrorBoundary</Title>
+      <Title order={3}>ArlopassErrorBoundary</Title>
       <Text>
-        Wrap your app (or sections of it) in <code>BYOMErrorBoundary</code> to
-        catch unhandled exceptions. It provides a <code>fallback</code> render
-        function and an optional <code>onError</code> callback for logging.
+        Wrap your app (or sections of it) in <code>ArlopassErrorBoundary</code>{" "}
+        to catch unhandled exceptions. It provides a <code>fallback</code>{" "}
+        render function and an optional <code>onError</code> callback for
+        logging.
       </Text>
       <CodeBlock title="ErrorBoundary.tsx" code={errorBoundaryExample} />
 
-      <Title order={3}>BYOMHasError guard</Title>
+      <Title order={3}>ArlopassHasError guard</Title>
       <Text>
-        <code>BYOMHasError</code> is a negative guard — it only renders when
-        there's an active error. Use it in headers, sidebars, or toast areas
-        to show error state outside the main content area.
+        <code>ArlopassHasError</code> is a negative guard — it only renders when
+        there's an active error. Use it in headers, sidebars, or toast areas to
+        show error state outside the main content area.
       </Text>
       <CodeBlock title="ErrorBanner.tsx" code={hasErrorGuard} />
 
       <Title order={3}>Global error callback</Title>
       <Text>
-        Pass <code>onError</code> to <code>BYOMProvider</code> to receive every
-        SDK error. Use it for error tracking, analytics, or global logging.
+        Pass <code>onError</code> to <code>ArlopassProvider</code> to receive
+        every SDK error. Use it for error tracking, analytics, or global
+        logging.
       </Text>
       <CodeBlock title="GlobalErrorHandler.tsx" code={onErrorCallback} />
 
       <Title order={3}>Error codes</Title>
-      <Text>
-        Key error codes and whether they're retryable:
-      </Text>
+      <Text>Key error codes and whether they're retryable:</Text>
       <ApiTable
         data={errorCodesData.map((row) => ({
           name: row.name,
@@ -384,8 +385,8 @@ export default function ErrorHandling() {
 
       <Title order={3}>Complete example</Title>
       <Text>
-        A chat app with layered error handling — error boundary, connection
-        gate fallbacks, inline chat errors, and global logging:
+        A chat app with layered error handling — error boundary, connection gate
+        fallbacks, inline chat errors, and global logging:
       </Text>
       <CodeBlock title="App.tsx" code={fullExample} />
 

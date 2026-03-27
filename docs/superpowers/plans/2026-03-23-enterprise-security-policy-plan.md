@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement policy-as-code enforcement and auditability that enterprises can trust for BYOM request governance.
+**Goal:** Implement policy-as-code enforcement and auditability that enterprises can trust for Arlopass request governance.
 
 **Architecture:** Build a signed policy bundle model and deterministic evaluator first, then wire enforcement hooks into extension and bridge, and finally ship audit exporters with privacy-first defaults.
 

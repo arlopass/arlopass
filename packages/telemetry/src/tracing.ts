@@ -6,11 +6,11 @@ import {
 } from "./redaction.js";
 
 export const TELEMETRY_SPAN_NAMES = {
-  REQUEST: "byom.request",
-  POLICY_DECISION: "byom.policy.decision",
-  PROVIDER_DISPATCH: "byom.provider.dispatch",
-  STREAM: "byom.stream",
-  ADAPTER_HEALTH: "byom.adapter.health",
+  REQUEST: "arlopass.request",
+  POLICY_DECISION: "arlopass.policy.decision",
+  PROVIDER_DISPATCH: "arlopass.provider.dispatch",
+  STREAM: "arlopass.stream",
+  ADAPTER_HEALTH: "arlopass.adapter.health",
 } as const;
 
 export type TelemetrySpanName = (typeof TELEMETRY_SPAN_NAMES)[keyof typeof TELEMETRY_SPAN_NAMES];
@@ -59,7 +59,7 @@ export type TelemetryTracingOptions = Readonly<{
 const DEFAULT_REQUIRED_TRACE_METADATA_FIELDS = REQUIRED_SIGNAL_METADATA_FIELDS;
 
 function defaultTraceExporter(): TraceExporter {
-  return () => {};
+  return () => { };
 }
 
 function createRandomHex(size: number): string {

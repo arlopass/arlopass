@@ -1,11 +1,11 @@
-# @byom-ai/adapter-ollama
+# @arlopass/adapter-ollama
 
-Run local [Ollama](https://ollama.com) models (Llama, Mistral, Gemma, etc.) through the BYOM wallet.
+Run local [Ollama](https://ollama.com) models (Llama, Mistral, Gemma, etc.) through the Arlopass wallet.
 
 Requires Ollama running locally with at least one pulled model (`ollama pull llama3.2`).
 
 ```ts
-import { OllamaAdapter } from "@byom-ai/adapter-ollama";
+import { OllamaAdapter } from "@arlopass/adapter-ollama";
 
 const adapter = new OllamaAdapter({ baseUrl: "http://localhost:11434" });
 
@@ -17,7 +17,7 @@ const sessionId = await adapter.createSession({ model: "llama3.2" });
 const response = await adapter.sendMessage(sessionId, "Summarize secure coding in 5 bullets.");
 console.log(response);
 
-await adapter.streamMessage(sessionId, "Explain BYOM", (chunk) => {
+await adapter.streamMessage(sessionId, "Explain Arlopass", (chunk) => {
   process.stdout.write(chunk);
 });
 
@@ -80,7 +80,7 @@ const OLLAMA_MANIFEST: AdapterManifest = {
   requiredPermissions: ["network.egress"],
   egressRules: [{ host: "localhost", port: 11434, protocol: "http" }],
   riskLevel: "low",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 }
 ```
 
@@ -88,5 +88,5 @@ const OLLAMA_MANIFEST: AdapterManifest = {
 
 ### Dependencies
 
-- `@byom-ai/adapter-runtime` — Adapter contract and manifest validation
-- `@byom-ai/protocol` — Envelope and error types
+- `@arlopass/adapter-runtime` — Adapter contract and manifest validation
+- `@arlopass/protocol` — Envelope and error types

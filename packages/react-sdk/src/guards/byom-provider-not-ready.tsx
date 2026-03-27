@@ -7,7 +7,7 @@ type Props = Readonly<{
   children: ReactNode | (() => ReactNode);
 }>;
 
-export function BYOMProviderNotReady({ children }: Props): ReactNode {
+export function ArlopassProviderNotReady({ children }: Props): ReactNode {
   const snapshot = useStoreSnapshot();
 
   if (snapshot.selectedProvider !== null) return null;

@@ -13,8 +13,8 @@ import {
   type RevokeCredentialRefInput,
   type ValidateCredentialRefInput,
   type ValidationResult,
-} from "@byom-ai/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@byom-ai/protocol";
+} from "@arlopass/adapter-runtime";
+import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
 
 export const GEMINI_CONNECTION_METHOD_IDS = {
   API_KEY: "gemini.api_key",
@@ -59,7 +59,7 @@ export const GEMINI_MANIFEST: AdapterManifest = {
   requiredPermissions: ["network.egress"],
   egressRules: [{ host: "generativelanguage.googleapis.com", protocol: "https" }],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 const GEMINI_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";

@@ -1,6 +1,6 @@
 # Runbook: Bridge Unavailable
 
-**Alert:** `BYOM_BridgeUnavailable`  
+**Alert:** `ARLOPASS_BridgeUnavailable`  
 **SLO:** SLO-01 (Request success rate)  
 **Severity:** Critical  
 **Owner:** Platform Reliability
@@ -11,8 +11,8 @@
 
 | Signal | Indicator |
 |--------|-----------|
-| `byom.request.total` absent for > 3 min | Bridge has stopped processing messages |
-| `byom.request.failure.total` spike | Bridge returning errors on all message types |
+| `arlopass.request.total` absent for > 3 min | Bridge has stopped processing messages |
+| `arlopass.request.failure.total` spike | Bridge returning errors on all message types |
 | Extension UI shows "Bridge disconnected" | User-visible connectivity failure |
 
 ---
@@ -25,10 +25,10 @@ On the affected machine:
 
 ```bash
 # macOS / Linux
-ps aux | grep byom-bridge
+ps aux | grep arlopass-bridge
 
 # Windows
-Get-Process | Where-Object { $_.Name -like "*byom*" }
+Get-Process | Where-Object { $_.Name -like "*arlopass*" }
 ```
 
 If the process is not found, proceed to **Step 3** (restart).
@@ -37,10 +37,10 @@ If the process is not found, proceed to **Step 3** (restart).
 
 ```bash
 # Default log location
-cat ~/.byom/bridge.log | tail -100
+cat ~/.arlopass/bridge.log | tail -100
 
 # Or via journald on Linux
-journalctl -u byom-bridge --since "5 minutes ago"
+journalctl -u arlopass-bridge --since "5 minutes ago"
 ```
 
 Look for:
@@ -52,10 +52,10 @@ Look for:
 
 ```bash
 # macOS / Linux
-~/.byom/bin/byom-bridge &
+~/.arlopass/bin/arlopass-bridge &
 
 # Windows (PowerShell)
-Start-Process "$env:LOCALAPPDATA\BYOM\bin\byom-bridge.exe"
+Start-Process "$env:LOCALAPPDATA\Arlopass\bin\arlopass-bridge.exe"
 ```
 
 Wait 30 seconds, then verify the extension reconnects.
@@ -73,7 +73,7 @@ Expected response: `{ type: "handshake.challenge", nonce: "...", ... }`
 ### Step 5 — Check shared secret alignment
 
 If the handshake fails with `auth.invalid`:
-1. Verify `BYOM_BRIDGE_SHARED_SECRET` env var is consistent between bridge and extension.
+1. Verify `ARLOPASS_BRIDGE_SHARED_SECRET` env var is consistent between bridge and extension.
 2. Re-run the installation script to regenerate the shared secret.
 
 ---
@@ -103,13 +103,13 @@ If the handshake fails with `auth.invalid`:
 Before restarting:
 1. Capture `bridge.log` tail (last 500 lines)
 2. Record `ps aux` / process list snapshot
-3. Note exact time of `BYOM_BridgeUnavailable` alert trigger
+3. Note exact time of `ARLOPASS_BridgeUnavailable` alert trigger
 4. Export telemetry dashboard screenshot showing metric gap
 
 ---
 
 ## 6  Related
 
-- Alert: `BYOM_HighRequestFailureRate`
+- Alert: `ARLOPASS_HighRequestFailureRate`
 - Runbook: `ops/runbooks/adapter-crash-loop.md`
 - SLO: `ops/slo/slo-definitions.md#slo-01`

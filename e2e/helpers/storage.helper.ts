@@ -34,16 +34,16 @@ export async function setStorageValue(
 }
 
 /**
- * Clear all BYOM wallet keys from chrome.storage.local.
+ * Clear all Arlopass wallet keys from chrome.storage.local.
  */
 export async function clearWalletStorage(context: BrowserContext): Promise<void> {
     const sw = context.serviceWorkers()[0];
     if (!sw) throw new Error("No service worker found");
     await sw.evaluate(async () => {
         await chrome.storage.local.remove([
-            "byom.wallet.providers.v1",
-            "byom.wallet.activeProvider.v1",
-            "byom.wallet.ui.lastError.v1",
+            "arlopass.wallet.providers.v1",
+            "arlopass.wallet.activeProvider.v1",
+            "arlopass.wallet.ui.lastError.v1",
         ]);
     });
 }
@@ -56,9 +56,9 @@ export async function seedProviders(
     providers: readonly Record<string, unknown>[],
     activeProvider?: { providerId: string; modelId?: string },
 ): Promise<void> {
-    await setStorageValue(context, "byom.wallet.providers.v1", providers);
+    await setStorageValue(context, "arlopass.wallet.providers.v1", providers);
     if (activeProvider) {
-        await setStorageValue(context, "byom.wallet.activeProvider.v1", activeProvider);
+        await setStorageValue(context, "arlopass.wallet.activeProvider.v1", activeProvider);
     }
 }
 
@@ -69,7 +69,7 @@ export async function seedWalletError(
     context: BrowserContext,
     error: { message: string; code: string },
 ): Promise<void> {
-    await setStorageValue(context, "byom.wallet.ui.lastError.v1", {
+    await setStorageValue(context, "arlopass.wallet.ui.lastError.v1", {
         ...error,
         at: Date.now(),
     });

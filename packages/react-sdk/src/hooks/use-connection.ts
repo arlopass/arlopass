@@ -1,23 +1,23 @@
 "use client";
 
 import { useCallback } from "react";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
 import type { ClientState } from "../types.js";
-import { useBYOMContext, useStoreSnapshot } from "./use-store.js";
+import { useArlopassContext, useStoreSnapshot } from "./use-store.js";
 
 type UseConnectionReturn = Readonly<{
     state: ClientState;
     sessionId: string | null;
     isConnected: boolean;
     isConnecting: boolean;
-    error: BYOMSDKError | null;
+    error: ArlopassSDKError | null;
     connect: () => Promise<void>;
     disconnect: () => Promise<void>;
     retry: (() => Promise<void>) | null;
 }>;
 
 export function useConnection(): UseConnectionReturn {
-    const { store } = useBYOMContext();
+    const { store } = useArlopassContext();
     const snapshot = useStoreSnapshot();
 
     const connect = useCallback(async () => {
@@ -26,7 +26,7 @@ export function useConnection(): UseConnectionReturn {
             await store.client.connect({ appId: "default" });
             store.refreshSnapshot();
         } catch (error) {
-            store.setError(error as BYOMSDKError);
+            store.setError(error as ArlopassSDKError);
             store.refreshSnapshot();
             throw error;
         }
@@ -40,7 +40,7 @@ export function useConnection(): UseConnectionReturn {
         }
     }, [store]);
 
-    const retry = snapshot.error !== null && (snapshot.error as BYOMSDKError).retryable === true
+    const retry = snapshot.error !== null && (snapshot.error as ArlopassSDKError).retryable === true
         ? async () => {
             store.clearError();
             await connect();

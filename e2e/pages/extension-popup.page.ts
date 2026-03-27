@@ -1,7 +1,7 @@
 import type { Page, Locator } from "@playwright/test";
 
 /**
- * Page Object for the BYOM Wallet extension popup (`popup.html`).
+ * Page Object for the Arlopass Wallet extension popup (`popup.html`).
  *
  * Selectors derive from the static HTML in `popup.html` and the
  * dynamically-rendered output of `renderWalletView()`.

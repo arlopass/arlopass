@@ -78,7 +78,7 @@ export type OriginUsageSummary = {
   }>;
 };
 
-export const TOKEN_USAGE_STORAGE_KEY = "byom.token-usage.v1";
+export const TOKEN_USAGE_STORAGE_KEY = "arlopass.token-usage.v1";
 export const MAX_USAGE_RECORD_KEYS = 500;
 
 export function makeUsageRecordKey(
@@ -122,7 +122,7 @@ import {
   estimateTokenCount,
   estimateInputTokens,
 } from "../usage/token-estimation.js";
-import type { ChatMessage } from "@byom-ai/web-sdk";
+import type { ChatMessage } from "@arlopass/web-sdk";
 
 describe("estimateTokenCount", () => {
   it("returns 1 for very short text", () => {
@@ -167,7 +167,7 @@ Expected: FAIL — module not found
 
 ```typescript
 // apps/extension/src/usage/token-estimation.ts
-import type { ChatMessage } from "@byom-ai/web-sdk";
+import type { ChatMessage } from "@arlopass/web-sdk";
 import type { UsageReport } from "./token-usage-types.js";
 
 const CHARS_PER_TOKEN = 4;
@@ -850,7 +850,7 @@ it("records token usage after chat.completions request", async () => {
   const handler = createTransportMessageHandler({ storage, dependencies: { /* mock fetch returns Ollama response */ } });
   await handler(makeTransportMessage("request", "chat.completions", { messages: [{ role: "user", content: "hello" }] }));
   const snapshot = storage.snapshot();
-  const usageStore = snapshot["byom.token-usage.v1"];
+  const usageStore = snapshot["arlopass.token-usage.v1"];
   expect(usageStore).toBeDefined();
   // Check that a record exists for the origin/provider/model
 });
@@ -890,7 +890,7 @@ case "usage.query": {
 
 In the `DEFAULT_CAPABILITIES` array, add `"usage.query"`.
 
-Note: The `ProtocolCapability` type in `@byom-ai/protocol` may need `"usage.query"` added. Check `packages/protocol/src/capabilities.ts` and add it if needed.
+Note: The `ProtocolCapability` type in `@arlopass/protocol` may need `"usage.query"` added. Check `packages/protocol/src/capabilities.ts` and add it if needed.
 
 - [ ] **Step 3: Verify tests**
 

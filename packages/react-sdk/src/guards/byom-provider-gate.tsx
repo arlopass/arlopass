@@ -10,7 +10,7 @@ type Props = Readonly<{
   children: ReactNode;
 }>;
 
-export function BYOMProviderGate({
+export function ArlopassProviderGate({
   fallback = null,
   loadingFallback,
   children,

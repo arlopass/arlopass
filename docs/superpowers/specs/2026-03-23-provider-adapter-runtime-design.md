@@ -3,7 +3,7 @@
 ## Metadata
 - **Date:** 2026-03-23
 - **Status:** Draft for review
-- **Program:** BYOM AI SDK
+- **Program:** Arlopass SDK
 - **Pillars:** Security, Reliability, Robustness
 
 ---
@@ -94,7 +94,7 @@ Providers differ widely (local engines, cloud APIs, local CLIs). We need a stand
 
 ## 6) Onboarding Flow for New Providers
 
-1. Scaffold adapter using `create-byom-adapter`.
+1. Scaffold adapter using `create-arlopass-adapter`.
 2. Fill manifest and implement required interface.
 3. Run local contract conformance test suite.
 4. Execute security and soak test gates.

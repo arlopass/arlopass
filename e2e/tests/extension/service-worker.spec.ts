@@ -57,13 +57,13 @@ test.describe("Extension Service Worker", () => {
     test("service worker responds to wallet messages", async ({ context }) => {
         const sw = context.serviceWorkers()[0];
 
-        // The background script listens for { channel: "byom.wallet" } messages
+        // The background script listens for { channel: "arlopass.wallet" } messages
         const response = await sw.evaluate(async () => {
             return new Promise<unknown>((resolve) => {
                 // Simulate an internal message
                 chrome.runtime.sendMessage(
                     {
-                        channel: "byom.wallet",
+                        channel: "arlopass.wallet",
                         action: "wallet.getSnapshot",
                         requestId: "test-req-1",
                         payload: {},

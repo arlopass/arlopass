@@ -62,10 +62,10 @@
 
 - [ ] **Step 1: Document pairing operational flow and handshake troubleshooting updates**
 - [ ] **Step 2: Run package checks**
-  - `npm run -w @byom-ai/bridge typecheck && npm run -w @byom-ai/bridge lint && npm run -w @byom-ai/bridge test`
-  - `npm run -w @byom-ai/extension typecheck && npm run -w @byom-ai/extension lint && npm run -w @byom-ai/extension test`
+  - `npm run -w @arlopass/bridge typecheck && npm run -w @arlopass/bridge lint && npm run -w @arlopass/bridge test`
+  - `npm run -w @arlopass/extension typecheck && npm run -w @arlopass/extension lint && npm run -w @arlopass/extension test`
 - [ ] **Step 3: Run workspace checks**
   - `npm run typecheck && npm run lint && npm run test`
 - [ ] **Step 4: Build verification**
-  - `npm run -w @byom-ai/bridge build && npm run -w @byom-ai/extension build`
+  - `npm run -w @arlopass/bridge build && npm run -w @arlopass/extension build`
 

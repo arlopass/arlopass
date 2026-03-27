@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { type ReactNode } from "react";
-import { BYOMProvider } from "@byom-ai/react";
+import { ArlopassProvider } from "@arlopass/react";
 import { Chat } from "../chat/index.js";
 import type { TrackedChatMessage } from "../types.js";
 
@@ -12,12 +12,12 @@ function setup() {
     request: vi.fn().mockResolvedValue({ envelope: {} }),
     stream: vi.fn(),
   };
-  (window as unknown as Record<string, unknown>).byom = mockTransport;
+  (window as unknown as Record<string, unknown>).arlopass = mockTransport;
   return mockTransport;
 }
 
 afterEach(() => {
-  delete (window as unknown as Record<string, unknown>).byom;
+  delete (window as unknown as Record<string, unknown>).arlopass;
 });
 
 beforeEach(() => {
@@ -25,7 +25,7 @@ beforeEach(() => {
 });
 
 function Wrapper({ children }: { children: ReactNode }) {
-  return <BYOMProvider appId="test">{children}</BYOMProvider>;
+  return <ArlopassProvider appId="test">{children}</ArlopassProvider>;
 }
 
 const sampleMessage: TrackedChatMessage = {
@@ -37,7 +37,7 @@ const sampleMessage: TrackedChatMessage = {
 };
 
 describe("Chat.Root", () => {
-  it("renders in uncontrolled mode inside BYOMProvider", () => {
+  it("renders in uncontrolled mode inside ArlopassProvider", () => {
     render(
       <Wrapper>
         <Chat.Root data-testid="root">

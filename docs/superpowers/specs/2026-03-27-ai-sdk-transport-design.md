@@ -1,4 +1,4 @@
-# @byom-ai/ai-sdk-transport — Design Spec
+# @arlopass/ai-sdk-transport — Design Spec
 
 > **Date:** 2026-03-27
 > **Status:** Approved
@@ -6,19 +6,19 @@
 
 ## Goal
 
-Ship an npm package (`@byom-ai/ai-sdk-transport`) that implements the Vercel AI SDK's `ChatTransport` interface, connecting `useChat` directly to the BYOM browser extension. No API route, no server, no API keys.
+Ship an npm package (`@arlopass/ai-sdk-transport`) that implements the Vercel AI SDK's `ChatTransport` interface, connecting `useChat` directly to the Arlopass browser extension. No API route, no server, no API keys.
 
 ## Public API
 
 ```typescript
-import { BYOMChatTransport } from "@byom-ai/ai-sdk-transport";
-import type { BYOMChatTransportOptions } from "@byom-ai/ai-sdk-transport";
+import { ArlopassChatTransport } from "@arlopass/ai-sdk-transport";
+import type { ArlopassChatTransportOptions } from "@arlopass/ai-sdk-transport";
 ```
 
-### `BYOMChatTransportOptions`
+### `ArlopassChatTransportOptions`
 
 ```typescript
-type BYOMChatTransportOptions = {
+type ArlopassChatTransportOptions = {
   // Auto-connect mode (default)
   appId?: string;
   appSuffix?: string;
@@ -27,7 +27,7 @@ type BYOMChatTransportOptions = {
   appIcon?: string;
 
   // BYOB mode — pre-connected client, skips auto-connect
-  client?: BYOMClient;
+  client?: ArlopassClient;
 
   // Shared
   timeoutMs?: number; // default 120_000
@@ -38,25 +38,25 @@ type BYOMChatTransportOptions = {
 
 ```typescript
 // Zero-config
-useChat({ transport: new BYOMChatTransport() });
+useChat({ transport: new ArlopassChatTransport() });
 
 // With app metadata
-useChat({ transport: new BYOMChatTransport({ appId: "com.acme.app", appName: "Acme" }) });
+useChat({ transport: new ArlopassChatTransport({ appId: "com.acme.app", appName: "Acme" }) });
 
 // Pre-connected client
-useChat({ transport: new BYOMChatTransport({ client: myConnectedClient }) });
+useChat({ transport: new ArlopassChatTransport({ client: myConnectedClient }) });
 ```
 
 ## Architecture
 
-`BYOMChatTransport` implements `ChatTransport<UIMessage>` from the `ai` package. Two methods: `sendMessages()` and `reconnectToStream()`.
+`ArlopassChatTransport` implements `ChatTransport<UIMessage>` from the `ai` package. Two methods: `sendMessages()` and `reconnectToStream()`.
 
 ### Connection lifecycle
 
 On first `sendMessages()` call (auto-connect mode):
 
-1. Detect `window.byom`. Throw if missing.
-2. Create `BYOMClient({ transport: window.byom, timeoutMs })`.
+1. Detect `window.arlopass`. Throw if missing.
+2. Create `ArlopassClient({ transport: window.arlopass, timeoutMs })`.
 3. Call `client.connect({ appId, appName, ... })`.
 4. Cache client for subsequent calls.
 5. If `client.selectedProvider` is `undefined`, throw: "No provider selected."
@@ -99,9 +99,9 @@ Always returns `null`. No persistent server-side stream exists.
 
 | Scenario | Behavior |
 |---|---|
-| Extension not installed | Throw: "BYOM extension not detected. Install it from https://byomai.com" |
-| Connection fails | Throw the `BYOMSDKError` from `connect()` |
-| No provider selected | Throw: "No provider selected. Open the BYOM extension and choose a model." |
+| Extension not installed | Throw: "Arlopass extension not detected. Install it from https://arlopassai.com" |
+| Connection fails | Throw the `ArlopassSDKError` from `connect()` |
+| No provider selected | Throw: "No provider selected. Open the Arlopass extension and choose a model." |
 | Stream error mid-response | Emit `{ type: "error", errorText }` chunk, close stream |
 | AbortSignal fires | Emit `{ type: "abort" }`, close stream |
 
@@ -114,11 +114,11 @@ packages/ai-sdk-transport/
 ├── README.md
 └── src/
     ├── index.ts                         # Re-exports
-    ├── byom-chat-transport.ts           # ChatTransport implementation
+    ├── arlopass-chat-transport.ts           # ChatTransport implementation
     ├── convert-messages.ts              # UIMessage[] → ChatMessage[]
     ├── convert-stream.ts               # AsyncIterable<ChatStreamEvent> → ReadableStream<UIMessageChunk>
     └── __tests__/
-        ├── byom-chat-transport.test.ts  # Integration tests with mocked client
+        ├── arlopass-chat-transport.test.ts  # Integration tests with mocked client
         ├── convert-messages.test.ts     # Unit tests for message conversion
         └── convert-stream.test.ts       # Unit tests for stream conversion
 ```
@@ -129,7 +129,7 @@ packages/ai-sdk-transport/
 {
   "peerDependencies": {
     "ai": "^6.0.0",
-    "@byom-ai/web-sdk": "^0.1.0"
+    "@arlopass/web-sdk": "^0.1.0"
   }
 }
 ```
@@ -138,11 +138,11 @@ packages/ai-sdk-transport/
 
 - **convert-messages**: Pure function tests. Text-only messages, multi-part flattening, role mapping, empty parts, assistant messages with tool/reasoning parts (ignored).
 - **convert-stream**: Feed mock `ChatStreamEvent` arrays, collect `UIMessageChunk[]` from output `ReadableStream`. Verify event ordering: start → text-start → text-delta(s) → text-end → finish. Test error path and abort path.
-- **byom-chat-transport**: Mock `BYOMClient`. Verify: lazy connect on first call, client reuse on second call, BYOB mode bypasses connect, missing extension throws, missing provider throws, abort signal propagation.
+- **arlopass-chat-transport**: Mock `ArlopassClient`. Verify: lazy connect on first call, client reuse on second call, BYOB mode bypasses connect, missing extension throws, missing provider throws, abort signal propagation.
 
 ## Design decisions
 
 1. **No ConversationManager** — `useChat` manages its own history. We use raw `client.chat.stream()`.
 2. **Stateless per-call** — each `sendMessages()` sends the full history provided by `useChat`.
 3. **Provider selection is user-driven** — via the extension popup. The transport does not call `selectProvider()`.
-4. **Text-only** — non-text parts from `UIMessage.parts` are skipped. BYOM messages are `{ role, content: string }`.
+4. **Text-only** — non-text parts from `UIMessage.parts` are skipped. Arlopass messages are `{ role, content: string }`.

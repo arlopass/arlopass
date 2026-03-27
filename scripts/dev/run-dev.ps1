@@ -68,7 +68,7 @@ function Resolve-BridgeStateDirectory {
     $baseDirectory = [System.IO.Path]::GetTempPath()
   }
 
-  return Join-Path $baseDirectory "BYOM\bridge\state"
+  return Join-Path $baseDirectory "Arlopass\bridge\state"
 }
 
 function Start-WatcherWindow {
@@ -163,8 +163,8 @@ function Stop-ProcessTree {
 function Start-DevWatchers {
   $escapedRepoRoot = $repoRoot.Path.Replace("'", "''")
 
-  $bridgeWatchCommand = "Set-Location '$escapedRepoRoot'; npm run build -w @byom-ai/bridge -- --watch"
-  $extensionWatchCommand = "Set-Location '$escapedRepoRoot'; npm run build -w @byom-ai/extension -- --watch"
+  $bridgeWatchCommand = "Set-Location '$escapedRepoRoot'; npm run build -w @arlopass/bridge -- --watch"
+  $extensionWatchCommand = "Set-Location '$escapedRepoRoot'; npm run build -w @arlopass/extension -- --watch"
 
   $bridgeWatcher = Start-WatcherWindow -Name "bridge" -CommandText $bridgeWatchCommand
   $extensionWatcher = Start-WatcherWindow -Name "extension" -CommandText $extensionWatchCommand
@@ -233,7 +233,7 @@ function Invoke-Bridge {
   Invoke-InRepo {
     Invoke-Native `
       -FilePath "npm" `
-      -Arguments @("run", "typecheck", "-w", "@byom-ai/bridge") `
+      -Arguments @("run", "typecheck", "-w", "@arlopass/bridge") `
       -FailureMessage "Bridge typecheck failed"
     Write-Host "Bridge starting. Load extension from: $repoRoot\apps\extension" -ForegroundColor Cyan
     Invoke-Native `

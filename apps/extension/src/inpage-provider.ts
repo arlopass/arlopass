@@ -4,26 +4,26 @@ import type {
   TransportRequest,
   TransportResponse,
   TransportStream,
-} from "@byom-ai/web-sdk";
-import type { BYOMTransport } from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
+import type { ArlopassTransport } from "@arlopass/web-sdk";
 
-const PAGE_TO_CONTENT_CHANNEL = "byom.transport.page-to-content.v1";
-const CONTENT_TO_PAGE_CHANNEL = "byom.transport.content-to-page.v1";
+const PAGE_TO_CONTENT_CHANNEL = "arlopass.transport.page-to-content.v1";
+const CONTENT_TO_PAGE_CHANNEL = "arlopass.transport.content-to-page.v1";
 const REQUEST_TIMEOUT_MS = 15_000;
 const CHAT_REQUEST_TIMEOUT_MS = 90_000;
 const REQUEST_TIMEOUT_GRACE_MS = 5_000;
 const MAX_REQUEST_TIMEOUT_MS = 10 * 60_000;
 const MAX_BUFFERED_STREAM_ENTRIES = 512;
-const INJECTED_PROVIDER_TAG = Symbol.for("byom.extension.injected-provider");
+const INJECTED_PROVIDER_TAG = Symbol.for("arlopass.extension.injected-provider");
 
 type RuntimeWindow = Window &
   Readonly<{
-    byom?: unknown;
+    arlopass?: unknown;
   }>;
 
 type PageToContentMessage = Readonly<{
   channel: typeof PAGE_TO_CONTENT_CHANNEL;
-  source: "byom-inpage-provider";
+  source: "arlopass-inpage-provider";
   requestId: string;
   action: "request" | "request-stream" | "cancel-stream" | "disconnect";
   payload: unknown;
@@ -40,7 +40,7 @@ type BridgeErrorPayload = Readonly<{
 
 type ContentToPageResponseMessage = Readonly<{
   channel: typeof CONTENT_TO_PAGE_CHANNEL;
-  source: "byom-content-script";
+  source: "arlopass-content-script";
   requestId: string;
   ok: boolean;
   envelope?: ProtocolEnvelopePayload<unknown>;
@@ -50,7 +50,7 @@ type ContentToPageResponseMessage = Readonly<{
 
 type ContentToPageStreamMessage = Readonly<{
   channel: typeof CONTENT_TO_PAGE_CHANNEL;
-  source: "byom-content-script";
+  source: "arlopass-content-script";
   requestId: string;
   stream: true;
   event: "start" | "chunk" | "done" | "error" | "cancelled";
@@ -68,16 +68,16 @@ type PendingRequest = Readonly<{
 
 type StreamEntry =
   | Readonly<{
-      type: "value";
-      value: TransportResponse<ChatStreamResponsePayload>;
-    }>
+    type: "value";
+    value: TransportResponse<ChatStreamResponsePayload>;
+  }>
   | Readonly<{
-      type: "done";
-    }>
+    type: "done";
+  }>
   | Readonly<{
-      type: "error";
-      error: Error;
-    }>;
+    type: "error";
+    error: Error;
+  }>;
 
 type PendingStreamRequest = Readonly<{
   requestId: string;
@@ -517,7 +517,7 @@ function createBridgeDispatcher() {
 
     const message: PageToContentMessage = {
       channel: PAGE_TO_CONTENT_CHANNEL,
-      source: "byom-inpage-provider",
+      source: "arlopass-inpage-provider",
       requestId,
       action,
       payload: payloadForBridge,
@@ -590,7 +590,7 @@ function createBridgeDispatcher() {
     const sendCancel = (): void => {
       const cancelMessage: PageToContentMessage = {
         channel: PAGE_TO_CONTENT_CHANNEL,
-        source: "byom-inpage-provider",
+        source: "arlopass-inpage-provider",
         requestId,
         action: "cancel-stream",
         payload: {},
@@ -658,7 +658,7 @@ function createBridgeDispatcher() {
 
     const startMessage: PageToContentMessage = {
       channel: PAGE_TO_CONTENT_CHANNEL,
-      source: "byom-inpage-provider",
+      source: "arlopass-inpage-provider",
       requestId,
       action: "request-stream",
       payload: payloadForBridge,
@@ -726,7 +726,7 @@ function createBridgeDispatcher() {
   };
 }
 
-function createInjectedTransport(): BYOMTransport {
+function createInjectedTransport(): ArlopassTransport {
   const bridge = createBridgeDispatcher();
 
   return {
@@ -771,12 +771,12 @@ function createInjectedTransport(): BYOMTransport {
 
 function injectProvider(): void {
   const runtimeWindow = window as unknown as RuntimeWindow;
-  const existing = runtimeWindow.byom;
+  const existing = runtimeWindow.arlopass;
   if (existing !== undefined) {
     return;
   }
 
-  const transport = createInjectedTransport() as BYOMTransport &
+  const transport = createInjectedTransport() as ArlopassTransport &
     Record<string | symbol, unknown>;
   Object.defineProperty(transport, INJECTED_PROVIDER_TAG, {
     configurable: false,
@@ -785,7 +785,7 @@ function injectProvider(): void {
     value: true,
   });
 
-  Object.defineProperty(runtimeWindow, "byom", {
+  Object.defineProperty(runtimeWindow, "arlopass", {
     configurable: true,
     enumerable: false,
     writable: false,
@@ -793,9 +793,9 @@ function injectProvider(): void {
   });
 
   window.dispatchEvent(
-    new CustomEvent("byom:injected", {
+    new CustomEvent("arlopass:injected", {
       detail: {
-        source: "byom-extension",
+        source: "arlopass-extension",
       },
     }),
   );

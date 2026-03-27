@@ -1,5 +1,5 @@
 {
-  "name": "@byom-ai/web-sdk",
+  "name": "@arlopass/web-sdk",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "packages/web-sdk"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/packages/web-sdk#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/packages/web-sdk#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
   "exports": {
     ".": {
@@ -35,7 +35,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@byom-ai/protocol": "0.1.0",
-    "@byom-ai/telemetry": "0.1.0"
+    "@arlopass/protocol": "0.1.0",
+    "@arlopass/telemetry": "0.1.0"
   }
 }

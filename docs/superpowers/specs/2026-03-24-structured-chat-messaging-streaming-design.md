@@ -39,7 +39,7 @@ This spec defines:
 
 ### 3.1 Core Types
 
-These types live in `@byom-ai/protocol` (new file: `structured-chat.ts`) because they flow across all layers.
+These types live in `@arlopass/protocol` (new file: `structured-chat.ts`) because they flow across all layers.
 
 ```ts
 type ChatRole = "system" | "user" | "assistant";
@@ -555,7 +555,7 @@ async #sendChat(input: ChatInput, options?: ChatOperationOptions): Promise<ChatS
       if (!validation.valid) {
         lastValidationError = validation.error;
         if (attempt < maxAttempts) continue;
-        throw new BYOMFormatValidationError(
+        throw new ArlopassFormatValidationError(
           validation.error, filtered.enforceFormatValidation.format, attempt, result.message.content,
         );
       }
@@ -564,7 +564,7 @@ async #sendChat(input: ChatInput, options?: ChatOperationOptions): Promise<ChatS
     return result;
   }
 
-  throw new BYOMFormatValidationError(lastValidationError!, filtered.enforceFormatValidation!.format, maxAttempts);
+  throw new ArlopassFormatValidationError(lastValidationError!, filtered.enforceFormatValidation!.format, maxAttempts);
 }
 ```
 
@@ -612,14 +612,14 @@ async *#streamChat(input: ChatInput, options?: ChatOperationOptions): AsyncItera
 ### 6.4 New Error Class
 
 ```ts
-class BYOMFormatValidationError extends BYOMSDKError {
+class ArlopassFormatValidationError extends ArlopassSDKError {
   readonly format: ResponseFormatType;
   readonly attempts: number;
   readonly rawContent: string;
 
   constructor(message: string, format: ResponseFormatType, attempts: number, rawContent?: string) {
     super(message, {
-      machineCode: "BYOM_SDK_FORMAT_VALIDATION_FAILED",
+      machineCode: "ARLOPASS_SDK_FORMAT_VALIDATION_FAILED",
       reasonCode: "request.invalid",
       retryable: false,
     });
@@ -666,9 +666,9 @@ The cloud chat executor calls the adapter's `sendMessage(sessionId, input)`, whi
 
 | Machine Code | Reason Code | When |
 |---|---|---|
-| `BYOM_SDK_FORMAT_VALIDATION_FAILED` | `request.invalid` | Response failed format validation after all retries |
-| `BYOM_SDK_PERMISSION_RULE_DENIED` | `permission.denied` | A permission rule blocked the request |
-| `BYOM_SDK_RULE_SET_MISMATCH` | `policy.denied` | SDK's ruleSetHash doesn't match bridge's copy |
+| `ARLOPASS_SDK_FORMAT_VALIDATION_FAILED` | `request.invalid` | Response failed format validation after all retries |
+| `ARLOPASS_SDK_PERMISSION_RULE_DENIED` | `permission.denied` | A permission rule blocked the request |
+| `ARLOPASS_SDK_RULE_SET_MISMATCH` | `policy.denied` | SDK's ruleSetHash doesn't match bridge's copy |
 
 ---
 
@@ -692,13 +692,13 @@ The cloud chat executor calls the adapter's `sendMessage(sessionId, input)`, whi
 
 | Package | Files Created | Files Modified |
 |---------|--------------|----------------|
-| `@byom-ai/protocol` | `src/structured-chat.ts`, `src/chat-permission-rules.ts` | `src/index.ts` (re-exports) |
-| `@byom-ai/web-sdk` | `src/response-validation.ts`, `src/permission-filter.ts`, `src/permissions-api.ts` | `src/client.ts`, `src/types.ts`, `src/errors.ts`, `src/index.ts` |
-| `@byom-ai/adapter-runtime` | — | `src/cloud-contract.ts` (AdapterContract signatures), `src/manifest-schema.ts` (StructuredInputCapabilities), `src/index.ts` |
-| `@byom-ai/adapter-ollama` | — | `src/index.ts` (sendMessage/streamMessage accept StructuredChatInput, toOllamaPayload translation) |
-| `@byom-ai/adapter-claude-subscription` | — | `src/index.ts` (sendMessage/streamMessage, toClaudePayload with tool_use) |
-| `@byom-ai/adapter-local-cli-bridge` | `src/xml-formatter.ts` | `src/index.ts` (sendMessage/streamMessage, toCliPrompt) |
-| `@byom-ai/bridge` | `src/permissions/chat-rule-enforcer.ts` | `src/bridge-handler.ts`, `src/cli/copilot-chat-executor.ts`, `src/cloud/cloud-chat-executor.ts` |
+| `@arlopass/protocol` | `src/structured-chat.ts`, `src/chat-permission-rules.ts` | `src/index.ts` (re-exports) |
+| `@arlopass/web-sdk` | `src/response-validation.ts`, `src/permission-filter.ts`, `src/permissions-api.ts` | `src/client.ts`, `src/types.ts`, `src/errors.ts`, `src/index.ts` |
+| `@arlopass/adapter-runtime` | — | `src/cloud-contract.ts` (AdapterContract signatures), `src/manifest-schema.ts` (StructuredInputCapabilities), `src/index.ts` |
+| `@arlopass/adapter-ollama` | — | `src/index.ts` (sendMessage/streamMessage accept StructuredChatInput, toOllamaPayload translation) |
+| `@arlopass/adapter-claude-subscription` | — | `src/index.ts` (sendMessage/streamMessage, toClaudePayload with tool_use) |
+| `@arlopass/adapter-local-cli-bridge` | `src/xml-formatter.ts` | `src/index.ts` (sendMessage/streamMessage, toCliPrompt) |
+| `@arlopass/bridge` | `src/permissions/chat-rule-enforcer.ts` | `src/bridge-handler.ts`, `src/cli/copilot-chat-executor.ts`, `src/cloud/cloud-chat-executor.ts` |
 
 ---
 
@@ -732,6 +732,6 @@ The cloud chat executor calls the adapter's `sendMessage(sessionId, input)`, whi
 
 4. **JSON Schema execution** — The JSON Schema validator must not support `$ref` with external URIs to prevent SSRF. Only local schema definitions are evaluated.
 
-5. **Response content in errors** — `BYOMFormatValidationError.rawContent` contains the unvalidated AI response. SDK developers must treat this as untrusted input and sanitize before display.
+5. **Response content in errors** — `ArlopassFormatValidationError.rawContent` contains the unvalidated AI response. SDK developers must treat this as untrusted input and sanitize before display.
 
 6. **Metadata pass-through** — `metadata` field is never interpreted by the system. It flows through for user-land correlation. Size constraints prevent abuse.

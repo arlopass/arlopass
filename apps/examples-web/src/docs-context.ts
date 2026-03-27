@@ -17,26 +17,26 @@ export type DocEntry = {
 const DOCS: DocEntry[] = [
   {
     id: "overview",
-    title: "BYOM Overview",
-    content: `BYOM (Bring Your Own Model) is an AI wallet system. It consists of:
+    title: "Arlopass Overview",
+    content: `Arlopass (Bring Your Own Model) is an AI wallet system. It consists of:
 - A Chrome extension that acts as a secure wallet for AI provider credentials
-- A web SDK (@byom-ai/web-sdk) that web apps use to communicate with the extension
+- A web SDK (@arlopass/web-sdk) that web apps use to communicate with the extension
 - A native bridge that routes requests to cloud providers (Anthropic, OpenAI, Gemini, etc.) and local runtimes (Ollama)
 - A consent/permission system where users control which apps can access which providers and models
 
 The extension popup shows connected providers, models, apps, and stored credentials (vault).
-Web apps connect via window.byom which is injected by the extension's content script.`,
-    keywords: ["byom", "overview", "what is", "architecture", "how does", "wallet", "extension"],
+Web apps connect via window.arlopass which is injected by the extension's content script.`,
+    keywords: ["arlopass", "overview", "what is", "architecture", "how does", "wallet", "extension"],
   },
   {
     id: "web-sdk",
-    title: "Web SDK (BYOMClient)",
-    content: `The @byom-ai/web-sdk provides a BYOMClient class for web apps:
+    title: "Web SDK (ArlopassClient)",
+    content: `The @arlopass/web-sdk provides a ArlopassClient class for web apps:
 
-import { BYOMClient } from "@byom-ai/web-sdk";
+import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({
-  transport: window.byom, // injected by extension
+const client = new ArlopassClient({
+  transport: window.arlopass, // injected by extension
   origin: window.location.origin,
   timeoutMs: 120000,
 });
@@ -68,7 +68,7 @@ for await (const chunk of stream) {
 }
 
 Client states: disconnected → connecting → connected → (degraded/reconnecting/failed)`,
-    keywords: ["sdk", "client", "BYOMClient", "connect", "listProviders", "selectProvider", "chat", "send", "stream", "transport", "import"],
+    keywords: ["sdk", "client", "ArlopassClient", "connect", "listProviders", "selectProvider", "chat", "send", "stream", "transport", "import"],
   },
   {
     id: "providers",
@@ -79,7 +79,7 @@ Client states: disconnected → connecting → connected → (degraded/reconnect
 - CLI: GitHub Copilot CLI, Claude Code (via native bridge)
 
 Each provider has:
-- An ID (e.g., "byom.wallet.provider.cloud-anthropic.xxxxx")
+- An ID (e.g., "arlopass.wallet.provider.cloud-anthropic.xxxxx")
 - A name (e.g., "Anthropic Cloud")
 - A list of available models
 - A status (connected, disconnected, attention, degraded, etc.)
@@ -119,13 +119,13 @@ If not approved:
 6. App connection is saved
 
 Once connected, the app can only see/use providers and models that were explicitly enabled.
-App connections are stored in chrome.storage.local under byom.wallet.apps.v1.`,
+App connections are stored in chrome.storage.local under arlopass.wallet.apps.v1.`,
     keywords: ["connect", "connection", "app", "approve", "permission", "settings", "rules", "limits", "consent", "appId", "appSuffix", "appName", "appDescription", "appIcon", "validation", "origin"],
   },
   {
     id: "credentials",
     title: "Credentials & Vault",
-    content: `Credentials are stored in the extension's vault (chrome.storage.local under byom.wallet.credentials.v1).
+    content: `Credentials are stored in the extension's vault (chrome.storage.local under arlopass.wallet.credentials.v1).
 
 Each credential contains:
 - Connector ID (which provider type, e.g., "cloud-anthropic")
@@ -147,18 +147,18 @@ Security: chrome.storage.local is extension-private and encrypted at rest by Chr
   {
     id: "errors",
     title: "Error Handling",
-    content: `The SDK throws BYOMSDKError with structured error info:
-- machineCode: e.g., "BYOM_PERMISSION_DENIED", "BYOM_POLICY_VIOLATION", "BYOM_TRANSIENT_NETWORK"
+    content: `The SDK throws ArlopassSDKError with structured error info:
+- machineCode: e.g., "ARLOPASS_PERMISSION_DENIED", "ARLOPASS_POLICY_VIOLATION", "ARLOPASS_TRANSIENT_NETWORK"
 - reasonCode: e.g., "permission.denied", "policy.denied", "transport.transient_failure"
 - retryable: boolean indicating if the request can be retried
 - correlationId: for tracing across hops
 - details: additional context object
 
 Common errors:
-- Connection declined: machineCode="BYOM_PERMISSION_DENIED", user declined the app connection
+- Connection declined: machineCode="ARLOPASS_PERMISSION_DENIED", user declined the app connection
 - Provider unavailable: provider not connected or model not enabled for the app
 - Timeout: transport didn't respond within timeoutMs`,
-    keywords: ["error", "BYOMSDKError", "machineCode", "reasonCode", "retry", "timeout", "permission denied"],
+    keywords: ["error", "ArlopassSDKError", "machineCode", "reasonCode", "retry", "timeout", "permission denied"],
   },
   {
     id: "streaming",
@@ -190,7 +190,7 @@ Each chunk is delivered as it arrives from the provider.`,
     title: "ConversationManager",
     content: `The ConversationManager class provides automatic conversation history management:
 
-import { ConversationManager } from "@byom-ai/web-sdk";
+import { ConversationManager } from "@arlopass/web-sdk";
 
 const conversation = new ConversationManager({
   client,
@@ -227,7 +227,7 @@ Key features:
 - Built-in model context window lookup (25+ models)
 - getContextWindow() and getTokenCount() for inspection
 - getContextInfo() returns ContextWindowInfo: maxTokens, usedTokens, reservedOutputTokens, remainingTokens, usageRatio
-- BYOMClient.contextWindowSize getter and getContextInfo(messages) for low-level usage
+- ArlopassClient.contextWindowSize getter and getContextInfo(messages) for low-level usage
 - React hooks expose contextInfo on both useChat and useConversation`,
     keywords: ["conversation", "manager", "history", "context", "window", "truncation", "pin", "pinning", "summarize", "summarization", "tokens", "maxTokens", "contextInfo", "contextWindowSize", "usageRatio", "remainingTokens", "getContextInfo", "ContextWindowInfo"],
   },
@@ -236,7 +236,7 @@ Key features:
     title: "Tool / Function Calling",
     content: `SDK-side function/tool calling via ConversationManager:
 
-import { ConversationManager } from "@byom-ai/web-sdk";
+import { ConversationManager } from "@arlopass/web-sdk";
 
 const conversation = new ConversationManager({
   client,
@@ -288,7 +288,7 @@ Strip <tool_call> XML markup from responses stored in conversation history:
 Match Ranges:
 Every ToolCall and tool_call event includes matchRange: { start, end } — character indices in the response.
 Use for highlighting, custom rendering, or manual stripping.
-  import { parseToolCalls, stripToolCalls } from "@byom-ai/web-sdk";
+  import { parseToolCalls, stripToolCalls } from "@arlopass/web-sdk";
   const result = parseToolCalls(text, toolNames, toolDefs);
   const clean = stripToolCalls(text, result.matchRanges);
 
@@ -310,23 +310,23 @@ Multi-Format Parsing (5 strategies):
   },
   {
     id: "react-sdk",
-    title: "React SDK (@byom-ai/react)",
-    content: `The @byom-ai/react package provides React bindings for the BYOM web SDK.
-It wraps @byom-ai/web-sdk in idiomatic React hooks and components.
+    title: "React SDK (@arlopass/react)",
+    content: `The @arlopass/react package provides React bindings for the Arlopass web SDK.
+It wraps @arlopass/web-sdk in idiomatic React hooks and components.
 
-Setup — wrap your app in BYOMProvider:
+Setup — wrap your app in ArlopassProvider:
 
-import { BYOMProvider, useChat } from "@byom-ai/react";
+import { ArlopassProvider, useChat } from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="my-app">
+    <ArlopassProvider appId="my-app">
       <ChatUI />
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }
 
-BYOMProvider detects window.byom (injected by the extension) and auto-connects.
+ArlopassProvider detects window.arlopass (injected by the extension) and auto-connects.
 It accepts optional defaultProvider/defaultModel for auto-selection.
 
 Hooks:
@@ -334,75 +334,75 @@ Hooks:
 - useProviders() — provider discovery: providers, selectedProvider, isLoading, listProviders(), selectProvider(), retry()
 - useChat() — low-level chat: messages, streamingContent, isStreaming, send(), stream(), stop(), clearMessages(), retry()
 - useConversation() — recommended: wraps ConversationManager with tools, pinning, tokenCount, contextWindow, submitToolResult()
-- useClient() — escape hatch: returns the raw BYOMClient or null
+- useClient() — escape hatch: returns the raw ArlopassClient or null
 
-Requirements: React 18+, injected transport only (window.byom from the browser extension).`,
-    keywords: ["react", "hook", "useChat", "useConversation", "useConnection", "useProviders", "useClient", "BYOMProvider", "provider"],
+Requirements: React 18+, injected transport only (window.arlopass from the browser extension).`,
+    keywords: ["react", "hook", "useChat", "useConversation", "useConnection", "useProviders", "useClient", "ArlopassProvider", "provider"],
   },
   {
     id: "react-guards",
     title: "React SDK Guard Components",
-    content: `Guard components from @byom-ai/react/guards provide declarative conditional rendering based on connection/provider/chat state.
+    content: `Guard components from @arlopass/react/guards provide declarative conditional rendering based on connection/provider/chat state.
 
 3 Positive Gates (show children when condition met, render fallback otherwise):
-- <BYOMConnectionGate fallback={...}> — renders children when connected
-- <BYOMProviderGate fallback={...}> — renders children when a provider is selected
-- <BYOMChatReadyGate connectingFallback={...} notInstalledFallback={...} providerFallback={...} errorFallback={({ error, retry }) => ...}> — all-in-one gate
+- <ArlopassConnectionGate fallback={...}> — renders children when connected
+- <ArlopassProviderGate fallback={...}> — renders children when a provider is selected
+- <ArlopassChatReadyGate connectingFallback={...} notInstalledFallback={...} providerFallback={...} errorFallback={({ error, retry }) => ...}> — all-in-one gate
 
 7 Negative Guards (render function children when condition met):
-- <BYOMNotInstalled>{() => <p>Install extension</p>}</BYOMNotInstalled>
-- <BYOMDisconnected>{() => <p>Not connected</p>}</BYOMDisconnected>
-- <BYOMConnected>{() => <p>Connected!</p>}</BYOMConnected>
-- <BYOMProviderNotReady>{() => <p>Select provider</p>}</BYOMProviderNotReady>
-- <BYOMHasError>{({ error, retry }) => <p>{error.message}</p>}</BYOMHasError>
-- <BYOMChatNotReady>{() => <p>Chat not ready</p>}</BYOMChatNotReady>
-- <BYOMChatReady>{() => <p>Ready to chat!</p>}</BYOMChatReady>
+- <ArlopassNotInstalled>{() => <p>Install extension</p>}</ArlopassNotInstalled>
+- <ArlopassDisconnected>{() => <p>Not connected</p>}</ArlopassDisconnected>
+- <ArlopassConnected>{() => <p>Connected!</p>}</ArlopassConnected>
+- <ArlopassProviderNotReady>{() => <p>Select provider</p>}</ArlopassProviderNotReady>
+- <ArlopassHasError>{({ error, retry }) => <p>{error.message}</p>}</ArlopassHasError>
+- <ArlopassChatNotReady>{() => <p>Chat not ready</p>}</ArlopassChatNotReady>
+- <ArlopassChatReady>{() => <p>Ready to chat!</p>}</ArlopassChatReady>
 
-BYOMErrorBoundary catches fatal errors in the React tree:
-<BYOMErrorBoundary fallback={({ error, reset }) => <button onClick={reset}>Retry</button>}>
+ArlopassErrorBoundary catches fatal errors in the React tree:
+<ArlopassErrorBoundary fallback={({ error, reset }) => <button onClick={reset}>Retry</button>}>
   <App />
-</BYOMErrorBoundary>
+</ArlopassErrorBoundary>
 
-Import: import { BYOMChatReadyGate, BYOMHasError, ... } from "@byom-ai/react/guards";`,
-    keywords: ["guard", "gate", "BYOMConnectionGate", "BYOMProviderGate", "BYOMChatReadyGate", "BYOMNotInstalled", "BYOMDisconnected", "BYOMConnected", "BYOMHasError", "BYOMChatNotReady", "BYOMChatReady"],
+Import: import { ArlopassChatReadyGate, ArlopassHasError, ... } from "@arlopass/react/guards";`,
+    keywords: ["guard", "gate", "ArlopassConnectionGate", "ArlopassProviderGate", "ArlopassChatReadyGate", "ArlopassNotInstalled", "ArlopassDisconnected", "ArlopassConnected", "ArlopassHasError", "ArlopassChatNotReady", "ArlopassChatReady"],
   },
   {
     id: "react-testing",
     title: "React SDK Testing Utilities",
-    content: `Testing utilities from @byom-ai/react/testing for unit testing React components that use BYOM hooks.
+    content: `Testing utilities from @arlopass/react/testing for unit testing React components that use Arlopass hooks.
 
-createMockTransport(options?) — creates a mock BYOMTransport:
-  import { createMockTransport } from "@byom-ai/react/testing";
+createMockTransport(options?) — creates a mock ArlopassTransport:
+  import { createMockTransport } from "@arlopass/react/testing";
   const transport = createMockTransport({
     chatResponse: "Mock reply",
     streamChunks: ["Hello ", "world!"],
     providers: [{ providerId: "mock", providerName: "Mock", models: ["mock-model"] }],
   });
 
-MockBYOMProvider — drop-in test wrapper:
-  import { MockBYOMProvider } from "@byom-ai/react/testing";
+MockArlopassProvider — drop-in test wrapper:
+  import { MockArlopassProvider } from "@arlopass/react/testing";
   render(
-    <MockBYOMProvider transport={transport}>
+    <MockArlopassProvider transport={transport}>
       <MyComponent />
-    </MockBYOMProvider>
+    </MockArlopassProvider>
   );
 
-mockWindowByom(transport) / cleanupWindowByom() — inject/clean window.byom:
-  beforeEach(() => mockWindowByom(transport));
-  afterEach(() => cleanupWindowByom());
+mockWindowArlopass(transport) / cleanupWindowArlopass() — inject/clean window.arlopass:
+  beforeEach(() => mockWindowArlopass(transport));
+  afterEach(() => cleanupWindowArlopass());
 
 waitForChat() / waitForStream() / waitForState(state) — async test helpers:
   await waitForChat(); // waits until chat response arrives
   await waitForStream(); // waits until streaming completes
   await waitForState("connected"); // waits until connection state matches`,
-    keywords: ["testing", "mock", "MockBYOMProvider", "createMockTransport", "test", "vitest", "jest"],
+    keywords: ["testing", "mock", "MockArlopassProvider", "createMockTransport", "test", "vitest", "jest"],
   },
   {
     id: "react-ui",
-    title: "Components Library (@byom-ai/react-ui)",
-    content: `The @byom-ai/react-ui package provides headless, unstyled compound React components for AI chat interfaces. All components use dot-notation namespaces and support controlled + uncontrolled modes.
+    title: "Components Library (@arlopass/react-ui)",
+    content: `The @arlopass/react-ui package provides headless, unstyled compound React components for AI chat interfaces. All components use dot-notation namespaces and support controlled + uncontrolled modes.
 
-Install: npm install @byom-ai/react-ui
+Install: npm install @arlopass/react-ui
 
 Components:
 - Chat — compound chat interface: Chat.Root, Chat.Messages, Chat.Message, Chat.MessageContent, Chat.Input, Chat.SendButton, Chat.StopButton, Chat.StreamingIndicator, Chat.EmptyState
@@ -413,9 +413,9 @@ Components:
 - ConnectionStatus — connection state display
 
 Usage (uncontrolled — auto-manages conversation):
-import { Chat } from "@byom-ai/react-ui";
+import { Chat } from "@arlopass/react-ui";
 
-<BYOMProvider appId="my-app">
+<ArlopassProvider appId="my-app">
   <Chat.Root systemPrompt="You are helpful.">
     <Chat.Messages>
       {(messages) => messages.map(m => (
@@ -427,7 +427,7 @@ import { Chat } from "@byom-ai/react-ui";
     <Chat.Input />
     <Chat.SendButton>Send</Chat.SendButton>
   </Chat.Root>
-</BYOMProvider>
+</ArlopassProvider>
 
 Styling: Components render semantic HTML with data-* attributes (data-state, data-role, data-status) for CSS targeting. No CSS shipped.
 CSS example: [data-role="user"] { background: #e3f2fd; } [data-state="streaming"] { opacity: 0.7; }`,
@@ -435,27 +435,27 @@ CSS example: [data-role="user"] { background: #e3f2fd; } [data-state="streaming"
   },
   {
     id: "ui-registry",
-    title: "Block Registry (@byom-ai/ui)",
-    content: `The @byom-ai/ui package is a CLI tool that copies pre-styled Tailwind React components into your project (like shadcn/ui).
+    title: "Block Registry (@arlopass/ui)",
+    content: `The @arlopass/ui package is a CLI tool that copies pre-styled Tailwind React components into your project (like shadcn/ui).
 
 CLI usage:
-  npx @byom-ai/ui add chat          # copy chat block
-  npx @byom-ai/ui add chatbot       # copy chatbot widget (includes chat)
-  npx @byom-ai/ui add --all         # copy all blocks
-  npx @byom-ai/ui list              # list available blocks
+  npx @arlopass/ui add chat          # copy chat block
+  npx @arlopass/ui add chatbot       # copy chatbot widget (includes chat)
+  npx @arlopass/ui add --all         # copy all blocks
+  npx @arlopass/ui list              # list available blocks
 
 Available blocks:
-- chat — complete chat interface with messages, streaming, input (BYOMChat component)
-- chatbot — floating chatbot bubble with expandable panel (BYOMChatbot component, depends on chat)
-- provider-picker — styled provider/model dropdowns (BYOMProviderPicker)
-- connection-banner — connection status banner with install prompt (BYOMConnectionBanner)
+- chat — complete chat interface with messages, streaming, input (ArlopassChat component)
+- chatbot — floating chatbot bubble with expandable panel (ArlopassChatbot component, depends on chat)
+- provider-picker — styled provider/model dropdowns (ArlopassProviderPicker)
+- connection-banner — connection status banner with install prompt (ArlopassConnectionBanner)
 
-Blocks are copied to src/components/byom/ by default. Configure with byom-ui.json:
-  { "outDir": "src/components/byom", "overwrite": false }
+Blocks are copied to src/components/arlopass/ by default. Configure with arlopass-ui.json:
+  { "outDir": "src/components/arlopass", "overwrite": false }
 
 After copying, you own the source. Modify Tailwind classes freely.
-Blocks import from @byom-ai/react-ui (headless primitives) and @byom-ai/react (hooks/guards).`,
-    keywords: ["registry", "blocks", "CLI", "npx", "byom-ui", "chat block", "chatbot", "tailwind", "copy", "shadcn", "BYOMChat", "BYOMChatbot"],
+Blocks import from @arlopass/react-ui (headless primitives) and @arlopass/react (hooks/guards).`,
+    keywords: ["registry", "blocks", "CLI", "npx", "arlopass-ui", "chat block", "chatbot", "tailwind", "copy", "shadcn", "ArlopassChat", "ArlopassChatbot"],
   },
 ];
 
@@ -512,7 +512,7 @@ export function buildSystemPrompt(userQuery: string): string {
     `--- ${doc.title} ---\n${doc.content}`
   ).join("\n\n");
 
-  return `You are a helpful assistant for the BYOM AI Wallet documentation website. You answer questions about the BYOM extension, web SDK, React SDK, providers, app connections, credentials, and how to integrate with BYOM.
+  return `You are a helpful assistant for the Arlopass Wallet documentation website. You answer questions about the Arlopass extension, web SDK, React SDK, providers, app connections, credentials, and how to integrate with Arlopass.
 
 Use the following documentation context to answer accurately. If the answer isn't in the context, say so honestly.
 
@@ -521,6 +521,6 @@ ${contextBlocks}
 Important:
 - Be concise and accurate
 - Include code examples when relevant
-- Reference specific BYOM concepts (providers, models, vault, app connections)
-- If asked about implementation, show @byom-ai/web-sdk or @byom-ai/react TypeScript code`;
+- Reference specific Arlopass concepts (providers, models, vault, app connections)
+- If asked about implementation, show @arlopass/web-sdk or @arlopass/react TypeScript code`;
 }

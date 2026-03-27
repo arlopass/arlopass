@@ -14,7 +14,7 @@ function buildTranscript(input: Readonly<{
   extensionPublicKey: string;
 }>): string {
   return [
-    "byom.bridge.pairing.v1",
+    "arlopass.bridge.pairing.v1",
     input.pairingSessionId,
     input.extensionId,
     input.hostName,
@@ -42,12 +42,12 @@ describe("BridgeHandler pairing dispatch", () => {
     const begin = await handler.handle({
       type: "pairing.begin",
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     expect(begin).toMatchObject({
       type: "pairing.begin",
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     expect((begin as Record<string, unknown>)["oneTimeCode"]).toBeUndefined();
 
@@ -81,7 +81,7 @@ describe("BridgeHandler pairing dispatch", () => {
     expect(complete).toMatchObject({
       type: "pairing.complete",
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     const pairingHandle = (complete as Record<string, string>)["pairingHandle"] ?? "";
@@ -91,7 +91,7 @@ describe("BridgeHandler pairing dispatch", () => {
       type: "pairing.list",
       sessionToken,
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     expect(listed).toMatchObject({
       type: "pairing.list",
@@ -107,7 +107,7 @@ describe("BridgeHandler pairing dispatch", () => {
       sessionToken,
       pairingHandle,
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     expect(revoked).toMatchObject({
       type: "pairing.revoke",
@@ -124,18 +124,18 @@ describe("BridgeHandler pairing dispatch", () => {
     const handler = new BridgeHandler({
       pairingManager,
       pairingCodeRetrievalHint:
-        "Bridge pairing code log: C:\\Users\\example\\AppData\\Local\\BYOM\\bridge\\logs\\pairing-code.log",
+        "Bridge pairing code log: C:\\Users\\example\\AppData\\Local\\Arlopass\\bridge\\logs\\pairing-code.log",
     });
 
     const begin = await handler.handle({
       type: "pairing.begin",
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     expect(begin).toMatchObject({
       type: "pairing.begin",
       codeRetrievalHint:
-        "Bridge pairing code log: C:\\Users\\example\\AppData\\Local\\BYOM\\bridge\\logs\\pairing-code.log",
+        "Bridge pairing code log: C:\\Users\\example\\AppData\\Local\\Arlopass\\bridge\\logs\\pairing-code.log",
     });
     expect((begin as Record<string, unknown>)["oneTimeCode"]).toBeUndefined();
   });
@@ -152,7 +152,7 @@ describe("BridgeHandler pairing dispatch", () => {
     const begin = await handler.handle({
       type: "pairing.begin",
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
       includeOneTimeCode: true,
     });
     expect(begin).toMatchObject({
@@ -175,7 +175,7 @@ describe("BridgeHandler pairing dispatch", () => {
     const begin = await handler.handle({
       type: "pairing.begin",
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const beginPayload = begin as Record<string, string>;
     const extensionEcdh = createECDH("prime256v1");
@@ -212,7 +212,7 @@ describe("BridgeHandler pairing dispatch", () => {
       pairingManager.resolvePairingSecret({
         pairingHandle,
         extensionId: "ext.runtime.transport",
-        hostName: "com.byom.bridge",
+        hostName: "com.arlopass.bridge",
       }) ?? Buffer.alloc(32, 0),
     )
       .update(nonce)
@@ -222,7 +222,7 @@ describe("BridgeHandler pairing dispatch", () => {
       nonce,
       hmac,
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
       pairingHandle,
     });
 
@@ -241,13 +241,13 @@ describe("PairingManager.createAutoPairing", () => {
 
     const result = pairingManager.createAutoPairing({
       extensionId: "ext.auto.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     expect(result.pairingHandle).toMatch(/^pairh\.[0-9a-f]{32}$/);
     expect(result.pairingKeyHex).toHaveLength(64);
     expect(result.extensionId).toBe("ext.auto.test");
-    expect(result.hostName).toBe("com.byom.bridge");
+    expect(result.hostName).toBe("com.arlopass.bridge");
     expect(result.createdAt).toBeDefined();
   });
 
@@ -258,13 +258,13 @@ describe("PairingManager.createAutoPairing", () => {
 
     const result = pairingManager.createAutoPairing({
       extensionId: "ext.resolve.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     const resolved = pairingManager.resolvePairingSecret({
       pairingHandle: result.pairingHandle,
       extensionId: "ext.resolve.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     expect(resolved).toBeDefined();
@@ -282,11 +282,11 @@ describe("PairingManager.createAutoPairing", () => {
 
     const first = pairingManager.createAutoPairing({
       extensionId: "ext.idempotent",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const second = pairingManager.createAutoPairing({
       extensionId: "ext.idempotent",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     expect(second.pairingHandle).toBe(first.pairingHandle);
@@ -302,11 +302,11 @@ describe("PairingManager.createAutoPairing", () => {
 
     const first = pairingManager.createAutoPairing({
       extensionId: "ext.alpha",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const second = pairingManager.createAutoPairing({
       extensionId: "ext.beta",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     expect(second.pairingHandle).not.toBe(first.pairingHandle);
@@ -326,13 +326,13 @@ describe("BridgeHandler pairing.auto dispatch", () => {
     const response = await handler.handle({
       type: "pairing.auto",
       extensionId: "ext.auto.dispatch",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     expect(response).toMatchObject({
       type: "pairing.auto",
       extensionId: "ext.auto.dispatch",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const payload = response as Record<string, string>;
     expect(payload["pairingHandle"]).toMatch(/^pairh\.[0-9a-f]{32}$/);
@@ -345,7 +345,7 @@ describe("BridgeHandler pairing.auto dispatch", () => {
 
     const response = await handler.handle({
       type: "pairing.auto",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
 
     expect(response).toMatchObject({
@@ -380,7 +380,7 @@ describe("BridgeHandler pairing.auto dispatch", () => {
     const autoPairing = await handler.handle({
       type: "pairing.auto",
       extensionId: "ext.handshake.auto",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const autoPayload = autoPairing as Record<string, string>;
     const pairingHandle = autoPayload["pairingHandle"] ?? "";
@@ -397,7 +397,7 @@ describe("BridgeHandler pairing.auto dispatch", () => {
       nonce,
       hmac,
       extensionId: "ext.handshake.auto",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
       pairingHandle,
     });
 

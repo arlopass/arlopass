@@ -1,19 +1,19 @@
-# @byom-ai/react — React SDK Design Spec
+# @arlopass/react — React SDK Design Spec
 
 **Date:** 2026-03-26
 **Status:** Approved
-**Package:** `@byom-ai/react`
+**Package:** `@arlopass/react`
 **Location:** `packages/react-sdk/`
 
 ---
 
 ## 1. Overview
 
-A React SDK built on `@byom-ai/web-sdk` that provides hooks, providers, guard components, error boundaries, and testing utilities for integrating BYOM AI into React applications.
+A React SDK built on `@arlopass/web-sdk` that provides hooks, providers, guard components, error boundaries, and testing utilities for integrating Arlopass into React applications.
 
 **Dependency chain:**
 ```
-@byom-ai/react  →  @byom-ai/web-sdk  →  @byom-ai/protocol
+@arlopass/react  →  @arlopass/web-sdk  →  @arlopass/protocol
      (React layer)      (Core client)       (Envelope types)
 ```
 
@@ -21,7 +21,7 @@ A React SDK built on `@byom-ai/web-sdk` that provides hooks, providers, guard co
 
 **Target:** React 18+ (peer dependency `^18.0.0 || ^19.0.0`).
 
-**Client-only SDK.** This package uses browser APIs (`window.byom`, `requestAnimationFrame`, `AbortController`) and cannot run on a server. All entry points include `'use client'` directives for React Server Component compatibility. In Next.js, wrap `<BYOMProvider>` at the route/layout level — do not use BYOM hooks inside server components.
+**Client-only SDK.** This package uses browser APIs (`window.arlopass`, `requestAnimationFrame`, `AbortController`) and cannot run on a server. All entry points include `'use client'` directives for React Server Component compatibility. In Next.js, wrap `<ArlopassProvider>` at the route/layout level — do not use Arlopass hooks inside server components.
 
 ---
 
@@ -33,20 +33,20 @@ A React SDK built on `@byom-ai/web-sdk` that provides hooks, providers, guard co
 ┌─────────────────────────────────────────────────────────┐
 │  Developer's React App                                   │
 │                                                          │
-│  <BYOMProvider appId="my-app">                          │
-│    <BYOMChatReadyGate ...>                              │
+│  <ArlopassProvider appId="my-app">                          │
+│    <ArlopassChatReadyGate ...>                              │
 │      <ChatUI />  ← useChat(), useConnection()           │
-│    </BYOMChatReadyGate>                                 │
-│  </BYOMProvider>                                         │
+│    </ArlopassChatReadyGate>                                 │
+│  </ArlopassProvider>                                         │
 │                                                          │
 ├─────────────────────────────────────────────────────────┤
-│  @byom-ai/react                                          │
+│  @arlopass/react                                          │
 │                                                          │
 │  ┌──────────┐  ┌──────────┐  ┌───────────┐              │
 │  │ Provider  │  │  Hooks   │  │  Guards   │              │
 │  │ Context   │  │          │  │           │              │
-│  │          │  │ useChat   │  │ BYOM*Gate │              │
-│  │ Client   │  │ useConn   │  │ BYOM*     │              │
+│  │          │  │ useChat   │  │ Arlopass*Gate │              │
+│  │ Client   │  │ useConn   │  │ Arlopass*     │              │
 │  │ Store    │  │ useProvs  │  │ (pos/neg) │              │
 │  │ Adapter  │  │ useClient │  │           │              │
 │  └────┬─────┘  └────┬─────┘  └─────┬─────┘              │
@@ -58,68 +58,68 @@ A React SDK built on `@byom-ai/web-sdk` that provides hooks, providers, guard co
 │  └────────────────┬───────────────────────┘              │
 │                   │                                      │
 ├───────────────────┼──────────────────────────────────────┤
-│  @byom-ai/web-sdk │                                      │
+│  @arlopass/web-sdk │                                      │
 │  ┌────────────────┴───────────────────┐                  │
-│  │  BYOMClient                         │                  │
+│  │  ArlopassClient                         │                  │
 │  │  - connect/disconnect               │                  │
 │  │  - listProviders/selectProvider     │                  │
 │  │  - chat.send / chat.stream          │                  │
 │  └────────────────┬───────────────────┘                  │
 │                   │                                      │
 │  ┌────────────────┴───────────────────┐                  │
-│  │  InjectedTransport (window.byom)    │                  │
+│  │  InjectedTransport (window.arlopass)    │                  │
 │  └────────────────────────────────────┘                  │
 └─────────────────────────────────────────────────────────┘
 ```
 
 **Key principles:**
-- Single source of truth: `BYOMClient` owns state; React subscribes via `useSyncExternalStore`
-- Injected transport only: production path is `window.byom` from browser extension
-- Zero-config defaults: `<BYOMProvider appId="x">` is the minimum viable setup
+- Single source of truth: `ArlopassClient` owns state; React subscribes via `useSyncExternalStore`
+- Injected transport only: production path is `window.arlopass` from browser extension
+- Zero-config defaults: `<ArlopassProvider appId="x">` is the minimum viable setup
 - Concurrent-mode safe: `useSyncExternalStore` guarantees tear-free reads
 
 ---
 
 ## 3. Transport Strategy
 
-**Production:** Injected transport only — `window.byom` set by the BYOM browser extension. Other connection methods (bridge, demo) are local development concerns, not exposed in the React SDK. Allowing arbitrary transport targets from web apps would bypass the extension's trust boundary.
+**Production:** Injected transport only — `window.arlopass` set by the Arlopass browser extension. Other connection methods (bridge, demo) are local development concerns, not exposed in the React SDK. Allowing arbitrary transport targets from web apps would bypass the extension's trust boundary.
 
-**Testing:** `createMockTransport()` from `@byom-ai/react/testing` subpath. Never bundled into production.
+**Testing:** `createMockTransport()` from `@arlopass/react/testing` subpath. Never bundled into production.
 
 **Detection logic:**
 ```ts
-function getInjectedTransport(): BYOMTransport | null {
-  if (typeof window !== "undefined" && window.byom &&
-      typeof window.byom.request === "function") {
-    return window.byom as BYOMTransport
+function getInjectedTransport(): ArlopassTransport | null {
+  if (typeof window !== "undefined" && window.arlopass &&
+      typeof window.arlopass.request === "function") {
+    return window.arlopass as ArlopassTransport
   }
   return null
 }
 ```
 
-Runtime shape validation — checks `request` method exists, not just `window.byom` presence.
+Runtime shape validation — checks `request` method exists, not just `window.arlopass` presence.
 
 ### TypeScript declaration
 
 The SDK ships a `global.d.ts` that augments the `Window` interface:
 
 ```ts
-import type { BYOMTransport } from '@byom-ai/web-sdk';
+import type { ArlopassTransport } from '@arlopass/web-sdk';
 
 declare global {
   interface Window {
-    byom?: BYOMTransport;
+    arlopass?: ArlopassTransport;
   }
 }
 ```
 
-Developers do not need to add their own type augmentation — importing from `@byom-ai/react` is sufficient.
+Developers do not need to add their own type augmentation — importing from `@arlopass/react` is sufficient.
 
 ---
 
 ## 4. ClientStore — State Synchronization Layer
 
-The internal bridge between `BYOMClient` and React.
+The internal bridge between `ArlopassClient` and React.
 
 ### Snapshot type
 
@@ -129,24 +129,24 @@ type ClientSnapshot = Readonly<{
   sessionId: string | null
   selectedProvider: { providerId: string; modelId: string } | null
   providers: readonly ProviderDescriptor[]
-  error: BYOMSDKError | null
+  error: ArlopassSDKError | null
 }>
 ```
 
 ### How it works
 
-- Holds a `BYOMClient` instance and a mutable snapshot
+- Holds a `ArlopassClient` instance and a mutable snapshot
 - **Primary sync path:** every SDK operation (`connect`, `disconnect`, `listProviders`, `selectProvider`, `chat.send`, `chat.stream`) is wrapped by the `ClientStore`. After each operation completes (or fails), the store reads the client's current state via getters (`.state`, `.sessionId`, `.selectedProvider`), builds a new snapshot, and synchronously notifies all subscribers. This is the main mechanism — React is always notified within the same microtask as the state change.
-- **Safety-net polling:** `BYOMClient` has no event emitter (only getter properties). To detect external state changes not triggered by SDK operations (e.g., extension unloads, transport drops), the store runs a lightweight polling interval (every 500ms) that compares `client.state` against the last-known snapshot. If different, it builds a new snapshot and notifies. This adds at most 500ms latency for externally-triggered disconnects — acceptable for a safety net. The polling interval is stopped on unmount.
-- **Future optimization:** if `BYOMClient` adds an `on('stateChange', cb)` event emitter in a future version, the polling can be removed entirely. The `ClientStore` is designed to support both patterns.
+- **Safety-net polling:** `ArlopassClient` has no event emitter (only getter properties). To detect external state changes not triggered by SDK operations (e.g., extension unloads, transport drops), the store runs a lightweight polling interval (every 500ms) that compares `client.state` against the last-known snapshot. If different, it builds a new snapshot and notifies. This adds at most 500ms latency for externally-triggered disconnects — acceptable for a safety net. The polling interval is stopped on unmount.
+- **Future optimization:** if `ArlopassClient` adds an `on('stateChange', cb)` event emitter in a future version, the polling can be removed entirely. The `ClientStore` is designed to support both patterns.
 - `subscribe(callback)` and `getSnapshot()` conform to `useSyncExternalStore` contract
 - Snapshot objects are immutable — only replaced when values actually change (referential equality check prevents unnecessary React re-renders)
 
 ### Lifecycle
 
 ```
-BYOMProvider mounts
-  → creates BYOMClient + ClientStore
+ArlopassProvider mounts
+  → creates ArlopassClient + ClientStore
   → store holds client ref + initial snapshot
   → hooks subscribe via useSyncExternalStore
 
@@ -160,7 +160,7 @@ External disconnect (extension unloads)
   → builds new snapshot → notifies subscribers → React re-renders
   → (max 500ms latency for externally-triggered changes)
 
-BYOMProvider unmounts
+ArlopassProvider unmounts
   → store calls client.disconnect()
   → clears snapshot, unsubscribes all
 ```
@@ -169,10 +169,10 @@ BYOMProvider unmounts
 
 ## 5. Provider Component
 
-### `<BYOMProvider>`
+### `<ArlopassProvider>`
 
 ```tsx
-<BYOMProvider
+<ArlopassProvider
   appId="my-app"                              // Required
   defaultProvider="provider.ollama"            // Optional: auto-select on connect
   defaultModel="model.llama3"                 // Optional: auto-select on connect
@@ -180,13 +180,13 @@ BYOMProvider unmounts
   onError={(error) => reportToSentry(error)}  // Optional: global error callback
 >
   {children}
-</BYOMProvider>
+</ArlopassProvider>
 ```
 
 **Mount sequence:**
-1. Checks `window.byom` for injected transport
+1. Checks `window.arlopass` for injected transport
 2. If not found → state = `"disconnected"` with descriptive error (extension not installed)
-3. If found → creates `BYOMClient` with injected transport
+3. If found → creates `ArlopassClient` with injected transport
 4. If `autoConnect={true}` → calls `client.connect({ appId })`
 5. If `defaultProvider` + `defaultModel` set and connect succeeds → calls `client.selectProvider()` automatically. On failure (e.g., provider not in list, model not available), the error is set in the store's `error` field — the app can render error UI or fall back to `useProviders().selectProvider()` for manual selection. The connection remains active.
 6. Stores `ClientStore` in React context
@@ -195,7 +195,7 @@ BYOMProvider unmounts
 
 ### Cleanup & unmount during active operations
 
-When `<BYOMProvider>` unmounts:
+When `<ArlopassProvider>` unmounts:
 1. All active `AbortController` instances are aborted
 2. In-progress `chat.stream()` and `conversationManager.stream()` generators receive abort signal and stop iteration
 3. `useChat()` and `useConversation()` set `error` to an abort error (retryable) if a stream was in progress
@@ -209,7 +209,7 @@ When `<BYOMProvider>` unmounts:
 
 **Context shape (internal, not exported):**
 ```ts
-type BYOMContextValue = Readonly<{
+type ArlopassContextValue = Readonly<{
   store: ClientStore
   connect: () => Promise<void>
   disconnect: () => Promise<void>
@@ -224,7 +224,7 @@ type BYOMContextValue = Readonly<{
 
 ## 6. Hooks API
 
-All hooks throw if used outside `<BYOMProvider>`.
+All hooks throw if used outside `<ArlopassProvider>`.
 
 ### `useConnection()`
 
@@ -234,7 +234,7 @@ const {
   sessionId,      // string | null
   isConnected,    // boolean (derived)
   isConnecting,   // boolean (derived)
-  error,          // BYOMSDKError | null
+  error,          // ArlopassSDKError | null
   connect,        // () => Promise<void>
   disconnect,     // () => Promise<void>
   retry,          // (() => Promise<void>) | null — when error.retryable
@@ -250,7 +250,7 @@ const {
   providers,        // readonly ProviderDescriptor[]
   selectedProvider, // { providerId, modelId } | null
   isLoading,        // boolean
-  error,            // BYOMSDKError | null
+  error,            // ArlopassSDKError | null
   listProviders,    // () => Promise<readonly ProviderDescriptor[]>
   selectProvider,   // (input: SelectProviderInput) => Promise<SelectProviderResult>
   retry,            // (() => Promise<void>) | null
@@ -295,8 +295,8 @@ type ChatSubscribe = {
   (event: 'response', messageId: MessageId, handler: (msg: TrackedChatMessage) => void): () => void;
   (event: 'response', handler: (msg: TrackedChatMessage) => void): () => void;
   (event: 'stream', messageId: MessageId, handler: (delta: string, accumulated: string) => void): () => void;
-  (event: 'error', handler: (error: BYOMSDKError, messageId: MessageId | null) => void): () => void;
-  (event: 'error', messageId: MessageId, handler: (error: BYOMSDKError) => void): () => void;
+  (event: 'error', handler: (error: ArlopassSDKError, messageId: MessageId | null) => void): () => void;
+  (event: 'error', messageId: MessageId, handler: (error: ArlopassSDKError) => void): () => void;
   (event: 'tool_call', handler: (toolCallId: string, name: string, args: Record<string, unknown>, messageId: MessageId) => void): () => void;
   (event: 'tool_call', messageId: MessageId, handler: (toolCallId: string, name: string, args: Record<string, unknown>) => void): () => void;
   (event: 'tool_result', handler: (toolCallId: string, name: string, result: string, messageId: MessageId) => void): () => void;
@@ -315,7 +315,7 @@ const {
   streamingMessageId,  // MessageId | null
   isStreaming,         // boolean
   isSending,           // boolean
-  error,               // BYOMSDKError | null
+  error,               // ArlopassSDKError | null
   tokenCount,          // number — current context window token usage
   contextWindow,       // readonly ChatMessage[] — what's actually sent to the model
   
@@ -340,7 +340,7 @@ const {
   onDelta?: (delta: string, accumulated: string, messageId: MessageId) => void
   onToolCall?: (toolCallId: string, name: string, args: Record<string, unknown>) => void
   onToolResult?: (toolCallId: string, name: string, result: string) => void
-  onError?: (error: BYOMSDKError, messageId: MessageId) => void
+  onError?: (error: ArlopassSDKError, messageId: MessageId) => void
 })
 ```
 
@@ -379,11 +379,11 @@ const { stream, subscribe } = useConversation({
 
 **`pinMessage()` behavior:**
 - Pinned messages are never evicted during context window truncation
-- Pinning a message that would overflow the budget throws a `BYOMStateError`
+- Pinning a message that would overflow the budget throws a `ArlopassStateError`
 - System prompt is implicitly pinned
 
 **`submitToolResult()` behavior:**
-- Calling with an unknown `toolCallId` throws a `BYOMStateError`
+- Calling with an unknown `toolCallId` throws a `ArlopassStateError`
 - The result is fed back to the model, which may respond with text or more tool calls
 - Tool call loops are capped at `maxToolRounds` (default: 5)
 
@@ -398,7 +398,7 @@ const {
   streamingMessageId, // MessageId | null
   isStreaming,        // boolean
   isSending,          // boolean
-  error,              // BYOMSDKError | null
+  error,              // ArlopassSDKError | null
   send,               // (content: string) => Promise<MessageId>
   stream,             // (content: string) => Promise<MessageId>
   stop,               // () => void
@@ -410,7 +410,7 @@ const {
   initialMessages?: ChatMessage[]
   onMessage?: (message: TrackedChatMessage) => void
   onDelta?: (delta: string, accumulated: string, messageId: MessageId) => void
-  onError?: (error: BYOMSDKError, messageId: MessageId) => void
+  onError?: (error: ArlopassSDKError, messageId: MessageId) => void
 })
 ```
 
@@ -475,7 +475,7 @@ Message state is local to each `useChat()` instance — multiple chats on one pa
 
 **`stop()` behavior:** Calling `stop()` mid-stream aborts the `AbortController`. If the stream was incomplete, the assistant message status is set to `"error"` and `error` is set to an abort error (`retryable: true`). The partial `streamingContent` is discarded (not appended to `messages`). `retry()` is exposed to re-run the same request.
 
-**Concurrency:** `send()` and `stream()` cannot be called concurrently within the same `useChat()` instance. Calling `stream()` while `isSending` is `true` (or vice versa) throws a `BYOMStateError`. Multiple `useChat()` instances can operate concurrently.
+**Concurrency:** `send()` and `stream()` cannot be called concurrently within the same `useChat()` instance. Calling `stream()` while `isSending` is `true` (or vice versa) throws a `ArlopassStateError`. Multiple `useChat()` instances can operate concurrently.
 
 **`isStreaming` / `isSending` semantics:**
 - `isStreaming` = `true` only during an active `stream()` call with `AsyncIterable` in progress
@@ -485,7 +485,7 @@ Message state is local to each `useChat()` instance — multiple chats on one pa
 ### `useClient()`
 
 ```ts
-const client = useClient()  // BYOMClient | null
+const client = useClient()  // ArlopassClient | null
 ```
 
 Escape hatch for advanced use cases. Returns `null` if not connected.
@@ -498,41 +498,41 @@ Escape hatch for advanced use cases. Returns `null` if not connected.
 
 | Component | Renders children when | Fallback props |
 |---|---|---|
-| `<BYOMConnectionGate>` | Connected | `fallback`, `errorFallback`, `notInstalledFallback` |
-| `<BYOMProviderGate>` | Provider selected | `fallback`, `loadingFallback` |
-| `<BYOMChatReadyGate>` | Connected + provider selected | `connectingFallback`, `notInstalledFallback`, `providerFallback`, `errorFallback` |
+| `<ArlopassConnectionGate>` | Connected | `fallback`, `errorFallback`, `notInstalledFallback` |
+| `<ArlopassProviderGate>` | Provider selected | `fallback`, `loadingFallback` |
+| `<ArlopassChatReadyGate>` | Connected + provider selected | `connectingFallback`, `notInstalledFallback`, `providerFallback`, `errorFallback` |
 
 ### Negative guards (render when condition NOT met)
 
 | Component | Renders children when | Passes props |
 |---|---|---|
-| `<BYOMNotInstalled>` | No `window.byom` | No |
-| `<BYOMDisconnected>` | Not connected | No |
-| `<BYOMConnected>` | Connected | No |
-| `<BYOMProviderNotReady>` | No provider selected | No |
-| `<BYOMHasError>` | Active error exists | `{ error, retry }` |
-| `<BYOMChatNotReady>` | Not ready to chat | No |
-| `<BYOMChatReady>` | Ready to chat | No |
+| `<ArlopassNotInstalled>` | No `window.arlopass` | No |
+| `<ArlopassDisconnected>` | Not connected | No |
+| `<ArlopassConnected>` | Connected | No |
+| `<ArlopassProviderNotReady>` | No provider selected | No |
+| `<ArlopassHasError>` | Active error exists | `{ error, retry }` |
+| `<ArlopassChatNotReady>` | Not ready to chat | No |
+| `<ArlopassChatReady>` | Ready to chat | No |
 
 **Design:**
 - No fallback props on negative guards — pure conditional renderers
 - Children can be `ReactNode` or render function
 - Composable anywhere in the tree — header, sidebar, toast, footer
-- All prefixed with `BYOM` to avoid import collisions
+- All prefixed with `Arlopass` to avoid import collisions
 
 ---
 
 ## 8. Error Boundary
 
-### `<BYOMErrorBoundary>`
+### `<ArlopassErrorBoundary>`
 
 ```tsx
-<BYOMErrorBoundary
+<ArlopassErrorBoundary
   fallback={({ error, resetErrorBoundary }) => <ErrorPanel error={error} reset={resetErrorBoundary} />}
   onError={(error) => reportToSentry(error)}
 >
   {children}
-</BYOMErrorBoundary>
+</ArlopassErrorBoundary>
 ```
 
 **Error routing:**
@@ -541,9 +541,9 @@ Escape hatch for advanced use cases. Returns `null` if not connected.
 |---|---|---|
 | Timeout, transient network | `true` | Hook `error` state + `retry()` |
 | Provider unavailable | `true` | Hook `error` state + `retry()` |
-| Auth failed, permission denied | `false` | Thrown → `<BYOMErrorBoundary>` |
-| Policy violation | `false` | Thrown → `<BYOMErrorBoundary>` |
-| Protocol version mismatch | `false` | Thrown → `<BYOMErrorBoundary>` |
+| Auth failed, permission denied | `false` | Thrown → `<ArlopassErrorBoundary>` |
+| Policy violation | `false` | Thrown → `<ArlopassErrorBoundary>` |
+| Protocol version mismatch | `false` | Thrown → `<ArlopassErrorBoundary>` |
 
 Rule: retryable → local in hooks. Non-retryable fatal → error boundary.
 
@@ -551,13 +551,13 @@ Override: if `onError` callback is provided on a hook and doesn't re-throw, the 
 
 **`resetErrorBoundary` behavior:**
 - Clears the error state and re-mounts children
-- Does **not** automatically reconnect — `<BYOMProvider>` will re-run its mount sequence (check `window.byom`, auto-connect if enabled), which effectively retries the connection
+- Does **not** automatically reconnect — `<ArlopassProvider>` will re-run its mount sequence (check `window.arlopass`, auto-connect if enabled), which effectively retries the connection
 - For non-retryable errors (policy violation, protocol mismatch): re-mounting may hit the same error if the underlying cause hasn't been resolved upstream. This is by design — the developer or user must fix the issue (e.g., update extension, change policy)
 - If `onError` callback is provided on a hook and doesn't re-throw, the error stays in hook state and does **not** propagate to the boundary
 
 ---
 
-## 9. Testing Utilities (`@byom-ai/react/testing`)
+## 9. Testing Utilities (`@arlopass/react/testing`)
 
 Separate subpath export — never ships in production.
 
@@ -570,22 +570,22 @@ createMockTransport({
   streamResponse: "Streamed word by word" | undefined,
   streamChunks: ["Hello", " world"] | undefined,
   failOn: { connect: false, chat: false, stream: false },
-  chatError: BYOMTimeoutError | undefined,
+  chatError: ArlopassTimeoutError | undefined,
   latency: { connect: 50, chat: 100, stream: 20 },
 })
 ```
 
-### `<MockBYOMProvider>`
+### `<MockArlopassProvider>`
 
 ```tsx
-<MockBYOMProvider
+<MockArlopassProvider
   appId="test-app"
   mockTransport={transport}
   initialState="connected"
   initialProvider={{ providerId: "provider.mock", modelId: "model.test" }}
 >
   <ComponentUnderTest />
-</MockBYOMProvider>
+</MockArlopassProvider>
 ```
 
 ### Async helpers
@@ -599,8 +599,8 @@ waitForState(screen, "connected")  // Wait for connection state
 ### Window mock
 
 ```ts
-mockWindowByom(transport)   // Sets window.byom
-cleanupWindowByom()         // Removes window.byom
+mockWindowArlopass(transport)   // Sets window.arlopass
+cleanupWindowArlopass()         // Removes window.arlopass
 ```
 
 ### Store testing helpers
@@ -629,12 +629,12 @@ simulateExternalDisconnect(transport)  // Makes transport.request() reject
 - `AbortController` per stream for immediate cancellation
 
 ### Transport & connection
-- `window.byom` checked once on mount, cached in ref
+- `window.arlopass` checked once on mount, cached in ref
 - Auto-connect fires in `useEffect` (after first paint)
 - Provider auto-select pipelined in same microtask chain as connect
 
 ### Bundle size
-- Zero third-party runtime deps beyond `@byom-ai/web-sdk`
+- Zero third-party runtime deps beyond `@arlopass/web-sdk`
 - Subpath exports for guards and testing
 - Tree-shakeable — unused hooks eliminated
 
@@ -642,9 +642,9 @@ simulateExternalDisconnect(transport)  // Makes transport.request() reject
 
 | Import | Size |
 |---|---|
-| `@byom-ai/react` (core) | ~8-12 KB |
-| `@byom-ai/react/guards` | ~3-5 KB |
-| `@byom-ai/react/testing` | ~4-6 KB (dev only) |
+| `@arlopass/react` (core) | ~8-12 KB |
+| `@arlopass/react/guards` | ~3-5 KB |
+| `@arlopass/react/testing` | ~4-6 KB (dev only) |
 
 ---
 
@@ -652,7 +652,7 @@ simulateExternalDisconnect(transport)  // Makes transport.request() reject
 
 ### Transport trust boundary
 - Injected-only enforcement — no prop to pass arbitrary transport in production
-- Runtime shape validation on `window.byom` before use
+- Runtime shape validation on `window.arlopass` before use
 - Origin always `window.location.origin`, not developer-configurable
 
 ### Context isolation
@@ -673,7 +673,7 @@ simulateExternalDisconnect(transport)  // Makes transport.request() reject
 ### Dependency security
 - Zero third-party runtime dependencies
 - React as `peerDependency` — uses app's instance
-- `@byom-ai/web-sdk` version-locked for protocol compatibility
+- `@arlopass/web-sdk` version-locked for protocol compatibility
 
 ---
 
@@ -687,20 +687,20 @@ packages/react-sdk/
 ├── src/
 │   ├── index.ts                    # Main entry
 │   ├── types.ts                    # All public types + re-exports from web-sdk
-│   ├── global.d.ts                 # Window.byom type augmentation
+│   ├── global.d.ts                 # Window.arlopass type augmentation
 │   ├── guards/
 │   │   ├── index.ts
-│   │   ├── byom-connection-gate.tsx
-│   │   ├── byom-provider-gate.tsx
-│   │   ├── byom-chat-ready-gate.tsx
-│   │   ├── byom-not-installed.tsx
-│   │   ├── byom-disconnected.tsx
-│   │   ├── byom-connected.tsx
-│   │   ├── byom-provider-not-ready.tsx
-│   │   ├── byom-has-error.tsx
-│   │   ├── byom-chat-not-ready.tsx
-│   │   ├── byom-chat-ready.tsx
-│   │   └── byom-error-boundary.tsx
+│   │   ├── arlopass-connection-gate.tsx
+│   │   ├── arlopass-provider-gate.tsx
+│   │   ├── arlopass-chat-ready-gate.tsx
+│   │   ├── arlopass-not-installed.tsx
+│   │   ├── arlopass-disconnected.tsx
+│   │   ├── arlopass-connected.tsx
+│   │   ├── arlopass-provider-not-ready.tsx
+│   │   ├── arlopass-has-error.tsx
+│   │   ├── arlopass-chat-not-ready.tsx
+│   │   ├── arlopass-chat-ready.tsx
+│   │   └── arlopass-error-boundary.tsx
 │   ├── testing/
 │   │   ├── index.ts
 │   │   ├── mock-transport.ts
@@ -708,8 +708,8 @@ packages/react-sdk/
 │   │   ├── test-helpers.ts
 │   │   └── window-mock.ts
 │   ├── provider/
-│   │   ├── byom-provider.tsx
-│   │   └── byom-context.ts
+│   │   ├── arlopass-provider.tsx
+│   │   └── arlopass-context.ts
 │   ├── hooks/
 │   │   ├── use-connection.ts
 │   │   ├── use-providers.ts
@@ -725,7 +725,7 @@ packages/react-sdk/
 │       └── injected.ts
 └── src/__tests__/
     ├── client-store.test.ts
-    ├── byom-provider.test.tsx
+    ├── arlopass-provider.test.tsx
     ├── use-connection.test.tsx
     ├── use-providers.test.tsx
     ├── use-conversation.test.tsx
@@ -739,14 +739,14 @@ packages/react-sdk/
 
 ```json
 {
-  "name": "@byom-ai/react",
+  "name": "@arlopass/react",
   "exports": {
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
     "./guards": { "types": "./dist/guards/index.d.ts", "import": "./dist/guards/index.js" },
     "./testing": { "types": "./dist/testing/index.d.ts", "import": "./dist/testing/index.js" }
   },
   "peerDependencies": { "react": "^18.0.0 || ^19.0.0" },
-  "dependencies": { "@byom-ai/web-sdk": "0.1.0" }
+  "dependencies": { "@arlopass/web-sdk": "0.1.0" }
 }
 ```
 
@@ -754,13 +754,13 @@ packages/react-sdk/
 
 ```ts
 // Core — provider + hooks + types
-import { BYOMProvider, useConversation, useChat, useConnection, useProviders, useClient } from '@byom-ai/react'
+import { ArlopassProvider, useConversation, useChat, useConnection, useProviders, useClient } from '@arlopass/react'
 
 // Guards — gate components
-import { BYOMChatReadyGate, BYOMNotInstalled, BYOMHasError } from '@byom-ai/react/guards'
+import { ArlopassChatReadyGate, ArlopassNotInstalled, ArlopassHasError } from '@arlopass/react/guards'
 
 // Testing — never in production
-import { MockBYOMProvider, createMockTransport } from '@byom-ai/react/testing'
+import { MockArlopassProvider, createMockTransport } from '@arlopass/react/testing'
 
 // Types — re-exported from web-sdk so developers don't need a second install
 import type {
@@ -770,17 +770,17 @@ import type {
   ProviderDescriptor,
   SelectProviderInput,
   ChatOperationOptions,
-  BYOMSDKError,
-  BYOMTransport,
+  ArlopassSDKError,
+  ArlopassTransport,
   ToolDefinition,
   ConversationStreamEvent,
   TrackedChatMessage,
   MessageId,
   ToolCallInfo,
-} from '@byom-ai/react'
+} from '@arlopass/react'
 ```
 
-All common web-sdk types that developers need are re-exported from `@byom-ai/react`. Developers should never need to `npm install @byom-ai/web-sdk` directly.
+All common web-sdk types that developers need are re-exported from `@arlopass/react`. Developers should never need to `npm install @arlopass/web-sdk` directly.
 
 ---
 
@@ -788,14 +788,14 @@ All common web-sdk types that developers need are re-exported from `@byom-ai/rea
 
 | # | Decision | Choice | Rationale |
 |---|---|---|---|
-| 1 | Transport strategy | Injected only (`window.byom`) | Extension controls trust boundary; other methods are dev-only |
+| 1 | Transport strategy | Injected only (`window.arlopass`) | Extension controls trust boundary; other methods are dev-only |
 | 2 | Streaming UX | Accumulated string + onDelta callback | Covers 90% case + power users |
 | 3 | Error handling | Hook state + Error Boundary + retry helpers | Matches SDK retryable/non-retryable classification |
 | 4 | Provider selection | Manual + auto-select + ProviderGate | Three complexity levels for different app needs |
 | 5 | Bundle strategy | Multi-entry granular subpath exports | Single npm install, tree-shakeable |
 | 6 | React version | React 18+ | Covers ~95% of active React apps |
 | 7 | State sync | `useSyncExternalStore` | Concurrent-mode safe, canonical React 18 pattern |
-| 8 | Component prefix | `BYOM` prefix on all components | Avoids import collisions |
+| 8 | Component prefix | `Arlopass` prefix on all components | Avoids import collisions |
 | 9 | Message tracking | MessageId per send/stream + subscribe API | Correlation for multi-message UIs |
 | 10 | Conversation management | `useConversation()` wraps `ConversationManager` | Context window, token tracking, pinning, summarization |
 | 11 | Tool calling | Integrated into `useConversation()` with auto/manual/mixed modes | Three execution modes via handler presence |

@@ -9,7 +9,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("drops malformed providers and records warnings", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [{ id: 1 }],
+      "arlopass.wallet.providers.v1": [{ id: 1 }],
     });
     expect(result.providers).toHaveLength(0);
     expect(result.warnings.length).toBeGreaterThan(0);
@@ -24,7 +24,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("parses a valid provider correctly", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         {
           id: "ollama",
           name: "Ollama",
@@ -47,7 +47,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("parses multiple valid providers", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         { id: "ollama", name: "Ollama", type: "local", status: "connected", models: [] },
         { id: "claude", name: "Claude", type: "cloud", status: "disconnected", models: [] },
       ],
@@ -57,32 +57,32 @@ describe("normalizeWalletSnapshot", () => {
 
   it("normalizes active provider with providerId and modelId", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.activeProvider.v1": { providerId: "ollama", modelId: "llama3" },
+      "arlopass.wallet.activeProvider.v1": { providerId: "ollama", modelId: "llama3" },
     });
     expect(result.activeProvider).toEqual({ providerId: "ollama", modelId: "llama3" });
   });
 
   it("normalizes active provider with providerId only", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.activeProvider.v1": { providerId: "ollama" },
+      "arlopass.wallet.activeProvider.v1": { providerId: "ollama" },
     });
     expect(result.activeProvider).toEqual({ providerId: "ollama" });
     expect(result.activeProvider?.modelId).toBeUndefined();
   });
 
   it("normalizes active provider to null when value is null", () => {
-    const result = normalizeWalletSnapshot({ "byom.wallet.activeProvider.v1": null });
+    const result = normalizeWalletSnapshot({ "arlopass.wallet.activeProvider.v1": null });
     expect(result.activeProvider).toBeNull();
   });
 
   it("normalizes active provider to null when providerId is missing", () => {
-    const result = normalizeWalletSnapshot({ "byom.wallet.activeProvider.v1": { modelId: "x" } });
+    const result = normalizeWalletSnapshot({ "arlopass.wallet.activeProvider.v1": { modelId: "x" } });
     expect(result.activeProvider).toBeNull();
   });
 
   it("drops provider with invalid type and records warning", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         { id: "p1", name: "P1", type: "invalid", status: "connected", models: [] },
       ],
     });
@@ -92,7 +92,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("drops provider with invalid status and records warning", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         { id: "p1", name: "P1", type: "local", status: "unknown-status", models: [] },
       ],
     });
@@ -102,7 +102,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("drops provider missing id and records warning", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [{ name: "NoId", type: "local", status: "connected", models: [] }],
+      "arlopass.wallet.providers.v1": [{ name: "NoId", type: "local", status: "connected", models: [] }],
     });
     expect(result.providers).toHaveLength(0);
     expect(result.warnings.length).toBeGreaterThan(0);
@@ -110,7 +110,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("drops malformed model inside a valid provider and records warning", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         {
           id: "p1",
           name: "P1",
@@ -127,7 +127,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("ignores non-array providers key and records warning", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": "not-an-array",
+      "arlopass.wallet.providers.v1": "not-an-array",
     });
     expect(result.providers).toHaveLength(0);
     expect(result.warnings.length).toBeGreaterThan(0);
@@ -135,7 +135,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("parses lastError when present and valid", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.ui.lastError.v1": { code: "storage_error", message: "Failed to read", at: 12345 },
+      "arlopass.wallet.ui.lastError.v1": { code: "storage_error", message: "Failed to read", at: 12345 },
     });
     expect(result.lastError).toEqual({ code: "storage_error", message: "Failed to read", at: 12345 });
   });
@@ -147,7 +147,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("sets lastError to null when shape is invalid", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.ui.lastError.v1": { code: 42 },
+      "arlopass.wallet.ui.lastError.v1": { code: 42 },
     });
     expect(result.lastError).toBeNull();
   });
@@ -168,7 +168,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("preserves lastSyncedAt on provider when present", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         { id: "p1", name: "P1", type: "cli", status: "connected", models: [], lastSyncedAt: 9999 },
       ],
     });
@@ -177,7 +177,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("accepts reconnecting, failed, revoked, and degraded provider statuses", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         { id: "p1", name: "P1", type: "cloud", status: "reconnecting", models: [] },
         { id: "p2", name: "P2", type: "cloud", status: "failed", models: [] },
         { id: "p3", name: "P3", type: "cloud", status: "revoked", models: [] },
@@ -203,7 +203,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("maps stale/partial cloud discovery metadata to degraded provider status", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [
+      "arlopass.wallet.providers.v1": [
         {
           id: "p1",
           name: "Claude",

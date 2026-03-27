@@ -1,4 +1,4 @@
-import type { ProtocolCapability } from "@byom-ai/protocol";
+import type { ProtocolCapability } from "@arlopass/protocol";
 
 import type {
   ExtensionEventEmitter,

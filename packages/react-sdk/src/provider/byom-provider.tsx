@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
-import { BYOMClient } from "@byom-ai/web-sdk";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
+import { ArlopassClient } from "@arlopass/web-sdk";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
 import { ClientStore } from "../store/client-store.js";
 import { getInjectedTransport } from "../transport/injected.js";
-import { BYOMContext, type BYOMContextValue } from "./byom-context.js";
-import type { BYOMProviderProps } from "../types.js";
+import {
+  ArlopassContext,
+  type ArlopassContextValue,
+} from "./arlopass-context.js";
+import type { ArlopassProviderProps } from "../types.js";
 
-export function BYOMProvider({
+export function ArlopassProvider({
   appId,
   appSuffix,
   appName,
@@ -19,7 +22,7 @@ export function BYOMProvider({
   autoConnect = true,
   onError,
   children,
-}: BYOMProviderProps): ReactNode {
+}: ArlopassProviderProps): ReactNode {
   const storeRef = useRef<ClientStore | null>(null);
   const transportAvailableRef = useRef(false);
 
@@ -28,7 +31,7 @@ export function BYOMProvider({
     transportAvailableRef.current = transport !== null;
 
     if (transport !== null) {
-      const client = new BYOMClient(
+      const client = new ArlopassClient(
         typeof window !== "undefined"
           ? { transport, origin: window.location.origin }
           : { transport },
@@ -36,10 +39,14 @@ export function BYOMProvider({
       storeRef.current = new ClientStore(client);
     } else {
       const dummyTransport = {
-        async request() { throw new Error("BYOM extension not installed."); },
-        async stream() { throw new Error("BYOM extension not installed."); },
+        async request() {
+          throw new Error("Arlopass extension not installed.");
+        },
+        async stream() {
+          throw new Error("Arlopass extension not installed.");
+        },
       };
-      const client = new BYOMClient({ transport: dummyTransport });
+      const client = new ArlopassClient({ transport: dummyTransport });
       storeRef.current = new ClientStore(client);
     }
   }
@@ -63,27 +70,48 @@ export function BYOMProvider({
         });
         store!.refreshSnapshot();
 
-        if (!cancelled && defaultProvider !== undefined && defaultModel !== undefined) {
+        if (
+          !cancelled &&
+          defaultProvider !== undefined &&
+          defaultModel !== undefined
+        ) {
           try {
-            await store!.client.selectProvider({ providerId: defaultProvider, modelId: defaultModel });
+            await store!.client.selectProvider({
+              providerId: defaultProvider,
+              modelId: defaultModel,
+            });
             store!.refreshSnapshot();
           } catch (selectError) {
-            store!.setError(selectError as BYOMSDKError);
-            onError?.(selectError as BYOMSDKError);
+            store!.setError(selectError as ArlopassSDKError);
+            onError?.(selectError as ArlopassSDKError);
           }
         }
       } catch (connectError) {
         if (!cancelled) {
-          store!.setError(connectError as BYOMSDKError);
+          store!.setError(connectError as ArlopassSDKError);
           store!.refreshSnapshot();
-          onError?.(connectError as BYOMSDKError);
+          onError?.(connectError as ArlopassSDKError);
         }
       }
     }
 
     void connectAndSelect();
-    return () => { cancelled = true; };
-  }, [appId, appSuffix, appName, appDescription, appIcon, autoConnect, defaultModel, defaultProvider, onError, store, transportAvailable]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    appId,
+    appSuffix,
+    appName,
+    appDescription,
+    appIcon,
+    autoConnect,
+    defaultModel,
+    defaultProvider,
+    onError,
+    store,
+    transportAvailable,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -94,10 +122,14 @@ export function BYOMProvider({
     };
   }, [store]);
 
-  const contextValue = useMemo<BYOMContextValue>(
+  const contextValue = useMemo<ArlopassContextValue>(
     () => ({ store, transportAvailable }),
     [store, transportAvailable],
   );
 
-  return <BYOMContext.Provider value={contextValue}>{children}</BYOMContext.Provider>;
+  return (
+    <ArlopassContext.Provider value={contextValue}>
+      {children}
+    </ArlopassContext.Provider>
+  );
 }

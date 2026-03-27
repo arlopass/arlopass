@@ -1,15 +1,18 @@
 "use client";
 
-import { ProviderPicker } from "@byom-ai/react-ui";
+import { ProviderPicker } from "@arlopass/react-ui";
 
-export type BYOMProviderPickerProps = {
+export type ArlopassProviderPickerProps = {
   /** Callback when a provider+model pair is confirmed */
   onSelect?: (providerId: string, modelId: string) => void;
   /** CSS class for the root element */
   className?: string;
 };
 
-export function BYOMProviderPicker({ onSelect, className }: BYOMProviderPickerProps) {
+export function ArlopassProviderPicker({
+  onSelect,
+  className,
+}: ArlopassProviderPickerProps) {
   return (
     <ProviderPicker.Root
       onSelect={onSelect}

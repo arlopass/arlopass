@@ -1,4 +1,4 @@
-import type { BYOMClient, BYOMSDKError } from "@byom-ai/web-sdk";
+import type { ArlopassClient, ArlopassSDKError } from "@arlopass/web-sdk";
 import type { ProviderDescriptor } from "../types.js";
 import {
     buildSnapshot,
@@ -12,14 +12,14 @@ import { Subscriptions } from "./subscriptions.js";
 const HEARTBEAT_INTERVAL_MS = 500;
 
 export class ClientStore {
-    readonly #client: BYOMClient;
+    readonly #client: ArlopassClient;
     readonly #subscriptions = new Subscriptions();
     #snapshot: ClientSnapshot;
     #heartbeatId: ReturnType<typeof setInterval> | null = null;
     #providers: readonly ProviderDescriptor[] = EMPTY_PROVIDERS;
-    #error: BYOMSDKError | null = null;
+    #error: ArlopassSDKError | null = null;
 
-    constructor(client: BYOMClient) {
+    constructor(client: ArlopassClient) {
         this.#client = client;
         this.#snapshot = createInitialSnapshot();
         this.#startHeartbeat();
@@ -48,7 +48,7 @@ export class ClientStore {
         }
     }
 
-    setError(error: BYOMSDKError | null): void {
+    setError(error: ArlopassSDKError | null): void {
         this.#error = error;
         this.refreshSnapshot();
     }
@@ -63,7 +63,7 @@ export class ClientStore {
         this.refreshSnapshot();
     }
 
-    get client(): BYOMClient {
+    get client(): ArlopassClient {
         return this.#client;
     }
 

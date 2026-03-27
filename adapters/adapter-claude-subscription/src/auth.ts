@@ -1,4 +1,4 @@
-import { AuthError } from "@byom-ai/protocol";
+import { AuthError } from "@arlopass/protocol";
 
 export const CLAUDE_API_BASE = "https://api.anthropic.com";
 export const CLAUDE_API_VERSION = "2023-06-01";

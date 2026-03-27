@@ -2,7 +2,7 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, StepList, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const stepDefineTools = `import type { ToolDefinition } from "@byom-ai/react";
+const stepDefineTools = `import type { ToolDefinition } from "@arlopass/react";
 
 const tools: ToolDefinition[] = [
   {
@@ -46,7 +46,7 @@ const tools: ToolDefinition[] = [
   },
 ];`;
 
-const stepPassTools = `import { useConversation } from "@byom-ai/react";
+const stepPassTools = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const {
@@ -89,7 +89,7 @@ const tools: ToolDefinition[] = [
 // 3. Handler runs automatically, returns result
 // 4. Model generates final response using the result`;
 
-const stepManualMode = `import { useConversation } from "@byom-ai/react";
+const stepManualMode = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, subscribe, submitToolResult } =
@@ -124,7 +124,7 @@ function Chat() {
   });
 }`;
 
-const stepToolActivity = `import { useConversation } from "@byom-ai/react";
+const stepToolActivity = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, subscribe } = useConversation({ tools });
@@ -166,11 +166,11 @@ const stepMaxToolRounds = `const { messages, stream } = useConversation({
 
 const fullExample = `import { useState } from "react";
 import {
-  BYOMProvider,
+  ArlopassProvider,
   ChatReadyGate,
   useConversation,
-} from "@byom-ai/react";
-import type { ToolDefinition } from "@byom-ai/react";
+} from "@arlopass/react";
+import type { ToolDefinition } from "@arlopass/react";
 
 const tools: ToolDefinition[] = [
   {
@@ -287,20 +287,20 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="tool-calling-demo">
+    <ArlopassProvider appId="tool-calling-demo">
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
-        noProvider={<p>Select a provider in the BYOM extension.</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
         error={(err) => <p>Error: {err.message}</p>}
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const comparisonReact = `import { useConversation } from "@byom-ai/react";
-import type { ToolDefinition } from "@byom-ai/react";
+const comparisonReact = `import { useConversation } from "@arlopass/react";
+import type { ToolDefinition } from "@arlopass/react";
 
 const tools: ToolDefinition[] = [
   {
@@ -320,9 +320,9 @@ const tools: ToolDefinition[] = [
 const { messages, stream } = useConversation({ tools });
 await stream("What is 42 * 17?");`;
 
-const comparisonWeb = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const comparisonWeb = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 const convo = new ConversationManager({
@@ -397,8 +397,8 @@ export default function AddingToolCalling() {
               <Stack gap="xs">
                 <Text fz="sm">
                   A ToolDefinition has a name, description, JSON Schema
-                  parameters, and an optional handler function. The
-                  description tells the model when to use the tool.
+                  parameters, and an optional handler function. The description
+                  tells the model when to use the tool.
                 </Text>
                 <CodeBlock title="tools.ts" code={stepDefineTools} />
               </Stack>
@@ -410,8 +410,8 @@ export default function AddingToolCalling() {
               <Stack gap="xs">
                 <Text fz="sm">
                   Pass the tools array to useConversation. The hook
-                  automatically injects tool descriptions into the system
-                  prompt so the model knows what's available.
+                  automatically injects tool descriptions into the system prompt
+                  so the model knows what's available.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepPassTools} />
               </Stack>
@@ -436,8 +436,8 @@ export default function AddingToolCalling() {
               <Stack gap="xs">
                 <Text fz="sm">
                   Omit the handler for tools that need user confirmation.
-                  Subscribe to "tool_call" events and call submitToolResult
-                  when ready.
+                  Subscribe to "tool_call" events and call submitToolResult when
+                  ready.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepManualMode} />
                 <Callout type="warning" title="User-facing actions">
@@ -452,9 +452,9 @@ export default function AddingToolCalling() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Subscribe to tool_call and tool_result events to show the
-                  user what's happening. Messages also include a toolCalls
-                  array with call details and results.
+                  Subscribe to tool_call and tool_result events to show the user
+                  what's happening. Messages also include a toolCalls array with
+                  call details and results.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepToolActivity} />
               </Stack>
@@ -465,9 +465,9 @@ export default function AddingToolCalling() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Prevent infinite tool call loops by setting maxToolRounds.
-                  The default is 5. After this many rounds, the model must
-                  produce a text response.
+                  Prevent infinite tool call loops by setting maxToolRounds. The
+                  default is 5. After this many rounds, the model must produce a
+                  text response.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepMaxToolRounds} />
               </Stack>
@@ -477,15 +477,13 @@ export default function AddingToolCalling() {
       />
 
       <Title order={3}>Complete example</Title>
-      <Text>
-        A full app with search_docs and calculate tools:
-      </Text>
+      <Text>A full app with search_docs and calculate tools:</Text>
       <CodeBlock title="App.tsx" code={fullExample} />
 
       <Title order={3}>React SDK vs Web SDK</Title>
       <Text>
-        The React SDK wraps ConversationManager's tool handling in hooks.
-        Here's the same tool calling in both:
+        The React SDK wraps ConversationManager's tool handling in hooks. Here's
+        the same tool calling in both:
       </Text>
       <CodeComparison
         reactSdk={{ title: "Chat.tsx", code: comparisonReact }}

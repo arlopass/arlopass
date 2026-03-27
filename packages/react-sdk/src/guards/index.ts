@@ -1,13 +1,13 @@
 "use client";
 
-export { BYOMConnectionGate } from "./byom-connection-gate.js";
-export { BYOMProviderGate } from "./byom-provider-gate.js";
-export { BYOMChatReadyGate } from "./byom-chat-ready-gate.js";
-export { BYOMNotInstalled } from "./byom-not-installed.js";
-export { BYOMDisconnected } from "./byom-disconnected.js";
-export { BYOMConnected } from "./byom-connected.js";
-export { BYOMProviderNotReady } from "./byom-provider-not-ready.js";
-export { BYOMHasError } from "./byom-has-error.js";
-export { BYOMChatNotReady } from "./byom-chat-not-ready.js";
-export { BYOMChatReady } from "./byom-chat-ready.js";
-export { BYOMErrorBoundary } from "./byom-error-boundary.js";
+export { ArlopassConnectionGate } from "./arlopass-connection-gate.js";
+export { ArlopassProviderGate } from "./arlopass-provider-gate.js";
+export { ArlopassChatReadyGate } from "./arlopass-chat-ready-gate.js";
+export { ArlopassNotInstalled } from "./arlopass-not-installed.js";
+export { ArlopassDisconnected } from "./arlopass-disconnected.js";
+export { ArlopassConnected } from "./arlopass-connected.js";
+export { ArlopassProviderNotReady } from "./arlopass-provider-not-ready.js";
+export { ArlopassHasError } from "./arlopass-has-error.js";
+export { ArlopassChatNotReady } from "./arlopass-chat-not-ready.js";
+export { ArlopassChatReady } from "./arlopass-chat-ready.js";
+export { ArlopassErrorBoundary } from "./arlopass-error-boundary.js";

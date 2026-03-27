@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const PAGE_TO_CONTENT_CHANNEL = "byom.transport.page-to-content.v1";
-const CONTENT_TO_PAGE_CHANNEL = "byom.transport.content-to-page.v1";
-const TRANSPORT_STREAM_PORT_NAME = "byom.transport.stream.v1";
+const PAGE_TO_CONTENT_CHANNEL = "arlopass.transport.page-to-content.v1";
+const CONTENT_TO_PAGE_CHANNEL = "arlopass.transport.content-to-page.v1";
+const TRANSPORT_STREAM_PORT_NAME = "arlopass.transport.stream.v1";
 
 type PageMessageListener = (event: Readonly<{ source: unknown; data: unknown }>) => void;
 
@@ -36,7 +36,7 @@ async function loadContentScriptHarness(): Promise<ContentScriptHarness> {
 
   const connect = vi.fn(() => port);
   const sendMessage = vi.fn();
-  const getURL = vi.fn((path: string) => `chrome-extension://byom-extension/${path}`);
+  const getURL = vi.fn((path: string) => `chrome-extension://arlopass-extension/${path}`);
   const runtime = {
     connect,
     sendMessage,
@@ -106,7 +106,7 @@ describe("content script stream relay hardening", () => {
 
     const streamRequest = {
       channel: PAGE_TO_CONTENT_CHANNEL,
-      source: "byom-inpage-provider",
+      source: "arlopass-inpage-provider",
       requestId: "req.stream.duplicate.001",
       action: "request-stream",
       payload: {
@@ -122,7 +122,7 @@ describe("content script stream relay hardening", () => {
     expect(harness.port.postMessage).toHaveBeenCalledTimes(1);
     expect(harness.port.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        channel: "byom.transport.stream",
+        channel: "arlopass.transport.stream",
         action: "start",
         requestId: "req.stream.duplicate.001",
       }),
@@ -135,13 +135,13 @@ describe("content script stream relay hardening", () => {
     expect(harness.windowPostMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         channel: CONTENT_TO_PAGE_CHANNEL,
-        source: "byom-content-script",
+        source: "arlopass-content-script",
         requestId: "req.stream.duplicate.001",
         stream: true,
         event: "error",
         error: expect.objectContaining({
           reasonCode: "request.invalid",
-          machineCode: "BYOM_PROTOCOL_INVALID_ENVELOPE",
+          machineCode: "ARLOPASS_PROTOCOL_INVALID_ENVELOPE",
           retryable: false,
         }),
       }),
@@ -166,7 +166,7 @@ describe("content script stream relay hardening", () => {
 
     harness.emitPageMessage({
       channel: PAGE_TO_CONTENT_CHANNEL,
-      source: "byom-inpage-provider",
+      source: "arlopass-inpage-provider",
       requestId: "req.stream.bound.connect.001",
       action: "request-stream",
       payload: {
@@ -180,7 +180,7 @@ describe("content script stream relay hardening", () => {
     expect(harness.sendMessage).not.toHaveBeenCalled();
     expect(harness.port.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        channel: "byom.transport.stream",
+        channel: "arlopass.transport.stream",
         action: "start",
         requestId: "req.stream.bound.connect.001",
       }),

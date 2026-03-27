@@ -1,26 +1,26 @@
 import type {
-  BYOMTransport,
+  ArlopassTransport,
   TransportRequest,
   TransportResponse,
   TransportStream,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
-const DEFAULT_PROPERTY_NAME = "byom";
-const INJECTED_PROVIDER_TAG = Symbol.for("byom.extension.injected-provider");
+const DEFAULT_PROPERTY_NAME = "arlopass";
+const INJECTED_PROVIDER_TAG = Symbol.for("arlopass.extension.injected-provider");
 
 export type InjectedProviderMetadata = Readonly<{
-  source: "byom-extension";
+  source: "arlopass-extension";
   protocolVersion: string;
   extensionVersion?: string;
 }>;
 
-export interface InjectedByomProvider extends BYOMTransport {
+export interface InjectedArlopassProvider extends ArlopassTransport {
   readonly metadata: InjectedProviderMetadata;
   readonly [INJECTED_PROVIDER_TAG]: true;
 }
 
 export type ProviderInjectionOptions = Readonly<{
-  transport: BYOMTransport;
+  transport: ArlopassTransport;
   target?: Record<string, unknown>;
   propertyName?: string;
   overwrite?: boolean;
@@ -28,7 +28,7 @@ export type ProviderInjectionOptions = Readonly<{
 }>;
 
 export type ProviderInjectionHandle = Readonly<{
-  provider: InjectedByomProvider;
+  provider: InjectedArlopassProvider;
   propertyName: string;
   dispose(): void;
 }>;
@@ -95,10 +95,10 @@ function toProviderInjectionError(
 }
 
 function createInjectedProvider(
-  transport: BYOMTransport,
+  transport: ArlopassTransport,
   metadata: InjectedProviderMetadata,
-): InjectedByomProvider {
-  const provider: InjectedByomProvider = {
+): InjectedArlopassProvider {
+  const provider: InjectedArlopassProvider = {
     metadata,
     [INJECTED_PROVIDER_TAG]: true,
     request: async <TRequestPayload, TResponsePayload>(
@@ -174,7 +174,7 @@ function createInjectedProvider(
   return Object.freeze(provider);
 }
 
-function isInjectedProvider(value: unknown): value is InjectedByomProvider {
+function isInjectedProvider(value: unknown): value is InjectedArlopassProvider {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -185,7 +185,7 @@ function isInjectedProvider(value: unknown): value is InjectedByomProvider {
 
 function createDefaultMetadata(): InjectedProviderMetadata {
   return {
-    source: "byom-extension",
+    source: "arlopass-extension",
     protocolVersion: "1.0.0",
   };
 }
@@ -207,7 +207,7 @@ export function injectProvider(options: ProviderInjectionOptions): ProviderInjec
 
   if (existing !== undefined && overwrite && !isInjectedProvider(existing)) {
     throw new ProviderInjectionError(
-      `Global property "${propertyName}" cannot be overwritten because it is not a BYOM extension provider.`,
+      `Global property "${propertyName}" cannot be overwritten because it is not a Arlopass extension provider.`,
       "property-conflict",
     );
   }
@@ -259,12 +259,12 @@ export function injectProvider(options: ProviderInjectionOptions): ProviderInjec
   };
 }
 
-export function isInjectedByomProvider(value: unknown): value is InjectedByomProvider {
+export function isInjectedArlopassProvider(value: unknown): value is InjectedArlopassProvider {
   return isInjectedProvider(value);
 }
 
 declare global {
   interface Window {
-    byom?: InjectedByomProvider;
+    arlopass?: InjectedArlopassProvider;
   }
 }

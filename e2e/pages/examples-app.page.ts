@@ -1,7 +1,7 @@
 import type { Page, Locator } from "@playwright/test";
 
 /**
- * Page Object for the BYOM examples web app (React + Mantine).
+ * Page Object for the Arlopass examples web app (React + Mantine).
  *
  * Selectors target Mantine component roles, labels, and text content
  * rendered by `apps/examples-web/src/App.tsx`.
@@ -60,7 +60,7 @@ export class ExamplesAppPage {
         this.page = page;
 
         // Header
-        this.heading = page.getByRole("heading", { name: "BYOM Extension + SDK Examples" });
+        this.heading = page.getByRole("heading", { name: "Arlopass Extension + SDK Examples" });
         this.connectionBadge = page.getByText("CONNECTED").or(page.getByText("DISCONNECTED"));
         this.stateBadge = page.locator('[class*="Badge"]').last();
 

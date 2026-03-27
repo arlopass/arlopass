@@ -1,12 +1,12 @@
-# @byom-ai/ai-sdk-transport Implementation Plan
+# @arlopass/ai-sdk-transport Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `@byom-ai/ai-sdk-transport` — a `ChatTransport` for the Vercel AI SDK's `useChat` hook that connects directly to the BYOM browser extension, requiring no backend.
+**Goal:** Ship `@arlopass/ai-sdk-transport` — a `ChatTransport` for the Vercel AI SDK's `useChat` hook that connects directly to the Arlopass browser extension, requiring no backend.
 
-**Architecture:** Four source files in a new `packages/ai-sdk-transport/` workspace package. `BYOMChatTransport` implements `ChatTransport<UIMessage>` from the `ai` package. Two pure converters handle message and stream transformation. Peer-depends on `ai` v6+ and `@byom-ai/web-sdk`.
+**Architecture:** Four source files in a new `packages/ai-sdk-transport/` workspace package. `ArlopassChatTransport` implements `ChatTransport<UIMessage>` from the `ai` package. Two pure converters handle message and stream transformation. Peer-depends on `ai` v6+ and `@arlopass/web-sdk`.
 
-**Tech Stack:** TypeScript, Vitest, Vercel AI SDK v6 (`ai` package), `@byom-ai/web-sdk`
+**Tech Stack:** TypeScript, Vitest, Vercel AI SDK v6 (`ai` package), `@arlopass/web-sdk`
 
 ---
 
@@ -21,7 +21,7 @@
 
 ```json
 {
-  "name": "@byom-ai/ai-sdk-transport",
+  "name": "@arlopass/ai-sdk-transport",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
@@ -31,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "packages/ai-sdk-transport"
   },
   "exports": {
@@ -51,11 +51,11 @@
   },
   "peerDependencies": {
     "ai": "^6.0.0",
-    "@byom-ai/web-sdk": "^0.1.0"
+    "@arlopass/web-sdk": "^0.1.0"
   },
   "devDependencies": {
     "ai": "^6.0.0",
-    "@byom-ai/web-sdk": "0.1.0"
+    "@arlopass/web-sdk": "0.1.0"
   }
 }
 ```
@@ -78,19 +78,19 @@
 - [ ] **Step 3: Create placeholder `src/index.ts`**
 
 ```typescript
-// @byom-ai/ai-sdk-transport
-// Vercel AI SDK ChatTransport for the BYOM browser extension.
+// @arlopass/ai-sdk-transport
+// Vercel AI SDK ChatTransport for the Arlopass browser extension.
 export {};
 ```
 
 - [ ] **Step 4: Install dependencies**
 
-Run: `cd d:\Projects\byom-web && npm install`
+Run: `cd d:\Projects\arlopass && npm install`
 Expected: Lock file updates, workspace linked.
 
 - [ ] **Step 5: Verify build**
 
-Run: `npm run build -w @byom-ai/ai-sdk-transport`
+Run: `npm run build -w @arlopass/ai-sdk-transport`
 Expected: Clean compilation, `dist/index.js` + `dist/index.d.ts` created.
 
 - [ ] **Step 6: Commit**
@@ -224,7 +224,7 @@ Expected: FAIL — `convertMessages` not found.
 - [ ] **Step 3: Implement `convert-messages.ts`**
 
 ```typescript
-import type { ChatMessage } from "@byom-ai/web-sdk";
+import type { ChatMessage } from "@arlopass/web-sdk";
 
 type UIMessageLike = Readonly<{
   id: string;
@@ -479,18 +479,18 @@ git commit -m "feat(ai-sdk-transport): add ChatStreamEvent → UIMessageChunk st
 
 ---
 
-### Task 4: BYOMChatTransport class
+### Task 4: ArlopassChatTransport class
 
 **Files:**
-- Create: `packages/ai-sdk-transport/src/byom-chat-transport.ts`
-- Create: `packages/ai-sdk-transport/src/__tests__/byom-chat-transport.test.ts`
+- Create: `packages/ai-sdk-transport/src/arlopass-chat-transport.ts`
+- Create: `packages/ai-sdk-transport/src/__tests__/arlopass-chat-transport.test.ts`
 - Modify: `packages/ai-sdk-transport/src/index.ts`
 
 - [ ] **Step 1: Write the failing tests**
 
 ```typescript
 import { describe, expect, it, vi } from "vitest";
-import { BYOMChatTransport } from "../byom-chat-transport.js";
+import { ArlopassChatTransport } from "../arlopass-chat-transport.js";
 
 function createMockClient(overrides: Record<string, any> = {}) {
   return {
@@ -511,10 +511,10 @@ const trivialMessages = [
   { id: "1", role: "user" as const, parts: [{ type: "text" as const, text: "Hello" }] },
 ];
 
-describe("BYOMChatTransport", () => {
+describe("ArlopassChatTransport", () => {
   it("uses the provided client in BYOB mode", async () => {
     const client = createMockClient();
-    const transport = new BYOMChatTransport({ client });
+    const transport = new ArlopassChatTransport({ client });
 
     const stream = await transport.sendMessages({
       trigger: "submit-message",
@@ -529,8 +529,8 @@ describe("BYOMChatTransport", () => {
     expect(stream).toBeInstanceOf(ReadableStream);
   });
 
-  it("throws when extension is not installed (auto-connect, no window.byom)", async () => {
-    const transport = new BYOMChatTransport({ appId: "test" });
+  it("throws when extension is not installed (auto-connect, no window.arlopass)", async () => {
+    const transport = new ArlopassChatTransport({ appId: "test" });
 
     await expect(
       transport.sendMessages({
@@ -540,12 +540,12 @@ describe("BYOMChatTransport", () => {
         messages: trivialMessages,
         abortSignal: undefined,
       } as any),
-    ).rejects.toThrow(/BYOM extension not detected/);
+    ).rejects.toThrow(/Arlopass extension not detected/);
   });
 
   it("throws when no provider is selected", async () => {
     const client = createMockClient({ selectedProvider: undefined });
-    const transport = new BYOMChatTransport({ client });
+    const transport = new ArlopassChatTransport({ client });
 
     await expect(
       transport.sendMessages({
@@ -560,7 +560,7 @@ describe("BYOMChatTransport", () => {
 
   it("reuses the client across multiple calls (BYOB mode)", async () => {
     const client = createMockClient();
-    const transport = new BYOMChatTransport({ client });
+    const transport = new ArlopassChatTransport({ client });
 
     await transport.sendMessages({
       trigger: "submit-message", chatId: "chat1", messageId: undefined,
@@ -585,7 +585,7 @@ describe("BYOMChatTransport", () => {
   it("passes abort signal to the stream", async () => {
     const controller = new AbortController();
     const client = createMockClient();
-    const transport = new BYOMChatTransport({ client });
+    const transport = new ArlopassChatTransport({ client });
 
     const stream = await transport.sendMessages({
       trigger: "submit-message",
@@ -602,14 +602,14 @@ describe("BYOMChatTransport", () => {
   });
 
   it("reconnectToStream returns null", async () => {
-    const transport = new BYOMChatTransport({ client: createMockClient() });
+    const transport = new ArlopassChatTransport({ client: createMockClient() });
     const result = await transport.reconnectToStream({ chatId: "chat1" } as any);
     expect(result).toBeNull();
   });
 
   it("converts UIMessages to ChatMessages before streaming", async () => {
     const client = createMockClient();
-    const transport = new BYOMChatTransport({ client });
+    const transport = new ArlopassChatTransport({ client });
 
     await transport.sendMessages({
       trigger: "submit-message",
@@ -633,23 +633,23 @@ describe("BYOMChatTransport", () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `npx vitest run packages/ai-sdk-transport/src/__tests__/byom-chat-transport.test.ts`
-Expected: FAIL — `BYOMChatTransport` not found.
+Run: `npx vitest run packages/ai-sdk-transport/src/__tests__/arlopass-chat-transport.test.ts`
+Expected: FAIL — `ArlopassChatTransport` not found.
 
-- [ ] **Step 3: Implement `byom-chat-transport.ts`**
+- [ ] **Step 3: Implement `arlopass-chat-transport.ts`**
 
 ```typescript
-import { BYOMClient, type BYOMTransport, type ChatMessage } from "@byom-ai/web-sdk";
+import { ArlopassClient, type ArlopassTransport, type ChatMessage } from "@arlopass/web-sdk";
 import { convertMessages } from "./convert-messages.js";
 import { convertStream } from "./convert-stream.js";
 
-export type BYOMChatTransportOptions = Readonly<{
+export type ArlopassChatTransportOptions = Readonly<{
   appId?: string;
   appSuffix?: string;
   appName?: string;
   appDescription?: string;
   appIcon?: string;
-  client?: BYOMClient;
+  client?: ArlopassClient;
   timeoutMs?: number;
 }>;
 
@@ -678,17 +678,17 @@ type UIMessageChunkLike =
   | { type: "error"; errorText: string }
   | { type: "abort"; reason?: string };
 
-function getInjectedTransport(): BYOMTransport | undefined {
+function getInjectedTransport(): ArlopassTransport | undefined {
   if (typeof window === "undefined") return undefined;
-  return (window as Window & { byom?: BYOMTransport }).byom;
+  return (window as Window & { arlopass?: ArlopassTransport }).arlopass;
 }
 
-export class BYOMChatTransport {
-  readonly #options: BYOMChatTransportOptions;
-  #client: BYOMClient | undefined;
-  #connectPromise: Promise<BYOMClient> | undefined;
+export class ArlopassChatTransport {
+  readonly #options: ArlopassChatTransportOptions;
+  #client: ArlopassClient | undefined;
+  #connectPromise: Promise<ArlopassClient> | undefined;
 
-  constructor(options: BYOMChatTransportOptions = {}) {
+  constructor(options: ArlopassChatTransportOptions = {}) {
     this.#options = options;
     if (options.client !== undefined) {
       this.#client = options.client;
@@ -702,7 +702,7 @@ export class BYOMChatTransport {
 
     if (client.selectedProvider === undefined) {
       throw new Error(
-        "No provider selected. Open the BYOM extension and choose a model.",
+        "No provider selected. Open the Arlopass extension and choose a model.",
       );
     }
 
@@ -723,7 +723,7 @@ export class BYOMChatTransport {
     return null;
   }
 
-  async #ensureClient(): Promise<BYOMClient> {
+  async #ensureClient(): Promise<ArlopassClient> {
     if (this.#client !== undefined) return this.#client;
 
     // Deduplicate concurrent connect attempts
@@ -739,16 +739,16 @@ export class BYOMChatTransport {
     }
   }
 
-  async #autoConnect(): Promise<BYOMClient> {
+  async #autoConnect(): Promise<ArlopassClient> {
     const transport = getInjectedTransport();
     if (transport === undefined) {
       throw new Error(
-        "BYOM extension not detected. Install it from https://byomai.com to use AI models.",
+        "Arlopass extension not detected. Install it from https://arlopassai.com to use AI models.",
       );
     }
 
     const timeoutMs = this.#options.timeoutMs ?? 120_000;
-    const client = new BYOMClient({
+    const client = new ArlopassClient({
       transport,
       origin: typeof window !== "undefined" ? window.location.origin : undefined,
       timeoutMs,
@@ -769,14 +769,14 @@ export class BYOMChatTransport {
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `npx vitest run packages/ai-sdk-transport/src/__tests__/byom-chat-transport.test.ts`
+Run: `npx vitest run packages/ai-sdk-transport/src/__tests__/arlopass-chat-transport.test.ts`
 Expected: All 7 tests PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/ai-sdk-transport/src/byom-chat-transport.ts packages/ai-sdk-transport/src/__tests__/byom-chat-transport.test.ts
-git commit -m "feat(ai-sdk-transport): implement BYOMChatTransport"
+git add packages/ai-sdk-transport/src/arlopass-chat-transport.ts packages/ai-sdk-transport/src/__tests__/arlopass-chat-transport.test.ts
+git commit -m "feat(ai-sdk-transport): implement ArlopassChatTransport"
 ```
 
 ---
@@ -789,15 +789,15 @@ git commit -m "feat(ai-sdk-transport): implement BYOMChatTransport"
 - [ ] **Step 1: Update `index.ts` with all exports**
 
 ```typescript
-export { BYOMChatTransport } from "./byom-chat-transport.js";
-export type { BYOMChatTransportOptions } from "./byom-chat-transport.js";
+export { ArlopassChatTransport } from "./arlopass-chat-transport.js";
+export type { ArlopassChatTransportOptions } from "./arlopass-chat-transport.js";
 export { convertMessages } from "./convert-messages.js";
 export { convertStream } from "./convert-stream.js";
 ```
 
 - [ ] **Step 2: Build the package**
 
-Run: `npm run build -w @byom-ai/ai-sdk-transport`
+Run: `npm run build -w @arlopass/ai-sdk-transport`
 Expected: Clean compilation.
 
 - [ ] **Step 3: Run all package tests**
@@ -827,14 +827,14 @@ git commit -m "feat(ai-sdk-transport): wire up exports"
 - [ ] **Step 1: Write the README**
 
 The README should include:
-- One-line description: "Vercel AI SDK ChatTransport for the BYOM browser extension — use useChat with any AI model, no API route needed."
-- Install: `npm install @byom-ai/ai-sdk-transport ai @byom-ai/web-sdk`
-- Prerequisite: BYOM browser extension installed
+- One-line description: "Vercel AI SDK ChatTransport for the Arlopass browser extension — use useChat with any AI model, no API route needed."
+- Install: `npm install @arlopass/ai-sdk-transport ai @arlopass/web-sdk`
+- Prerequisite: Arlopass browser extension installed
 - Quick start example (zero-config `useChat`)
 - Advanced example (BYOB client mode)
 - Options table
 - How it works (brief architecture)
-- Link to the BYOM docs app
+- Link to the Arlopass docs app
 
 - [ ] **Step 2: Commit**
 

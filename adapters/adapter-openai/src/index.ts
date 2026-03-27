@@ -13,8 +13,8 @@ import {
   type RevokeCredentialRefInput,
   type ValidateCredentialRefInput,
   type ValidationResult,
-} from "@byom-ai/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@byom-ai/protocol";
+} from "@arlopass/adapter-runtime";
+import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
 
 export const OPENAI_CONNECTION_METHOD_IDS = {
   API_KEY: "openai.api_key",
@@ -51,7 +51,7 @@ export const OPENAI_MANIFEST: AdapterManifest = {
   requiredPermissions: ["network.egress"],
   egressRules: [{ host: "api.openai.com", protocol: "https" }],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 const OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1";

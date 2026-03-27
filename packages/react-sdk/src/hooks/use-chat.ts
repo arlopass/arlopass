@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
 import type {
     ChatSubscribeNoTools,
     ContextWindowInfo,
@@ -9,7 +9,7 @@ import type {
     TrackedChatMessage,
 } from "../types.js";
 import { Subscriptions } from "../store/subscriptions.js";
-import { useBYOMContext } from "./use-store.js";
+import { useArlopassContext } from "./use-store.js";
 
 function generateMessageId(): MessageId {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -34,7 +34,7 @@ type UseChatReturn = Readonly<{
     streamingMessageId: MessageId | null;
     isStreaming: boolean;
     isSending: boolean;
-    error: BYOMSDKError | null;
+    error: ArlopassSDKError | null;
     contextInfo: ContextWindowInfo;
     send: (content: string) => Promise<MessageId>;
     stream: (content: string) => Promise<MessageId>;
@@ -45,7 +45,7 @@ type UseChatReturn = Readonly<{
 }>;
 
 export function useChat(options?: UseChatOptions): UseChatReturn {
-    const { store } = useBYOMContext();
+    const { store } = useArlopassContext();
     const [messages, setMessages] = useState<TrackedChatMessage[]>(
         () => options?.initialMessages ?? [],
     );
@@ -53,7 +53,7 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
     const [streamingMessageId, setStreamingMessageId] = useState<MessageId | null>(null);
     const [isStreaming, setIsStreaming] = useState(false);
     const [isSending, setIsSending] = useState(false);
-    const [error, setError] = useState<BYOMSDKError | null>(null);
+    const [error, setError] = useState<ArlopassSDKError | null>(null);
 
     const messagesRef = useRef<TrackedChatMessage[]>(options?.initialMessages ?? []);
     const abortRef = useRef<AbortController | null>(null);
@@ -121,7 +121,7 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
             subsRef.current.notify();
             return userMsgId;
         } catch (err) {
-            setError(err as BYOMSDKError);
+            setError(err as ArlopassSDKError);
             updateMessage(userMsgId, { status: "error" });
             throw err;
         } finally {
@@ -217,7 +217,7 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
                 setStreamingMessageId(null);
                 return userMsgId;
             }
-            setError(err as BYOMSDKError);
+            setError(err as ArlopassSDKError);
             updateMessage(userMsgId, { status: "error" });
             setStreamingContent("");
             setStreamingMessageId(null);
@@ -247,7 +247,7 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
         lastRequestRef.current = null;
     }, []);
 
-    const retry = error !== null && (error as BYOMSDKError & { retryable?: boolean }).retryable === true && lastRequestRef.current !== null
+    const retry = error !== null && (error as ArlopassSDKError & { retryable?: boolean }).retryable === true && lastRequestRef.current !== null
         ? async () => {
             setError(null);
             const req = lastRequestRef.current!;

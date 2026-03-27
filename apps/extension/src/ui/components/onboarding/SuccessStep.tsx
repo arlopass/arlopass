@@ -37,7 +37,8 @@ export function SuccessStep({ onComplete }: SuccessStepProps) {
       </Text>
 
       <Text size="sm" c={tokens.color.textSecondary} ta="center">
-        BYOM is ready to use. Here are a few things to know before you start.
+        Arlopass is ready to use. Here are a few things to know before you
+        start.
       </Text>
 
       <Button

@@ -178,7 +178,7 @@ describe("TokenUsageService", () => {
         // Verify the old entry was actually compacted: only the recent entry
         // should remain in entries[], with the old one folded into allTimeTotals.
         const raw = storage.snapshot();
-        const store = raw["byom.token-usage.v1"] as {
+        const store = raw["arlopass.token-usage.v1"] as {
             records: Record<string, { entries: unknown[]; allTimeTotals: { inputTokens: number; outputTokens: number; requestCount: number } }>;
         };
         const record = store.records["https://example.com\0p\0m"]!;

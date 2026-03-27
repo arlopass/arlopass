@@ -61,7 +61,7 @@ export const foundryApiKey = (): string | undefined => env("FOUNDRY_API_KEY");
 export const ollamaBaseUrl = (): string => env("OLLAMA_BASE_URL") ?? "http://localhost:11434";
 
 // ─── Bridge ───
-export const bridgeHostName = (): string => env("BRIDGE_HOST_NAME") ?? "com.byom.bridge";
+export const bridgeHostName = (): string => env("BRIDGE_HOST_NAME") ?? "com.arlopass.bridge";
 
 // ─── Global Test Mode Flags ───
 

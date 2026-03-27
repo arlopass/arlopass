@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26
 **Status:** Approved
-**Scope:** `@byom-ai/web-sdk`, `@byom-ai/protocol`, extension transport runtime, extension popup UI
+**Scope:** `@arlopass/web-sdk`, `@arlopass/protocol`, extension transport runtime, extension popup UI
 
 ---
 

@@ -1,4 +1,4 @@
-# BYOM AI — Alert Rules v1
+# Arlopass — Alert Rules v1
 
 > **Status:** Draft · **Effective from:** 2026-03-23  
 > **Owner:** Platform Reliability  
@@ -7,15 +7,15 @@
 
 ---
 
-## Alert: BYOM_HighRequestFailureRate
+## Alert: ARLOPASS_HighRequestFailureRate
 
 ```yaml
-alert: BYOM_HighRequestFailureRate
+alert: ARLOPASS_HighRequestFailureRate
 expr: |
   (
-    rate(byom_request_failure_total[5m])
+    rate(arlopass_request_failure_total[5m])
     /
-    rate(byom_request_total[5m])
+    rate(arlopass_request_total[5m])
   ) > 0.01
 for: 5m
 severity: warning
@@ -32,15 +32,15 @@ annotations:
 
 ---
 
-## Alert: BYOM_CriticalRequestFailureRate
+## Alert: ARLOPASS_CriticalRequestFailureRate
 
 ```yaml
-alert: BYOM_CriticalRequestFailureRate
+alert: ARLOPASS_CriticalRequestFailureRate
 expr: |
   (
-    rate(byom_request_failure_total[5m])
+    rate(arlopass_request_failure_total[5m])
     /
-    rate(byom_request_total[5m])
+    rate(arlopass_request_total[5m])
   ) > 0.05
 for: 2m
 severity: critical
@@ -58,12 +58,12 @@ annotations:
 
 ---
 
-## Alert: BYOM_HighP95Latency
+## Alert: ARLOPASS_HighP95Latency
 
 ```yaml
-alert: BYOM_HighP95Latency
+alert: ARLOPASS_HighP95Latency
 expr: |
-  histogram_quantile(0.95, rate(byom_request_duration_ms_bucket[10m])) > 3000
+  histogram_quantile(0.95, rate(arlopass_request_duration_ms_bucket[10m])) > 3000
 for: 10m
 severity: warning
 labels:
@@ -79,12 +79,12 @@ annotations:
 
 ---
 
-## Alert: BYOM_AdapterDegraded
+## Alert: ARLOPASS_AdapterDegraded
 
 ```yaml
-alert: BYOM_AdapterDegraded
+alert: ARLOPASS_AdapterDegraded
 expr: |
-  min by (providerId) (byom_adapter_health) < 1
+  min by (providerId) (arlopass_adapter_health) < 1
 for: 2m
 severity: warning
 labels:
@@ -100,12 +100,12 @@ annotations:
 
 ---
 
-## Alert: BYOM_AdapterCrashLoop
+## Alert: ARLOPASS_AdapterCrashLoop
 
 ```yaml
-alert: BYOM_AdapterCrashLoop
+alert: ARLOPASS_AdapterCrashLoop
 expr: |
-  increase(byom_retry_total[10m]) > 3
+  increase(arlopass_retry_total[10m]) > 3
 for: 0m
 severity: critical
 labels:
@@ -122,15 +122,15 @@ annotations:
 
 ---
 
-## Alert: BYOM_HighStreamInterruptionRate
+## Alert: ARLOPASS_HighStreamInterruptionRate
 
 ```yaml
-alert: BYOM_HighStreamInterruptionRate
+alert: ARLOPASS_HighStreamInterruptionRate
 expr: |
   (
-    rate(byom_stream_interruption_total[10m])
+    rate(arlopass_stream_interruption_total[10m])
     /
-    (rate(byom_stream_chunk_total[10m]) + rate(byom_stream_interruption_total[10m]))
+    (rate(arlopass_stream_chunk_total[10m]) + rate(arlopass_stream_interruption_total[10m]))
   ) > 0.005
 for: 10m
 severity: warning
@@ -147,15 +147,15 @@ annotations:
 
 ---
 
-## Alert: BYOM_AuthFailureSpike
+## Alert: ARLOPASS_AuthFailureSpike
 
 ```yaml
-alert: BYOM_AuthFailureSpike
+alert: ARLOPASS_AuthFailureSpike
 expr: |
   (
-    rate(byom_request_failure_total{reasonCode=~"auth.*"}[5m])
+    rate(arlopass_request_failure_total{reasonCode=~"auth.*"}[5m])
     /
-    rate(byom_request_total[5m])
+    rate(arlopass_request_total[5m])
   ) > 0.02
 for: 5m
 severity: warning
@@ -172,19 +172,19 @@ annotations:
 
 ---
 
-## Alert: BYOM_BridgeUnavailable
+## Alert: ARLOPASS_BridgeUnavailable
 
 ```yaml
-alert: BYOM_BridgeUnavailable
+alert: ARLOPASS_BridgeUnavailable
 expr: |
-  absent(byom_request_total) == 1
+  absent(arlopass_request_total) == 1
 for: 3m
 severity: critical
 labels:
   team: platform
   page: "true"
 annotations:
-  summary: "No byom.request.total metrics for > 3 min — bridge may be down"
+  summary: "No arlopass.request.total metrics for > 3 min — bridge may be down"
   description: >
     The bridge daemon appears to have stopped emitting metrics.  Check
     whether the native messaging host process is running and reachable.

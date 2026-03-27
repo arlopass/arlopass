@@ -241,7 +241,7 @@ function toKeyDerivationTranscript(input: Readonly<{
   extensionPublicKey: string;
 }>): string {
   return [
-    "byom.bridge.pairing.v1",
+    "arlopass.bridge.pairing.v1",
     input.pairingSessionId,
     input.extensionId,
     input.hostName,

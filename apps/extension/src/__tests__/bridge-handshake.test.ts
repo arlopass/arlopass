@@ -5,7 +5,7 @@ import {
   ensureBridgeHandshakeSession,
 } from "../transport/bridge-handshake.js";
 
-const HOST_NAME = "com.byom.bridge";
+const HOST_NAME = "com.arlopass.bridge";
 const EXTENSION_ID = "ext.runtime.test";
 const SECRET_HEX = "ab".repeat(32);
 const NOW_MS = Date.parse("2026-03-24T15:00:00.000Z");

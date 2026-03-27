@@ -1,6 +1,6 @@
 # Runbook: Auth Failure Spike
 
-**Alert:** `BYOM_AuthFailureSpike`  
+**Alert:** `ARLOPASS_AuthFailureSpike`  
 **SLO:** SLO-01 (Request success rate — auth sub-category)  
 **Severity:** Warning  
 **Owner:** Platform Reliability
@@ -11,7 +11,7 @@
 
 | Signal | Indicator |
 |--------|-----------|
-| `byom.request.failure.total{reasonCode=~"auth.*"}` > 2 % of requests | Auth failures are disproportionately high |
+| `arlopass.request.failure.total{reasonCode=~"auth.*"}` > 2 % of requests | Auth failures are disproportionately high |
 | Bridge logs contain `auth.invalid` or `auth.expired` | Token or credential validation failing |
 | Users report "Unauthorized" or permission denied in extension UI | Visible symptom of auth breakage |
 
@@ -34,20 +34,20 @@ From telemetry, filter by `reasonCode`:
 For OAuth2-based adapters:
 ```bash
 # Inspect the token expiry stored in the adapter configuration
-cat ~/.byom/adapters/<provider-id>/credentials.json | jq '.expiresAt'
+cat ~/.arlopass/adapters/<provider-id>/credentials.json | jq '.expiresAt'
 ```
 
 For API-key-based adapters:
 ```bash
 # Verify the key against the provider's status API (replace URL with actual)
-curl -H "Authorization: Bearer $(cat ~/.byom/adapters/<provider-id>/api-key)" \
+curl -H "Authorization: Bearer $(cat ~/.arlopass/adapters/<provider-id>/api-key)" \
      https://api.provider.example/v1/models
 ```
 
 ### Step 3 — Re-authenticate the affected adapter
 
 ```bash
-byom adapter re-auth <provider-id>
+arlopass adapter re-auth <provider-id>
 ```
 
 This will:
@@ -57,14 +57,14 @@ This will:
 
 ### Step 4 — Monitor recovery
 
-Watch `byom.request.failure.total{reasonCode=~"auth.*"}` in the dashboard.
+Watch `arlopass.request.failure.total{reasonCode=~"auth.*"}` in the dashboard.
 The failure rate should return to baseline within 2–3 minutes of successful
 re-authentication.
 
 ### Step 5 — Check credential rotation schedule
 
 If auth failures recur on a predictable cycle:
-1. Inspect the token TTL: `cat ~/.byom/adapters/<provider-id>/credentials.json | jq '.ttlSeconds'`
+1. Inspect the token TTL: `cat ~/.arlopass/adapters/<provider-id>/credentials.json | jq '.ttlSeconds'`
 2. Set up automated token refresh if not already in place
 3. Increase warning threshold for token expiry events
 
@@ -75,7 +75,7 @@ If auth failures recur on a predictable cycle:
 | Condition | Action |
 |-----------|--------|
 | All users affected simultaneously | Suspect a provider-side outage or credential rotation event |
-| Re-auth fails consistently | Verify BYOM_BRIDGE_SHARED_SECRET integrity; re-install if corrupted |
+| Re-auth fails consistently | Verify ARLOPASS_BRIDGE_SHARED_SECRET integrity; re-install if corrupted |
 | Rate limiting from provider | Implement request throttling and backoff; notify affected users |
 
 ---
@@ -92,7 +92,7 @@ If auth failures recur on a predictable cycle:
 
 ## 5  Evidence Collection
 
-1. Export `byom.request.failure.total` time series filtered by `reasonCode=~"auth.*"`
+1. Export `arlopass.request.failure.total` time series filtered by `reasonCode=~"auth.*"`
 2. Capture bridge log lines containing `auth` errors for the window
 3. Record exact `expiresAt` timestamp from adapter credentials
 4. Note whether failure affects a single provider or all providers
@@ -101,7 +101,7 @@ If auth failures recur on a predictable cycle:
 
 ## 6  Related
 
-- Alert: `BYOM_AuthFailureSpike`
+- Alert: `ARLOPASS_AuthFailureSpike`
 - Runbook: `ops/runbooks/bridge-unavailable.md`
 - Runbook: `ops/runbooks/adapter-crash-loop.md`
 - SLO: `ops/slo/slo-definitions.md#slo-01`

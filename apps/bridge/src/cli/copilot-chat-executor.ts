@@ -162,7 +162,7 @@ const CLAUDE_CODE_FALLBACK_MODELS: readonly CliModelDescriptor[] = [
 const CLI_PROFILES: Readonly<Record<SupportedCliType, CliProfile>> = {
   [CLI_TYPE_COPILOT]: {
     id: CLI_TYPE_COPILOT,
-    commandEnvVar: "BYOM_COPILOT_CLI_PATH",
+    commandEnvVar: "ARLOPASS_COPILOT_CLI_PATH",
     defaultCommand: "copilot",
     knownModels: COPILOT_FALLBACK_MODELS,
     buildCommandArgs(options): readonly string[] {
@@ -191,7 +191,7 @@ const CLI_PROFILES: Readonly<Record<SupportedCliType, CliProfile>> = {
   },
   [CLI_TYPE_CLAUDE]: {
     id: CLI_TYPE_CLAUDE,
-    commandEnvVar: "BYOM_CLAUDE_CODE_CLI_PATH",
+    commandEnvVar: "ARLOPASS_CLAUDE_CODE_CLI_PATH",
     defaultCommand: "claude",
     knownModels: CLAUDE_CODE_FALLBACK_MODELS,
     buildCommandArgs(options): readonly string[] {
@@ -804,7 +804,7 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
       ),
     };
     this.#maxConcurrent = clampInteger(
-      options.maxConcurrent ?? parseConcurrentLimit(env["BYOM_CLI_MAX_CONCURRENT"]),
+      options.maxConcurrent ?? parseConcurrentLimit(env["ARLOPASS_CLI_MAX_CONCURRENT"]),
       1,
       MAX_CONCURRENT_CAP,
       DEFAULT_MAX_CONCURRENT,

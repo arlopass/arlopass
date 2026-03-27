@@ -2,9 +2,9 @@ import { Stack, Title, Text } from "@mantine/core";
 import { Callout, CodeBlock } from "../../components";
 import { navigate } from "../../router";
 
-const transportInterface = `// The BYOMTransport interface — two methods, that's it.
+const transportInterface = `// The ArlopassTransport interface — two methods, that's it.
 
-export interface BYOMTransport {
+export interface ArlopassTransport {
   // Send a request, get a single response
   request<TRequestPayload, TResponsePayload>(
     request: TransportRequest<TRequestPayload>,
@@ -19,21 +19,21 @@ export interface BYOMTransport {
   disconnect?(sessionId: string): Promise<void>;
 }`;
 
-const injectedTransport = `// The extension's content script injects window.byom.
+const injectedTransport = `// The extension's content script injects window.arlopass.
 // This happens before your app code runs.
 
 // React SDK — detects it automatically
-import { BYOMProvider } from "@byom-ai/react";
+import { ArlopassProvider } from "@arlopass/react";
 
-<BYOMProvider appId="my-app">
-  {/* BYOMProvider checks window.byom on mount */}
+<ArlopassProvider appId="my-app">
+  {/* ArlopassProvider checks window.arlopass on mount */}
   {/* If missing → transportAvailable: false */}
   <App />
-</BYOMProvider>
+</ArlopassProvider>
 
 // Web SDK — you reference it explicitly
-import { BYOMClient } from "@byom-ai/web-sdk";
-const client = new BYOMClient({ transport: window.byom });`;
+import { ArlopassClient } from "@arlopass/web-sdk";
+const client = new ArlopassClient({ transport: window.arlopass });`;
 
 const envelopeFormat = `// Every request/response is wrapped in a CanonicalEnvelope.
 // The SDK builds this automatically — you never construct one manually.
@@ -70,9 +70,9 @@ nonceStore.add(envelope.nonce);
 if (response.correlationId !== request.requestId) reject();`;
 
 const mockTransport = `// For testing, use the mock transport from the React SDK test utilities.
-// It implements BYOMTransport without needing the extension.
+// It implements ArlopassTransport without needing the extension.
 
-import { createMockTransport } from "@byom-ai/react/testing";
+import { createMockTransport } from "@arlopass/react/testing";
 
 const transport = createMockTransport({
   providers: [
@@ -81,7 +81,7 @@ const transport = createMockTransport({
 });
 
 // Use it in tests exactly like the real transport
-const client = new BYOMClient({ transport });
+const client = new ArlopassClient({ transport });
 await client.connect({ appId: "test-app" });`;
 
 export default function TransportModel() {
@@ -96,19 +96,22 @@ export default function TransportModel() {
 
       <Title order={3}>What is a transport?</Title>
       <Text>
-        A transport is the communication layer between the SDK and the BYOM
-        extension. The <code>BYOMTransport</code> interface is intentionally
+        A transport is the communication layer between the SDK and the Arlopass
+        extension. The <code>ArlopassTransport</code> interface is intentionally
         minimal: <code>request()</code> for single request-response operations
         (like listing providers), and <code>stream()</code> for streaming
         operations (like chat). That's the entire surface area.
       </Text>
-      <CodeBlock title="BYOMTransport interface" code={transportInterface} />
+      <CodeBlock
+        title="ArlopassTransport interface"
+        code={transportInterface}
+      />
 
       <Title order={3}>Injected transport</Title>
       <Text>
-        The extension's content script injects a <code>BYOMTransport</code>{" "}
-        implementation at <code>window.byom</code> before your app code
-        executes. The React SDK's <code>BYOMProvider</code> detects this
+        The extension's content script injects a <code>ArlopassTransport</code>{" "}
+        implementation at <code>window.arlopass</code> before your app code
+        executes. The React SDK's <code>ArlopassProvider</code> detects this
         automatically and exposes a <code>transportAvailable</code> flag. The
         Web SDK accepts it as a constructor argument.
       </Text>
@@ -118,18 +121,18 @@ export default function TransportModel() {
       <Text>
         You might wonder why the SDK doesn't let you construct your own
         transport — say, a WebSocket to your own backend. The reason is
-        security. The entire BYOM trust model depends on the extension
+        security. The entire Arlopass trust model depends on the extension
         controlling the communication channel. If arbitrary transports were
-        allowed, any code in the page could bypass the extension's consent
-        flow, credential management, and rate limiting. The injected transport
-        is the extension's guarantee that it mediates every interaction.
+        allowed, any code in the page could bypass the extension's consent flow,
+        credential management, and rate limiting. The injected transport is the
+        extension's guarantee that it mediates every interaction.
       </Text>
 
       <Callout type="warning" title="No arbitrary transports">
-        Constructing a custom <code>BYOMTransport</code> in production code
+        Constructing a custom <code>ArlopassTransport</code> in production code
         bypasses the extension trust boundary. The SDK accepts{" "}
-        <code>window.byom</code> — nothing else. For testing, use the mock
-        transport from <code>@byom-ai/react/testing</code>.
+        <code>window.arlopass</code> — nothing else. For testing, use the mock
+        transport from <code>@arlopass/react/testing</code>.
       </Callout>
 
       <Title order={3}>The envelope protocol</Title>
@@ -144,7 +147,7 @@ export default function TransportModel() {
       <Title order={3}>Envelope validation</Title>
       <Text>
         The extension validates every incoming envelope before processing it.
-        This is where BYOM's replay resistance, expiry enforcement, and
+        This is where Arlopass's replay resistance, expiry enforcement, and
         correlation checking happen. A stale envelope is rejected. A replayed
         nonce is rejected. A response that doesn't match the original request's
         correlation ID is rejected.
@@ -155,9 +158,9 @@ export default function TransportModel() {
       <Text>
         In tests, you don't have a browser extension. The React SDK ships a{" "}
         <code>createMockTransport</code> utility that implements{" "}
-        <code>BYOMTransport</code> with configurable providers and responses.
-        It lets you test your components against the full SDK without needing
-        the extension installed.
+        <code>ArlopassTransport</code> with configurable providers and
+        responses. It lets you test your components against the full SDK without
+        needing the extension installed.
       </Text>
       <CodeBlock title="Mock transport for tests" code={mockTransport} />
 
@@ -167,9 +170,9 @@ export default function TransportModel() {
           span
           c="blue"
           style={{ cursor: "pointer" }}
-          onClick={() => navigate("concepts/how-byom-works")}
+          onClick={() => navigate("concepts/how-arlopass-works")}
         >
-          How BYOM Works
+          How Arlopass Works
         </Text>{" "}
         for the full architecture overview, or{" "}
         <Text

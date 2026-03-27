@@ -39,7 +39,7 @@ jobs:
           MAX_RETRIES=3
           until [ $RETRY -ge $MAX_RETRIES ]; do
             if chrome-webstore-upload upload \
-              --source byom-extension-chromium.zip \
+              --source arlopass-extension-chromium.zip \
               --extension-id "${EXTENSION_ID}" \
               --client-id "${CLIENT_ID}" \
               --client-secret "${CLIENT_SECRET}" \

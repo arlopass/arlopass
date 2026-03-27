@@ -287,7 +287,7 @@ Run: `cd packages/web-sdk && npx vitest run`
 
 - [ ] **Step 1: Add validation on session.create**
 
-Import: `import { validateAppIdForOrigin, validateAppIconUrl, isDevOrigin } from "@byom-ai/web-sdk";`
+Import: `import { validateAppIdForOrigin, validateAppIconUrl, isDevOrigin } from "@arlopass/web-sdk";`
 
 Or inline the functions to avoid the dependency (the extension bundles its own code). Better: copy the pure functions to avoid SDK dependency from extension transport.
 
@@ -323,7 +323,7 @@ case "session.create": {
 
     // Store pending connection metadata for the popup onboarding wizard
     await options.storage.set({
-      "byom.wallet.pendingConnect.v1": {
+      "arlopass.wallet.pendingConnect.v1": {
         origin: options.envelope.origin,
         appId,
         appName,
@@ -424,12 +424,12 @@ Run: `cd apps/extension && npx tsc --noEmit && npx vitest run`
 
 Update the `doConnect` function to use the new simplified API:
 ```typescript
-const c = new BYOMClient({ transport: r.transport, origin, timeoutMs: tMs });
+const c = new ArlopassClient({ transport: r.transport, origin, timeoutMs: tMs });
 const res = await c.connect({
   appSuffix: "examples",
-  appName: "BYOM Examples",
+  appName: "Arlopass Examples",
   appDescription: "Interactive SDK examples and documentation",
-  appIcon: "https://byom.ai/icon-64.png", // or omit for dev
+  appIcon: "https://arlopass.ai/icon-64.png", // or omit for dev
 });
 ```
 

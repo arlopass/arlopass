@@ -60,19 +60,19 @@ export class OtlpExporter {
     const timeUnixNano = (BigInt(timestampMs) * 1_000_000n).toString();
 
     const attributes: Record<string, string> = {
-      "byom.origin": event.origin,
-      "byom.provider_id": event.providerId,
-      "byom.model_id": event.modelId,
-      "byom.capability": event.capability,
-      "byom.decision": event.decision,
-      "byom.reason_code": event.reasonCode,
-      "byom.correlation_id": event.correlationId,
-      "byom.policy_version": event.policyVersion,
+      "arlopass.origin": event.origin,
+      "arlopass.provider_id": event.providerId,
+      "arlopass.model_id": event.modelId,
+      "arlopass.capability": event.capability,
+      "arlopass.decision": event.decision,
+      "arlopass.reason_code": event.reasonCode,
+      "arlopass.correlation_id": event.correlationId,
+      "arlopass.policy_version": event.policyVersion,
     };
 
     if (event.metadata) {
       for (const [key, value] of Object.entries(event.metadata)) {
-        attributes[`byom.meta.${key}`] = String(value);
+        attributes[`arlopass.meta.${key}`] = String(value);
       }
     }
 

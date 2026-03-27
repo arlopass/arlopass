@@ -1,5 +1,5 @@
 {
-  "name": "@byom-ai/adapter-microsoft-foundry",
+  "name": "@arlopass/adapter-microsoft-foundry",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "adapters/adapter-microsoft-foundry"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/adapters/adapter-microsoft-foundry#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/adapters/adapter-microsoft-foundry#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,7 +28,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@byom-ai/adapter-runtime": "0.1.0",
-    "@byom-ai/protocol": "0.1.0"
+    "@arlopass/adapter-runtime": "0.1.0",
+    "@arlopass/protocol": "0.1.0"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@byom-ai/policy",
+  "name": "@arlopass/policy",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "packages/policy"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/packages/policy#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/packages/policy#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
   "exports": {
     ".": {
@@ -35,6 +35,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@byom-ai/protocol": "0.1.0"
+    "@arlopass/protocol": "0.1.0"
   }
 }

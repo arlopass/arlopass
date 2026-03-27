@@ -16,12 +16,12 @@ import {
   ADAPTER_STATE,
   loadAdapter,
   type AdapterContract,
-} from "@byom-ai/adapter-runtime";
+} from "@arlopass/adapter-runtime";
 import {
   TelemetryMetrics,
   TELEMETRY_METRIC_NAMES,
   type MetricPoint,
-} from "@byom-ai/telemetry";
+} from "@arlopass/telemetry";
 
 // ---------------------------------------------------------------------------
 // Mock adapter helpers
@@ -55,12 +55,12 @@ function createFlakyAdapter(options: {
       _sessionId: string,
       _message: string,
       _onChunk: (chunk: string) => void,
-    ) => {},
+    ) => { },
     healthCheck: async () => {
       callCount += 1;
       return callCount <= options.healthyFor;
     },
-    shutdown: async () => {},
+    shutdown: async () => { },
   };
 }
 
@@ -209,7 +209,7 @@ describe("Chaos: adapter kill and crash-loop", () => {
     expect(allPoints.length).toBeGreaterThan(0);
     for (const point of allPoints) {
       expect(point.metadata.providerId).toBe("provider.mock");
-      expect(point.metadata.origin).toBe("byom.adapter-host");
+      expect(point.metadata.origin).toBe("arlopass.adapter-host");
     }
 
     await host.shutdown();

@@ -1,4 +1,4 @@
-import type { BYOMClient } from "./client.js";
+import type { ArlopassClient } from "./client.js";
 import type { ChatMessage, ContextWindowInfo } from "./types.js";
 import type { ToolDefinition, ToolCall, ToolResult, ConversationStreamEvent } from "./tools.js";
 import { estimateTokenCount } from "./token-estimation.js";
@@ -21,7 +21,7 @@ export type PinOptions = {
 };
 
 export type ConversationManagerOptions = {
-    client: BYOMClient;
+    client: ArlopassClient;
     maxTokens?: number;
     reserveOutputTokens?: number;
     systemPrompt?: string;
@@ -40,7 +40,7 @@ export type ConversationManagerOptions = {
 const DEFAULT_RESERVE_OUTPUT_TOKENS = 1024;
 
 export class ConversationManager {
-    readonly #client: BYOMClient;
+    readonly #client: ArlopassClient;
     readonly #maxTokens: number;
     readonly #reserveOutputTokens: number;
     readonly #systemPrompt: string | undefined;

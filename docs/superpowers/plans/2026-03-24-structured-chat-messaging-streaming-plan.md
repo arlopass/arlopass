@@ -35,7 +35,7 @@
 |------|--------|
 | `packages/protocol/src/index.ts` | Add re-exports for new modules |
 | `packages/web-sdk/src/types.ts` | Update `ChatInput`, `ChatSendPayload`, `ChatStreamPayload`, `ChatStreamEvent` types |
-| `packages/web-sdk/src/errors.ts` | Add `BYOMFormatValidationError`, `BYOMPermissionRuleDeniedError`, new machine codes |
+| `packages/web-sdk/src/errors.ts` | Add `ArlopassFormatValidationError`, `ArlopassPermissionRuleDeniedError`, new machine codes |
 | `packages/web-sdk/src/client.ts` | Integrate permission filter, response validation, retry loop, permissions API |
 | `packages/web-sdk/src/index.ts` | Add re-exports for new modules |
 | `adapters/runtime/src/adapter-loader.ts` | Update `AdapterContract` interface signatures |
@@ -479,7 +479,7 @@ export * from "./structured-chat.js";
 
 - [ ] **Step 6: Run full protocol typecheck**
 
-Run: `npm run typecheck -w @byom-ai/protocol`
+Run: `npm run typecheck -w @arlopass/protocol`
 Expected: No errors
 
 - [ ] **Step 7: Commit**
@@ -842,7 +842,7 @@ export * from "./chat-permission-rules.js";
 
 - [ ] **Step 6: Typecheck**
 
-Run: `npm run typecheck -w @byom-ai/protocol`
+Run: `npm run typecheck -w @arlopass/protocol`
 Expected: No errors
 
 - [ ] **Step 7: Commit**
@@ -884,7 +884,7 @@ With:
 
 Add import at top:
 ```ts
-import { type StructuredChatInput } from "@byom-ai/protocol";
+import { type StructuredChatInput } from "@arlopass/protocol";
 ```
 
 Add `ChatResponse` type after `AdapterContract`:
@@ -904,7 +904,7 @@ Add to `adapters/runtime/src/manifest-schema.ts` after existing types:
 export type StructuredInputCapabilities = Readonly<{
   nativeSystemPrompt: boolean;
   nativeStructuredOutput: boolean;
-  supportedFormats: readonly import("@byom-ai/protocol").ResponseFormatType[];
+  supportedFormats: readonly import("@arlopass/protocol").ResponseFormatType[];
   maxContextTokens?: number;
 }>;
 ```
@@ -916,7 +916,7 @@ Add optional field to `AdapterManifest` type:
 
 - [ ] **Step 3: Typecheck the adapter-runtime package**
 
-Run: `npm run typecheck -w @byom-ai/adapter-runtime`
+Run: `npm run typecheck -w @arlopass/adapter-runtime`
 Expected: Errors in adapter packages that still use old signatures (expected — we'll fix them in Tasks 4–6)
 
 - [ ] **Step 4: Commit**
@@ -938,8 +938,8 @@ git commit -m "feat(adapter-runtime): evolve AdapterContract to accept Structure
 
 In `adapters/adapter-ollama/src/index.ts`:
 
-1. Add import: `import { type StructuredChatInput } from "@byom-ai/protocol";`
-2. Add import: `import { type ChatResponse } from "@byom-ai/adapter-runtime";`
+1. Add import: `import { type StructuredChatInput } from "@arlopass/protocol";`
+2. Add import: `import { type ChatResponse } from "@arlopass/adapter-runtime";`
 3. Change `sendMessage` signature from `(sessionId: string, message: string): Promise<string>` to `(sessionId: string, input: StructuredChatInput): Promise<ChatResponse>`
 4. Change `streamMessage` signature from `(sessionId: string, message: string, onChunk: (chunk: string) => void): Promise<void>` to `(sessionId: string, input: StructuredChatInput, onChunk: (chunk: string) => void): Promise<void>`
 5. Add internal `#toOllamaMessages(input: StructuredChatInput, sessionMessages: OllamaMessage[]): OllamaMessage[]` method that:
@@ -957,12 +957,12 @@ Update any existing tests that call `sendMessage(sessionId, "string")` to use `s
 
 - [ ] **Step 3: Typecheck**
 
-Run: `npm run typecheck -w @byom-ai/adapter-ollama`
+Run: `npm run typecheck -w @arlopass/adapter-ollama`
 Expected: No errors
 
 - [ ] **Step 4: Run tests**
 
-Run: `npm run test -w @byom-ai/adapter-ollama`
+Run: `npm run test -w @arlopass/adapter-ollama`
 Expected: All PASS
 
 - [ ] **Step 5: Commit**
@@ -994,7 +994,7 @@ Same pattern — update string calls to `StructuredChatInput`.
 
 - [ ] **Step 3: Typecheck and test**
 
-Run: `npm run typecheck -w @byom-ai/adapter-claude-subscription && npm run test -w @byom-ai/adapter-claude-subscription`
+Run: `npm run typecheck -w @arlopass/adapter-claude-subscription && npm run test -w @arlopass/adapter-claude-subscription`
 Expected: No errors, all PASS
 
 - [ ] **Step 4: Commit**
@@ -1019,7 +1019,7 @@ git commit -m "feat(adapter-claude): accept StructuredChatInput with system para
 // adapters/adapter-local-cli-bridge/src/__tests__/xml-formatter.test.ts
 import { describe, it, expect } from "vitest";
 import { toCliPrompt, escapeXml } from "../xml-formatter.js";
-import type { StructuredChatInput } from "@byom-ai/protocol";
+import type { StructuredChatInput } from "@arlopass/protocol";
 
 describe("escapeXml", () => {
   it("escapes < > &", () => {
@@ -1081,7 +1081,7 @@ Expected: FAIL
 
 ```ts
 // adapters/adapter-local-cli-bridge/src/xml-formatter.ts
-import type { StructuredChatInput } from "@byom-ai/protocol";
+import type { StructuredChatInput } from "@arlopass/protocol";
 
 export function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -1126,8 +1126,8 @@ Expected: All PASS
 
 Update `adapters/adapter-local-cli-bridge/src/index.ts`:
 1. Import `toCliPrompt` from `./xml-formatter.js`
-2. Import `type StructuredChatInput` from `@byom-ai/protocol`
-3. Import `type ChatResponse` from `@byom-ai/adapter-runtime`
+2. Import `type StructuredChatInput` from `@arlopass/protocol`
+3. Import `type ChatResponse` from `@arlopass/adapter-runtime`
 4. Change `sendMessage(sessionId: string, message: string)` to `sendMessage(sessionId: string, input: StructuredChatInput): Promise<ChatResponse>`
 5. Change `streamMessage` similarly
 6. In `sendMessage` body, replace `message` usage with `toCliPrompt(input)`
@@ -1138,7 +1138,7 @@ Update `adapters/adapter-local-cli-bridge/src/index.ts`:
 
 - [ ] **Step 7: Typecheck and test**
 
-Run: `npm run typecheck -w @byom-ai/adapter-local-cli-bridge && npm run test -w @byom-ai/adapter-local-cli-bridge`
+Run: `npm run typecheck -w @arlopass/adapter-local-cli-bridge && npm run test -w @arlopass/adapter-local-cli-bridge`
 Expected: No errors, all PASS
 
 - [ ] **Step 8: Commit**
@@ -1206,7 +1206,7 @@ describe("validateResponse", () => {
 
 ```ts
 // packages/web-sdk/src/response-validation.ts
-import type { ResponseFormatType } from "@byom-ai/protocol";
+import type { ResponseFormatType } from "@arlopass/protocol";
 
 export type ValidationResult =
   | Readonly<{ valid: true; parsed: unknown }>
@@ -1369,14 +1369,14 @@ git commit -m "feat(web-sdk): add permission filter and permissions API"
 
 Add to `SDK_MACHINE_CODES`:
 ```ts
-  FORMAT_VALIDATION_FAILED: "BYOM_SDK_FORMAT_VALIDATION_FAILED",
-  PERMISSION_RULE_DENIED: "BYOM_SDK_PERMISSION_RULE_DENIED",
-  RULE_SET_MISMATCH: "BYOM_SDK_RULE_SET_MISMATCH",
+  FORMAT_VALIDATION_FAILED: "ARLOPASS_SDK_FORMAT_VALIDATION_FAILED",
+  PERMISSION_RULE_DENIED: "ARLOPASS_SDK_PERMISSION_RULE_DENIED",
+  RULE_SET_MISMATCH: "ARLOPASS_SDK_RULE_SET_MISMATCH",
 ```
 
 Add new error classes:
 ```ts
-export class BYOMFormatValidationError extends BYOMSDKError {
+export class ArlopassFormatValidationError extends ArlopassSDKError {
   readonly format: ResponseFormatType;
   readonly attempts: number;
   readonly rawContent: string;
@@ -1393,7 +1393,7 @@ export class BYOMFormatValidationError extends BYOMSDKError {
   }
 }
 
-export class BYOMPermissionRuleDeniedError extends BYOMSDKError {
+export class ArlopassPermissionRuleDeniedError extends ArlopassSDKError {
   constructor(message: string, options: SharedSDKErrorOptions = {}) {
     super(message, {
       machineCode: SDK_MACHINE_CODES.PERMISSION_RULE_DENIED,
@@ -1416,7 +1416,7 @@ export type SimpleChatInput = Readonly<{
 }>;
 ```
 
-Import `StructuredChatInput` from `@byom-ai/protocol` and re-export `ChatRole`, `ChatMessage` from there.
+Import `StructuredChatInput` from `@arlopass/protocol` and re-export `ChatRole`, `ChatMessage` from there.
 
 Update `ChatSendPayload` and `ChatStreamPayload` to use `StructuredChatInput`.
 
@@ -1442,7 +1442,7 @@ export * from "./permissions-api.js";
 
 - [ ] **Step 4: Typecheck**
 
-Run: `npm run typecheck -w @byom-ai/web-sdk`
+Run: `npm run typecheck -w @arlopass/web-sdk`
 Expected: Errors in client.ts (not yet updated — expected)
 
 - [ ] **Step 5: Commit**
@@ -1459,7 +1459,7 @@ git commit -m "feat(web-sdk): add format validation error, permission error, upd
 **Files:**
 - Modify: `packages/web-sdk/src/client.ts`
 
-- [ ] **Step 1: Add permissions property to BYOMClient**
+- [ ] **Step 1: Add permissions property to ArlopassClient**
 
 Import `PermissionsAPI` and initialize in constructor. Expose as `client.permissions`.
 
@@ -1477,7 +1477,7 @@ After stream completes, validate assembled content. Yield `validation-failed` ev
 
 - [ ] **Step 5: Typecheck and run all tests**
 
-Run: `npm run typecheck -w @byom-ai/web-sdk && npm run test -w @byom-ai/web-sdk`
+Run: `npm run typecheck -w @arlopass/web-sdk && npm run test -w @arlopass/web-sdk`
 Expected: No errors, all PASS
 
 - [ ] **Step 6: Commit**

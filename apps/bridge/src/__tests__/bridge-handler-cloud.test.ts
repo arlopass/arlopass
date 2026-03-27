@@ -832,7 +832,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
   });
 
   it("does not replay persisted cloud.connection.complete across shared-secret rotation", async () => {
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-bridge-idempotency-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-bridge-idempotency-"));
     const stateFilePath = join(tempRoot, "request-idempotency-state.json");
     const firstSecret = Buffer.alloc(32, 7);
     const secondSecret = Buffer.alloc(32, 9);
@@ -994,7 +994,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     issueSessionToken(sessionKeyRegistry);
 
     const originPolicy = createAuthenticatedOriginPolicyFromEnv({
-      BYOM_BRIDGE_AUTHENTICATED_ORIGINS: "https://app.example.com",
+      ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS: "https://app.example.com",
     });
     const handler = new BridgeHandler({
       signingKey,

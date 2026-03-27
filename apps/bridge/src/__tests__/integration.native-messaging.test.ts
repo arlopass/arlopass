@@ -33,7 +33,7 @@ import type { CloudFeatureFlags } from "../config/cloud-feature-flags.js";
 // ---------------------------------------------------------------------------
 
 const TEST_EXTENSION_ID = "abcdefghabcdefghabcdefghabcdefgh";
-const TEST_HOST_NAME = "com.byom.bridge";
+const TEST_HOST_NAME = "com.arlopass.bridge";
 const TEST_ORIGIN = "https://app.example.com";
 const FIXED_NOW = new Date("2026-03-23T12:00:00.000Z");
 
@@ -374,7 +374,7 @@ describe("BridgeHandler â€” handshake", () => {
       pairingManager,
       extensionIdAllowlist: [
         { extensionId: TEST_EXTENSION_ID, browser: "chrome" },
-        { extensionId: "byom-ai-wallet@byomai.com", browser: "firefox" },
+        { extensionId: "arlopass-wallet@arlopassai.com", browser: "firefox" },
       ],
     });
 
@@ -412,13 +412,13 @@ describe("BridgeHandler â€” handshake", () => {
       sessionKeyRegistry: new SessionKeyRegistry({ now: () => FIXED_NOW }),
       pairingManager,
       extensionIdAllowlist: [
-        { extensionId: "byom-ai-wallet@byomai.com", browser: "firefox" },
+        { extensionId: "arlopass-wallet@arlopassai.com", browser: "firefox" },
       ],
     });
 
     const pairResp = await handler.handle({
       type: "pairing.auto",
-      extensionId: "byom-ai-wallet@byomai.com",
+      extensionId: "arlopass-wallet@arlopassai.com",
       hostName: TEST_HOST_NAME,
     });
     const pairingHandle = (pairResp as Record<string, string>)["pairingHandle"] ?? "";
@@ -431,14 +431,14 @@ describe("BridgeHandler â€” handshake", () => {
       type: "handshake.verify",
       nonce: HANDSHAKE_NONCE_HEX,
       hmac,
-      extensionId: "byom-ai-wallet@byomai.com",
+      extensionId: "arlopass-wallet@arlopassai.com",
       hostName: TEST_HOST_NAME,
       pairingHandle,
     });
 
     expect(response).toMatchObject({
       type: "handshake.session",
-      extensionId: "byom-ai-wallet@byomai.com",
+      extensionId: "arlopass-wallet@arlopassai.com",
     });
   });
 
@@ -1091,7 +1091,7 @@ describe("BridgeHandler â€” session gate rejects unauthenticated operations
     const response = await handler.handle({
       type: "pairing.begin",
       extensionId: TEST_EXTENSION_ID,
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     // Should not be auth.required â€” pairing.begin doesn't need a session
     expect((response as Record<string, unknown>)["reasonCode"]).not.toBe("auth.required");

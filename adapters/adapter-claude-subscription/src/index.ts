@@ -15,7 +15,7 @@ import {
   type ValidateCredentialRefInput,
   type ValidationResult,
   MANIFEST_SCHEMA_VERSION,
-} from "@byom-ai/adapter-runtime";
+} from "@arlopass/adapter-runtime";
 import {
   type ProtocolCapability,
   AuthError,
@@ -23,7 +23,7 @@ import {
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 import {
   buildAuthHeaders,
   CLAUDE_API_BASE,
@@ -74,7 +74,7 @@ export const CLAUDE_SUBSCRIPTION_MANIFEST: AdapterManifest = {
   requiredPermissions: ["network.egress"],
   egressRules: [{ host: "api.anthropic.com", protocol: "https" }],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 export type ClaudeAdapterOptions = Readonly<{

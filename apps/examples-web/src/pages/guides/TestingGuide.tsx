@@ -2,7 +2,7 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const mockTransportReact = `import { createMockTransport, MockBYOMProvider } from "@byom-ai/react/testing";
+const mockTransportReact = `import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import Chat from "./Chat";
@@ -21,18 +21,18 @@ describe("Chat", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
-    // Your component is now connected to a mock BYOM backend
+    // Your component is now connected to a mock Arlopass backend
     // that responds with "Hello! How can I help you?"
   });
 });`;
 
-const mockTransportWeb = `import { createMockTransport } from "@byom-ai/react/testing";
-import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const mockTransportWeb = `import { createMockTransport } from "@arlopass/react/testing";
+import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 import { describe, it, expect } from "vitest";
 
 describe("ConversationManager", () => {
@@ -42,7 +42,7 @@ describe("ConversationManager", () => {
       latency: 50,
     });
 
-    const client = new BYOMClient({ transport });
+    const client = new ArlopassClient({ transport });
     await client.connect({ appId: "test" });
 
     const convo = new ConversationManager({ client });
@@ -56,7 +56,7 @@ describe("ConversationManager", () => {
   });
 });`;
 
-const mockErrorExample = `import { createMockTransport, MockBYOMProvider } from "@byom-ai/react/testing";
+const mockErrorExample = `import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import Chat from "./Chat";
@@ -68,9 +68,9 @@ describe("Chat error handling", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
     // Component should display the error
@@ -82,16 +82,16 @@ describe("Chat error handling", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
     // Provider listing fails — component should show fallback
   });
 });`;
 
-const streamMockExample = `import { createMockTransport, MockBYOMProvider } from "@byom-ai/react/testing";
+const streamMockExample = `import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
@@ -105,9 +105,9 @@ describe("Chat streaming", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -127,50 +127,50 @@ describe("Chat streaming", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
     // streamResponse auto-splits into chunks for streaming
   });
 });`;
 
-const windowMockExample = `import { mockWindowByom, cleanupWindowByom } from "@byom-ai/react/testing";
-import { createMockTransport } from "@byom-ai/react/testing";
+const windowMockExample = `import { mockWindowArlopass, cleanupWindowArlopass } from "@arlopass/react/testing";
+import { createMockTransport } from "@arlopass/react/testing";
 import { describe, it, afterEach } from "vitest";
 
 describe("Integration tests", () => {
   afterEach(() => {
-    // Always clean up window.byom after each test
-    cleanupWindowByom();
+    // Always clean up window.arlopass after each test
+    cleanupWindowArlopass();
   });
 
-  it("injects transport into window.byom", () => {
+  it("injects transport into window.arlopass", () => {
     const transport = createMockTransport({
       chatResponse: "Hello!",
     });
 
     // Simulate the extension injecting the transport
-    mockWindowByom(transport);
+    mockWindowArlopass(transport);
 
-    // Now window.byom is available — your app will
+    // Now window.arlopass is available — your app will
     // detect the extension as installed
-    expect(window.byom).toBeDefined();
+    expect(window.arlopass).toBeDefined();
   });
 
   it("simulates extension not installed", () => {
-    // Don't call mockWindowByom — window.byom is undefined
+    // Don't call mockWindowArlopass — window.arlopass is undefined
     // Your app's "not installed" UI should render
-    expect(window.byom).toBeUndefined();
+    expect(window.arlopass).toBeUndefined();
   });
 });`;
 
-const fullTestExample = `import { createMockTransport, MockBYOMProvider } from "@byom-ai/react/testing";
+const fullTestExample = `import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
-import { useConversation } from "@byom-ai/react";
+import { useConversation } from "@arlopass/react";
 import { useState } from "react";
 
 // Component under test
@@ -238,9 +238,9 @@ describe("Chat component", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -268,9 +268,9 @@ describe("Chat component", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -289,9 +289,9 @@ describe("Chat component", () => {
     });
 
     render(
-      <MockBYOMProvider transport={transport}>
+      <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockBYOMProvider>
+      </MockArlopassProvider>
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -319,27 +319,27 @@ export default function TestingGuide() {
       <div>
         <Title order={2}>Testing Your App</Title>
         <Text c="dimmed" mt={4}>
-          You want to write tests for components that use BYOM hooks.
+          You want to write tests for components that use Arlopass hooks.
         </Text>
       </div>
 
       <Title order={3}>Create a mock transport</Title>
       <Text>
         <code>createMockTransport()</code> builds a fake transport that
-        simulates the BYOM extension. Configure responses, errors, latency, and
-        streaming behaviour without a real extension or AI provider.
+        simulates the Arlopass extension. Configure responses, errors, latency,
+        and streaming behaviour without a real extension or AI provider.
       </Text>
       <CodeComparison
         reactSdk={{ title: "React component test", code: mockTransportReact }}
         webSdk={{ title: "Web SDK unit test", code: mockTransportWeb }}
       />
 
-      <Title order={3}>MockBYOMProvider</Title>
+      <Title order={3}>MockArlopassProvider</Title>
       <Text>
-        <code>MockBYOMProvider</code> is a drop-in test wrapper that injects
-        the mock transport into <code>window.byom</code> and wraps children
-        with <code>BYOMProvider</code>. Use it in every React component test
-        that uses BYOM hooks.
+        <code>MockArlopassProvider</code> is a drop-in test wrapper that injects
+        the mock transport into <code>window.arlopass</code> and wraps children
+        with <code>ArlopassProvider</code>. Use it in every React component test
+        that uses Arlopass hooks.
       </Text>
 
       <Title order={3}>Test error scenarios</Title>
@@ -359,11 +359,11 @@ export default function TestingGuide() {
       </Text>
       <CodeBlock title="streaming-tests.tsx" code={streamMockExample} />
 
-      <Title order={3}>Integration tests with window.byom</Title>
+      <Title order={3}>Integration tests with window.arlopass</Title>
       <Text>
         For integration tests that mount your full app (not just wrapped
-        components), use <code>mockWindowByom()</code> and{" "}
-        <code>cleanupWindowByom()</code> to control the global transport.
+        components), use <code>mockWindowArlopass()</code> and{" "}
+        <code>cleanupWindowArlopass()</code> to control the global transport.
         Always clean up in <code>afterEach</code>.
       </Text>
       <CodeBlock title="integration-tests.ts" code={windowMockExample} />
@@ -390,9 +390,9 @@ export default function TestingGuide() {
           span
           c="blue"
           style={{ cursor: "pointer" }}
-          onClick={() => navigate("reference/web-sdk/byom-client")}
+          onClick={() => navigate("reference/web-sdk/arlopass-client")}
         >
-          BYOMClient reference
+          ArlopassClient reference
         </Text>{" "}
         for web SDK testing patterns.
       </Callout>

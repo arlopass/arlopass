@@ -1,5 +1,5 @@
 {
-    "name": "@byom-ai/ai-sdk-transport",
+    "name": "@arlopass/ai-sdk-transport",
     "version": "0.1.0",
     "license": "MIT",
     "type": "module",
@@ -9,7 +9,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/AltClick/byom-web.git",
+        "url": "https://github.com/AltClick/arlopass.git",
         "directory": "packages/ai-sdk-transport"
     },
     "exports": {
@@ -31,10 +31,10 @@
     },
     "peerDependencies": {
         "ai": "^6.0.0",
-        "@byom-ai/web-sdk": "^0.1.0"
+        "@arlopass/web-sdk": "^0.1.0"
     },
     "devDependencies": {
         "ai": "^6.0.0",
-        "@byom-ai/web-sdk": "0.1.0"
+        "@arlopass/web-sdk": "0.1.0"
     }
 }

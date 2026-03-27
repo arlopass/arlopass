@@ -1,6 +1,6 @@
 import { createTheme, type MantineThemeOverride } from "@mantine/core";
 
-export const byomTheme: MantineThemeOverride = createTheme({
+export const arlopassTheme: MantineThemeOverride = createTheme({
     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     primaryColor: "dark",
     defaultRadius: "sm",

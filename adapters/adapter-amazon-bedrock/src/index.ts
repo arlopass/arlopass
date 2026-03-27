@@ -13,8 +13,8 @@ import {
   type RevokeCredentialRefInput,
   type ValidateCredentialRefInput,
   type ValidationResult,
-} from "@byom-ai/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@byom-ai/protocol";
+} from "@arlopass/adapter-runtime";
+import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
 
 export const BEDROCK_CONNECTION_METHOD_IDS = {
   API_KEY: "bedrock.api_key",
@@ -85,7 +85,7 @@ export const AMAZON_BEDROCK_MANIFEST: AdapterManifest = {
     { host: "bedrock-runtime.us-west-2.amazonaws.com", protocol: "https" },
   ],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 const BEDROCK_DEFAULT_MODEL = "anthropic.claude-3-5-sonnet-20241022-v2:0";

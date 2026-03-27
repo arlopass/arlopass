@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { IconArrowLeft } from "@tabler/icons-react";
-import { byomTheme } from "./ui/components/theme.js";
+import { arlopassTheme } from "./ui/components/theme.js";
 import { BridgeInstallGuide } from "./ui/components/onboarding/BridgeInstallGuide.js";
 import { OnboardingBanner } from "./ui/components/onboarding/OnboardingBanner.js";
 import { AddProviderWizard } from "./ui/components/onboarding/AddProviderWizard.js";
@@ -154,7 +154,7 @@ if (route !== null) {
   }
 
   createRoot(mountEl).render(
-    <MantineProvider theme={byomTheme} forceColorScheme="light">
+    <MantineProvider theme={arlopassTheme} forceColorScheme="light">
       <OptionsOnboarding />
     </MantineProvider>,
   );

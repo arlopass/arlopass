@@ -1,4 +1,4 @@
-# Design Spec: BYOM Extension Wallet UI (MetaMask-Inspired)
+# Design Spec: Arlopass Extension Wallet UI (MetaMask-Inspired)
 
 ## Metadata
 - **Date:** 2026-03-23
@@ -20,7 +20,7 @@ The extension currently has backend mediation logic but no user-facing wallet UI
 1. Add a polished extension popup with wallet-style structure.
 2. Present connected providers/models with clear status and active selection.
 3. Support user actions: connect provider, switch active provider/model, revoke provider.
-4. Match MetaMask-like visual language (card surfaces, hierarchy, controls) while using BYOM branding.
+4. Match MetaMask-like visual language (card surfaces, hierarchy, controls) while using Arlopass branding.
 
 ## Non-Goals
 1. Pixel-perfect cloning of MetaMask assets/UI.
@@ -33,7 +33,7 @@ The extension currently has backend mediation logic but no user-facing wallet UI
 
 ## Popup Layout
 1. **Top bar**
-   - BYOM Wallet title + status chip.
+   - Arlopass Wallet title + status chip.
 2. **Primary account card**
    - Active provider + active model.
    - Connection confidence/status.
@@ -55,7 +55,7 @@ The extension currently has backend mediation logic but no user-facing wallet UI
 
 ---
 
-## 4) Visual Direction (MetaMask-Inspired, BYOM-Branded)
+## 4) Visual Direction (MetaMask-Inspired, Arlopass-Branded)
 
 1. White/light-neutral cards on soft gray background.
 2. Rounded corners, subtle borders/shadows, bold primary CTA.
@@ -86,21 +86,21 @@ The extension currently has backend mediation logic but no user-facing wallet UI
 - Keep logic deterministic and no silent failures (show explicit UI error block).
 
 ## Storage Contract (v1)
-- `byom.wallet.providers.v1`:
+- `arlopass.wallet.providers.v1`:
   - `Array<{ id: string; name: string; type: "local" | "cloud" | "cli"; status: "connected" | "disconnected" | "attention"; models: Array<{ id: string; name: string }>; lastSyncedAt?: number }>`
-- `byom.wallet.activeProvider.v1`:
+- `arlopass.wallet.activeProvider.v1`:
   - `{ providerId: string; modelId?: string } | null`
-- `byom.wallet.ui.lastError.v1` (optional):
+- `arlopass.wallet.ui.lastError.v1` (optional):
   - `{ code: string; message: string; at: number }`
 
-`byom.wallet.activeProvider.v1` is the single source of truth for active selection.
+`arlopass.wallet.activeProvider.v1` is the single source of truth for active selection.
 When no provider is active, value MUST be `null` (or key absent and normalized to `null` at read-time).
 On revoke of the active provider, background sets value to `null` before emitting refresh.
 Unknown or malformed records are dropped from render and surfaced as non-fatal warnings.
 
 ## Action Contract (popup -> background)
 Transport envelope (all actions):
-- request: `{ channel: "byom.wallet"; action: string; requestId: string; payload: object }` via `chrome.runtime.sendMessage`
+- request: `{ channel: "arlopass.wallet"; action: string; requestId: string; payload: object }` via `chrome.runtime.sendMessage`
 - response: `{ ok: true; data?: object } | { ok: false; errorCode: string; message: string }`
 
 - `wallet.setActiveProvider` payload: `{ providerId: string; modelId?: string }`

@@ -40,7 +40,7 @@ export type OriginUsageSummary = {
     }>;
 };
 
-export const TOKEN_USAGE_STORAGE_KEY = "byom.token-usage.v1";
+export const TOKEN_USAGE_STORAGE_KEY = "arlopass.token-usage.v1";
 export const MAX_USAGE_RECORD_KEYS = 500;
 
 export function makeUsageRecordKey(

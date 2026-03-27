@@ -27,32 +27,32 @@ const EMPTY_CLOUD_CANARY_ALLOWLIST: CloudCanaryAllowlist = Object.freeze({
 
 const PROVIDER_METHOD_FLAG_ENV_MAP: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
-    BYOM_CLOUD_PROVIDER_ANTHROPIC_API_KEY_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_ANTHROPIC_API_KEY_ENABLED: Object.freeze([
       "anthropic.api_key",
     ]),
-    BYOM_CLOUD_PROVIDER_ANTHROPIC_OAUTH_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_ANTHROPIC_OAUTH_ENABLED: Object.freeze([
       "anthropic.oauth_subscription",
     ]),
-    BYOM_CLOUD_PROVIDER_FOUNDRY_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_FOUNDRY_ENABLED: Object.freeze([
       "foundry.api_key",
     ]),
-    BYOM_CLOUD_PROVIDER_VERTEX_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_VERTEX_ENABLED: Object.freeze([
       "vertex.api_key",
       "vertex.service_account",
       "vertex.workload_identity_federation",
     ]),
-    BYOM_CLOUD_PROVIDER_BEDROCK_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_BEDROCK_ENABLED: Object.freeze([
       "bedrock.api_key",
       "bedrock.assume_role",
       "bedrock.aws_access_key",
     ]),
-    BYOM_CLOUD_PROVIDER_OPENAI_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_OPENAI_ENABLED: Object.freeze([
       "openai.api_key",
     ]),
-    BYOM_CLOUD_PROVIDER_PERPLEXITY_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_PERPLEXITY_ENABLED: Object.freeze([
       "perplexity.api_key",
     ]),
-    BYOM_CLOUD_PROVIDER_GEMINI_ENABLED: Object.freeze([
+    ARLOPASS_CLOUD_PROVIDER_GEMINI_ENABLED: Object.freeze([
       "gemini.api_key",
       "gemini.oauth_access_token",
     ]),
@@ -200,7 +200,7 @@ export function isCanaryAllowed(
 export function createCloudFeatureFlagsFromEnv(
   env: NodeJS.ProcessEnv = process.env,
 ): CloudFeatureFlags {
-  const enabledMethodIds = new Set<string>(parseCsvEnv(env["BYOM_CLOUD_METHOD_ALLOWLIST"]));
+  const enabledMethodIds = new Set<string>(parseCsvEnv(env["ARLOPASS_CLOUD_METHOD_ALLOWLIST"]));
   for (const [envKey, methodIds] of Object.entries(PROVIDER_METHOD_FLAG_ENV_MAP)) {
     if (!parseBooleanEnv(env[envKey], false)) {
       continue;
@@ -211,13 +211,13 @@ export function createCloudFeatureFlagsFromEnv(
   }
 
   const cloudCanaryAllowlist: CloudCanaryAllowlist = Object.freeze({
-    extensionIds: parseCsvEnv(env["BYOM_CLOUD_CANARY_EXTENSION_IDS"]),
-    origins: parseCsvEnv(env["BYOM_CLOUD_CANARY_ORIGINS"]),
+    extensionIds: parseCsvEnv(env["ARLOPASS_CLOUD_CANARY_EXTENSION_IDS"]),
+    origins: parseCsvEnv(env["ARLOPASS_CLOUD_CANARY_ORIGINS"]),
   });
 
   return Object.freeze({
     cloudBrokerV2Enabled: parseBooleanEnv(
-      env["BYOM_CLOUD_BROKER_V2_ENABLED"],
+      env["ARLOPASS_CLOUD_BROKER_V2_ENABLED"],
       false,
     ),
     cloudMethodAllowlist: createMethodAllowlist(Array.from(enabledMethodIds)),

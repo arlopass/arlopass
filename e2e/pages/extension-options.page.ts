@@ -1,7 +1,7 @@
 import type { Page, Locator } from "@playwright/test";
 
 /**
- * Page Object for the BYOM Wallet options / Connect Provider page (`options.html`).
+ * Page Object for the Arlopass Wallet options / Connect Provider page (`options.html`).
  */
 export class ExtensionOptionsPage {
     readonly page: Page;

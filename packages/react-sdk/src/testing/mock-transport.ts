@@ -1,6 +1,6 @@
 "use client";
 
-import type { BYOMTransport } from "@byom-ai/web-sdk";
+import type { ArlopassTransport } from "@arlopass/web-sdk";
 
 type MockTransportOptions = {
     /** Capabilities returned on session.create */
@@ -42,7 +42,7 @@ function makeEnvelope(capability: string, payload: unknown) {
     };
 }
 
-export function createMockTransport(options: MockTransportOptions = {}): BYOMTransport {
+export function createMockTransport(options: MockTransportOptions = {}): ArlopassTransport {
     const {
         capabilities = ["session.create", "provider.list", "chat.completions", "chat.stream"],
         providers = [{ providerId: "mock", providerName: "Mock Provider", models: ["mock-model"] }],
@@ -54,7 +54,7 @@ export function createMockTransport(options: MockTransportOptions = {}): BYOMTra
         streamResponse,
     } = options;
 
-    const transport: BYOMTransport = {
+    const transport: ArlopassTransport = {
         async request(request) {
             if (latency > 0) await delay(latency);
 

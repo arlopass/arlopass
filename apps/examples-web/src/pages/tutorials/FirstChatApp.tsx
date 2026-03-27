@@ -2,22 +2,22 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, StepList, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const stepProvider = `import { BYOMProvider } from "@byom-ai/react";
+const stepProvider = `import { ArlopassProvider } from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="my-chat-app" defaultProvider="ollama" defaultModel="llama3">
+    <ArlopassProvider appId="my-chat-app" defaultProvider="ollama" defaultModel="llama3">
       <ChatApp />
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const stepGate = `import { ChatReadyGate } from "@byom-ai/react";
+const stepGate = `import { ChatReadyGate } from "@arlopass/react";
 
 function ChatApp() {
   return (
     <ChatReadyGate
-      connecting={<p>Connecting to BYOM extension...</p>}
+      connecting={<p>Connecting to Arlopass extension...</p>}
       noProvider={<p>Please select a provider in the extension.</p>}
       error={(err) => <p>Something went wrong: {err.message}</p>}
     >
@@ -26,7 +26,7 @@ function ChatApp() {
   );
 }`;
 
-const stepHook = `import { useConversation } from "@byom-ai/react";
+const stepHook = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const {
@@ -87,10 +87,10 @@ const stepStop = `{isStreaming && (
 
 const fullExample = `import { useState } from "react";
 import {
-  BYOMProvider,
+  ArlopassProvider,
   ChatReadyGate,
   useConversation,
-} from "@byom-ai/react";
+} from "@arlopass/react";
 
 function Chat() {
   const {
@@ -150,19 +150,19 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="my-chat-app">
+    <ArlopassProvider appId="my-chat-app">
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
-        noProvider={<p>Select a provider in the BYOM extension.</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
         error={(err) => <p>Error: {err.message}</p>}
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const comparisonReact = `import { useConversation } from "@byom-ai/react";
+const comparisonReact = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, streamingContent, isStreaming, stop } =
@@ -180,9 +180,9 @@ function Chat() {
   );
 }`;
 
-const comparisonWeb = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const comparisonWeb = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-chat-app" });
 
 const convo = new ConversationManager({
@@ -210,12 +210,12 @@ export default function FirstChatApp() {
       <Text>
         A fully functional chat UI with message history, real-time streaming
         responses, a text input, and a stop button — all powered by any AI
-        provider through the BYOM extension.
+        provider through the Arlopass extension.
       </Text>
 
       <Callout type="info" title="Prerequisites">
-        Make sure you've installed the React SDK and the BYOM browser extension.
-        See the{" "}
+        Make sure you've installed the React SDK and the Arlopass browser
+        extension. See the{" "}
         <Text
           span
           c="blue"
@@ -234,8 +234,8 @@ export default function FirstChatApp() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Wrap your app in BYOMProvider. This connects to the browser
-                  extension and manages the AI client lifecycle. You can
+                  Wrap your app in ArlopassProvider. This connects to the
+                  browser extension and manages the AI client lifecycle. You can
                   optionally set a default provider and model.
                 </Text>
                 <CodeBlock title="App.tsx" code={stepProvider} />
@@ -260,8 +260,8 @@ export default function FirstChatApp() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  The useConversation hook manages messages, streaming, and
-                  tool calls. Pass a systemPrompt to set the AI's behaviour.
+                  The useConversation hook manages messages, streaming, and tool
+                  calls. Pass a systemPrompt to set the AI's behaviour.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepHook} />
               </Stack>
@@ -284,9 +284,9 @@ export default function FirstChatApp() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  While isStreaming is true, streamingContent holds the
-                  partial response text. Render it below your message list
-                  so the user sees the AI typing in real time.
+                  While isStreaming is true, streamingContent holds the partial
+                  response text. Render it below your message list so the user
+                  sees the AI typing in real time.
                 </Text>
                 <CodeBlock title="Chat.tsx (JSX)" code={stepStreaming} />
               </Stack>
@@ -297,9 +297,9 @@ export default function FirstChatApp() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Create a controlled input and call stream() on submit.
-                  Clear the input immediately so the user can keep typing.
-                  Disable the input while streaming.
+                  Create a controlled input and call stream() on submit. Clear
+                  the input immediately so the user can keep typing. Disable the
+                  input while streaming.
                 </Text>
                 <CodeBlock title="Chat.tsx" code={stepInput} />
               </Stack>
@@ -310,8 +310,8 @@ export default function FirstChatApp() {
             content: (
               <Stack gap="xs">
                 <Text fz="sm">
-                  Call stop() to abort the current stream. The partial
-                  response is kept in the messages array.
+                  Call stop() to abort the current stream. The partial response
+                  is kept in the messages array.
                 </Text>
                 <CodeBlock title="Chat.tsx (JSX)" code={stepStop} />
               </Stack>
@@ -322,15 +322,15 @@ export default function FirstChatApp() {
 
       <Title order={3}>Complete example</Title>
       <Text>
-        Here's the full working app — copy it into your project and you're
-        ready to chat:
+        Here's the full working app — copy it into your project and you're ready
+        to chat:
       </Text>
       <CodeBlock title="App.tsx" code={fullExample} />
 
       <Title order={3}>React SDK vs Web SDK</Title>
       <Text>
-        The React SDK wraps the Web SDK in hooks and components. Here's the
-        same chat in both approaches:
+        The React SDK wraps the Web SDK in hooks and components. Here's the same
+        chat in both approaches:
       </Text>
       <CodeComparison
         reactSdk={{ title: "Chat.tsx", code: comparisonReact }}

@@ -1,4 +1,4 @@
-# Design Spec: BYOM Cloud Provider Adapters and Connection Flows (v2)
+# Design Spec: Arlopass Cloud Provider Adapters and Connection Flows (v2)
 
 ## 1) Metadata and Pillars
 
@@ -18,8 +18,8 @@
 1. **Bridge authority remains final**
    - Extension preflight is advisory; bridge runtime is authoritative deny/allow (`apps/extension/src/policy/preflight-evaluator.ts`, `apps/bridge/src/policy/runtime-evaluator.ts`, `apps/bridge/src/permissions/runtime-enforcer.ts`).
 2. **Stable SDK API stays stable**
-   - `@byom-ai/web-sdk` public contract remains `connect`, `listProviders`, `selectProvider`, `chat.send`, `chat.stream`, `disconnect` (`packages/web-sdk/src/client.ts`).
-   - `window.byom` remains transport plumbing, not the app contract (existing spec direction in `docs/superpowers/specs/2026-03-23-byom-ai-wallet-design.md`).
+   - `@arlopass/web-sdk` public contract remains `connect`, `listProviders`, `selectProvider`, `chat.send`, `chat.stream`, `disconnect` (`packages/web-sdk/src/client.ts`).
+   - `window.arlopass` remains transport plumbing, not the app contract (existing spec direction in `docs/superpowers/specs/2026-03-23-arlopass-wallet-design.md`).
 3. **Existing adapter runtime checks are mandatory**
    - Manifest schema enforcement, signature verification, sandbox permissions/egress, lifecycle health checks (`adapters/runtime/src/manifest-schema.ts`, `adapter-loader.ts`, `artifact-signature.ts`, `sandbox.ts`, `adapter-host.ts`).
 4. **Known cloud-runtime gap is explicitly closed**
@@ -30,7 +30,7 @@
 ## 2) Problem and Scope
 
 ### Problem
-BYOM currently supports cloud provider configuration/testing in extension options, but cloud chat execution is blocked at runtime by design because no secure token broker path is wired into the bridge execution plane. This creates an architecture gap between “provider appears connected” and “provider can execute chat safely in production.”
+Arlopass currently supports cloud provider configuration/testing in extension options, but cloud chat execution is blocked at runtime by design because no secure token broker path is wired into the bridge execution plane. This creates an architecture gap between “provider appears connected” and “provider can execute chat safely in production.”
 
 ### Scope
 This design defines the enterprise-grade cloud connection and execution architecture for:
@@ -128,7 +128,7 @@ Runtime execution context bound to:
 - Session health state + policy context
 
 #### Persistence boundaries
-- **Extension storage (`byom.wallet.providers.v1`)** stores provider metadata + `ConnectionHandle`, never plaintext credentials or `CredentialRef`.
+- **Extension storage (`arlopass.wallet.providers.v1`)** stores provider metadata + `ConnectionHandle`, never plaintext credentials or `CredentialRef`.
 - **Bridge keychain store** stores encrypted secret/token material.
 - **Bridge metadata store** maps `ConnectionHandle -> CredentialRef` and enforces binding constraints.
 - **In-memory runtime** stores ephemeral access tokens/session keys with TTL.
@@ -197,7 +197,7 @@ export interface CloudAdapterContractV2 extends AdapterContract {
 ### 4.4 Versioning and backward compatibility
 
 #### API compatibility
-- Keep `@byom-ai/web-sdk` method signatures unchanged.
+- Keep `@arlopass/web-sdk` method signatures unchanged.
 - Cloud v2 behavior is internal transport/runtime enhancement; app API remains stable.
 
 #### Protocol compatibility

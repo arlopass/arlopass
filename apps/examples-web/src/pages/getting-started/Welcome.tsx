@@ -1,4 +1,13 @@
-import { Stack, Title, Text, Card, Badge, Group, Divider, SimpleGrid } from "@mantine/core";
+import {
+  Stack,
+  Title,
+  Text,
+  Card,
+  Badge,
+  Group,
+  Divider,
+  SimpleGrid,
+} from "@mantine/core";
 import { Callout } from "../../components";
 import { navigate } from "../../router";
 
@@ -30,28 +39,28 @@ export default function Welcome() {
   return (
     <Stack gap="lg">
       <div>
-        <Title order={2}>Welcome to BYOM</Title>
+        <Title order={2}>Welcome to Arlopass</Title>
         <Text c="dimmed" mt={4}>
           Bring Your Own Model — an AI wallet for the web
         </Text>
       </div>
 
       <Text>
-        BYOM lets users bring their own AI provider to any web app. Instead of
-        locking into a single model or forcing users to trust you with API keys,
-        your app connects to whatever provider the user already has — through a
-        browser extension that acts as a universal AI wallet.
+        Arlopass lets users bring their own AI provider to any web app. Instead
+        of locking into a single model or forcing users to trust you with API
+        keys, your app connects to whatever provider the user already has —
+        through a browser extension that acts as a universal AI wallet.
       </Text>
 
       <Title order={3}>How it works</Title>
       <Text>
         The architecture has three layers. The{" "}
-        <strong>BYOM browser extension</strong> holds the user's provider
+        <strong>Arlopass browser extension</strong> holds the user's provider
         credentials and exposes a secure transport on the page. The{" "}
         <strong>Web SDK</strong> connects to that transport and gives you a
-        client for sending messages, streaming responses, and calling tools.
-        The <strong>React SDK</strong> wraps the Web SDK in hooks and
-        components so you can build AI-powered UIs with minimal boilerplate.
+        client for sending messages, streaming responses, and calling tools. The{" "}
+        <strong>React SDK</strong> wraps the Web SDK in hooks and components so
+        you can build AI-powered UIs with minimal boilerplate.
       </Text>
 
       <Title order={3}>Key features</Title>
@@ -101,13 +110,13 @@ export default function Welcome() {
             React SDK
           </Text>
           <Text fz="sm" c="dimmed">
-            Hooks, providers, and guard components. The fastest way to add AI
-            to a React app.
+            Hooks, providers, and guard components. The fastest way to add AI to
+            a React app.
           </Text>
         </Card>
       </SimpleGrid>
 
-      <Callout type="tip" title="New to BYOM?">
+      <Callout type="tip" title="New to Arlopass?">
         Start with the{" "}
         <Text
           span

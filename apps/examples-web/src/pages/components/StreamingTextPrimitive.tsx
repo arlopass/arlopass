@@ -22,7 +22,7 @@ const props = [
   },
 ];
 
-const usageExample = `import { StreamingText } from "@byom-ai/react-ui";
+const usageExample = `import { StreamingText } from "@arlopass/react-ui";
 
 function StreamingDemo({ content, isStreaming }) {
   return (
@@ -34,7 +34,7 @@ function StreamingDemo({ content, isStreaming }) {
   );
 }`;
 
-const withChatExample = `import { Chat, StreamingText } from "@byom-ai/react-ui";
+const withChatExample = `import { Chat, StreamingText } from "@arlopass/react-ui";
 
 <Chat.Root systemPrompt="You are helpful.">
   <Chat.Messages>
@@ -91,7 +91,7 @@ export default function StreamingTextPrimitive() {
       </div>
 
       <CodeBlock
-        code={`import { StreamingText } from "@byom-ai/react-ui";`}
+        code={`import { StreamingText } from "@arlopass/react-ui";`}
         language="tsx"
       />
 
@@ -113,7 +113,7 @@ export default function StreamingTextPrimitive() {
             }}
           >
             <span>
-              BYOM is an AI wallet that lets you use your own providers
+              Arlopass is an AI wallet that lets you use your own providers
             </span>
             <span style={{ color: "#2563eb" }}>▌</span>
           </div>

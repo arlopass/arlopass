@@ -1,16 +1,16 @@
-# @byom-ai/telemetry
+# @arlopass/telemetry
 
-Collect metrics, propagate traces, and redact sensitive data across all BYOM components. Zero dependencies.
+Collect metrics, propagate traces, and redact sensitive data across all Arlopass components. Zero dependencies.
 
 ```ts
-import { TelemetryMetrics, TelemetryTracing } from "@byom-ai/telemetry";
+import { TelemetryMetrics, TelemetryTracing } from "@arlopass/telemetry";
 
 const metrics = new TelemetryMetrics();
-const counter = metrics.createCounter("byom.request.total", { correlationId: "req-1", origin: "https://app.acme.com", providerId: "ollama" });
+const counter = metrics.createCounter("arlopass.request.total", { correlationId: "req-1", origin: "https://app.acme.com", providerId: "ollama" });
 counter.add();
 
 const tracing = new TelemetryTracing();
-const result = await tracing.withSpan("byom.request", { correlationId: "req-1", origin: "https://app.acme.com", providerId: "ollama" }, async (span) => {
+const result = await tracing.withSpan("arlopass.request", { correlationId: "req-1", origin: "https://app.acme.com", providerId: "ollama" }, async (span) => {
   span.addEvent("provider.dispatch", { modelId: "llama3.2" });
   const res = await doWork();
   span.setStatus("ok");
@@ -52,13 +52,13 @@ type MetricPoint = {
 
 | Name | Unit |
 |------|------|
-| `byom.request.total` | count |
-| `byom.request.duration_ms` | milliseconds |
-| `byom.request.failure.total` | count |
-| `byom.stream.chunk.total` | count |
-| `byom.stream.interruption.total` | count |
-| `byom.retry.total` | count |
-| `byom.adapter.health` | ratio |
+| `arlopass.request.total` | count |
+| `arlopass.request.duration_ms` | milliseconds |
+| `arlopass.request.failure.total` | count |
+| `arlopass.stream.chunk.total` | count |
+| `arlopass.stream.interruption.total` | count |
+| `arlopass.retry.total` | count |
+| `arlopass.adapter.health` | ratio |
 
 ---
 
@@ -108,7 +108,7 @@ type SpanEvent = { name: string; timestamp: string; attributes: TraceAttributes 
 
 #### Span Names (`TELEMETRY_SPAN_NAMES`)
 
-`byom.request` | `byom.policy.decision` | `byom.provider.dispatch` | `byom.stream` | `byom.adapter.health`
+`arlopass.request` | `arlopass.policy.decision` | `arlopass.provider.dispatch` | `arlopass.stream` | `arlopass.adapter.health`
 
 ---
 

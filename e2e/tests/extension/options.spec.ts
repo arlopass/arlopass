@@ -78,7 +78,7 @@ test.describe("Extension Options Page", () => {
 
     test("renders bridge pairing controls", async () => {
         await expect(options.bridgeHostNameInput).toBeVisible();
-        await expect(options.bridgeHostNameInput).toHaveValue("com.byom.bridge");
+        await expect(options.bridgeHostNameInput).toHaveValue("com.arlopass.bridge");
         await expect(options.beginPairingBtn).toBeVisible();
         await expect(options.refreshPairingsBtn).toBeVisible();
     });

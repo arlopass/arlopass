@@ -9,12 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import {
-  BYOMClient,
-  BYOMSDKError,
-  type BYOMTransport,
+  ArlopassClient,
+  ArlopassSDKError,
+  type ArlopassTransport,
   type ChatMessage,
   type ProviderDescriptor,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
 import {
   createDemoTransport,
@@ -65,7 +65,7 @@ export const fmtModel = (m: string) =>
     )
     .join(" ");
 export const errStr = (e: unknown) =>
-  e instanceof BYOMSDKError
+  e instanceof ArlopassSDKError
     ? `${e.machineCode} | ${e.reasonCode} | retryable=${String(e.retryable)}`
     : e instanceof Error
       ? e.message
@@ -74,7 +74,7 @@ export const errFb = (ctx: string, e: unknown): Feedback => ({
   kind: "error",
   title: `${ctx} failed`,
   message:
-    e instanceof BYOMSDKError
+    e instanceof ArlopassSDKError
       ? `${e.message} (${e.reasonCode})`
       : e instanceof Error
         ? e.message
@@ -82,13 +82,13 @@ export const errFb = (ctx: string, e: unknown): Feedback => ({
 });
 
 export function resolve(profile: TransportProfile): {
-  transport: BYOMTransport;
+  transport: ArlopassTransport;
   source: string;
   warning?: string;
 } {
   const inj = getInjectedTransport();
   if (profile === "injected") {
-    if (!inj) throw new Error("window.byom not found.");
+    if (!inj) throw new Error("window.arlopass not found.");
     return { transport: inj, source: "Injected extension" };
   }
   if (profile === "auto") {
@@ -96,7 +96,7 @@ export function resolve(profile: TransportProfile): {
     return {
       transport: createDemoTransport("mock"),
       source: "Demo mock",
-      warning: "window.byom unavailable — using demo transport.",
+      warning: "window.arlopass unavailable — using demo transport.",
     };
   }
   return { transport: createDemoTransport(profile), source: `Demo ${profile}` };
@@ -106,7 +106,7 @@ export function resolve(profile: TransportProfile): {
 
 interface InteractiveContextValue {
   /* state */
-  clientRef: React.RefObject<BYOMClient | null>;
+  clientRef: React.RefObject<ArlopassClient | null>;
   tp: TransportProfile;
   setTp: (v: TransportProfile) => void;
   appId: string;
@@ -164,9 +164,9 @@ const InteractiveContext = createContext<InteractiveContextValue | null>(null);
 /* ─── Provider ──────────────────────────────────────────────────────── */
 
 export function InteractiveProvider({ children }: { children: ReactNode }) {
-  const clientRef = useRef<BYOMClient | null>(null);
+  const clientRef = useRef<ArlopassClient | null>(null);
   const [tp, setTp] = useState<TransportProfile>("auto");
-  const [appId, setAppId] = useState("com.byom.examples.app");
+  const [appId, setAppId] = useState("com.arlopass.examples.app");
   const [originOv, setOriginOv] = useState("");
   const [fb, setFb] = useState<Feedback | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -178,7 +178,7 @@ export function InteractiveProvider({ children }: { children: ReactNode }) {
   const [selProv, setSelProv] = useState<string | null>(null);
   const [selModel, setSelModel] = useState<string | null>(null);
   const [prompt, setPrompt] = useState(
-    "Explain how BYOM protects provider credentials.",
+    "Explain how Arlopass protects provider credentials.",
   );
   const [history, setHistory] = useState<readonly ChatMessage[]>([]);
   const [preview, setPreview] = useState("");
@@ -193,10 +193,10 @@ export function InteractiveProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const r = () => setInjAvail(getInjectedTransport() !== null);
     r();
-    window.addEventListener("byom:injected", r as EventListener);
+    window.addEventListener("arlopass:injected", r as EventListener);
     window.addEventListener("focus", r);
     return () => {
-      window.removeEventListener("byom:injected", r as EventListener);
+      window.removeEventListener("arlopass:injected", r as EventListener);
       window.removeEventListener("focus", r);
     };
   }, []);
@@ -268,7 +268,7 @@ export function InteractiveProvider({ children }: { children: ReactNode }) {
     const origin = originOv.trim() || window.location.origin;
     const tMs =
       tp === "slow" ? 1500 : tp === "injected" || tp === "auto" ? 120000 : 6000;
-    const c = new BYOMClient({
+    const c = new ArlopassClient({
       transport: r.transport,
       origin,
       timeoutMs: tMs,
@@ -392,7 +392,7 @@ export function InteractiveProvider({ children }: { children: ReactNode }) {
         if (s) {
           await doSelect(s.providerId, s.modelId);
           await doSend([
-            { role: "user", content: "Summarize BYOM in one paragraph." },
+            { role: "user", content: "Summarize Arlopass in one paragraph." },
           ]);
         }
       }),

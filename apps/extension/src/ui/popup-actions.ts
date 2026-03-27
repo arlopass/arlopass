@@ -2,7 +2,7 @@
  * Wallet popup action client.
  *
  * Sends typed `chrome.runtime.sendMessage` envelopes to the background
- * service worker over the `byom.wallet` channel.  The `sendMessage`
+ * service worker over the `arlopass.wallet` channel.  The `sendMessage`
  * dependency is injected so callers can substitute a test double.
  */
 
@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 
 export type WalletMessageEnvelope = Readonly<{
-  channel: "byom.wallet";
+  channel: "arlopass.wallet";
   action: string;
   requestId: string;
   payload: object;
@@ -67,7 +67,7 @@ let _seq = 0;
 
 function generateRequestId(): string {
   _seq += 1;
-  return `byom.wallet.${Date.now()}.${_seq}`;
+  return `arlopass.wallet.${Date.now()}.${_seq}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,7 +77,7 @@ function generateRequestId(): string {
 export function createWalletActionClient(sendMessage: SendMessageFn): WalletActionClient {
   function send(action: string, payload: object): Promise<WalletActionResponse> {
     return sendMessage({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action,
       requestId: generateRequestId(),
       payload,

@@ -1,8 +1,8 @@
-const PAGE_TO_CONTENT_CHANNEL = "byom.transport.page-to-content.v1";
-const CONTENT_TO_PAGE_CHANNEL = "byom.transport.content-to-page.v1";
-const TRANSPORT_STREAM_CHANNEL = "byom.transport.stream";
-const TRANSPORT_STREAM_PORT_NAME = "byom.transport.stream.v1";
-const INPAGE_SCRIPT_ID = "byom-extension-inpage-provider-v1";
+const PAGE_TO_CONTENT_CHANNEL = "arlopass.transport.page-to-content.v1";
+const CONTENT_TO_PAGE_CHANNEL = "arlopass.transport.content-to-page.v1";
+const TRANSPORT_STREAM_CHANNEL = "arlopass.transport.stream";
+const TRANSPORT_STREAM_PORT_NAME = "arlopass.transport.stream.v1";
+const INPAGE_SCRIPT_ID = "arlopass-extension-inpage-provider-v1";
 
 type TransportBridgeAction =
   | "request"
@@ -12,7 +12,7 @@ type TransportBridgeAction =
 
 type PageToContentMessage = Readonly<{
   channel: typeof PAGE_TO_CONTENT_CHANNEL;
-  source: "byom-inpage-provider";
+  source: "arlopass-inpage-provider";
   requestId: string;
   action: TransportBridgeAction;
   payload: unknown;
@@ -22,7 +22,7 @@ type TransportStreamEventType = "start" | "chunk" | "done" | "error" | "cancelle
 
 type ContentToPageMessage = Readonly<{
   channel: typeof CONTENT_TO_PAGE_CHANNEL;
-  source: "byom-content-script";
+  source: "arlopass-content-script";
   requestId: string;
   ok: boolean;
   envelope?: unknown;
@@ -39,7 +39,7 @@ type ContentToPageMessage = Readonly<{
 
 type ContentToPageStreamMessage = Readonly<{
   channel: typeof CONTENT_TO_PAGE_CHANNEL;
-  source: "byom-content-script";
+  source: "arlopass-content-script";
   requestId: string;
   stream: true;
   event: TransportStreamEventType;
@@ -84,7 +84,7 @@ function isPageBridgeMessage(message: unknown): message is PageToContentMessage 
   return (
     isRecord(message) &&
     message["channel"] === PAGE_TO_CONTENT_CHANNEL &&
-    message["source"] === "byom-inpage-provider" &&
+    message["source"] === "arlopass-inpage-provider" &&
     typeof message["requestId"] === "string" &&
     (message["action"] === "request" ||
       message["action"] === "request-stream" ||
@@ -104,7 +104,7 @@ function postError(
 ): void {
   postResponseToPage({
     channel: CONTENT_TO_PAGE_CHANNEL,
-    source: "byom-content-script",
+    source: "arlopass-content-script",
     requestId,
     ok: false,
     error: {
@@ -189,7 +189,7 @@ function relayBufferedStreamToBackground(
 ): void {
   chrome.runtime.sendMessage(
     {
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request-stream",
       request: requestPayload,
     },
@@ -201,7 +201,7 @@ function relayBufferedStreamToBackground(
           runtimeError.message ?? "Extension bridge stream request failed.",
           {
             reasonCode: "transport.transient_failure",
-            machineCode: "BYOM_TRANSIENT_NETWORK",
+            machineCode: "ARLOPASS_TRANSIENT_NETWORK",
             retryable: true,
           },
         );
@@ -211,7 +211,7 @@ function relayBufferedStreamToBackground(
       if (!isRecord(response) || typeof response["ok"] !== "boolean") {
         postError(requestId, "Extension bridge returned an unexpected response.", {
           reasonCode: "transport.transient_failure",
-          machineCode: "BYOM_TRANSIENT_NETWORK",
+          machineCode: "ARLOPASS_TRANSIENT_NETWORK",
           retryable: true,
         });
         return;
@@ -220,7 +220,7 @@ function relayBufferedStreamToBackground(
       if (response["ok"] === true) {
         postResponseToPage({
           channel: CONTENT_TO_PAGE_CHANNEL,
-          source: "byom-content-script",
+          source: "arlopass-content-script",
           requestId,
           ok: true,
           ...(Array.isArray(response["envelopes"]) ? { envelopes: response["envelopes"] } : {}),
@@ -230,7 +230,7 @@ function relayBufferedStreamToBackground(
 
       postResponseToPage({
         channel: CONTENT_TO_PAGE_CHANNEL,
-        source: "byom-content-script",
+        source: "arlopass-content-script",
         requestId,
         ok: false,
         error: toRuntimeErrorPayload(response["error"]),
@@ -246,14 +246,14 @@ function relayLiveStreamToBackground(
   if (activeStreamPorts.has(requestId)) {
     postResponseToPage({
       channel: CONTENT_TO_PAGE_CHANNEL,
-      source: "byom-content-script",
+      source: "arlopass-content-script",
       requestId,
       stream: true,
       event: "error",
       error: {
         message: "Stream requestId is already active.",
         reasonCode: "request.invalid",
-        machineCode: "BYOM_PROTOCOL_INVALID_ENVELOPE",
+        machineCode: "ARLOPASS_PROTOCOL_INVALID_ENVELOPE",
         retryable: false,
       },
     });
@@ -299,7 +299,7 @@ function relayLiveStreamToBackground(
   ): void => {
     postResponseToPage({
       channel: CONTENT_TO_PAGE_CHANNEL,
-      source: "byom-content-script",
+      source: "arlopass-content-script",
       requestId,
       stream: true,
       event: "error",
@@ -322,7 +322,7 @@ function relayLiveStreamToBackground(
         terminal = true;
         emitStreamError("Malformed stream event received from extension runtime.", {
           reasonCode: "request.invalid",
-          machineCode: "BYOM_PROTOCOL_INVALID_ENVELOPE",
+          machineCode: "ARLOPASS_PROTOCOL_INVALID_ENVELOPE",
           retryable: false,
         });
         cleanup();
@@ -334,7 +334,7 @@ function relayLiveStreamToBackground(
       terminal = true;
       postResponseToPage({
         channel: CONTENT_TO_PAGE_CHANNEL,
-        source: "byom-content-script",
+        source: "arlopass-content-script",
         requestId,
         stream: true,
         event: "error",
@@ -349,7 +349,7 @@ function relayLiveStreamToBackground(
         terminal = true;
         emitStreamError("Malformed stream envelope received from extension runtime.", {
           reasonCode: "request.invalid",
-          machineCode: "BYOM_PROTOCOL_INVALID_ENVELOPE",
+          machineCode: "ARLOPASS_PROTOCOL_INVALID_ENVELOPE",
           retryable: false,
         });
         cleanup();
@@ -359,7 +359,7 @@ function relayLiveStreamToBackground(
 
     postResponseToPage({
       channel: CONTENT_TO_PAGE_CHANNEL,
-      source: "byom-content-script",
+      source: "arlopass-content-script",
       requestId,
       stream: true,
       event: incoming.event,
@@ -380,7 +380,7 @@ function relayLiveStreamToBackground(
     const runtimeError = chrome.runtime.lastError;
     emitStreamError(runtimeError?.message ?? "Extension stream bridge disconnected.", {
       reasonCode: "transport.transient_failure",
-      machineCode: "BYOM_TRANSIENT_NETWORK",
+      machineCode: "ARLOPASS_TRANSIENT_NETWORK",
       retryable: true,
     });
     cleanup();
@@ -416,7 +416,7 @@ function relayToBackground(message: PageToContentMessage): void {
         "Invalid transport request payload from page context.",
         {
           reasonCode: "request.invalid",
-          machineCode: "BYOM_PROTOCOL_INVALID_ENVELOPE",
+          machineCode: "ARLOPASS_PROTOCOL_INVALID_ENVELOPE",
           retryable: false,
         },
       );
@@ -425,7 +425,7 @@ function relayToBackground(message: PageToContentMessage): void {
 
     chrome.runtime.sendMessage(
       {
-        channel: "byom.transport",
+        channel: "arlopass.transport",
         action: "request",
         request: requestPayload,
       },
@@ -437,7 +437,7 @@ function relayToBackground(message: PageToContentMessage): void {
             runtimeError.message ?? "Extension bridge request failed.",
             {
               reasonCode: "transport.transient_failure",
-              machineCode: "BYOM_TRANSIENT_NETWORK",
+              machineCode: "ARLOPASS_TRANSIENT_NETWORK",
               retryable: true,
             },
           );
@@ -447,7 +447,7 @@ function relayToBackground(message: PageToContentMessage): void {
         if (!isRecord(response) || typeof response["ok"] !== "boolean") {
           postError(requestId, "Extension bridge returned an unexpected response.", {
             reasonCode: "transport.transient_failure",
-            machineCode: "BYOM_TRANSIENT_NETWORK",
+            machineCode: "ARLOPASS_TRANSIENT_NETWORK",
             retryable: true,
           });
           return;
@@ -456,7 +456,7 @@ function relayToBackground(message: PageToContentMessage): void {
         if (response["ok"] === true) {
           postResponseToPage({
             channel: CONTENT_TO_PAGE_CHANNEL,
-            source: "byom-content-script",
+            source: "arlopass-content-script",
             requestId,
             ok: true,
             ...(isRecord(response["envelope"]) ? { envelope: response["envelope"] } : {}),
@@ -467,7 +467,7 @@ function relayToBackground(message: PageToContentMessage): void {
 
         postResponseToPage({
           channel: CONTENT_TO_PAGE_CHANNEL,
-          source: "byom-content-script",
+          source: "arlopass-content-script",
           requestId,
           ok: false,
           error: toRuntimeErrorPayload(response["error"]),
@@ -485,7 +485,7 @@ function relayToBackground(message: PageToContentMessage): void {
         "Invalid transport stream payload from page context.",
         {
           reasonCode: "request.invalid",
-          machineCode: "BYOM_PROTOCOL_INVALID_ENVELOPE",
+          machineCode: "ARLOPASS_PROTOCOL_INVALID_ENVELOPE",
           retryable: false,
         },
       );
@@ -501,7 +501,7 @@ function relayToBackground(message: PageToContentMessage): void {
     if (port === undefined) {
       postResponseToPage({
         channel: CONTENT_TO_PAGE_CHANNEL,
-        source: "byom-content-script",
+        source: "arlopass-content-script",
         requestId,
         stream: true,
         event: "cancelled",
@@ -518,14 +518,14 @@ function relayToBackground(message: PageToContentMessage): void {
     } catch {
       postResponseToPage({
         channel: CONTENT_TO_PAGE_CHANNEL,
-        source: "byom-content-script",
+        source: "arlopass-content-script",
         requestId,
         stream: true,
         event: "error",
         error: {
           message: "Failed to propagate stream cancellation to extension runtime.",
           reasonCode: "transport.transient_failure",
-          machineCode: "BYOM_TRANSIENT_NETWORK",
+          machineCode: "ARLOPASS_TRANSIENT_NETWORK",
           retryable: true,
         },
       });
@@ -542,7 +542,7 @@ function relayToBackground(message: PageToContentMessage): void {
   const sessionId = extractDisconnectSessionId(message.payload);
   chrome.runtime.sendMessage(
     {
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "disconnect",
       ...(sessionId !== undefined ? { sessionId } : {}),
     },
@@ -554,7 +554,7 @@ function relayToBackground(message: PageToContentMessage): void {
           runtimeError.message ?? "Extension bridge disconnect failed.",
           {
             reasonCode: "transport.transient_failure",
-            machineCode: "BYOM_TRANSIENT_NETWORK",
+            machineCode: "ARLOPASS_TRANSIENT_NETWORK",
             retryable: true,
           },
         );
@@ -564,7 +564,7 @@ function relayToBackground(message: PageToContentMessage): void {
       if (!isRecord(response) || typeof response["ok"] !== "boolean") {
         postError(requestId, "Extension bridge returned an unexpected response.", {
           reasonCode: "transport.transient_failure",
-          machineCode: "BYOM_TRANSIENT_NETWORK",
+          machineCode: "ARLOPASS_TRANSIENT_NETWORK",
           retryable: true,
         });
         return;
@@ -573,7 +573,7 @@ function relayToBackground(message: PageToContentMessage): void {
       if (response["ok"] === true) {
         postResponseToPage({
           channel: CONTENT_TO_PAGE_CHANNEL,
-          source: "byom-content-script",
+          source: "arlopass-content-script",
           requestId,
           ok: true,
         });
@@ -583,7 +583,7 @@ function relayToBackground(message: PageToContentMessage): void {
       const error = isRecord(response["error"]) ? response["error"] : {};
       postResponseToPage({
         channel: CONTENT_TO_PAGE_CHANNEL,
-        source: "byom-content-script",
+        source: "arlopass-content-script",
         requestId,
         ok: false,
         error: {
@@ -646,11 +646,11 @@ function injectInpageProviderScript(): void {
   });
   script.addEventListener("error", () => {
     postError(
-      "byom.inject",
-      "Failed to inject BYOM provider script into page context.",
+      "arlopass.inject",
+      "Failed to inject Arlopass provider script into page context.",
       {
         reasonCode: "provider.unavailable",
-        machineCode: "BYOM_PROVIDER_UNAVAILABLE",
+        machineCode: "ARLOPASS_PROVIDER_UNAVAILABLE",
         retryable: false,
       },
     );

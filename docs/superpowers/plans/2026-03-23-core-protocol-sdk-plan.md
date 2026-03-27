@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the canonical BYOM protocol package and app-facing web SDK with strict contracts, typed errors, and deterministic session behavior.
+**Goal:** Build the canonical Arlopass protocol package and app-facing web SDK with strict contracts, typed errors, and deterministic session behavior.
 
 **Architecture:** Create `packages/protocol` as the source of truth for envelopes/capabilities/errors/versioning, then build `packages/web-sdk` on top with a state machine and transport abstraction. Validate with unit and integration tests before downstream sub-projects depend on it.
 
@@ -131,7 +131,7 @@ Expected: PASS for protocol tests and no TS errors.
 
 ```bash
 git add packages/protocol
-git commit -m "feat: add canonical byom protocol package"
+git commit -m "feat: add canonical arlopass protocol package"
 ```
 
 ---
@@ -159,7 +159,7 @@ Expected: FAIL with missing implementation.
 - [ ] **Step 3: Implement minimal SDK to pass tests**
 
 Implement:
-- `BYOMClient` with `connect`, `listProviders`, `selectProvider`, `chat.send`, `chat.stream`, `disconnect`
+- `ArlopassClient` with `connect`, `listProviders`, `selectProvider`, `chat.send`, `chat.stream`, `disconnect`
 - transport adapter interface used by extension provider bridge
 - correlation-id generation and propagation across request/response/stream APIs
 - typed error normalization from protocol errors
@@ -173,7 +173,7 @@ Expected: PASS.
 
 ```bash
 git add packages/web-sdk
-git commit -m "feat: implement byom web sdk core api"
+git commit -m "feat: implement arlopass web sdk core api"
 ```
 
 ---

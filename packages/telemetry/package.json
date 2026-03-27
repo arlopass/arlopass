@@ -1,5 +1,5 @@
 {
-  "name": "@byom-ai/telemetry",
+  "name": "@arlopass/telemetry",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "packages/telemetry"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/packages/telemetry#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/packages/telemetry#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
   "exports": {
     ".": {

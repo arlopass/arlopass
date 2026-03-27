@@ -115,7 +115,7 @@ describe("createAuditEvent", () => {
 describe("JsonlExporter", () => {
   it("exports an event and returns written: true", () => {
     const exporter = new JsonlExporter({
-      filePath: "/tmp/byom-audit-test.jsonl",
+      filePath: "/tmp/arlopass-audit-test.jsonl",
     });
 
     // Override internal write by spying via the filter returning true
@@ -127,7 +127,7 @@ describe("JsonlExporter", () => {
 
   it("respects filter: events rejected by filter are not written", () => {
     const exporter = new JsonlExporter({
-      filePath: "/tmp/byom-audit-test-filtered.jsonl",
+      filePath: "/tmp/arlopass-audit-test-filtered.jsonl",
       filter: () => false,
     });
     const result = exporter.export(baseEvent());
@@ -137,7 +137,7 @@ describe("JsonlExporter", () => {
 
   it("passes events accepted by filter to the file", () => {
     const exporter = new JsonlExporter({
-      filePath: "/tmp/byom-audit-test-pass.jsonl",
+      filePath: "/tmp/arlopass-audit-test-pass.jsonl",
       filter: (e) => e.decision === "deny",
     });
     const allowResult = exporter.export(baseEvent());
@@ -183,14 +183,14 @@ describe("OtlpExporter", () => {
     exporter.export(baseEvent());
 
     const attrs = records[0]!.attributes;
-    expect(attrs["byom.origin"]).toBe("https://example.corp");
-    expect(attrs["byom.provider_id"]).toBe("provider.openai");
-    expect(attrs["byom.model_id"]).toBe("model.gpt-4o");
-    expect(attrs["byom.capability"]).toBe("chat.stream");
-    expect(attrs["byom.decision"]).toBe("allow");
-    expect(attrs["byom.reason_code"]).toBe("policy.allow.default");
-    expect(attrs["byom.correlation_id"]).toBe("corr.abc123");
-    expect(attrs["byom.policy_version"]).toBe("v1.0.0");
+    expect(attrs["arlopass.origin"]).toBe("https://example.corp");
+    expect(attrs["arlopass.provider_id"]).toBe("provider.openai");
+    expect(attrs["arlopass.model_id"]).toBe("model.gpt-4o");
+    expect(attrs["arlopass.capability"]).toBe("chat.stream");
+    expect(attrs["arlopass.decision"]).toBe("allow");
+    expect(attrs["arlopass.reason_code"]).toBe("policy.allow.default");
+    expect(attrs["arlopass.correlation_id"]).toBe("corr.abc123");
+    expect(attrs["arlopass.policy_version"]).toBe("v1.0.0");
   });
 
   it("includes optional metadata as prefixed attributes", () => {
@@ -199,8 +199,8 @@ describe("OtlpExporter", () => {
     exporter.export({ ...baseEvent(), metadata: { env: "prod", region: "us-east-1" } });
 
     const attrs = records[0]!.attributes;
-    expect(attrs["byom.meta.env"]).toBe("prod");
-    expect(attrs["byom.meta.region"]).toBe("us-east-1");
+    expect(attrs["arlopass.meta.env"]).toBe("prod");
+    expect(attrs["arlopass.meta.region"]).toBe("us-east-1");
   });
 
   it("generates a valid timeUnixNano from the timestamp", () => {

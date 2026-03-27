@@ -1,7 +1,7 @@
 import { Stack, Title, Text, Divider } from "@mantine/core";
 import { ApiTable, CodeBlock, InlineCode } from "../../../components";
 
-const importLine = `import { ConversationManager } from "@byom-ai/web-sdk";`;
+const importLine = `import { ConversationManager } from "@arlopass/web-sdk";`;
 
 // ---------------------------------------------------------------------------
 // Constructor options
@@ -10,9 +10,9 @@ const importLine = `import { ConversationManager } from "@byom-ai/web-sdk";`;
 const constructorOptions = [
   {
     name: "client",
-    type: "BYOMClient",
+    type: "ArlopassClient",
     required: true,
-    description: "Connected BYOMClient instance.",
+    description: "Connected ArlopassClient instance.",
   },
   {
     name: "maxTokens",
@@ -212,8 +212,8 @@ export default function ConversationManagerAPI() {
       <Title order={2}>ConversationManager</Title>
       <Text>
         High-level conversation controller built on top of{" "}
-        <InlineCode>BYOMClient</InlineCode>. Handles context-window management,
-        summarization, tool calling, and message pinning.
+        <InlineCode>ArlopassClient</InlineCode>. Handles context-window
+        management, summarization, tool calling, and message pinning.
       </Text>
 
       <CodeBlock code={importLine} language="tsx" />

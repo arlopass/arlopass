@@ -1,14 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useBYOMContext } from "../hooks/use-store.js";
+import { useArlopassContext } from "../hooks/use-store.js";
 
 type Props = Readonly<{
   children: ReactNode | (() => ReactNode);
 }>;
 
-export function BYOMNotInstalled({ children }: Props): ReactNode {
-  const { transportAvailable } = useBYOMContext();
+export function ArlopassNotInstalled({ children }: Props): ReactNode {
+  const { transportAvailable } = useArlopassContext();
 
   if (transportAvailable) return null;
 

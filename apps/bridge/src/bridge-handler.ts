@@ -6,7 +6,7 @@ import {
   TELEMETRY_METRIC_NAMES,
   TELEMETRY_METRIC_UNITS,
   type TelemetryMetrics,
-} from "@byom-ai/telemetry";
+} from "@arlopass/telemetry";
 
 import {
   CliChatExecutionError,
@@ -142,7 +142,7 @@ function toRequestFingerprint(payload: unknown): string {
 }
 
 const DEFAULT_IDEMPOTENCY_NAMESPACE = createHash("sha256")
-  .update("byom.bridge.cloud.connection.complete.idempotency.v1.default", "utf8")
+  .update("arlopass.bridge.cloud.connection.complete.idempotency.v1.default", "utf8")
   .digest("hex");
 
 function deriveCloudConnectionCompleteIdempotencyNamespace(signingKey: Buffer): string {
@@ -150,7 +150,7 @@ function deriveCloudConnectionCompleteIdempotencyNamespace(signingKey: Buffer): 
     return DEFAULT_IDEMPOTENCY_NAMESPACE;
   }
   return createHash("sha256")
-    .update("byom.bridge.cloud.connection.complete.idempotency.v1", "utf8")
+    .update("arlopass.bridge.cloud.connection.complete.idempotency.v1", "utf8")
     .update(signingKey)
     .digest("hex");
 }
@@ -456,7 +456,7 @@ export class BridgeHandler {
     if (this.#metrics === undefined) return;
     const metadata = {
       correlationId: `bridge.${messageType}`,
-      origin: "byom.bridge",
+      origin: "arlopass.bridge",
       providerId: "bridge",
       messageType,
     };
@@ -645,7 +645,7 @@ export class BridgeHandler {
 
   #emitPairingCode(begin: BeginPairingResult): void {
     const output = [
-      `[byom-bridge] Pair Bridge code`,
+      `[arlopass-bridge] Pair Bridge code`,
       `session=${begin.pairingSessionId}`,
       `code=${begin.oneTimeCode}`,
       `ttlSeconds=${String(Math.floor(begin.ttlMs / 1_000))}`,
@@ -653,7 +653,7 @@ export class BridgeHandler {
       `hostName=${begin.hostName}`,
     ].join(" | ");
     const pairingCodeLogPath = normalizeOptionalNonEmptyString(
-      process.env["BYOM_BRIDGE_PAIRING_CODE_LOG_PATH"],
+      process.env["ARLOPASS_BRIDGE_PAIRING_CODE_LOG_PATH"],
     );
     if (pairingCodeLogPath !== undefined) {
       try {
@@ -662,7 +662,7 @@ export class BridgeHandler {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         process.stderr.write(
-          `[byom-bridge] warning: failed to append pairing code to "${pairingCodeLogPath}": ${errorMessage}\n`,
+          `[arlopass-bridge] warning: failed to append pairing code to "${pairingCodeLogPath}": ${errorMessage}\n`,
         );
       }
     }
@@ -691,7 +691,7 @@ export class BridgeHandler {
         : {}),
       ...(input.pairingHandle !== undefined ? { pairingHandle: input.pairingHandle } : {}),
     };
-    process.stderr.write(`[byom-bridge][audit] ${JSON.stringify(event)}\n`);
+    process.stderr.write(`[arlopass-bridge][audit] ${JSON.stringify(event)}\n`);
   }
 
   #asPairingErrorResponse(error: unknown, fallbackMessage: string): NativeMessage {

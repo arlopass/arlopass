@@ -30,7 +30,7 @@ An unauthenticated message type (added to `BridgeHandler.#UNAUTHENTICATED_MESSAG
 {
   type: "pairing.auto",
   extensionId: string,   // chrome.runtime.id
-  hostName: string       // "com.byom.bridge"
+  hostName: string       // "com.arlopass.bridge"
 }
 ```
 
@@ -99,7 +99,7 @@ Receive { pairingHandle, pairingKeyHex, ... }
 Wrap pairing key with PBKDF2 + AES-256-GCM
   (using existing wrapPairingKeyMaterial from bridge-pairing.ts)
   ↓
-Store wrapped state in chrome.storage.local at "byom.wallet.bridgePairing.v1"
+Store wrapped state in chrome.storage.local at "arlopass.wallet.bridgePairing.v1"
   ↓
 Show "✓ Bridge connected and paired"
 ```
@@ -109,7 +109,7 @@ User sees: "Bridge connected" — pairing is invisible.
 ### AddProviderWizard update
 
 Replace `resolveBridgeSharedSecret()` (legacy) with pairing-based secret resolution:
-- Read `byom.wallet.bridgePairing.v1` from storage
+- Read `arlopass.wallet.bridgePairing.v1` from storage
 - Unwrap pairing key using `unwrapPairingKeyMaterial`
 - Pass to `ensureBridgeHandshakeSession` as `resolveBridgeSharedSecret`
 - Include `pairingHandle` via `resolveBridgePairingHandle`
@@ -122,7 +122,7 @@ Replace `resolveBridgeSharedSecret()` (legacy) with pairing-based secret resolut
 
 | File | What | Action |
 |---|---|---|
-| `apps/bridge/src/main.ts` | `resolveSharedSecretFromEnv()` | Delete function. Bridge no longer reads `BYOM_BRIDGE_SHARED_SECRET`. |
+| `apps/bridge/src/main.ts` | `resolveSharedSecretFromEnv()` | Delete function. Bridge no longer reads `ARLOPASS_BRIDGE_SHARED_SECRET`. |
 | `apps/bridge/src/main.ts` | `deriveConnectionRegistrySigningKey(sharedSecret)` | Replace (see Phase C). |
 | `apps/bridge/src/main.ts` | `sharedSecret` variable + Buffer validation | Remove. |
 | `apps/bridge/src/bridge-handler.ts` | `#sharedSecret: Buffer` field | Remove. |
@@ -158,8 +158,8 @@ Add `"pairing.auto"` to the set alongside `handshake.challenge`, `handshake.veri
 
 | File | What | Action |
 |---|---|---|
-| `scripts/dev/run-dev.ps1` | Secret generation, `BYOM_BRIDGE_SHARED_SECRET` env var setup | Remove. Dev startup no longer needs a secret. |
-| `scripts/dev/native-host/*.cmd` | `BYOM_BRIDGE_SHARED_SECRET_PATH` reading | Remove. |
+| `scripts/dev/run-dev.ps1` | Secret generation, `ARLOPASS_BRIDGE_SHARED_SECRET` env var setup | Remove. Dev startup no longer needs a secret. |
+| `scripts/dev/native-host/*.cmd` | `ARLOPASS_BRIDGE_SHARED_SECRET_PATH` reading | Remove. |
 
 ### Test updates
 
@@ -199,8 +199,8 @@ const signingKey = loadFromStateFile();
 ### State file
 
 Location:
-- Linux/macOS: `~/.local/share/byom-bridge/state.json`
-- Windows: `%LOCALAPPDATA%\BYOM\state.json`
+- Linux/macOS: `~/.local/share/arlopass-bridge/state.json`
+- Windows: `%LOCALAPPDATA%\Arlopass\state.json`
 
 Structure:
 ```json
@@ -237,7 +237,7 @@ Cloud connection metadata is a bridge-internal concern. If the extension re-pair
 - Replaces all `BridgeHandler({ sharedSecret })` instantiations
 
 **Extension tests:** Create a storage fixture that:
-- Populates `byom.wallet.bridgePairing.v1` with a wrapped pairing state
+- Populates `arlopass.wallet.bridgePairing.v1` with a wrapped pairing state
 - Uses a known test password for unwrapping
 - Replaces all `WALLET_KEY_BRIDGE_SHARED_SECRET` mock storage setups
 

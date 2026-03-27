@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { BYOMClient } from "../client.js";
+import { ArlopassClient } from "../client.js";
 import {
-  BYOMStateError,
-  BYOMTimeoutError,
+  ArlopassStateError,
+  ArlopassTimeoutError,
   SDK_MACHINE_CODES,
 } from "../errors.js";
 import type {
@@ -27,7 +27,7 @@ import {
   setupConnectedClient,
 } from "./test-helpers.js";
 
-describe("BYOMClient", () => {
+describe("ArlopassClient", () => {
   it("supports connect -> listProviders -> selectProvider -> chat -> disconnect flow", async () => {
     const transport = new MockTransport();
     transport.requestHandler = createDefaultRequestHandler();
@@ -57,7 +57,7 @@ describe("BYOMClient", () => {
     const sendResult = await client.chat.send({
       messages: [{ role: "user", content: "hello" }],
     });
-    expect(sendResult.message.content).toBe("Hello from BYOM.");
+    expect(sendResult.message.content).toBe("Hello from Arlopass.");
     expect(sendResult.correlationId).toMatch(/^corr\./);
 
     const streamEvents = await consumeStream(
@@ -140,7 +140,7 @@ describe("BYOMClient", () => {
 
     await client.connect({ appId: "acme.app" });
     await expect(client.connect({ appId: "acme.again" })).rejects.toBeInstanceOf(
-      BYOMStateError,
+      ArlopassStateError,
     );
   });
 
@@ -168,7 +168,7 @@ describe("BYOMClient", () => {
       return createDefaultRequestHandler()(request);
     };
 
-    const client = new BYOMClient({
+    const client = new ArlopassClient({
       transport,
       timeoutMs: 10,
       now: createDeterministicClock(),
@@ -182,7 +182,7 @@ describe("BYOMClient", () => {
       client.chat.send({
         messages: [{ role: "user", content: "slow request" }],
       }),
-    ).rejects.toBeInstanceOf(BYOMTimeoutError);
+    ).rejects.toBeInstanceOf(ArlopassTimeoutError);
   });
 
   it("normalizes chat.stream timeout failures into typed timeout errors", async () => {
@@ -205,7 +205,7 @@ describe("BYOMClient", () => {
       return streamGenerator();
     };
 
-    const client = new BYOMClient({
+    const client = new ArlopassClient({
       transport,
       timeoutMs: 10,
       now: createDeterministicClock(),
@@ -221,7 +221,7 @@ describe("BYOMClient", () => {
           messages: [{ role: "user", content: "slow stream" }],
         }),
       ),
-    ).rejects.toBeInstanceOf(BYOMTimeoutError);
+    ).rejects.toBeInstanceOf(ArlopassTimeoutError);
   });
 
   it("propagates abort signal to chat.send and classifies cancellation", async () => {
@@ -259,7 +259,7 @@ describe("BYOMClient", () => {
       });
     };
 
-    const client = new BYOMClient({
+    const client = new ArlopassClient({
       transport,
       timeoutMs: 5_000,
       now: createDeterministicClock(),
@@ -290,7 +290,7 @@ describe("BYOMClient", () => {
   });
 });
 
-describe("BYOMClient — context window", () => {
+describe("ArlopassClient — context window", () => {
   it("returns default context window size before provider selection", () => {
     const transport = new MockTransport();
     transport.requestHandler = createDefaultRequestHandler();

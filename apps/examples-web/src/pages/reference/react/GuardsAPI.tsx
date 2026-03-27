@@ -2,18 +2,18 @@ import { Stack, Title, Text, Divider } from "@mantine/core";
 import { ApiTable, CodeBlock, InlineCode } from "../../../components";
 
 const importLine = `import {
-  BYOMConnectionGate,
-  BYOMProviderGate,
-  BYOMChatReadyGate,
-  BYOMNotInstalled,
-  BYOMDisconnected,
-  BYOMConnected,
-  BYOMProviderNotReady,
-  BYOMHasError,
-  BYOMChatNotReady,
-  BYOMChatReady,
-  BYOMErrorBoundary,
-} from "@byom-ai/react/guards";`;
+  ArlopassConnectionGate,
+  ArlopassProviderGate,
+  ArlopassChatReadyGate,
+  ArlopassNotInstalled,
+  ArlopassDisconnected,
+  ArlopassConnected,
+  ArlopassProviderNotReady,
+  ArlopassHasError,
+  ArlopassChatNotReady,
+  ArlopassChatReady,
+  ArlopassErrorBoundary,
+} from "@arlopass/react/guards";`;
 
 // ---------------------------------------------------------------------------
 // Positive gates
@@ -28,14 +28,14 @@ const connectionGateProps = [
   },
   {
     name: "errorFallback",
-    type: "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+    type: "(props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
     description:
       "Rendered when connection fails. Receives the error and a retry function.",
   },
   {
     name: "notInstalledFallback",
     type: "ReactNode",
-    description: "Rendered when the BYOM extension is not installed.",
+    description: "Rendered when the Arlopass extension is not installed.",
   },
   {
     name: "children",
@@ -46,9 +46,9 @@ const connectionGateProps = [
   },
 ];
 
-const connectionGateExample = `<BYOMConnectionGate
+const connectionGateExample = `<ArlopassConnectionGate
   fallback={<p>Connecting…</p>}
-  notInstalledFallback={<p>Please install the BYOM extension.</p>}
+  notInstalledFallback={<p>Please install the Arlopass extension.</p>}
   errorFallback={({ error, retry }) => (
     <div>
       <p>Error: {error.message}</p>
@@ -57,7 +57,7 @@ const connectionGateExample = `<BYOMConnectionGate
   )}
 >
   <MyApp />
-</BYOMConnectionGate>`;
+</ArlopassConnectionGate>`;
 
 const providerGateProps = [
   {
@@ -80,9 +80,9 @@ const providerGateProps = [
   },
 ];
 
-const providerGateExample = `<BYOMProviderGate fallback={<ProviderPicker />}>
+const providerGateExample = `<ArlopassProviderGate fallback={<ProviderPicker />}>
   <Chat />
-</BYOMProviderGate>`;
+</ArlopassProviderGate>`;
 
 const chatReadyGateProps = [
   {
@@ -104,7 +104,7 @@ const chatReadyGateProps = [
   },
   {
     name: "errorFallback",
-    type: "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+    type: "(props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
     description: "Rendered on connection failure.",
   },
   {
@@ -115,12 +115,12 @@ const chatReadyGateProps = [
   },
 ];
 
-const chatReadyGateExample = `<BYOMChatReadyGate
+const chatReadyGateExample = `<ArlopassChatReadyGate
   connectingFallback={<Spinner />}
   providerFallback={<ProviderPicker />}
 >
   <Chat />
-</BYOMChatReadyGate>`;
+</ArlopassChatReadyGate>`;
 
 // ---------------------------------------------------------------------------
 // Negative guards
@@ -128,43 +128,43 @@ const chatReadyGateExample = `<BYOMChatReadyGate
 
 const negativeGuards = [
   {
-    name: "BYOMNotInstalled",
+    name: "ArlopassNotInstalled",
     description:
-      "Renders children only when the BYOM extension is not detected.",
+      "Renders children only when the Arlopass extension is not detected.",
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
-    name: "BYOMDisconnected",
+    name: "ArlopassDisconnected",
     description:
       'Renders children when the client is not connected (any state except "connected" or "degraded").',
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
-    name: "BYOMConnected",
+    name: "ArlopassConnected",
     description:
       'Renders children only when connected ("connected" or "degraded").',
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
-    name: "BYOMProviderNotReady",
+    name: "ArlopassProviderNotReady",
     description: "Renders children when no provider is selected.",
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
-    name: "BYOMHasError",
+    name: "ArlopassHasError",
     description:
       "Renders children when a connection error is present. Children receive { error, retry } as a render prop.",
     childrenType:
-      "(props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+      "(props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
   },
   {
-    name: "BYOMChatNotReady",
+    name: "ArlopassChatNotReady",
     description:
       "Renders children when chat is not ready (not connected or no provider selected).",
     childrenType: "ReactNode | (() => ReactNode)",
   },
   {
-    name: "BYOMChatReady",
+    name: "ArlopassChatReady",
     description:
       "Renders children only when chat is ready (connected and provider selected).",
     childrenType: "ReactNode | (() => ReactNode)",
@@ -177,21 +177,21 @@ const negativeGuardsData = negativeGuards.map((g) => ({
   description: `${g.description} Children type: ${g.childrenType}`,
 }));
 
-const negativeExample = `<BYOMNotInstalled>
-  <p>Install the BYOM extension to use AI features.</p>
-</BYOMNotInstalled>
+const negativeExample = `<ArlopassNotInstalled>
+  <p>Install the Arlopass extension to use AI features.</p>
+</ArlopassNotInstalled>
 
-<BYOMHasError>
+<ArlopassHasError>
   {({ error, retry }) => (
     <div>
       <p>{error.message}</p>
       {retry && <button onClick={retry}>Retry</button>}
     </div>
   )}
-</BYOMHasError>`;
+</ArlopassHasError>`;
 
 // ---------------------------------------------------------------------------
-// BYOMErrorBoundary
+// ArlopassErrorBoundary
 // ---------------------------------------------------------------------------
 
 const errorBoundaryProps = [
@@ -215,7 +215,7 @@ const errorBoundaryProps = [
   },
 ];
 
-const errorBoundaryExample = `<BYOMErrorBoundary
+const errorBoundaryExample = `<ArlopassErrorBoundary
   fallback={({ error, resetErrorBoundary }) => (
     <div>
       <p>Something went wrong: {error.message}</p>
@@ -225,7 +225,7 @@ const errorBoundaryExample = `<BYOMErrorBoundary
   onError={(err, info) => console.error(err, info)}
 >
   <Chat />
-</BYOMErrorBoundary>`;
+</ArlopassErrorBoundary>`;
 
 export default function GuardsAPI() {
   return (
@@ -234,7 +234,7 @@ export default function GuardsAPI() {
       <Text>
         Guards conditionally render children based on connection state, provider
         selection, and error conditions. Import from{" "}
-        <InlineCode>@byom-ai/react/guards</InlineCode>.
+        <InlineCode>@arlopass/react/guards</InlineCode>.
       </Text>
 
       <CodeBlock code={importLine} language="tsx" />
@@ -247,7 +247,7 @@ export default function GuardsAPI() {
         otherwise.
       </Text>
 
-      <Title order={4}>BYOMConnectionGate</Title>
+      <Title order={4}>ArlopassConnectionGate</Title>
       <Text>
         Renders children when the client is connected. Shows fallbacks for
         loading, error, and not-installed states.
@@ -255,12 +255,12 @@ export default function GuardsAPI() {
       <ApiTable data={connectionGateProps} title="Props" />
       <CodeBlock code={connectionGateExample} language="tsx" />
 
-      <Title order={4}>BYOMProviderGate</Title>
+      <Title order={4}>ArlopassProviderGate</Title>
       <Text>Renders children when a provider/model pair is selected.</Text>
       <ApiTable data={providerGateProps} title="Props" />
       <CodeBlock code={providerGateExample} language="tsx" />
 
-      <Title order={4}>BYOMChatReadyGate</Title>
+      <Title order={4}>ArlopassChatReadyGate</Title>
       <Text>
         All-in-one gate that checks connection, provider selection, and error
         state. Renders children only when everything is ready to chat.
@@ -282,7 +282,7 @@ export default function GuardsAPI() {
 
       {/* Error boundary -------------------------------------------------- */}
       <Divider />
-      <Title order={3}>BYOMErrorBoundary</Title>
+      <Title order={3}>ArlopassErrorBoundary</Title>
       <Text>
         A React error boundary that catches rendering errors in the child tree.
         Standard class-component boundary with a render-prop fallback.

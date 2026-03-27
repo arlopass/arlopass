@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-26
 **Status:** Approved
-**Scope:** `@byom-ai/web-sdk` — new `ConversationManager` class
+**Scope:** `@arlopass/web-sdk` — new `ConversationManager` class
 
 ---
 
@@ -20,7 +20,7 @@ The current SDK requires web apps to manually manage conversation history. There
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Location | Inside `@byom-ai/web-sdk` | Natural extension of client; needs `client.chat.send()` for summarization |
+| Location | Inside `@arlopass/web-sdk` | Natural extension of client; needs `client.chat.send()` for summarization |
 | Opt-in model | `ConversationManager` helper class | Apps that want manual control keep passing `messages[]` directly |
 | Context window limits | Hybrid: developer override → provider-reported → static table → default 4096 | Maximum reliability across known and unknown models |
 | Truncation strategy | Priority-based sliding window + optional summarization | Pinning gives control; summarization is opt-in to avoid surprise LLM costs |
@@ -34,7 +34,7 @@ The current SDK requires web apps to manually manage conversation history. There
 
 ```typescript
 type ConversationManagerOptions = {
-  client: BYOMClient;
+  client: ArlopassClient;
   /** Max tokens for the context window. Overrides provider-reported and static defaults. */
   maxTokens?: number;
   /** Reserve tokens for the model's response (excluded from context budget). Default: 1024. */

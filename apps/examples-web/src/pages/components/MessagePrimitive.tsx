@@ -48,7 +48,7 @@ const rootProps = [
   },
 ];
 
-const standaloneExample = `import { Message } from "@byom-ai/react-ui";
+const standaloneExample = `import { Message } from "@arlopass/react-ui";
 
 function SingleMessage({ msg }) {
   return (
@@ -62,7 +62,7 @@ function SingleMessage({ msg }) {
   );
 }`;
 
-const insideChatExample = `import { Chat, Message } from "@byom-ai/react-ui";
+const insideChatExample = `import { Chat, Message } from "@arlopass/react-ui";
 
 <Chat.Root systemPrompt="You are helpful.">
   <Chat.Messages>
@@ -120,7 +120,7 @@ export default function MessagePrimitive() {
       </div>
 
       <CodeBlock
-        code={`import { Message } from "@byom-ai/react-ui";`}
+        code={`import { Message } from "@arlopass/react-ui";`}
         language="tsx"
       />
 

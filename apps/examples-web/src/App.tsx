@@ -40,19 +40,39 @@ function Shell() {
   return (
     <AppShell
       header={{ height: 52 }}
-      navbar={{ width: 240, breakpoint: "sm", collapsed: { mobile: !navOpen, desktop: !navOpen } }}
-      aside={{ width: chatOpen ? 340 : 0, breakpoint: "sm", collapsed: { mobile: !chatOpen, desktop: !chatOpen } }}
+      navbar={{
+        width: 240,
+        breakpoint: "sm",
+        collapsed: { mobile: !navOpen, desktop: !navOpen },
+      }}
+      aside={{
+        width: chatOpen ? 340 : 0,
+        breakpoint: "sm",
+        collapsed: { mobile: !chatOpen, desktop: !chatOpen },
+      }}
       padding={0}
     >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
             <Burger opened={navOpen} onClick={toggleNav} size="sm" />
-            <Title order={4} fw={700}>BYOM Docs</Title>
-            <Badge size="sm" color={state === "connected" ? "teal" : "gray"} variant="light">{state}</Badge>
+            <Title order={4} fw={700}>
+              Arlopass Docs
+            </Title>
+            <Badge
+              size="sm"
+              color={state === "connected" ? "teal" : "gray"}
+              variant="light"
+            >
+              {state}
+            </Badge>
           </Group>
           <Group gap="xs">
-            {injAvail && <Badge size="xs" color="teal" variant="dot">Extension</Badge>}
+            {injAvail && (
+              <Badge size="xs" color="teal" variant="dot">
+                Extension
+              </Badge>
+            )}
             <Tooltip label={chatOpen ? "Close chat" : "Open AI chat"}>
               <ActionIcon variant="subtle" onClick={toggleChat} size="lg">
                 <IconMessage size={20} />
@@ -67,9 +87,20 @@ function Shell() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <ScrollArea h="calc(100vh - 52px)" p="lg" type="scroll" viewportRef={scrollViewportRef}>
+        <ScrollArea
+          h="calc(100vh - 52px)"
+          p="lg"
+          type="scroll"
+          viewportRef={scrollViewportRef}
+        >
           <Box maw={800} mx="auto">
-            <Suspense fallback={<Center h={200}><Loader /></Center>}>
+            <Suspense
+              fallback={
+                <Center h={200}>
+                  <Loader />
+                </Center>
+              }
+            >
               {PageComponent ? (
                 <Layout pageId={route}>
                   <PageComponent />
@@ -102,4 +133,3 @@ export default function App() {
     </InteractiveProvider>
   );
 }
-

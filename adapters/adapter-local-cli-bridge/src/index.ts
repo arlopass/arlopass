@@ -5,13 +5,13 @@ import {
   type AdapterContract,
   type AdapterManifest,
   MANIFEST_SCHEMA_VERSION,
-} from "@byom-ai/adapter-runtime";
+} from "@arlopass/adapter-runtime";
 import {
   type ProtocolCapability,
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 export const LOCAL_CLI_BRIDGE_MANIFEST: AdapterManifest = {
   schemaVersion: MANIFEST_SCHEMA_VERSION,
@@ -28,7 +28,7 @@ export const LOCAL_CLI_BRIDGE_MANIFEST: AdapterManifest = {
   requiredPermissions: ["process.spawn", "filesystem.read", "env.read"],
   egressRules: [],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 export type LocalCliBridgeOptions = Readonly<{

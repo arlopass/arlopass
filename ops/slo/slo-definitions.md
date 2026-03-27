@@ -1,4 +1,4 @@
-# BYOM AI — SLO Definitions v1
+# Arlopass — SLO Definitions v1
 
 > **Status:** Draft · **Effective from:** 2026-03-23  
 > **Owner:** Platform Reliability · **Review cadence:** Quarterly
@@ -7,9 +7,9 @@
 
 ## 1  Scope
 
-These SLOs cover the production request path from the BYOM web-SDK through the
+These SLOs cover the production request path from the Arlopass web-SDK through the
 local bridge daemon to adapter providers.  Measurements are taken from the
-bridge's telemetry signals (`byom.*` metric namespace).
+bridge's telemetry signals (`arlopass.*` metric namespace).
 
 ---
 
@@ -17,10 +17,10 @@ bridge's telemetry signals (`byom.*` metric namespace).
 
 | ID | Signal | Metric | Window |
 |----|--------|--------|--------|
-| SLI-01 | Request success rate | `byom.request.total` vs `byom.request.failure.total` | 30-day rolling |
-| SLI-02 | P95 end-to-end latency | `byom.request.duration_ms` p95 | 7-day rolling |
-| SLI-03 | Stream interruption rate | `byom.stream.interruption.total` vs `byom.stream.chunk.total` | 7-day rolling |
-| SLI-04 | Adapter health availability | `byom.adapter.health` gauge (1 = healthy) | 24-h rolling |
+| SLI-01 | Request success rate | `arlopass.request.total` vs `arlopass.request.failure.total` | 30-day rolling |
+| SLI-02 | P95 end-to-end latency | `arlopass.request.duration_ms` p95 | 7-day rolling |
+| SLI-03 | Stream interruption rate | `arlopass.stream.interruption.total` vs `arlopass.stream.chunk.total` | 7-day rolling |
+| SLI-04 | Adapter health availability | `arlopass.adapter.health` gauge (1 = healthy) | 24-h rolling |
 | SLI-05 | Mean time to recover (MTTR) | Measured from degraded → running state transitions | Per incident |
 
 ---
@@ -35,7 +35,7 @@ bridge's telemetry signals (`byom.*` metric namespace).
 
 **Measurement:**
 ```
-success_rate = 1 - (sum(byom.request.failure.total) / sum(byom.request.total))
+success_rate = 1 - (sum(arlopass.request.failure.total) / sum(arlopass.request.total))
 ```
 
 **Labels:** `providerId`, `messageType`, `origin`  
@@ -52,7 +52,7 @@ success_rate = 1 - (sum(byom.request.failure.total) / sum(byom.request.total))
 | `session.create` | P95 ≤ 500 ms |
 | `provider.list` | P95 ≤ 300 ms |
 
-**Measurement:** `byom.request.duration_ms` histogram p95 per capability.
+**Measurement:** `arlopass.request.duration_ms` histogram p95 per capability.
 
 ---
 
@@ -64,8 +64,8 @@ success_rate = 1 - (sum(byom.request.failure.total) / sum(byom.request.total))
 
 **Measurement:**
 ```
-interruption_rate = sum(byom.stream.interruption.total) /
-                   (sum(byom.stream.interruption.total) + count_of_completed_streams)
+interruption_rate = sum(arlopass.stream.interruption.total) /
+                   (sum(arlopass.stream.interruption.total) + count_of_completed_streams)
 ```
 
 ---
@@ -74,9 +74,9 @@ interruption_rate = sum(byom.stream.interruption.total) /
 
 | Target |
 |--------|
-| `byom.adapter.health` gauge ≥ 0.99 over any 24-hour window per registered provider |
+| `arlopass.adapter.health` gauge ≥ 0.99 over any 24-hour window per registered provider |
 
-**Measurement:** Time-weighted average of `byom.adapter.health` gauge value.
+**Measurement:** Time-weighted average of `arlopass.adapter.health` gauge value.
 
 ---
 
@@ -87,7 +87,7 @@ interruption_rate = sum(byom.stream.interruption.total) /
 | MTTR ≤ 5 minutes from alert trigger to adapter back in RUNNING state |
 
 **Measurement:** Manually recorded from incident timeline; automated where
-adapter-host restart telemetry (`byom.retry.total`) is available.
+adapter-host restart telemetry (`arlopass.retry.total`) is available.
 
 ---
 
@@ -103,7 +103,7 @@ adapter-host restart telemetry (`byom.retry.total`) is available.
 
 ## 5  Exclusions and Special Cases
 
-- **Auth policy denials** (`byom.request.failure.total` where `reasonCode = auth.*`):
+- **Auth policy denials** (`arlopass.request.failure.total` where `reasonCode = auth.*`):
   counted separately for SLO-06 (auth spike runbook) and excluded from SLO-01.
 - **Planned maintenance windows**: must be declared ≥ 1 h in advance; excluded
   from error budget calculation.

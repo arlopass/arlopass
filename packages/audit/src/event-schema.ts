@@ -1,5 +1,5 @@
 /**
- * Canonical audit event schema for BYOM enterprise policy decisions.
+ * Canonical audit event schema for Arlopass enterprise policy decisions.
  *
  * Privacy-safe by default: prompt and response content are excluded unless
  * explicitly included via the optional `redactedContent` field with a

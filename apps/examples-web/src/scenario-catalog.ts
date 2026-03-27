@@ -13,7 +13,7 @@ export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
     summary:
       "Connect, list providers, select model, and send a non-streaming chat request.",
     steps: [
-      "Initialize BYOMClient with transport (injected extension or demo transport).",
+      "Initialize ArlopassClient with transport (injected extension or demo transport).",
       "Call connect({ appId }) and inspect session + capabilities.",
       "Call listProviders(), select provider/model, then call chat.send().",
     ],
@@ -37,10 +37,10 @@ export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
     id: "extension-first",
     title: "Extension-first transport",
     summary:
-      "Use injected window.byom transport from the extension when available.",
+      "Use injected window.arlopass transport from the extension when available.",
     steps: [
-      "Check whether window.byom exists in the page context.",
-      "Build BYOMClient with injected transport and origin.",
+      "Check whether window.arlopass exists in the page context.",
+      "Build ArlopassClient with injected transport and origin.",
       "Fallback to controlled mock transport if extension transport is unavailable.",
     ],
     expectedOutcome:
@@ -50,10 +50,10 @@ export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
     id: "error-timeout",
     title: "Error + timeout handling",
     summary:
-      "Exercise typed BYOM SDK errors for policy denials and transient/timeout failures.",
+      "Exercise typed Arlopass SDK errors for policy denials and transient/timeout failures.",
     steps: [
       "Switch transport profile to Failure or Slow modes.",
-      "Run chat.send/chat.stream and catch BYOMSDKError variants.",
+      "Run chat.send/chat.stream and catch ArlopassSDKError variants.",
       "Show machineCode, reasonCode, retryability, and correlation context.",
     ],
     expectedOutcome:
@@ -78,7 +78,7 @@ export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
     summary:
       "Use ConversationManager to automatically manage conversation history within the model's context window.",
     steps: [
-      "Create a ConversationManager with a BYOMClient, system prompt, and optional maxTokens override.",
+      "Create a ConversationManager with a ArlopassClient, system prompt, and optional maxTokens override.",
       "Send messages via conversation.send() — history is tracked automatically.",
       "Pin important messages so they survive truncation when the context window fills up.",
       "Enable auto-summarization to preserve context from evicted messages.",
@@ -102,14 +102,14 @@ export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
   },
 ];
 
-export const EXTENSION_SNIPPET = `import { BYOMClient, type BYOMTransport } from "@byom-ai/web-sdk";
+export const EXTENSION_SNIPPET = `import { ArlopassClient, type ArlopassTransport } from "@arlopass/web-sdk";
 
-const transport = (window as Window & { byom?: BYOMTransport }).byom;
+const transport = (window as Window & { arlopass?: ArlopassTransport }).arlopass;
 if (transport === undefined) {
-  throw new Error("BYOM extension transport was not injected.");
+  throw new Error("Arlopass extension transport was not injected.");
 }
 
-const client = new BYOMClient({
+const client = new ArlopassClient({
   transport,
   origin: window.location.origin,
 });

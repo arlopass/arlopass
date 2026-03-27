@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the extension as UX/control initiator and make the bridge authoritative for security-sensitive operations. Introduce a bridge-only credential registry (`CredentialRef`) plus extension-visible `ConnectionHandle`, request-bound proof verification, cloud adapter contract v2, and provider-specific adapters behind a common execution engine with strict reliability controls.
 
-**Tech Stack:** TypeScript, Node.js, Chrome Extension APIs, Vitest, Native Messaging bridge, existing BYOM protocol/policy/audit/telemetry packages.
+**Tech Stack:** TypeScript, Node.js, Chrome Extension APIs, Vitest, Native Messaging bridge, existing Arlopass protocol/policy/audit/telemetry packages.
 
 ---
 
@@ -20,7 +20,7 @@
 ## Implementation Rules
 - TDD-first for every task (fail -> implement -> pass).
 - No plaintext credentials in extension storage, SDK payloads, logs, or UI error text.
-- Keep `@byom-ai/web-sdk` public API unchanged.
+- Keep `@arlopass/web-sdk` public API unchanged.
 - Keep bridge authoritative: extension preflight/cache never bypasses bridge checks.
 - Commit after each task.
 
@@ -123,10 +123,10 @@
 - `RUNNING_AND_USAGE_GUIDE.md` — cloud connection setup/runtime validation instructions.
 
 ### Test Suites to keep green
-- `npm run -w @byom-ai/protocol test`
-- `npm run -w @byom-ai/adapter-runtime test`
-- `npm run -w @byom-ai/bridge test`
-- `npm run -w @byom-ai/extension test`
+- `npm run -w @arlopass/protocol test`
+- `npm run -w @arlopass/adapter-runtime test`
+- `npm run -w @arlopass/bridge test`
+- `npm run -w @arlopass/extension test`
 - `npm run lint && npm run typecheck && npm run test && npm run build`
 
 ---
@@ -168,7 +168,7 @@ it("accepts unknown optional fields without breaking compatibility", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm run -w @byom-ai/protocol test -- src/__tests__/cloud-connection.test.ts`  
+Run: `npm run -w @arlopass/protocol test -- src/__tests__/cloud-connection.test.ts`  
 Expected: FAIL (missing module / missing parser).
 
 - [ ] **Step 3: Implement minimal cloud contract types and parsers**
@@ -182,7 +182,7 @@ export function parseCloudRequestProof(input: unknown): CloudRequestProof { /* r
 
 - [ ] **Step 4: Re-run protocol tests**
 
-Run: `npm run -w @byom-ai/protocol test -- src/__tests__/cloud-connection.test.ts`  
+Run: `npm run -w @arlopass/protocol test -- src/__tests__/cloud-connection.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -217,7 +217,7 @@ it("requires cloud adapters to expose discovery hooks", () => {
 
 - [ ] **Step 2: Run adapter runtime tests to verify failures**
 
-Run: `npm run -w @byom-ai/adapter-runtime test -- src/__tests__/manifest-schema.test.ts src/__tests__/cloud-contract.test.ts`  
+Run: `npm run -w @arlopass/adapter-runtime test -- src/__tests__/manifest-schema.test.ts src/__tests__/cloud-contract.test.ts`  
 Expected: FAIL (unknown field/contract helpers absent).
 
 - [ ] **Step 3: Implement manifest/schema additions and contract guards**
@@ -236,7 +236,7 @@ export interface CloudAdapterContractV2 extends AdapterContract {
 
 - [ ] **Step 4: Re-run targeted adapter runtime tests**
 
-Run: `npm run -w @byom-ai/adapter-runtime test -- src/__tests__/manifest-schema.test.ts src/__tests__/adapter-host.test.ts src/__tests__/cloud-contract.test.ts`  
+Run: `npm run -w @arlopass/adapter-runtime test -- src/__tests__/manifest-schema.test.ts src/__tests__/adapter-host.test.ts src/__tests__/cloud-contract.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -284,7 +284,7 @@ it("rejects handle resolution when extension/origin/policy binding context misma
 
 - [ ] **Step 2: Run bridge tests to verify failure**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/connection-registry.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/connection-registry.test.ts`  
 Expected: FAIL (registry missing).
 
 - [ ] **Step 3: Implement registry + keychain account namespacing**
@@ -305,7 +305,7 @@ type ConnectionRecord = {
 
 - [ ] **Step 4: Re-run bridge tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/connection-registry.test.ts src/__tests__/secrets-governance.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/connection-registry.test.ts src/__tests__/secrets-governance.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -347,7 +347,7 @@ it("rejects proof when handle binding metadata does not match extension/origin c
 
 - [ ] **Step 2: Run failing security tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/request-proof.test.ts src/__tests__/handshake.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/request-proof.test.ts src/__tests__/handshake.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement session-key issuance and proof verification helpers**
@@ -359,7 +359,7 @@ assertHandleBinding(connectionHandle, { extensionId, origin, policyVersion, endp
 
 - [ ] **Step 4: Re-run security and integration tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/request-proof.test.ts src/__tests__/handshake.test.ts src/__tests__/integration.native-messaging.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/request-proof.test.ts src/__tests__/handshake.test.ts src/__tests__/integration.native-messaging.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -382,8 +382,8 @@ git commit -m "feat(bridge): enforce request-bound connection handle proof verif
 
 ```ts
 it("acquires handshake session key once and reuses it until expiry", async () => {
-  const session = await ensureBridgeHandshakeSession({ hostName: "com.byom.bridge" });
-  const reused = await ensureBridgeHandshakeSession({ hostName: "com.byom.bridge" });
+  const session = await ensureBridgeHandshakeSession({ hostName: "com.arlopass.bridge" });
+  const reused = await ensureBridgeHandshakeSession({ hostName: "com.arlopass.bridge" });
   expect(reused.sessionKey).toBe(session.sessionKey);
 });
 it("refreshes handshake session on auth.expired and never persists session key", async () => {
@@ -393,7 +393,7 @@ it("refreshes handshake session on auth.expired and never persists session key",
 
 - [ ] **Step 2: Run handshake tests and verify failures**
 
-Run: `npm run -w @byom-ai/extension test -- src/__tests__/bridge-handshake.test.ts && npm run -w @byom-ai/bridge test -- src/__tests__/session-key-registry.test.ts`  
+Run: `npm run -w @arlopass/extension test -- src/__tests__/bridge-handshake.test.ts && npm run -w @arlopass/bridge test -- src/__tests__/session-key-registry.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement handshake client + bridge session-key registry**
@@ -413,7 +413,7 @@ sessionKeyRegistry.resolve(sessionToken);
 
 - [ ] **Step 4: Re-run handshake tests**
 
-Run: `npm run -w @byom-ai/extension test -- src/__tests__/bridge-handshake.test.ts && npm run -w @byom-ai/bridge test -- src/__tests__/session-key-registry.test.ts src/__tests__/integration.native-messaging.test.ts`  
+Run: `npm run -w @arlopass/extension test -- src/__tests__/bridge-handshake.test.ts && npm run -w @arlopass/bridge test -- src/__tests__/session-key-registry.test.ts src/__tests__/integration.native-messaging.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -470,7 +470,7 @@ it("fails closed with policy.denied when discovery fan-out endpoint is not decla
 
 - [ ] **Step 2: Run bridge handler tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/bridge-handler-cloud.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/bridge-handler-cloud.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement cloud control-plane service and dispatch wiring**
@@ -496,7 +496,7 @@ for (const endpoint of discoveryFanoutEndpoints) {
 
 - [ ] **Step 4: Re-run cloud handler tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/cloud-connection-service.test.ts src/__tests__/discovery-cache.test.ts src/__tests__/discovery-refresh-scheduler.test.ts src/__tests__/bridge-handler-cloud.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/cloud-connection-service.test.ts src/__tests__/discovery-cache.test.ts src/__tests__/discovery-refresh-scheduler.test.ts src/__tests__/bridge-handler-cloud.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -578,7 +578,7 @@ it("fails closed and emits audit marker when revocation occurs after refresh loc
 
 - [ ] **Step 2: Run executor tests to verify failures**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/cloud-chat-executor.test.ts src/__tests__/timeout-budgets.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/cloud-chat-executor.test.ts src/__tests__/timeout-budgets.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement executor + token lease single-flight + epoch checks**
@@ -602,7 +602,7 @@ if (currentEpoch !== admissionEpochAtCompletion) {
 
 - [ ] **Step 4: Re-run executor and integration tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/cloud-chat-executor.test.ts src/__tests__/timeout-budgets.test.ts src/__tests__/integration.native-messaging.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/cloud-chat-executor.test.ts src/__tests__/timeout-budgets.test.ts src/__tests__/integration.native-messaging.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -631,7 +631,7 @@ it("supports subscription oauth and api_key methods", () => {
 
 - [ ] **Step 2: Run adapter tests to verify failures**
 
-Run: `npm run -w @byom-ai/adapter-claude-subscription test -- src/__tests__/contract.test.ts`  
+Run: `npm run -w @arlopass/adapter-claude-subscription test -- src/__tests__/contract.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement v2 connection lifecycle methods**
@@ -643,7 +643,7 @@ async completeConnect(input) { /* persist via broker callback and return handle 
 
 - [ ] **Step 4: Re-run adapter contract tests**
 
-Run: `npm run -w @byom-ai/adapter-claude-subscription test -- src/__tests__/contract.test.ts`  
+Run: `npm run -w @arlopass/adapter-claude-subscription test -- src/__tests__/contract.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -700,7 +700,7 @@ it("implements provider-specific endpointProfile/discovery semantics with partia
 
 - [ ] **Step 2: Run tests and confirm failure**
 
-Run: `npm test --workspace @byom-ai/adapter-microsoft-foundry --workspace @byom-ai/adapter-google-vertex-ai --workspace @byom-ai/adapter-amazon-bedrock`  
+Run: `npm test --workspace @arlopass/adapter-microsoft-foundry --workspace @arlopass/adapter-google-vertex-ai --workspace @arlopass/adapter-amazon-bedrock`  
 Expected: FAIL (packages missing).
 
 - [ ] **Step 3: Implement minimal adapter contract v2 for each provider**
@@ -717,7 +717,7 @@ export class MicrosoftFoundryAdapter implements AdapterContract, CloudAdapterCon
 
 - [ ] **Step 4: Re-run adapter tests**
 
-Run: `npm test --workspace @byom-ai/adapter-microsoft-foundry --workspace @byom-ai/adapter-google-vertex-ai --workspace @byom-ai/adapter-amazon-bedrock`  
+Run: `npm test --workspace @arlopass/adapter-microsoft-foundry --workspace @arlopass/adapter-google-vertex-ai --workspace @arlopass/adapter-amazon-bedrock`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -750,7 +750,7 @@ it("denies provider execution when provider-level flag is disabled", async () =>
 
 - [ ] **Step 2: Run bridge gating tests and verify failures**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/cloud-feature-flags.test.ts src/__tests__/bridge-handler-cloud.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/cloud-feature-flags.test.ts src/__tests__/bridge-handler-cloud.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement default-off global/provider cloud gates in bridge handler path**
@@ -762,7 +762,7 @@ if (!flags.providerEnabled(methodId)) return deny("policy.denied");
 
 - [ ] **Step 4: Re-run bridge gating tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/cloud-feature-flags.test.ts src/__tests__/bridge-handler-cloud.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/cloud-feature-flags.test.ts src/__tests__/bridge-handler-cloud.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -806,14 +806,14 @@ it("computes request-bound proof from session key + request context for every cl
   expect(proof.length).toBeGreaterThan(10);
 });
 it("acquires bridge handshake session before computing proof and sending cloud request", async () => {
-  const session = await ensureBridgeHandshakeSession({ hostName: "com.byom.bridge", extensionId: "ext.test" });
+  const session = await ensureBridgeHandshakeSession({ hostName: "com.arlopass.bridge", extensionId: "ext.test" });
   expect(session.sessionKey.length).toBeGreaterThan(10);
 });
 ```
 
 - [ ] **Step 2: Run extension transport tests and verify expected failures**
 
-Run: `npm run -w @byom-ai/extension test -- src/__tests__/transport-runtime.test.ts src/__tests__/bridge-handshake.test.ts src/__tests__/request-proof.test.ts`  
+Run: `npm run -w @arlopass/extension test -- src/__tests__/transport-runtime.test.ts src/__tests__/bridge-handshake.test.ts src/__tests__/request-proof.test.ts`  
 Expected: FAIL (still throws cloud broker unavailable).
 
 - [ ] **Step 3: Implement cloud-native message client and runtime switch branch**
@@ -843,7 +843,7 @@ case "cloud":
 
 - [ ] **Step 4: Re-run transport tests**
 
-Run: `npm run -w @byom-ai/extension test -- src/__tests__/transport-runtime.test.ts src/__tests__/bridge-handshake.test.ts src/__tests__/request-proof.test.ts`  
+Run: `npm run -w @arlopass/extension test -- src/__tests__/transport-runtime.test.ts src/__tests__/bridge-handshake.test.ts src/__tests__/request-proof.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -880,7 +880,7 @@ it("never persists raw credential fields in sanitized metadata", () => {
 it("requires roleArn for bedrock.assume_role and treats externalId as optional", () => {
   const valid = validateCloudConnectorInput("cloud-bedrock", {
     methodId: "bedrock.assume_role",
-    roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+    roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
     externalId: "optional-external-id",
     region: "us-east-1",
   });
@@ -895,7 +895,7 @@ it("requires roleArn for bedrock.assume_role and treats externalId as optional",
 
 - [ ] **Step 2: Run options connector tests and verify failure**
 
-Run: `npm run -w @byom-ai/extension test -- src/__tests__/options-cloud-connectors.test.ts`  
+Run: `npm run -w @arlopass/extension test -- src/__tests__/options-cloud-connectors.test.ts`  
 Expected: FAIL (connector module missing).
 
 - [ ] **Step 3: Extract connector modules and wire options form to native cloud connection methods**
@@ -907,7 +907,7 @@ const CONNECTORS = [...LOCAL_CONNECTORS, ...CLOUD_CONNECTORS, CLI_CONNECTOR];
 
 - [ ] **Step 4: Re-run connector + options-adjacent tests**
 
-Run: `npm run -w @byom-ai/extension test -- src/__tests__/options-cloud-connectors.test.ts src/__tests__/background.test.ts src/__tests__/popup-state.test.ts`  
+Run: `npm run -w @arlopass/extension test -- src/__tests__/options-cloud-connectors.test.ts src/__tests__/background.test.ts src/__tests__/popup-state.test.ts`  
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -982,7 +982,7 @@ it("redacts raw provider errors and secrets from user-visible messages", () => {
 
 - [ ] **Step 2: Run targeted tests and verify failure**
 
-Run: `npm run -w @byom-ai/extension test -- src/__tests__/background.test.ts src/__tests__/popup-state.test.ts src/__tests__/popup-render.test.ts && npm run -w @byom-ai/bridge test -- src/__tests__/integration.native-messaging.test.ts src/__tests__/discovery-cache.test.ts src/__tests__/cloud-observability.test.ts src/__tests__/error-redaction.test.ts`  
+Run: `npm run -w @arlopass/extension test -- src/__tests__/background.test.ts src/__tests__/popup-state.test.ts src/__tests__/popup-render.test.ts && npm run -w @arlopass/bridge test -- src/__tests__/integration.native-messaging.test.ts src/__tests__/discovery-cache.test.ts src/__tests__/cloud-observability.test.ts src/__tests__/error-redaction.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement event propagation and final integration wiring**
@@ -1012,9 +1012,9 @@ auditDebugLog(redactProviderPayload(rawProviderError));
 
 Run:
 ```bash
-npm run -w @byom-ai/extension test -- src/__tests__/background.test.ts
-npm run -w @byom-ai/extension test -- src/__tests__/popup-state.test.ts src/__tests__/popup-render.test.ts
-npm run -w @byom-ai/bridge test -- src/__tests__/integration.native-messaging.test.ts src/__tests__/discovery-cache.test.ts src/__tests__/cloud-observability.test.ts src/__tests__/error-redaction.test.ts
+npm run -w @arlopass/extension test -- src/__tests__/background.test.ts
+npm run -w @arlopass/extension test -- src/__tests__/popup-state.test.ts src/__tests__/popup-render.test.ts
+npm run -w @arlopass/bridge test -- src/__tests__/integration.native-messaging.test.ts src/__tests__/discovery-cache.test.ts src/__tests__/cloud-observability.test.ts src/__tests__/error-redaction.test.ts
 ```
 Expected: PASS.
 
@@ -1056,7 +1056,7 @@ it("enforces canary allowlists for extension IDs and origins", () => {
 
 - [ ] **Step 2: Run failing migration/flag tests**
 
-Run: `npm run -w @byom-ai/bridge test -- src/__tests__/cloud-feature-flags.test.ts && npm run -w @byom-ai/extension test -- src/__tests__/provider-migrations.test.ts`  
+Run: `npm run -w @arlopass/bridge test -- src/__tests__/cloud-feature-flags.test.ts && npm run -w @arlopass/extension test -- src/__tests__/provider-migrations.test.ts`  
 Expected: FAIL.
 
 - [ ] **Step 3: Implement phased migration and rollout controls**
@@ -1071,22 +1071,22 @@ const CLOUD_FEATURE_FLAGS = [
   "cloudProvider.bedrock.enabled",
 ] as const;
 const CLOUD_CANARY_ALLOWLIST = {
-  extensionIds: parseCsvEnv("BYOM_CLOUD_CANARY_EXTENSION_IDS"), // defaults to []
-  origins: parseCsvEnv("BYOM_CLOUD_CANARY_ORIGINS"), // defaults to []
+  extensionIds: parseCsvEnv("ARLOPASS_CLOUD_CANARY_EXTENSION_IDS"), // defaults to []
+  origins: parseCsvEnv("ARLOPASS_CLOUD_CANARY_ORIGINS"), // defaults to []
 };
 if (!isCanaryAllowed(requestContext, CLOUD_CANARY_ALLOWLIST)) return deny("policy.denied");
 // Ensure workspace package wiring resolves new adapters at runtime and in tests.
-registerCloudAdapterPackage("@byom-ai/adapter-microsoft-foundry");
-registerCloudAdapterPackage("@byom-ai/adapter-google-vertex-ai");
-registerCloudAdapterPackage("@byom-ai/adapter-amazon-bedrock");
+registerCloudAdapterPackage("@arlopass/adapter-microsoft-foundry");
+registerCloudAdapterPackage("@arlopass/adapter-google-vertex-ai");
+registerCloudAdapterPackage("@arlopass/adapter-amazon-bedrock");
 ```
 
 - [ ] **Step 4: Re-run migration/flag tests and final full repo quality gates**
 
 Run:
 ```bash
-npm run -w @byom-ai/bridge test -- src/__tests__/cloud-feature-flags.test.ts
-npm run -w @byom-ai/extension test -- src/__tests__/provider-migrations.test.ts
+npm run -w @arlopass/bridge test -- src/__tests__/cloud-feature-flags.test.ts
+npm run -w @arlopass/extension test -- src/__tests__/provider-migrations.test.ts
 npm run lint
 npm run typecheck
 npm run test

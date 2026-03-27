@@ -1,8 +1,8 @@
-# BYOM AI Wallet — Release Pipelines Design Spec
+# Arlopass Wallet — Release Pipelines Design Spec
 
 ## Overview
 
-Comprehensive CI/CD release pipeline system for the BYOM AI Wallet monorepo. Produces three classes of artifacts — npm packages, browser extensions, and native bridge binaries — with automated publishing to npm, Chrome Web Store, Edge Add-ons, Firefox Add-ons (AMO), and GitHub Releases.
+Comprehensive CI/CD release pipeline system for the Arlopass Wallet monorepo. Produces three classes of artifacts — npm packages, browser extensions, and native bridge binaries — with automated publishing to npm, Chrome Web Store, Edge Add-ons, Firefox Add-ons (AMO), and GitHub Releases.
 
 **Non-negotiable pillars:** Robustness, Reliability, Extensibility, Airtight Security.
 
@@ -66,25 +66,25 @@ bridge/v0.3.0          → release-bridge.yml
 ### 2.1 Versioning Strategy (Hybrid)
 
 **Synchronized core packages** (share same version):
-- `@byom-ai/protocol`
-- `@byom-ai/web-sdk`
-- `@byom-ai/policy`
-- `@byom-ai/audit`
-- `@byom-ai/telemetry`
-- `@byom-ai/adapter-runtime`
-- `@byom-ai/adapter-tooling`
+- `@arlopass/protocol`
+- `@arlopass/web-sdk`
+- `@arlopass/policy`
+- `@arlopass/audit`
+- `@arlopass/telemetry`
+- `@arlopass/adapter-runtime`
+- `@arlopass/adapter-tooling`
 
 **Independent adapter packages** (own semver):
-- `@byom-ai/adapter-amazon-bedrock`
-- `@byom-ai/adapter-claude-subscription`
-- `@byom-ai/adapter-google-vertex-ai`
-- `@byom-ai/adapter-local-cli-bridge`
-- `@byom-ai/adapter-microsoft-foundry`
-- `@byom-ai/adapter-ollama`
+- `@arlopass/adapter-amazon-bedrock`
+- `@arlopass/adapter-claude-subscription`
+- `@arlopass/adapter-google-vertex-ai`
+- `@arlopass/adapter-local-cli-bridge`
+- `@arlopass/adapter-microsoft-foundry`
+- `@arlopass/adapter-ollama`
 
 **Apps:**
-- `@byom-ai/extension` and `@byom-ai/examples-web` remain `private: true` (never published to npm)
-- `@byom-ai/bridge` is published to npm as a **global CLI package** with `bin` field. Its `package.json` must be changed to `private: false` and given `publishConfig`, `bin`, `license`, `repository`, `homepage`, `bugs` fields. The bridge npm package and the SEA binary are **different distribution formats of the same artifact** — they share the same version from the `bridge/v*` tag.
+- `@arlopass/extension` and `@arlopass/examples-web` remain `private: true` (never published to npm)
+- `@arlopass/bridge` is published to npm as a **global CLI package** with `bin` field. Its `package.json` must be changed to `private: false` and given `publishConfig`, `bin`, `license`, `repository`, `homepage`, `bugs` fields. The bridge npm package and the SEA binary are **different distribution formats of the same artifact** — they share the same version from the `bridge/v*` tag.
 
 ### 2.2 Package Preparation
 
@@ -92,7 +92,7 @@ Each publishable package needs these fields added to `package.json`:
 - `"private": false` (or remove `"private"` entirely)
 - `"publishConfig": { "access": "public", "provenance": true }`
 - `"license": "MIT"` (or chosen license)
-- `"repository": { "type": "git", "url": "https://github.com/<org>/byom-web", "directory": "<package-path>" }`
+- `"repository": { "type": "git", "url": "https://github.com/<org>/arlopass", "directory": "<package-path>" }`
 - `"homepage"` and `"bugs"` URLs
 
 ### 2.3 Core Package Release Flow
@@ -112,7 +112,7 @@ _build-packages.yml
 _publish-npm.yml
   ├─ Dry-run: npm publish --dry-run (catch issues before real publish)
   ├─ Version collision check: npm view <pkg>@<version> (skip if exists)
-  ├─ Dependency resolution: verify all @byom-ai/* deps available on npm
+  ├─ Dependency resolution: verify all @arlopass/* deps available on npm
   ├─ Publish: npm publish --provenance (OIDC-backed SLSA attestation)
   └─ Per-package: publishes in dependency order
   ↓
@@ -140,7 +140,7 @@ _sign-attest.yml
 
 - **Dry-run first**: Every publish runs `npm publish --dry-run` before the real publish
 - **Version collision check**: Skip already-published versions gracefully (idempotency)
-- **Dependency resolution check**: Verify all `@byom-ai/*` dependencies exist on npm at required versions
+- **Dependency resolution check**: Verify all `@arlopass/*` dependencies exist on npm at required versions
 - **Partial failure handling**: If any package in a core batch fails to publish:
   - The workflow **stops** — it does not continue publishing dependent packages
   - It posts a failure summary to the configured notification channel listing which packages succeeded and which failed
@@ -169,7 +169,7 @@ The existing `apps/extension/scripts/build.mjs` currently outputs flat to `dist/
 3. Output to `dist/chromium/` or `dist/firefox/` based on target
 4. For Firefox: run a manifest transform step after build that:
    - Reads the base `manifest.json`
-   - Adds `browser_specific_settings.gecko.id`: `byom-ai-wallet@byomai.com` (email-style ID, Firefox standard format)
+   - Adds `browser_specific_settings.gecko.id`: `arlopass-wallet@arlopassai.com` (email-style ID, Firefox standard format)
    - Adds `browser_specific_settings.gecko.strict_min_version`: `"109.0"`
    - Removes Chrome-only fields (`minimum_chrome_version`)
    - Writes to `dist/firefox/manifest.json`
@@ -267,11 +267,11 @@ Node.js Single Executable Applications (SEA) compile the bridge into self-contai
 
 | Platform | Runner | Binary Name | Arch |
 |---|---|---|---|
-| Windows | `windows-latest` | `byom-bridge-win-x64.exe` | x64 |
-| macOS | `macos-latest` | `byom-bridge-macos-x64` | x64 |
-| macOS | `macos-latest` | `byom-bridge-macos-arm64` | arm64 |
-| Linux | `ubuntu-latest` | `byom-bridge-linux-x64` | x64 |
-| Linux | `ubuntu-latest` | `byom-bridge-linux-arm64` | arm64 |
+| Windows | `windows-latest` | `arlopass-bridge-win-x64.exe` | x64 |
+| macOS | `macos-latest` | `arlopass-bridge-macos-x64` | x64 |
+| macOS | `macos-latest` | `arlopass-bridge-macos-arm64` | arm64 |
+| Linux | `ubuntu-latest` | `arlopass-bridge-linux-x64` | x64 |
+| Linux | `ubuntu-latest` | `arlopass-bridge-linux-arm64` | arm64 |
 
 **Note on arm64:** macOS arm64 (Apple Silicon) is built natively on `macos-latest` (which runs arm64). Linux arm64 uses QEMU cross-compilation via `docker run --platform linux/arm64`. Windows arm64 is **deferred** — GitHub Actions `windows-latest` is x64-only and cross-compiling Node.js SEA for Windows arm64 is not reliably supported. Windows arm64 can be added when GitHub provides arm64 Windows runners.
 
@@ -283,7 +283,7 @@ Node.js Single Executable Applications (SEA) compile the bridge into self-contai
 3. esbuild bundle: single-file ESM → single CJS bundle
    Entry: apps/bridge/dist/main.js
    Output: apps/bridge/dist/bridge-bundle.cjs
-   All @byom-ai/* deps inlined (no external requires)
+   All @arlopass/* deps inlined (no external requires)
 4. Generate SEA blob:
    sea-config.json: { "main": "bridge-bundle.cjs", "output": "sea-prep.blob" }
    node --experimental-sea-config sea-config.json
@@ -291,8 +291,8 @@ Node.js Single Executable Applications (SEA) compile the bridge into self-contai
    is not fully stable until Node 22+). Pin workflow to Node 20.x for consistency
    with the existing CI. When the project upgrades to Node 22+, remove the flag.
 5. Copy node binary + inject blob:
-   cp $(which node) byom-bridge-<platform>-<arch>
-   postject byom-bridge-<platform>-<arch> NODE_SEA_BLOB sea-prep.blob \
+   cp $(which node) arlopass-bridge-<platform>-<arch>
+   postject arlopass-bridge-<platform>-<arch> NODE_SEA_BLOB sea-prep.blob \
      --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
    NOTE: The sentinel fuse value above is the standard Node.js SEA fuse defined
    in the Node.js source code. It is NOT project-specific — all SEA applications
@@ -326,10 +326,10 @@ sha256sum -c SHA256SUMS.txt
 
 ### 4.5 npm Global Install Fallback
 
-`@byom-ai/bridge` is also published to npm as a global CLI:
+`@arlopass/bridge` is also published to npm as a global CLI:
 ```bash
-npm install -g @byom-ai/bridge
-byom-bridge
+npm install -g @arlopass/bridge
+arlopass-bridge
 ```
 Same tag triggers both SEA build and npm publish.
 
@@ -367,12 +367,12 @@ _generate-installers.yml
 
 **Windows (PowerShell):**
 ```powershell
-irm https://byomai.com/install.ps1 | iex
+irm https://arlopassai.com/install.ps1 | iex
 ```
 
 **macOS / Linux (Bash):**
 ```bash
-curl -fsSL https://byomai.com/install.sh | sh
+curl -fsSL https://arlopassai.com/install.sh | sh
 ```
 
 ### 5.2 install.ps1 Design
@@ -382,7 +382,7 @@ curl -fsSL https://byomai.com/install.sh | sh
 3. Download matching binary + `SHA256SUMS.txt` + `.sig`
 4. **Mandatory checksum verification** (fail if mismatch)
 5. **Opportunistic Sigstore verification** (warn if cosign unavailable; fail if cosign present but verification fails)
-6. Install to `$env:LOCALAPPDATA\BYOM\bin\`
+6. Install to `$env:LOCALAPPDATA\Arlopass\bin\`
 7. Add to User PATH if not present
 8. Generate + register native host manifests for Chrome/Edge/Firefox
 9. Print success with version + verification status
@@ -396,7 +396,7 @@ curl -fsSL https://byomai.com/install.sh | sh
 3. Download matching binary + checksums + signature
 4. **Mandatory checksum verification** (`sha256sum -c` or `shasum -a 256 -c`)
 5. **Opportunistic Sigstore verification**
-6. Install to `~/.local/bin/byom-bridge` (or `/usr/local/bin` with sudo confirmation)
+6. Install to `~/.local/bin/arlopass-bridge` (or `/usr/local/bin` with sudo confirmation)
 7. `chmod +x`
 8. Generate + install native host manifests for Chrome/Firefox
 9. Print success + next steps
@@ -408,12 +408,12 @@ curl -fsSL https://byomai.com/install.sh | sh
 Scripts live at `scripts/installers/install.ps1` and `scripts/installers/install.sh`:
 - Committed to repo, reviewed like any code
 - Uploaded to GitHub Releases as assets
-- `byomai.com/install.ps1` → redirect to latest release asset URL
+- `arlopassai.com/install.ps1` → redirect to latest release asset URL
 
 **The installer scripts do NOT contain hardcoded versions.** Instead, they always fetch the latest release dynamically from the GitHub API at install time:
 ```bash
 # install.sh fetches latest bridge release:
-LATEST=$(curl -fsSL "https://api.github.com/repos/<org>/byom-web/releases?per_page=20" \
+LATEST=$(curl -fsSL "https://api.github.com/repos/<org>/arlopass/releases?per_page=20" \
   | grep -o '"tag_name": "bridge/v[^"]*"' | head -1 | grep -o 'v[0-9].*')
 ```
 
@@ -427,9 +427,9 @@ The `_generate-installers.yml` workflow:
 
 | Platform | Chrome | Firefox |
 |---|---|---|
-| Windows | Registry: `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.byom.bridge` | Registry: `HKCU\Software\Mozilla\NativeMessagingHosts\com.byom.bridge` |
-| macOS | `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.byom.bridge.json` | `~/Library/Application Support/Mozilla/NativeMessagingHosts/com.byom.bridge.json` |
-| Linux | `~/.config/google-chrome/NativeMessagingHosts/com.byom.bridge.json` | `~/.mozilla/native-messaging-hosts/com.byom.bridge.json` |
+| Windows | Registry: `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.arlopass.bridge` | Registry: `HKCU\Software\Mozilla\NativeMessagingHosts\com.arlopass.bridge` |
+| macOS | `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.arlopass.bridge.json` | `~/Library/Application Support/Mozilla/NativeMessagingHosts/com.arlopass.bridge.json` |
+| Linux | `~/.config/google-chrome/NativeMessagingHosts/com.arlopass.bridge.json` | `~/.mozilla/native-messaging-hosts/com.arlopass.bridge.json` |
 
 Edge uses the same paths as Chrome on all platforms.
 
@@ -474,7 +474,7 @@ This eliminates duplication while preserving the existing reliability test suite
 
 | Secret | Used By | Notes |
 |---|---|---|
-| `NPM_TOKEN` | `_publish-npm.yml` | 90-day rotation, scoped to `@byom-ai` |
+| `NPM_TOKEN` | `_publish-npm.yml` | 90-day rotation, scoped to `@arlopass` |
 | `CHROME_CLIENT_ID` | `_deploy-chrome-store.yml` | Google OAuth2 |
 | `CHROME_CLIENT_SECRET` | `_deploy-chrome-store.yml` | Google OAuth2 |
 | `CHROME_REFRESH_TOKEN` | `_deploy-chrome-store.yml` | Google OAuth2 |
@@ -561,7 +561,7 @@ scripts/
 
 - **Unit tests**: PowerShell Pester tests for install.ps1, BATS tests for install.sh
 - **Integration tests**: Run installers in clean container images (Windows Server Core, Ubuntu, macOS) — verify binary is installed, PATH is set, native host is registered
-- **Smoke tests**: After install, verify `byom-bridge --version` returns expected version
+- **Smoke tests**: After install, verify `arlopass-bridge --version` returns expected version
 
 ---
 

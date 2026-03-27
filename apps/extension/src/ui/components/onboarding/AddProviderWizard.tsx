@@ -31,7 +31,7 @@ import type {
   ConnectorDefinition,
 } from "../../../options/connectors/types.js";
 
-const PROVIDER_ID_PREFIX = "byom.wallet.provider";
+const PROVIDER_ID_PREFIX = "arlopass.wallet.provider";
 
 function createProviderId(connectorId: string): string {
   const randomPart = Math.random().toString(36).slice(2, 10);
@@ -78,7 +78,7 @@ function withCloudConnectionBinding(
   };
 }
 
-const PAIRING_STATE_KEY = "byom.wallet.bridgePairing.v1";
+const PAIRING_STATE_KEY = "arlopass.wallet.bridgePairing.v1";
 
 /** Resolve pairing secret from wrapped pairing state for HMAC handshake. */
 async function resolvePairingSecret(): Promise<string | undefined> {
@@ -112,7 +112,10 @@ async function resolvePairingHandle(): Promise<string | undefined> {
  */
 let persistentPort: chrome.runtime.Port | null = null;
 let portRequestId = 0;
-const pendingRequests = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+const pendingRequests = new Map<
+  string,
+  { resolve: (v: unknown) => void; reject: (e: Error) => void }
+>();
 
 function getPersistentPort(hostName: string): chrome.runtime.Port {
   if (persistentPort !== null) return persistentPort;
@@ -225,7 +228,7 @@ async function sendNativeMessage(
 const deps: CloudConnectorDependencies = {
   sendNativeMessage,
   formatNativeHostRuntimeError,
-  defaultNativeHostName: "com.byom.bridge",
+  defaultNativeHostName: "com.arlopass.bridge",
 };
 
 const cloudConnectors = createCloudConnectors(deps);
@@ -304,7 +307,7 @@ function createCliConnector(options: {
     defaultName: options.defaultName,
     fields: [],
     async testConnection(config) {
-      const hostName = config["nativeHostName"] ?? "com.byom.bridge";
+      const hostName = config["nativeHostName"] ?? "com.arlopass.bridge";
       const cliType = config["cliType"] ?? options.defaultCliType;
 
       // Verify the bridge is reachable via handshake challenge.
@@ -386,7 +389,7 @@ function createCliConnector(options: {
     },
     sanitizeMetadata(config) {
       return {
-        nativeHostName: config["nativeHostName"] ?? "com.byom.bridge",
+        nativeHostName: config["nativeHostName"] ?? "com.arlopass.bridge",
         cliType: config["cliType"] ?? options.defaultCliType,
       };
     },
@@ -432,7 +435,7 @@ export function AddProviderWizard({
 }: AddProviderWizardProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [state, dispatch, _stateRestored] = usePersistedReducer(
-    "byom.popup.addProvider.v1",
+    "arlopass.popup.addProvider.v1",
     onboardingReducer,
     INITIAL_STATE,
   );
@@ -446,7 +449,7 @@ export function AddProviderWizard({
 
   const clearPersistedState = useCallback(() => {
     try {
-      chrome.storage.session.remove(["byom.popup.addProvider.v1"]);
+      chrome.storage.session.remove(["arlopass.popup.addProvider.v1"]);
     } catch {
       /* ignore */
     }
@@ -475,7 +478,8 @@ export function AddProviderWizard({
     const config: Record<string, string> = {
       ...state.fieldValues,
       methodId: selectedProvider.defaultMethodId,
-      nativeHostName: state.fieldValues["nativeHostName"] ?? "com.byom.bridge",
+      nativeHostName:
+        state.fieldValues["nativeHostName"] ?? "com.arlopass.bridge",
       baseUrl:
         state.fieldValues["baseUrl"] ??
         getDefaultBaseUrl(selectedProvider.connectorId),
@@ -516,7 +520,8 @@ export function AddProviderWizard({
     const config: Record<string, string> = {
       ...state.fieldValues,
       methodId: selectedProvider.defaultMethodId,
-      nativeHostName: state.fieldValues["nativeHostName"] ?? "com.byom.bridge",
+      nativeHostName:
+        state.fieldValues["nativeHostName"] ?? "com.arlopass.bridge",
       baseUrl:
         state.fieldValues["baseUrl"] ??
         getDefaultBaseUrl(selectedProvider.connectorId),
@@ -580,22 +585,22 @@ export function AddProviderWizard({
     const storageData = await new Promise<Record<string, unknown>>(
       (resolve) => {
         chrome.storage.local.get(
-          ["byom.wallet.providers.v1", "byom.wallet.activeProvider.v1"],
+          ["arlopass.wallet.providers.v1", "arlopass.wallet.activeProvider.v1"],
           (result) => resolve(result as Record<string, unknown>),
         );
       },
     );
 
     const existingProviders = Array.isArray(
-      storageData["byom.wallet.providers.v1"],
+      storageData["arlopass.wallet.providers.v1"],
     )
-      ? (storageData["byom.wallet.providers.v1"] as unknown[])
+      ? (storageData["arlopass.wallet.providers.v1"] as unknown[])
       : [];
 
     const providers = [...existingProviders, newProvider];
 
     // Auto-activate if no active provider
-    const existingActive = storageData["byom.wallet.activeProvider.v1"];
+    const existingActive = storageData["arlopass.wallet.activeProvider.v1"];
     const activeProvider =
       existingActive != null
         ? existingActive
@@ -604,9 +609,9 @@ export function AddProviderWizard({
     await new Promise<void>((resolve) => {
       chrome.storage.local.set(
         {
-          "byom.wallet.providers.v1": providers,
-          "byom.wallet.activeProvider.v1": activeProvider,
-          "byom.wallet.ui.lastError.v1": null,
+          "arlopass.wallet.providers.v1": providers,
+          "arlopass.wallet.activeProvider.v1": activeProvider,
+          "arlopass.wallet.ui.lastError.v1": null,
         },
         () => resolve(),
       );

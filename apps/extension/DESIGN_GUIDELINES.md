@@ -1,6 +1,6 @@
-# BYOM Extension – Design Implementation Guidelines
+# Arlopass Extension – Design Implementation Guidelines
 
-> **Source of truth**: Figma file `BYOM` (XIhjQLd0oI8hQ6KL56G4Y8)  
+> **Source of truth**: Figma file `Arlopass` (XIhjQLd0oI8hQ6KL56G4Y8)  
 > **UI Library**: Mantine v7 (React)  
 > **This document is prescriptive**: AI agents MUST follow every rule below when implementing or modifying extension popup UI.
 
@@ -31,19 +31,19 @@
 
 | Token Name | Hex | Usage |
 |---|---|---|
-| `dark.9` / `--byom-text-primary` | `#202225` | Primary text, active tab text, provider names, header title |
-| `gray.5` / `--byom-text-secondary` | `#808796` | Secondary text, inactive tab text, metadata labels |
-| `gray.3` / `--byom-border` | `#dfe1e8` | Card borders, inactive tab bottom borders, dividers |
-| `gray.1` / `--byom-bg-surface` | `#f3f3f3` | Outer background, popup body |
-| `white` / `--byom-bg-card` | `#ffffff` | Card backgrounds, header background |
-| `dark.9` / `--byom-btn-primary-bg` | `#202225` | Primary button background |
-| `white` / `--byom-btn-primary-text` | `#ffffff` | Primary button text |
+| `dark.9` / `--arlopass-text-primary` | `#202225` | Primary text, active tab text, provider names, header title |
+| `gray.5` / `--arlopass-text-secondary` | `#808796` | Secondary text, inactive tab text, metadata labels |
+| `gray.3` / `--arlopass-border` | `#dfe1e8` | Card borders, inactive tab bottom borders, dividers |
+| `gray.1` / `--arlopass-bg-surface` | `#f3f3f3` | Outer background, popup body |
+| `white` / `--arlopass-bg-card` | `#ffffff` | Card backgrounds, header background |
+| `dark.9` / `--arlopass-btn-primary-bg` | `#202225` | Primary button background |
+| `white` / `--arlopass-btn-primary-text` | `#ffffff` | Primary button text |
 
 ### Strict Rules
 - NEVER use arbitrary hex colors inline. Always reference the theme tokens defined above.
 - The dark text color is `#202225`, NOT pure black (`#000`). This is intentional.
 - Secondary text is `#808796`. Do NOT use Mantine's default gray shades unless they match exactly.
-- Card borders are always `1px solid #dfe1e8` — use the `--byom-border` token.
+- Card borders are always `1px solid #dfe1e8` — use the `--arlopass-border` token.
 
 ---
 

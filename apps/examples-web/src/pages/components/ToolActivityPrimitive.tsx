@@ -57,7 +57,7 @@ const resultProps = [
   },
 ];
 
-const usageExample = `import { ToolActivity } from "@byom-ai/react-ui";
+const usageExample = `import { ToolActivity } from "@arlopass/react-ui";
 
 function ToolCalls({ toolCalls }) {
   return (
@@ -78,7 +78,7 @@ function ToolCalls({ toolCalls }) {
   );
 }`;
 
-const withMessageExample = `import { Chat, Message, ToolActivity } from "@byom-ai/react-ui";
+const withMessageExample = `import { Chat, Message, ToolActivity } from "@arlopass/react-ui";
 
 <Chat.Messages>
   {(messages) =>
@@ -127,7 +127,7 @@ export default function ToolActivityPrimitive() {
       </div>
 
       <CodeBlock
-        code={`import { ToolActivity } from "@byom-ai/react-ui";`}
+        code={`import { ToolActivity } from "@arlopass/react-ui";`}
         language="tsx"
       />
 

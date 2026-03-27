@@ -1,4 +1,4 @@
-import { PROTOCOL_MACHINE_CODES } from "@byom-ai/protocol";
+import { PROTOCOL_MACHINE_CODES } from "@arlopass/protocol";
 import { describe, expect, it } from "vitest";
 
 import type {
@@ -29,7 +29,7 @@ function invalidEnvelopeResponse(
   };
 }
 
-describe("BYOMClient security regressions", () => {
+describe("ArlopassClient security regressions", () => {
   it("rejects responses missing required correlationId", async () => {
     const transport = new MockTransport();
     transport.requestHandler = async (request) => {

@@ -48,7 +48,7 @@ MCowBQYDK2VdAyEAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 describe("KeychainStore — deny by default on lookup failure", () => {
   it("returns undefined when the backend throws on getPassword", async () => {
     const store = new KeychainStore({
-      service: "byom.test",
+      service: "arlopass.test",
       backend: makeFaultyBackend(),
     });
 
@@ -57,14 +57,14 @@ describe("KeychainStore — deny by default on lookup failure", () => {
   });
 
   it("returns undefined when the secret does not exist in the backend", async () => {
-    const store = new KeychainStore({ service: "byom.test" });
+    const store = new KeychainStore({ service: "arlopass.test" });
     const result = await store.retrieve("nonexistent.key");
     expect(result).toBeUndefined();
   });
 
   it("returns false (not throws) when delete fails", async () => {
     const store = new KeychainStore({
-      service: "byom.test",
+      service: "arlopass.test",
       backend: makeFaultyBackend(),
     });
     const result = await store.delete("any.key");
@@ -73,7 +73,7 @@ describe("KeychainStore — deny by default on lookup failure", () => {
 
   it("throws KeychainError when store fails", async () => {
     const store = new KeychainStore({
-      service: "byom.test",
+      service: "arlopass.test",
       backend: makeFaultyBackend(),
     });
     await expect(store.store("api.key", "secret")).rejects.toThrow(KeychainError);
@@ -86,7 +86,7 @@ describe("KeychainStore — deny by default on lookup failure", () => {
 
 describe("KeychainStore — store/retrieve/delete lifecycle", () => {
   it("stores and retrieves a secret", async () => {
-    const store = new KeychainStore({ service: "byom.test" });
+    const store = new KeychainStore({ service: "arlopass.test" });
 
     await store.store("api.token", "sk-abc123");
     const retrieved = await store.retrieve("api.token");
@@ -95,7 +95,7 @@ describe("KeychainStore — store/retrieve/delete lifecycle", () => {
   });
 
   it("returns undefined after delete", async () => {
-    const store = new KeychainStore({ service: "byom.test" });
+    const store = new KeychainStore({ service: "arlopass.test" });
     await store.store("api.token", "sk-abc123");
     await store.delete("api.token");
 
@@ -104,8 +104,8 @@ describe("KeychainStore — store/retrieve/delete lifecycle", () => {
   });
 
   it("isolates secrets by service name", async () => {
-    const store1 = new KeychainStore({ service: "byom.service.a" });
-    const store2 = new KeychainStore({ service: "byom.service.b" });
+    const store1 = new KeychainStore({ service: "arlopass.service.a" });
+    const store2 = new KeychainStore({ service: "arlopass.service.b" });
 
     await store1.store("token", "value-a");
     await store2.store("token", "value-b");
@@ -115,7 +115,7 @@ describe("KeychainStore — store/retrieve/delete lifecycle", () => {
   });
 
   it("builds deterministic bridge-cloud namespaced account keys", async () => {
-    const store = new KeychainStore({ service: "byom.test" });
+    const store = new KeychainStore({ service: "arlopass.test" });
     const credentialAccount = buildBridgeCloudAccountName({
       namespace: "credential",
       providerId: "provider.claude",

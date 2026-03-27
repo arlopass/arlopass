@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { type ReactNode } from "react";
-import { BYOMProvider } from "@byom-ai/react";
+import { ArlopassProvider } from "@arlopass/react";
 import { ProviderPicker } from "../provider-picker/index.js";
 import type { ProviderDescriptor } from "../types.js";
 
@@ -12,12 +12,12 @@ function setup() {
     request: vi.fn().mockResolvedValue({ envelope: {} }),
     stream: vi.fn(),
   };
-  (window as unknown as Record<string, unknown>).byom = mockTransport;
+  (window as unknown as Record<string, unknown>).arlopass = mockTransport;
   return mockTransport;
 }
 
 afterEach(() => {
-  delete (window as unknown as Record<string, unknown>).byom;
+  delete (window as unknown as Record<string, unknown>).arlopass;
 });
 
 beforeEach(() => {
@@ -25,11 +25,15 @@ beforeEach(() => {
 });
 
 function Wrapper({ children }: { children: ReactNode }) {
-  return <BYOMProvider appId="test">{children}</BYOMProvider>;
+  return <ArlopassProvider appId="test">{children}</ArlopassProvider>;
 }
 
 const sampleProviders: ProviderDescriptor[] = [
-  { providerId: "openai", providerName: "OpenAI", models: ["gpt-4", "gpt-3.5"] },
+  {
+    providerId: "openai",
+    providerName: "OpenAI",
+    models: ["gpt-4", "gpt-3.5"],
+  },
   { providerId: "anthropic", providerName: "Anthropic", models: ["claude-3"] },
 ];
 
@@ -50,11 +54,7 @@ describe("ProviderPicker.Root", () => {
   it("data-state='loading' when loading", () => {
     render(
       <Wrapper>
-        <ProviderPicker.Root
-          providers={[]}
-          isLoading={true}
-          data-testid="root"
-        >
+        <ProviderPicker.Root providers={[]} isLoading={true} data-testid="root">
           <span>content</span>
         </ProviderPicker.Root>
       </Wrapper>,

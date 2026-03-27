@@ -80,8 +80,8 @@ export function BridgeCheckStep({
           </Group>
           <Text size="sm" c={tokens.color.textSecondary}>
             {state.status === "pairing"
-              ? "Establishing a secure connection with the BYOM Bridge."
-              : "Looking for the BYOM Bridge on your computer."}
+              ? "Establishing a secure connection with the Arlopass Bridge."
+              : "Looking for the Arlopass Bridge on your computer."}
           </Text>
         </Stack>
       )}
@@ -106,7 +106,7 @@ export function BridgeCheckStep({
             }}
           >
             <Text size="sm" c={tokens.color.textPrimary}>
-              ✓ BYOM Bridge v{state.version ?? "unknown"} —{" "}
+              ✓ Arlopass Bridge v{state.version ?? "unknown"} —{" "}
               {state.paired ? "Paired securely" : "Running on your computer"}
             </Text>
           </Box>
@@ -136,8 +136,8 @@ export function BridgeCheckStep({
           </Text>
 
           <Text size="sm" c={tokens.color.textSecondary}>
-            The BYOM Bridge is a small helper app that runs on your computer. It
-            connects the extension to your AI providers securely.
+            The Arlopass Bridge is a small helper app that runs on your
+            computer. It connects the extension to your AI providers securely.
           </Text>
 
           <Button

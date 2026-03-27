@@ -32,7 +32,7 @@ describe("SessionKeyRegistry", () => {
 
   it("persists issued sessions across registry instances when stateFilePath is configured", () => {
     const now = { value: BASE_TIME_MS };
-    const tempRoot = mkdtempSync(join(tmpdir(), "byom-session-key-registry-"));
+    const tempRoot = mkdtempSync(join(tmpdir(), "arlopass-session-key-registry-"));
     const stateFilePath = join(tempRoot, "session-keys.json");
     try {
       const sessionToken = "ef".repeat(32);

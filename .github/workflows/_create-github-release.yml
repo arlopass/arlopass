@@ -63,24 +63,24 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag }}
-          name: "BYOM Bridge v${{ inputs.version }}"
+          name: "Arlopass Bridge v${{ inputs.version }}"
           body: |
-            ## BYOM Bridge v${{ inputs.version }}
+            ## Arlopass Bridge v${{ inputs.version }}
 
             ### Install
 
             **One-liner (recommended):**
             ```bash
             # macOS / Linux
-            curl -fsSL https://byomai.com/install.sh | sh
+            curl -fsSL https://arlopassai.com/install.sh | sh
 
             # Windows (PowerShell)
-            irm https://byomai.com/install.ps1 | iex
+            irm https://arlopassai.com/install.ps1 | iex
             ```
 
             **npm (requires Node.js):**
             ```bash
-            npm install -g @byom-ai/bridge@${{ inputs.version }}
+            npm install -g @arlopass/bridge@${{ inputs.version }}
             ```
 
             **Manual download:** Download the binary for your platform below.

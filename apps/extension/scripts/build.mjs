@@ -164,7 +164,7 @@ async function processManifest() {
     // Add Firefox-specific settings
     manifest.browser_specific_settings = {
       gecko: {
-        id: "byom-ai-wallet@byomai.com",
+        id: "arlopass-wallet@arlopassai.com",
         strict_min_version: "109.0",
       },
     };

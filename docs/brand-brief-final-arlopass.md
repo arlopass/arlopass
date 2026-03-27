@@ -525,16 +525,16 @@ Users say "I use Arlopass" — the extension doesn't need a sub-brand. Developer
 
 ---
 
-## 14. Migration Plan: BYOM → Arlopass
+## 14. Migration Plan: Arlopass → Arlopass
 
 Since the product hasn't launched yet, this is a clean rename, not a migration. Key actions:
 
 | Area | Action |
 |------|--------|
-| **npm packages** | Publish under `@arlopass/*` scope from day one. No `@byom-ai/*` packages ever ship publicly. |
+| **npm packages** | Publish under `@arlopass/*` scope from day one. No `@arlopass/*` packages ever ship publicly. |
 | **GitHub** | Rename org to `arlopass`. Repository: `arlopass/arlopass`. |
 | **Domain** | `arlopass.com` (primary), `arlopass.dev` (developer docs if desired). |
 | **Extension** | Chrome Web Store listing as "Arlopass." Extension ID set once, never changes. |
-| **Injected API** | `window.arlopass` as the injected transport. No `window.byom` alias needed. |
-| **Internal references** | Find-and-replace all `byom`, `BYOM`, `byom-ai` references in codebase to `arlopass`. |
+| **Injected API** | `window.arlopass` as the injected transport. No `window.arlopass` alias needed. |
+| **Internal references** | Find-and-replace all `arlopass`, `Arlopass`, `arlopass` references in codebase to `arlopass`. |
 | **Social accounts** | Register `@arlopass` on GitHub, Twitter/X, Discord, npm, Chrome Web Store immediately. |

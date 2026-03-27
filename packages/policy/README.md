@@ -1,9 +1,9 @@
-# @byom-ai/policy
+# @arlopass/policy
 
 Evaluate allow/deny rules against origins, capabilities, providers, and models. Policies are versioned, signed with Ed25519, and enforced at two points — preflight in the extension and runtime in the bridge.
 
 ```ts
-import { evaluatePolicy, parsePolicyBundle } from "@byom-ai/policy";
+import { evaluatePolicy, parsePolicyBundle } from "@arlopass/policy";
 
 const bundle = parsePolicyBundle({
   schemaVersion: "1.0.0",
@@ -25,7 +25,7 @@ const decision = evaluatePolicy({
 });
 
 console.log(decision.decision);   // "allow"
-console.log(decision.machineCode); // "BYOM_POLICY_ALLOW"
+console.log(decision.machineCode); // "ARLOPASS_POLICY_ALLOW"
 ```
 
 ---
@@ -126,7 +126,7 @@ Verify a signed bundle against a key resolver.
 Key lifecycle manager for policy signing and verification.
 
 ```ts
-import { InMemoryPolicyKeyManager } from "@byom-ai/policy";
+import { InMemoryPolicyKeyManager } from "@arlopass/policy";
 
 const keys = new InMemoryPolicyKeyManager();
 const key = keys.createKey({ algorithm: "ed25519" });
@@ -163,7 +163,7 @@ type PolicyKeyRecord = {
 
 ### Decision Machine Codes (`POLICY_DECISION_MACHINE_CODES`)
 
-`BYOM_POLICY_ALLOW` plus 16 deny variants: `DENY_POLICY_MISSING`, `DENY_POLICY_INVALID`, `DENY_ORIGIN_NOT_ALLOWED`, `DENY_ORIGIN_BLOCKED`, `DENY_CAPABILITY_NOT_ALLOWED`, `DENY_CAPABILITY_BLOCKED`, `DENY_PROVIDER_NOT_ALLOWED`, `DENY_PROVIDER_BLOCKED`, `DENY_MODEL_NOT_ALLOWED`, `DENY_MODEL_BLOCKED`, and others.
+`ARLOPASS_POLICY_ALLOW` plus 16 deny variants: `DENY_POLICY_MISSING`, `DENY_POLICY_INVALID`, `DENY_ORIGIN_NOT_ALLOWED`, `DENY_ORIGIN_BLOCKED`, `DENY_CAPABILITY_NOT_ALLOWED`, `DENY_CAPABILITY_BLOCKED`, `DENY_PROVIDER_NOT_ALLOWED`, `DENY_PROVIDER_BLOCKED`, `DENY_MODEL_NOT_ALLOWED`, `DENY_MODEL_BLOCKED`, and others.
 
 **`toPolicyReasonCode(machineCode): ProtocolReasonCode`** — Map machine code to protocol reason code.
 
@@ -190,4 +190,4 @@ type PolicyKeyRecord = {
 
 ### Dependencies
 
-- `@byom-ai/protocol` — Capability types and reason codes
+- `@arlopass/protocol` — Capability types and reason codes

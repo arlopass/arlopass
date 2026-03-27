@@ -5,7 +5,7 @@ import type { Registry, Config } from "./types.js";
 import { resolveBlocks } from "./resolve.js";
 
 const DEFAULT_CONFIG: Config = {
-  outDir: "src/components/byom",
+  outDir: "src/components/arlopass",
   overwrite: false,
 };
 
@@ -15,7 +15,7 @@ function loadRegistry(): Registry {
 }
 
 function loadConfig(): Config {
-  const configPath = join(process.cwd(), "byom-ui.json");
+  const configPath = join(process.cwd(), "arlopass-ui.json");
   if (existsSync(configPath)) {
     const userConfig = JSON.parse(readFileSync(configPath, "utf-8")) as Partial<Config>;
     return {
@@ -52,7 +52,7 @@ export function addCommand(args: string[]): void {
   const { ids, outDir: flagOutDir, force, dryRun } = parseFlags(args);
 
   if (ids.length === 0) {
-    console.error("Usage: byom-ui add <block-id> [...block-ids] [--out <dir>] [--force] [--dry-run]");
+    console.error("Usage: arlopass-ui add <block-id> [...block-ids] [--out <dir>] [--force] [--dry-run]");
     process.exit(1);
   }
 

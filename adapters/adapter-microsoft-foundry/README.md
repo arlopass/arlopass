@@ -1,6 +1,6 @@
-# @byom-ai/adapter-microsoft-foundry
+# @arlopass/adapter-microsoft-foundry
 
-BYOM AI adapter for [Azure AI Foundry](https://ai.azure.com/).
+Arlopass adapter for [Azure AI Foundry](https://ai.azure.com/).
 
 > [!NOTE]
 > This adapter is **planned** and not yet implemented. The package structure and test scaffolding are in place.
@@ -14,5 +14,5 @@ BYOM AI adapter for [Azure AI Foundry](https://ai.azure.com/).
 
 ## Dependencies
 
-- `@byom-ai/adapter-runtime` — Adapter contract and cloud connection types
-- `@byom-ai/protocol` — Envelope and error types
+- `@arlopass/adapter-runtime` — Adapter contract and cloud connection types
+- `@arlopass/protocol` — Envelope and error types

@@ -1,5 +1,5 @@
 import type {
-  BYOMTransport,
+  ArlopassTransport,
   ChatMessage,
   ChatSendPayload,
   ChatSendResponsePayload,
@@ -16,7 +16,7 @@ import type {
   TransportRequest,
   TransportResponse,
   TransportStream,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
 export type DemoTransportMode = "mock" | "slow" | "failure";
 
@@ -106,10 +106,10 @@ function buildCompletion(
   providerId: string,
   modelId: string,
 ): string {
-  return `BYOM demo response from ${providerId}/${modelId}: ${prompt}`;
+  return `Arlopass demo response from ${providerId}/${modelId}: ${prompt}`;
 }
 
-export function createDemoTransport(mode: DemoTransportMode): BYOMTransport {
+export function createDemoTransport(mode: DemoTransportMode): ArlopassTransport {
   return {
     async request<TRequestPayload, TResponsePayload>(
       request: TransportRequest<TRequestPayload>,
@@ -125,7 +125,7 @@ export function createDemoTransport(mode: DemoTransportMode): BYOMTransport {
       if (mode === "failure" && capability !== "session.create") {
         throw {
           message: "Demo policy denied this request.",
-          machineCode: "BYOM_POLICY_VIOLATION",
+          machineCode: "ARLOPASS_POLICY_VIOLATION",
           reasonCode: "policy.denied",
           retryable: false,
           details: {
@@ -209,7 +209,7 @@ export function createDemoTransport(mode: DemoTransportMode): BYOMTransport {
       if (mode === "failure") {
         throw {
           message: "Demo stream failed due to transient bridge outage.",
-          machineCode: "BYOM_TRANSIENT_NETWORK",
+          machineCode: "ARLOPASS_TRANSIENT_NETWORK",
           reasonCode: "transport.transient_failure",
           retryable: true,
         };
@@ -265,13 +265,13 @@ export function createDemoTransport(mode: DemoTransportMode): BYOMTransport {
   };
 }
 
-type WindowWithBYOM = Window &
+type WindowWithArlopass = Window &
   Partial<{
-    byom: BYOMTransport;
+    arlopass: ArlopassTransport;
   }>;
 
-export function getInjectedTransport(): BYOMTransport | null {
-  const runtimeWindow = window as WindowWithBYOM;
-  return runtimeWindow.byom ?? null;
+export function getInjectedTransport(): ArlopassTransport | null {
+  const runtimeWindow = window as WindowWithArlopass;
+  return runtimeWindow.arlopass ?? null;
 }
 

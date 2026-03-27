@@ -13,7 +13,7 @@ function createChromeStub(
 } {
   return {
     runtime: {
-      id: "ext.test.byom",
+      id: "ext.test.arlopass",
       sendNativeMessage,
     },
   };
@@ -32,7 +32,7 @@ describe("options existing cloud handle validation", () => {
     vi.stubGlobal("document", documentStub);
     vi.stubGlobal("window", {
       location: {
-        origin: "chrome-extension://ext.test.byom",
+        origin: "chrome-extension://ext.test.arlopass",
       },
     });
 
@@ -75,7 +75,7 @@ describe("options existing cloud handle validation", () => {
         metadata: {
           providerId: "microsoft-foundry",
           methodId: "foundry.api_key",
-          nativeHostName: "com.byom.bridge",
+          nativeHostName: "com.arlopass.bridge",
           connectionHandle:
             "connh.provider.microsoft-foundry.foundry.api_key.00000000-0000-4000-8000-000000000001.0.sig",
           endpointProfileHash: "sha256:endpoint-profile-foundry",
@@ -101,7 +101,7 @@ describe("options existing cloud handle validation", () => {
     });
     vi.stubGlobal("window", {
       location: {
-        origin: "chrome-extension://ext.test.byom",
+        origin: "chrome-extension://ext.test.arlopass",
       },
     });
     vi.stubGlobal(
@@ -129,7 +129,7 @@ describe("options existing cloud handle validation", () => {
     });
     vi.stubGlobal("window", {
       location: {
-        origin: "chrome-extension://ext.test.byom",
+        origin: "chrome-extension://ext.test.arlopass",
       },
     });
     vi.stubGlobal(

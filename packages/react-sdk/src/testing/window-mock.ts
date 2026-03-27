@@ -1,25 +1,25 @@
-import type { BYOMTransport } from "@byom-ai/web-sdk";
+import type { ArlopassTransport } from "@arlopass/web-sdk";
 
 /**
- * Inject a mock transport as `window.byom`.
+ * Inject a mock transport as `window.arlopass`.
  */
-export function mockWindowByom(transport: BYOMTransport): void {
-    (window as unknown as Record<string, unknown>).byom = transport;
+export function mockWindowArlopass(transport: ArlopassTransport): void {
+    (window as unknown as Record<string, unknown>).arlopass = transport;
 }
 
 /**
- * Remove `window.byom` to simulate extension not installed.
+ * Remove `window.arlopass` to simulate extension not installed.
  */
-export function cleanupWindowByom(): void {
-    delete (window as unknown as Record<string, unknown>).byom;
+export function cleanupWindowArlopass(): void {
+    delete (window as unknown as Record<string, unknown>).arlopass;
 }
 
 /**
- * Simulate an external disconnect by removing `window.byom`
+ * Simulate an external disconnect by removing `window.arlopass`
  * and calling the transport's disconnect if available.
  */
-export async function simulateExternalDisconnect(transport: BYOMTransport): Promise<void> {
-    cleanupWindowByom();
+export async function simulateExternalDisconnect(transport: ArlopassTransport): Promise<void> {
+    cleanupWindowArlopass();
     if (typeof transport.disconnect === "function") {
         await transport.disconnect("mock-session");
     }

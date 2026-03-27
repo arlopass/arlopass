@@ -2,10 +2,10 @@ import { Stack, Title, Text } from "@mantine/core";
 import { Callout, CodeBlock } from "../../components";
 import { navigate } from "../../router";
 
-const theProblem = `// BYOMClient has internal state — but it's just getters, not reactive.
-import { BYOMClient } from "@byom-ai/web-sdk";
+const theProblem = `// ArlopassClient has internal state — but it's just getters, not reactive.
+import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 client.state;            // "connected" — a plain getter
@@ -16,14 +16,14 @@ client.selectedProvider; // null — a plain getter
 // There's no .onChange() callback, no EventEmitter, no observable.
 // The SDK is deliberately framework-agnostic.`;
 
-const clientStore = `// ClientStore wraps BYOMClient and maintains a reactive snapshot.
+const clientStore = `// ClientStore wraps ArlopassClient and maintains a reactive snapshot.
 
 class ClientStore {
-  #client: BYOMClient;
+  #client: ArlopassClient;
   #snapshot: ClientSnapshot;
   #subscriptions = new Subscriptions();
 
-  constructor(client: BYOMClient) {
+  constructor(client: ArlopassClient) {
     this.#client = client;
     this.#snapshot = createInitialSnapshot();
     this.#startHeartbeat(); // 500ms safety-net polling
@@ -58,7 +58,7 @@ import { useSyncExternalStore } from "react";
 
 // Full snapshot — used internally
 function useStoreSnapshot(): ClientSnapshot {
-  const { store } = useBYOMContext();
+  const { store } = useArlopassContext();
   return useSyncExternalStore(
     (cb) => store.subscribe(cb),
     () => store.getSnapshot(),
@@ -68,7 +68,7 @@ function useStoreSnapshot(): ClientSnapshot {
 
 // Selective subscription — each hook picks its slice
 function useStoreSelector<T>(selector: (snap: ClientSnapshot) => T): T {
-  const { store } = useBYOMContext();
+  const { store } = useArlopassContext();
   return useSyncExternalStore(
     (cb) => store.subscribe(cb),
     () => selector(store.getSnapshot()),
@@ -138,13 +138,13 @@ export default function StateManagement() {
       <div>
         <Title order={2}>State Management</Title>
         <Text c="dimmed" mt={4}>
-          How the React SDK stays in sync with the BYOMClient
+          How the React SDK stays in sync with the ArlopassClient
         </Text>
       </div>
 
       <Title order={3}>The challenge</Title>
       <Text>
-        <code>BYOMClient</code> is a plain TypeScript class. It has getters
+        <code>ArlopassClient</code> is a plain TypeScript class. It has getters
         like <code>.state</code>, <code>.sessionId</code>, and{" "}
         <code>.selectedProvider</code> — but they're not reactive. Nothing in
         the Web SDK knows about React, and that's intentional. The SDK is
@@ -156,9 +156,9 @@ export default function StateManagement() {
       <Title order={3}>ClientStore</Title>
       <Text>
         The answer is <code>ClientStore</code>. It wraps a{" "}
-        <code>BYOMClient</code> and maintains a snapshot — a plain object that
-        represents the client's current state at a point in time. When the store
-        detects a change, it creates a new snapshot object and notifies
+        <code>ArlopassClient</code> and maintains a snapshot — a plain object
+        that represents the client's current state at a point in time. When the
+        store detects a change, it creates a new snapshot object and notifies
         subscribers. When nothing changes, it keeps the same object reference.
       </Text>
       <CodeBlock title="ClientStore internals" code={clientStore} />
@@ -169,12 +169,9 @@ export default function StateManagement() {
         this pattern — reading from an external store that isn't managed by
         React. It guarantees tear-free reads (no partial state) and works
         correctly with concurrent features like Suspense and transitions. Every
-        BYOM hook uses it under the hood.
+        Arlopass hook uses it under the hood.
       </Text>
-      <CodeBlock
-        title="React integration"
-        code={useSyncExternalStoreCode}
-      />
+      <CodeBlock title="React integration" code={useSyncExternalStoreCode} />
 
       <Callout type="info" title="Why not useState?">
         If you used <code>useState</code> + <code>useEffect</code> to sync
@@ -188,8 +185,8 @@ export default function StateManagement() {
       <Title order={3}>Snapshot identity</Title>
       <Text>
         The key to avoiding unnecessary re-renders is snapshot identity. The
-        store compares the current snapshot to the next one field-by-field.
-        If nothing changed, it keeps the old object. Since{" "}
+        store compares the current snapshot to the next one field-by-field. If
+        nothing changed, it keeps the old object. Since{" "}
         <code>useSyncExternalStore</code> uses <code>Object.is</code> to
         compare, same reference means no re-render.
       </Text>
@@ -199,32 +196,31 @@ export default function StateManagement() {
       <Text>
         The store uses two complementary strategies. The primary strategy is
         wrap-and-refresh: every SDK operation goes through the store, which
-        calls <code>refreshSnapshot()</code> after completion. The safety net
-        is a 500ms heartbeat that catches changes the store didn't initiate —
-        like the extension unloading or the bridge dropping. The snapshot
-        equality check means the heartbeat is effectively free when nothing
-        has changed.
+        calls <code>refreshSnapshot()</code> after completion. The safety net is
+        a 500ms heartbeat that catches changes the store didn't initiate — like
+        the extension unloading or the bridge dropping. The snapshot equality
+        check means the heartbeat is effectively free when nothing has changed.
       </Text>
       <CodeBlock title="Two sync strategies" code={syncStrategies} />
 
       <Title order={3}>Selective subscriptions</Title>
       <Text>
         Each hook subscribes to only the slice of state it needs via{" "}
-        <code>useStoreSelector</code>. <code>useConnection()</code> cares
-        about <code>state</code> and <code>sessionId</code>.{" "}
-        <code>useProviders()</code> cares about the provider list. A change
-        to the provider list doesn't re-render components that only use{" "}
+        <code>useStoreSelector</code>. <code>useConnection()</code> cares about{" "}
+        <code>state</code> and <code>sessionId</code>.{" "}
+        <code>useProviders()</code> cares about the provider list. A change to
+        the provider list doesn't re-render components that only use{" "}
         <code>useConnection()</code>.
       </Text>
 
       <Title order={3}>Streaming optimization</Title>
       <Text>
         During streaming, tokens can arrive hundreds of times per second.
-        Re-rendering on every token would destroy performance. The store
-        uses <code>requestAnimationFrame</code> with{" "}
-        <code>setTimeout</code> microbatching — tokens accumulate, and the
-        store refreshes at most ~60 times per second. Each render sees the
-        latest accumulated content, not individual tokens.
+        Re-rendering on every token would destroy performance. The store uses{" "}
+        <code>requestAnimationFrame</code> with <code>setTimeout</code>{" "}
+        microbatching — tokens accumulate, and the store refreshes at most ~60
+        times per second. Each render sees the latest accumulated content, not
+        individual tokens.
       </Text>
       <CodeBlock title="Streaming batching" code={streamingOptimization} />
 

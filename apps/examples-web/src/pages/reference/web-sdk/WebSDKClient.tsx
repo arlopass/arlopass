@@ -1,7 +1,7 @@
 import { Stack, Title, Text, Divider } from "@mantine/core";
 import { ApiTable, CodeBlock, InlineCode, Callout } from "../../../components";
 
-const importLine = `import { BYOMClient } from "@byom-ai/web-sdk";`;
+const importLine = `import { ArlopassClient } from "@arlopass/web-sdk";`;
 
 // ---------------------------------------------------------------------------
 // Constructor options
@@ -10,15 +10,15 @@ const importLine = `import { BYOMClient } from "@byom-ai/web-sdk";`;
 const clientOptions = [
   {
     name: "transport",
-    type: "BYOMTransport",
+    type: "ArlopassTransport",
     required: true,
     description:
-      "Transport implementation (provided by the browser extension via window.byom).",
+      "Transport implementation (provided by the browser extension via window.arlopass).",
   },
   {
     name: "origin",
     type: "string",
-    default: '"https://app.byom.local"',
+    default: '"https://app.arlopass.local"',
     description:
       "Origin URL for envelope metadata. Auto-set to window.location.origin when in a browser.",
   },
@@ -161,7 +161,7 @@ const clientMethods = [
   },
 ];
 
-const connectExample = `const client = new BYOMClient({ transport: window.byom });
+const connectExample = `const client = new ArlopassClient({ transport: window.arlopass });
 
 await client.connect({ appId: "com.example.myapp" });
 const { providers } = await client.listProviders();
@@ -198,7 +198,7 @@ const stateDiagram = `// State machine transitions:
 export default function WebSDKClient() {
   return (
     <Stack gap="lg">
-      <Title order={2}>BYOMClient</Title>
+      <Title order={2}>ArlopassClient</Title>
       <Text>
         The core client class. Manages connection state, provider selection, and
         chat operations over the protocol transport.
@@ -209,10 +209,10 @@ export default function WebSDKClient() {
       {/* Constructor */}
       <Divider />
       <Title order={3}>Constructor options</Title>
-      <ApiTable data={clientOptions} title="BYOMClientOptions" />
+      <ApiTable data={clientOptions} title="ArlopassClientOptions" />
 
       <CodeBlock
-        code={`const client = new BYOMClient({ transport, origin: window.location.origin });`}
+        code={`const client = new ArlopassClient({ transport, origin: window.location.origin });`}
         language="tsx"
       />
 
@@ -236,8 +236,8 @@ export default function WebSDKClient() {
 
       <Callout type="info" title="State guards">
         Methods that require a connected state (listProviders, selectProvider,
-        chat.*) throw a <InlineCode>BYOMStateError</InlineCode> if called in an
-        invalid state.
+        chat.*) throw a <InlineCode>ArlopassStateError</InlineCode> if called in
+        an invalid state.
       </Callout>
     </Stack>
   );

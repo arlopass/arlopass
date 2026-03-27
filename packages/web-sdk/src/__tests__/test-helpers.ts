@@ -1,6 +1,6 @@
-import { parseEnvelope, type ProtocolCapability } from "@byom-ai/protocol";
+import { parseEnvelope, type ProtocolCapability } from "@arlopass/protocol";
 
-import { BYOMClient } from "../client.js";
+import { ArlopassClient } from "../client.js";
 import type {
   ChatSendPayload,
   ChatStreamPayload,
@@ -17,25 +17,25 @@ import type {
   TransportResponse,
   TransportStream,
 } from "../types.js";
-import type { BYOMTransport } from "../transport.js";
+import type { ArlopassTransport } from "../transport.js";
 
 type RequestOrStream =
   | Readonly<{ kind: "request"; request: TransportRequest<unknown> }>
   | Readonly<{ kind: "stream"; request: TransportRequest<unknown> }>;
 
-export class MockTransport implements BYOMTransport {
+export class MockTransport implements ArlopassTransport {
   readonly calls: RequestOrStream[] = [];
   readonly disconnectCalls: string[] = [];
 
   requestHandler:
     | ((
-        request: TransportRequest<unknown>,
-      ) => Promise<TransportResponse<unknown>>)
+      request: TransportRequest<unknown>,
+    ) => Promise<TransportResponse<unknown>>)
     | undefined;
   streamHandler:
     | ((
-        request: TransportRequest<unknown>,
-      ) => Promise<TransportStream<unknown>>)
+      request: TransportRequest<unknown>,
+    ) => Promise<TransportStream<unknown>>)
     | undefined;
 
   async request<TReq, TRes>(
@@ -126,8 +126,8 @@ export function setupConnectedClient(
     "chat.completions",
     "chat.stream",
   ],
-): BYOMClient {
-  return new BYOMClient({
+): ArlopassClient {
+  return new ArlopassClient({
     transport,
     now: createDeterministicClock(),
     randomId: createDeterministicIdGenerator(),
@@ -137,7 +137,7 @@ export function setupConnectedClient(
 }
 
 export async function connectAndSelectProvider(
-  client: BYOMClient,
+  client: ArlopassClient,
   providerId = "provider.ollama",
   modelId = "model.llama3",
 ): Promise<void> {
@@ -198,7 +198,7 @@ export function createDefaultRequestHandler() {
         {
           message: {
             role: "assistant",
-            content: "Hello from BYOM.",
+            content: "Hello from Arlopass.",
           },
         },
       );

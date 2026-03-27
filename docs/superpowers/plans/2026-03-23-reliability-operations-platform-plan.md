@@ -117,7 +117,7 @@ Expected: PASS.
 
 ```bash
 git add packages/web-sdk/src apps/extension/src apps/bridge/src adapters/runtime/src
-git commit -m "feat: instrument byom stack with end-to-end telemetry"
+git commit -m "feat: instrument arlopass stack with end-to-end telemetry"
 ```
 
 ---

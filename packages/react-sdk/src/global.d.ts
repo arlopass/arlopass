@@ -1,8 +1,8 @@
-import type { BYOMTransport } from "@byom-ai/web-sdk";
+import type { ArlopassTransport } from "@arlopass/web-sdk";
 
 declare global {
     interface Window {
-        byom?: BYOMTransport;
+        arlopass?: ArlopassTransport;
     }
 }
 

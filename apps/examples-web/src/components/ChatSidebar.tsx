@@ -23,24 +23,24 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import {
-  BYOMClient,
+  ArlopassClient,
   ConversationManager,
-  type BYOMTransport,
+  type ArlopassTransport,
   type ChatMessage,
   type ContextWindowInfo,
   type ProviderDescriptor,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 import { searchDocs } from "../docs-context";
 import { NAVIGATION } from "../navigation";
 import { Markdown } from "./Markdown";
 
 type ChatState = "disconnected" | "connecting" | "connected" | "error";
 
-const CHAT_PROV_KEY = "byom.examples.chat.lastProvider";
-const CHAT_MODEL_KEY = "byom.examples.chat.lastModel";
+const CHAT_PROV_KEY = "arlopass.examples.chat.lastProvider";
+const CHAT_MODEL_KEY = "arlopass.examples.chat.lastModel";
 
-function getInjected(): BYOMTransport | null {
-  return (window as Window & { byom?: BYOMTransport }).byom ?? null;
+function getInjected(): ArlopassTransport | null {
+  return (window as Window & { arlopass?: ArlopassTransport }).arlopass ?? null;
 }
 
 function fmtModel(m: string): string {
@@ -73,7 +73,7 @@ type DisplayMessage = ChatMessage & {
 };
 
 export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
-  const clientRef = useRef<BYOMClient | null>(null);
+  const clientRef = useRef<ArlopassClient | null>(null);
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
   const [chatState, setChatState] = useState<ChatState>("connecting");
@@ -127,14 +127,14 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
     }
     setChatState("connecting");
     try {
-      const client = new BYOMClient({
+      const client = new ArlopassClient({
         transport,
         origin: window.location.origin,
         timeoutMs: 120_000,
       });
       await client.connect({
         appSuffix: "chat",
-        appName: "BYOM AI Chat",
+        appName: "Arlopass Chat",
         appDescription: "Documentation assistant for the examples app",
         origin: window.location.origin,
       });
@@ -405,7 +405,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
             )}
             {chatState === "disconnected" && !getInjected() && (
               <Text fz="xs" c="dimmed">
-                Extension not detected. Load the BYOM extension first.
+                Extension not detected. Load the Arlopass extension first.
               </Text>
             )}
             <Button
@@ -416,7 +416,9 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               disabled={chatState === "connecting"}
               fullWidth
             >
-              {chatState === "error" ? "Retry connection" : "Connect to BYOM"}
+              {chatState === "error"
+                ? "Retry connection"
+                : "Connect to Arlopass"}
             </Button>
           </Stack>
         </Box>
@@ -433,7 +435,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
           {msgs.length === 0 && (
             <Text fz="sm" c="dimmed" ta="center" py="xl">
               {chatState === "connected"
-                ? "Ask anything about BYOM."
+                ? "Ask anything about Arlopass."
                 : "Connect to start chatting."}
             </Text>
           )}
@@ -651,7 +653,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
 
         <Group gap="xs" align="flex-end">
           <Textarea
-            placeholder="Ask about BYOM..."
+            placeholder="Ask about Arlopass..."
             value={chatIn}
             onChange={(e) => setChatIn(e.currentTarget.value)}
             onKeyDown={(e) => {
@@ -748,19 +750,19 @@ function ContextBar({ info }: { info: ContextWindowInfo }) {
 
 // ─── ConversationManager factory with search_docs tool ───────────────
 
-const CHAT_SYSTEM_PROMPT = `You are a helpful assistant for the BYOM AI Wallet documentation website. You answer questions about the BYOM extension, web SDK, providers, app connections, credentials, and how to integrate with BYOM.
+const CHAT_SYSTEM_PROMPT = `You are a helpful assistant for the Arlopass Wallet documentation website. You answer questions about the Arlopass extension, web SDK, providers, app connections, credentials, and how to integrate with Arlopass.
 
-When the user asks about BYOM features, SDK usage, providers, or integration, use the search_docs tool to find relevant documentation before answering.
+When the user asks about Arlopass features, SDK usage, providers, or integration, use the search_docs tool to find relevant documentation before answering.
 When the user asks to see a specific page, demo, or example, use the navigate_to_page tool to take them there.
 
 Important:
 - Be concise and accurate
 - Include code examples when relevant
-- Reference specific BYOM concepts (providers, models, vault, app connections)
-- If asked about implementation, show @byom-ai/web-sdk TypeScript code`;
+- Reference specific Arlopass concepts (providers, models, vault, app connections)
+- If asked about implementation, show @arlopass/web-sdk TypeScript code`;
 
 function createConversation(
-  client: BYOMClient,
+  client: ArlopassClient,
   onNavigateRef: React.RefObject<((pageId: string) => void) | undefined>,
 ): ConversationManager {
   const allPageIds = NAVIGATION.flatMap((cat) =>
@@ -801,11 +803,14 @@ function createConversation(
       {
         name: "search_docs",
         description:
-          "Search BYOM documentation for relevant pages about the SDK, extension, providers, apps, credentials, or integration patterns. Use this when the user asks about BYOM features.",
+          "Search Arlopass documentation for relevant pages about the SDK, extension, providers, apps, credentials, or integration patterns. Use this when the user asks about Arlopass features.",
         parameters: {
           type: "object",
           properties: {
-            query: { type: "string", description: "Search query about BYOM" },
+            query: {
+              type: "string",
+              description: "Search query about Arlopass",
+            },
           },
           required: ["query"],
         },

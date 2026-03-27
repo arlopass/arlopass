@@ -1,4 +1,4 @@
-# Project Plan: BYOM AI SDK ("MetaMask for AI")
+# Project Plan: Arlopass SDK ("MetaMask for AI")
 
 ## 1) Executive Summary
 
@@ -109,22 +109,22 @@ Use **Approach A** as the primary architecture, with a tightly restricted Approa
 ## 5) Reference Architecture
 
 ## Components
-1. **Web SDK (`@byom-ai/web-sdk`)**
+1. **Web SDK (`@arlopass/web-sdk`)**
    - JS/TS library used by app developers.
    - Talks to extension provider API.
    - Handles session state, streaming, and typed errors.
 
 2. **Provider Injection Layer**
-   - `window.byom` style API exposed by extension.
+   - `window.arlopass` style API exposed by extension.
    - EIP-1193-inspired request/response/event model adapted for AI capabilities.
 
-3. **Browser Extension (`byom-wallet`)**
+3. **Browser Extension (`arlopass-wallet`)**
    - Trusted consent and permission UI.
    - Origin-aware permission store.
    - Policy evaluation and request signing.
    - Secure channel to local bridge/native host.
 
-4. **Local Bridge Daemon (`byom-bridge`)**
+4. **Local Bridge Daemon (`arlopass-bridge`)**
    - Runs on user machine, loopback-only binding.
    - Adapter host runtime and health manager.
    - Secret storage integration (OS keychain).
@@ -137,12 +137,12 @@ Use **Approach A** as the primary architecture, with a tightly restricted Approa
    - `adapter-claude-local-client-bridge`
    - Pluggable adapter contract with strict capability descriptors.
 
-6. **Enterprise Policy Bundle (`@byom-ai/policy`)**
+6. **Enterprise Policy Bundle (`@arlopass/policy`)**
    - Allow/deny provider and model rules.
    - Data handling policies (PII guardrails, redaction hooks).
    - Egress restrictions and audit sinks.
 
-7. **Observability Package (`@byom-ai/telemetry`)**
+7. **Observability Package (`@arlopass/telemetry`)**
    - Metrics/traces/log schema.
    - OpenTelemetry exporters.
    - Health and reliability dashboards.
@@ -346,7 +346,7 @@ Adapter manifest includes:
 5. Manual security review (for first-party/default adapters)
 
 ## 10.4 Developer Experience
-- `create-byom-adapter` scaffolder
+- `create-arlopass-adapter` scaffolder
 - Local adapter sandbox runner
 - Contract test harness
 - Example adapters and docs
@@ -357,12 +357,12 @@ Adapter manifest includes:
 
 ## 11.1 Web SDK API (Conceptual)
 ```ts
-const byom = await BYOM.connect({ appId: "acme-copilot" });
+const arlopass = await Arlopass.connect({ appId: "acme-copilot" });
 
-const providers = await byom.listProviders();
-await byom.selectProvider({ providerId: "ollama", model: "llama3.2" });
+const providers = await arlopass.listProviders();
+await arlopass.selectProvider({ providerId: "ollama", model: "llama3.2" });
 
-const stream = byom.chat.stream({
+const stream = arlopass.chat.stream({
   messages: [{ role: "user", content: "Help me refactor this function." }],
 });
 

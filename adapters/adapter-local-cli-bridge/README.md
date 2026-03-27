@@ -1,11 +1,11 @@
-# @byom-ai/adapter-local-cli-bridge
+# @arlopass/adapter-local-cli-bridge
 
-Bridge local CLI tools — GitHub Copilot CLI, Claude Desktop, or any stdio-based AI tool — through the BYOM wallet.
+Bridge local CLI tools — GitHub Copilot CLI, Claude Desktop, or any stdio-based AI tool — through the Arlopass wallet.
 
-Spawns a CLI process, communicates via JSON-line stdio protocol, and translates BYOM protocol messages into CLI-compatible requests.
+Spawns a CLI process, communicates via JSON-line stdio protocol, and translates Arlopass protocol messages into CLI-compatible requests.
 
 ```ts
-import { LocalCliBridgeAdapter } from "@byom-ai/adapter-local-cli-bridge";
+import { LocalCliBridgeAdapter } from "@arlopass/adapter-local-cli-bridge";
 
 const adapter = new LocalCliBridgeAdapter({
   command: "/usr/local/bin/my-ai-cli",
@@ -18,7 +18,7 @@ const sessionId = await adapter.createSession({ model: models[0] });
 const response = await adapter.sendMessage(sessionId, "Hello");
 console.log(response);
 
-await adapter.streamMessage(sessionId, "Explain BYOM", (chunk) => {
+await adapter.streamMessage(sessionId, "Explain Arlopass", (chunk) => {
   process.stdout.write(chunk);
 });
 
@@ -94,7 +94,7 @@ const LOCAL_CLI_BRIDGE_MANIFEST: AdapterManifest = {
   requiredPermissions: ["process.spawn", "filesystem.read", "env.read"],
   egressRules: [],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 }
 ```
 
@@ -102,5 +102,5 @@ const LOCAL_CLI_BRIDGE_MANIFEST: AdapterManifest = {
 
 ### Dependencies
 
-- `@byom-ai/adapter-runtime` — Adapter contract and manifest validation
-- `@byom-ai/protocol` — Envelope and error types
+- `@arlopass/adapter-runtime` — Adapter contract and manifest validation
+- `@arlopass/protocol` — Envelope and error types

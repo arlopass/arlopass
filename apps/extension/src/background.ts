@@ -4,11 +4,11 @@ import {
   ProtocolError,
   type CanonicalEnvelope,
   type ProtocolErrorDetails,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 import type {
-  BYOMTransport,
+  ArlopassTransport,
   TransportResponse,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
 import {
   ExtensionEventEmitter,
@@ -41,7 +41,7 @@ export type BridgeGrantSynchronizer = Readonly<{
 }>;
 
 export type ExtensionBackgroundServiceOptions = Readonly<{
-  transport: BYOMTransport;
+  transport: ArlopassTransport;
   consentController: ConsentController;
   grantStore?: GrantStore;
   grantStoreOptions?: Omit<GrantStoreOptions, "events">;
@@ -113,7 +113,7 @@ export type WalletActionResponse =
 
 /** Inbound envelope shape from the popup via chrome.runtime.sendMessage. */
 export type WalletMessageEnvelope = Readonly<{
-  channel: "byom.wallet";
+  channel: "arlopass.wallet";
   action: string;
   requestId: string;
   payload: unknown;
@@ -135,8 +135,8 @@ export type WalletHandlerOptions = Readonly<{
 }>;
 
 // Storage key constants (spec: Storage Contract v1).
-const WALLET_KEY_PROVIDERS = "byom.wallet.providers.v1";
-const WALLET_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
+const WALLET_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
+const WALLET_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 
 type StoredProvider = {
   id: string;
@@ -312,8 +312,8 @@ async function walletHandleOpenConnectFlow(
   }
 }
 
-const PENDING_CONNECTION_KEY = "byom.wallet.pendingConnection.v1";
-const CONNECTION_RESULT_KEY = "byom.wallet.connectionResult.v1";
+const PENDING_CONNECTION_KEY = "arlopass.wallet.pendingConnection.v1";
+const CONNECTION_RESULT_KEY = "arlopass.wallet.connectionResult.v1";
 
 async function walletHandleRequestAppConnection(
   payload: unknown,
@@ -370,7 +370,7 @@ async function waitForConnectionResult(
 function isWalletMessageEnvelope(message: unknown): message is WalletMessageEnvelope {
   return (
     isRecord(message) &&
-    message["channel"] === "byom.wallet" &&
+    message["channel"] === "arlopass.wallet" &&
     typeof message["action"] === "string" &&
     typeof message["requestId"] === "string"
   );
@@ -379,7 +379,7 @@ function isWalletMessageEnvelope(message: unknown): message is WalletMessageEnve
 /**
  * Creates a wallet message dispatcher for use with chrome.runtime.onMessage.
  *
- * Returns `null` for messages that do not belong to the `byom.wallet` channel,
+ * Returns `null` for messages that do not belong to the `arlopass.wallet` channel,
  * so the background listener can handle other channels transparently.
  *
  * Usage:
@@ -484,7 +484,7 @@ function createChromeStorageAdapter(
   };
 }
 
-const WALLET_MESSAGE_LISTENER_FLAG = "__byom.wallet.listener.registered.v1";
+const WALLET_MESSAGE_LISTENER_FLAG = "__arlopass.wallet.listener.registered.v1";
 
 type ExtensionGlobalState = typeof globalThis & Record<string, unknown>;
 
@@ -496,7 +496,7 @@ export function registerDefaultWalletMessageListener(options: {
   reportError?: (error: Error) => void;
 } = {}): void {
   const reportError =
-    options.reportError ?? ((error: Error) => console.error("BYOM Wallet message handler failed", error));
+    options.reportError ?? ((error: Error) => console.error("Arlopass Wallet message handler failed", error));
 
   if (typeof chrome === "undefined") {
     return;
@@ -568,7 +568,7 @@ registerDefaultTransportStreamPortListener();
 // ---------------------------------------------------------------------------
 
 export class ExtensionBackgroundService {
-  readonly #transport: BYOMTransport;
+  readonly #transport: ArlopassTransport;
   readonly #consentController: ConsentController;
   readonly #events: ExtensionEventEmitter<ExtensionEventMap>;
   readonly #grantStore: GrantStore;

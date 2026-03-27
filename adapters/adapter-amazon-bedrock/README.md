@@ -1,6 +1,6 @@
-# @byom-ai/adapter-amazon-bedrock
+# @arlopass/adapter-amazon-bedrock
 
-BYOM AI adapter for [Amazon Bedrock](https://aws.amazon.com/bedrock/).
+Arlopass adapter for [Amazon Bedrock](https://aws.amazon.com/bedrock/).
 
 > [!NOTE]
 > This adapter is **planned** and not yet implemented. The package structure and test scaffolding are in place.
@@ -14,5 +14,5 @@ BYOM AI adapter for [Amazon Bedrock](https://aws.amazon.com/bedrock/).
 
 ## Dependencies
 
-- `@byom-ai/adapter-runtime` — Adapter contract and cloud connection types
-- `@byom-ai/protocol` — Envelope and error types
+- `@arlopass/adapter-runtime` — Adapter contract and cloud connection types
+- `@arlopass/protocol` — Envelope and error types

@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MANIFEST_SCHEMA_VERSION } from "@byom-ai/adapter-runtime";
+import { MANIFEST_SCHEMA_VERSION } from "@arlopass/adapter-runtime";
 import {
   AuthError,
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,
   isProtocolError,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 import { OllamaAdapter, OLLAMA_MANIFEST } from "../index.js";
 

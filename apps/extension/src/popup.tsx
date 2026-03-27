@@ -15,7 +15,7 @@ import {
   clearPendingConnection,
   writeConnectionResult,
 } from "./ui/components/app-connect/pending-connection.js";
-import { byomTheme } from "./ui/components/theme.js";
+import { arlopassTheme } from "./ui/components/theme.js";
 import { useWalletProviders } from "./ui/hooks/useWalletProviders.js";
 import { useActiveTabApp } from "./ui/hooks/useActiveTabApp.js";
 import {
@@ -29,7 +29,7 @@ const sendMessage: SendMessageFn = (message) =>
 
 const walletActions = createWalletActionClient(sendMessage);
 
-const VIEW_STATE_KEY = "byom.popup.viewState.v1";
+const VIEW_STATE_KEY = "arlopass.popup.viewState.v1";
 
 type PopupView =
   | { type: "main" }
@@ -151,7 +151,7 @@ function App() {
 
   if (view.type === "onboarding") {
     return (
-      <MantineProvider theme={byomTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
         <OnboardingController
           hasProviders={providers.length > 0}
           onComplete={() => {
@@ -170,7 +170,7 @@ function App() {
 
   if (view.type === "add-provider") {
     return (
-      <MantineProvider theme={byomTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
         <AddProviderWizard
           onClose={() => updateView({ type: "main" })}
           onSaved={refresh}
@@ -181,7 +181,7 @@ function App() {
 
   if (view.type === "connect-app") {
     return (
-      <MantineProvider theme={byomTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
         <AppConnectWizard
           origin={view.origin}
           providers={providers}
@@ -226,7 +226,7 @@ function App() {
   // Show app-specific view when the active tab has a connected app
   if (view.type === "main" && activeApp !== null) {
     return (
-      <MantineProvider theme={byomTheme} forceColorScheme="light">
+      <MantineProvider theme={arlopassTheme} forceColorScheme="light">
         <AppDetailView
           app={activeApp.app}
           rawProviders={rawProviders}
@@ -241,7 +241,7 @@ function App() {
   }
 
   return (
-    <MantineProvider theme={byomTheme} forceColorScheme="light">
+    <MantineProvider theme={arlopassTheme} forceColorScheme="light">
       <WalletPopup
         providers={providers}
         rawProviders={rawProviders}

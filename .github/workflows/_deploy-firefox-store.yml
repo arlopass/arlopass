@@ -40,7 +40,7 @@ jobs:
               --api-key "${WEB_EXT_API_KEY}" \
               --api-secret "${WEB_EXT_API_SECRET}" \
               --channel listed \
-              --upload-source-map byom-extension-firefox.zip 2>&1; then
+              --upload-source-map arlopass-extension-firefox.zip 2>&1; then
               echo "✅ AMO upload succeeded"
               break
             fi

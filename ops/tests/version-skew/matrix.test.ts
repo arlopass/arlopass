@@ -9,7 +9,7 @@
  *      the same major line (backward compatibility).
  *   4. Edge cases: pre-release suffixes, patch-only differences, etc.
  *
- * Uses only `@byom-ai/protocol` — no network or process I/O.
+ * Uses only `@arlopass/protocol` — no network or process I/O.
  */
 import { describe, it, expect } from "vitest";
 
@@ -18,7 +18,7 @@ import {
   parseProtocolVersion,
   isProtocolVersionInRange,
   compareProtocolVersions,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 // ---------------------------------------------------------------------------
 // Helpers

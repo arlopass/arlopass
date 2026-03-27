@@ -30,14 +30,14 @@ function makeSendMessage(
 // ---------------------------------------------------------------------------
 
 describe("wallet action client — envelope contract", () => {
-  it("sends channel: 'byom.wallet' for setActiveProvider", async () => {
+  it("sends channel: 'arlopass.wallet' for setActiveProvider", async () => {
     const sendMessage = makeSendMessage();
     const client = createWalletActionClient(sendMessage);
 
     await client.setActiveProvider({ providerId: "ollama" });
 
     expect(sendMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: "byom.wallet" }),
+      expect.objectContaining({ channel: "arlopass.wallet" }),
     );
   });
 

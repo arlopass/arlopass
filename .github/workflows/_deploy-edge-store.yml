@@ -51,7 +51,7 @@ jobs:
               -X POST "https://api.addons.microsoftedge.microsoft.com/v1/products/${PRODUCT_ID}/submissions/draft/package" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/zip" \
-              --data-binary @byom-extension-chromium.zip)
+              --data-binary @arlopass-extension-chromium.zip)
             if [ "${HTTP_CODE}" = "202" ] || [ "${HTTP_CODE}" = "200" ]; then
               echo "✅ Upload succeeded (HTTP ${HTTP_CODE})"
               break

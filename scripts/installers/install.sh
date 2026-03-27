@@ -1,21 +1,21 @@
 #!/usr/bin/env sh
-# BYOM Bridge Installer
-# Usage: curl -fsSL https://byomai.com/install.sh | sh
-# Uninstall: curl -fsSL https://byomai.com/install.sh | sh -s -- --uninstall
+# Arlopass Bridge Installer
+# Usage: curl -fsSL https://arlopassai.com/install.sh | sh
+# Uninstall: curl -fsSL https://arlopassai.com/install.sh | sh -s -- --uninstall
 #
 # Override extension IDs:
-#   BYOM_CHROME_EXT_ID=... BYOM_EDGE_EXT_ID=... BYOM_FIREFOX_EXT_ID=... sh install.sh
+#   ARLOPASS_CHROME_EXT_ID=... ARLOPASS_EDGE_EXT_ID=... ARLOPASS_FIREFOX_EXT_ID=... sh install.sh
 set -eu
 
-REPO="AltClick/byom-web"
+REPO="AltClick/arlopass"
 INSTALL_DIR="${HOME}/.local/bin"
-BINARY_NAME="byom-bridge"
-NATIVE_HOST_NAME="com.byom.bridge"
+BINARY_NAME="arlopass-bridge"
+NATIVE_HOST_NAME="com.arlopass.bridge"
 
 # Default extension IDs — override via env vars above
-CHROME_EXT_ID="${BYOM_CHROME_EXT_ID:-gebhamhhckkjfjibomllkpicongnebkh}"
-EDGE_EXT_ID="${BYOM_EDGE_EXT_ID:-}"
-FIREFOX_EXT_ID="${BYOM_FIREFOX_EXT_ID:-byom-ai-wallet@byomai.com}"
+CHROME_EXT_ID="${ARLOPASS_CHROME_EXT_ID:-gebhamhhckkjfjibomllkpicongnebkh}"
+EDGE_EXT_ID="${ARLOPASS_EDGE_EXT_ID:-}"
+FIREFOX_EXT_ID="${ARLOPASS_FIREFOX_EXT_ID:-arlopass-wallet@arlopassai.com}"
 
 log()   { printf '\033[1;34m%s\033[0m\n' "$*"; }
 ok()    { printf '\033[1;32m%s\033[0m\n' "$*"; }
@@ -54,8 +54,8 @@ install_bridge() {
     err "Could not determine latest bridge version"
   fi
 
-  binary_name="byom-bridge-${os}-${arch}"
-  log "Installing BYOM Bridge ${version} (${os}/${arch})..."
+  binary_name="arlopass-bridge-${os}-${arch}"
+  log "Installing Arlopass Bridge ${version} (${os}/${arch})..."
 
   tmp_dir=$(mktemp -d)
   trap 'rm -rf "${tmp_dir}"' EXIT
@@ -109,7 +109,7 @@ install_bridge() {
   install_native_hosts "${os}"
 
   echo ""
-  ok "BYOM Bridge ${version} installed successfully!"
+  ok "Arlopass Bridge ${version} installed successfully!"
   log "  Binary: ${INSTALL_DIR}/${BINARY_NAME}"
 }
 
@@ -132,7 +132,7 @@ install_native_hosts() {
 
   chromium_manifest="{
   \"name\": \"${NATIVE_HOST_NAME}\",
-  \"description\": \"BYOM AI Bridge native messaging host\",
+  \"description\": \"Arlopass Bridge native messaging host\",
   \"path\": \"${binary_path}\",
   \"type\": \"stdio\",
   \"allowed_origins\": [${chromium_origins}]
@@ -140,7 +140,7 @@ install_native_hosts() {
 
   firefox_manifest="{
   \"name\": \"${NATIVE_HOST_NAME}\",
-  \"description\": \"BYOM AI Bridge native messaging host\",
+  \"description\": \"Arlopass Bridge native messaging host\",
   \"path\": \"${binary_path}\",
   \"type\": \"stdio\",
   \"allowed_extensions\": [\"${FIREFOX_EXT_ID}\"]
@@ -181,7 +181,7 @@ install_native_hosts() {
   fi
 
   # ---- Config file for post-install edits ----
-  config_dir="${HOME}/.config/byom"
+  config_dir="${HOME}/.config/arlopass"
   mkdir -p "${config_dir}"
   cat > "${config_dir}/allowed-extensions.json" <<CONF
 {
@@ -199,11 +199,11 @@ CONF
   [ -n "${CHROME_EXT_ID}" ]  && log "  Chrome:  ${CHROME_EXT_ID}"
   [ -n "${EDGE_EXT_ID}" ]    && log "  Edge:    ${EDGE_EXT_ID}"
   [ -n "${FIREFOX_EXT_ID}" ] && log "  Firefox: ${FIREFOX_EXT_ID}"
-  [ -z "${EDGE_EXT_ID}" ]    && warn "  Edge:    (not configured — set BYOM_EDGE_EXT_ID after Edge Add-ons publishing)"
+  [ -z "${EDGE_EXT_ID}" ]    && warn "  Edge:    (not configured — set ARLOPASS_EDGE_EXT_ID after Edge Add-ons publishing)"
 }
 
 uninstall_bridge() {
-  warn "Uninstalling BYOM Bridge..."
+  warn "Uninstalling Arlopass Bridge..."
 
   rm -f "${INSTALL_DIR}/${BINARY_NAME}"
 
@@ -229,9 +229,9 @@ uninstall_bridge() {
   [ -n "${chrome_dir}" ]  && rm -f "${chrome_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
   [ -n "${edge_dir}" ]    && rm -f "${edge_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
   [ -n "${firefox_dir}" ] && rm -f "${firefox_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
-  rm -f "${HOME}/.config/byom/allowed-extensions.json" 2>/dev/null || true
+  rm -f "${HOME}/.config/arlopass/allowed-extensions.json" 2>/dev/null || true
 
-  ok "BYOM Bridge uninstalled."
+  ok "Arlopass Bridge uninstalled."
 }
 
 # Main

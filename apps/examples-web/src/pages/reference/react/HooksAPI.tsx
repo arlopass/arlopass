@@ -29,7 +29,7 @@ const useConnectionReturn = [
   },
   {
     name: "error",
-    type: "BYOMSDKError | null",
+    type: "ArlopassSDKError | null",
     description: "Most recent connection error, or null.",
   },
   {
@@ -50,7 +50,7 @@ const useConnectionReturn = [
   },
 ];
 
-const useConnectionExample = `import { useConnection } from "@byom-ai/react";
+const useConnectionExample = `import { useConnection } from "@arlopass/react";
 
 const { state, isConnected, connect, retry } = useConnection();`;
 
@@ -76,7 +76,7 @@ const useProvidersReturn = [
   },
   {
     name: "error",
-    type: "BYOMSDKError | null",
+    type: "ArlopassSDKError | null",
     description: "Error from the last provider operation.",
   },
   {
@@ -97,7 +97,7 @@ const useProvidersReturn = [
   },
 ];
 
-const useProvidersExample = `import { useProviders } from "@byom-ai/react";
+const useProvidersExample = `import { useProviders } from "@arlopass/react";
 
 const { providers, selectedProvider, selectProvider } = useProviders();`;
 
@@ -146,7 +146,7 @@ const useChatReturn = [
   },
   {
     name: "error",
-    type: "BYOMSDKError | null",
+    type: "ArlopassSDKError | null",
     description: "Error from the last chat operation.",
   },
   {
@@ -189,7 +189,7 @@ const useChatReturn = [
   },
 ];
 
-const useChatExample = `import { useChat } from "@byom-ai/react";
+const useChatExample = `import { useChat } from "@arlopass/react";
 
 const { messages, stream, isStreaming, stop, contextInfo } = useChat({
   systemPrompt: "You are a helpful assistant.",
@@ -272,7 +272,7 @@ const useConversationReturn = [
   },
   {
     name: "error",
-    type: "BYOMSDKError | null",
+    type: "ArlopassSDKError | null",
     description: "Error from the last operation.",
   },
   {
@@ -338,7 +338,7 @@ const useConversationReturn = [
   },
 ];
 
-const useConversationExample = `import { useConversation } from "@byom-ai/react";
+const useConversationExample = `import { useConversation } from "@arlopass/react";
 
 const { messages, stream, tokenCount, contextInfo, pinMessage } = useConversation({
   systemPrompt: "You are a helpful assistant.",
@@ -356,13 +356,13 @@ console.log(\`\${pct}% of context used (\${contextInfo.remainingTokens} tokens l
 const useClientReturn = [
   {
     name: "(return)",
-    type: "BYOMClient | null",
+    type: "ArlopassClient | null",
     description:
-      "The underlying BYOMClient instance, or null if the transport is unavailable or the client is disconnected/failed.",
+      "The underlying ArlopassClient instance, or null if the transport is unavailable or the client is disconnected/failed.",
   },
 ];
 
-const useClientExample = `import { useClient } from "@byom-ai/react";
+const useClientExample = `import { useClient } from "@arlopass/react";
 
 const client = useClient();
 // Use for advanced operations not covered by other hooks`;
@@ -373,18 +373,18 @@ export default function HooksAPI() {
       <Title order={2}>Hooks</Title>
       <Text>
         All hooks must be called inside a{" "}
-        <InlineCode>{"<BYOMProvider>"}</InlineCode>. They are re-exported from{" "}
-        <InlineCode>@byom-ai/react</InlineCode>.
+        <InlineCode>{"<ArlopassProvider>"}</InlineCode>. They are re-exported
+        from <InlineCode>@arlopass/react</InlineCode>.
       </Text>
 
       {/* ----------------------------------------------------------------- */}
       <Divider />
       <Title order={3}>useConnection</Title>
       <Text>
-        Manages the WebSocket-like connection to the BYOM browser extension.
+        Manages the WebSocket-like connection to the Arlopass browser extension.
       </Text>
       <CodeBlock
-        code={`import { useConnection } from "@byom-ai/react";`}
+        code={`import { useConnection } from "@arlopass/react";`}
         language="tsx"
       />
       <ApiTable data={useConnectionReturn} title="Return value" />
@@ -400,7 +400,7 @@ export default function HooksAPI() {
         <InlineCode>"degraded"</InlineCode>.
       </Text>
       <CodeBlock
-        code={`import { useProviders } from "@byom-ai/react";`}
+        code={`import { useProviders } from "@arlopass/react";`}
         language="tsx"
       />
       <ApiTable data={useProvidersReturn} title="Return value" />
@@ -415,7 +415,7 @@ export default function HooksAPI() {
         <InlineCode>useConversation</InlineCode> for that.
       </Text>
       <CodeBlock
-        code={`import { useChat } from "@byom-ai/react";`}
+        code={`import { useChat } from "@arlopass/react";`}
         language="tsx"
       />
       <ApiTable data={useChatOptions} title="Options" />
@@ -438,7 +438,7 @@ export default function HooksAPI() {
         summarization.
       </Text>
       <CodeBlock
-        code={`import { useConversation } from "@byom-ai/react";`}
+        code={`import { useConversation } from "@arlopass/react";`}
         language="tsx"
       />
       <ApiTable data={useConversationOptions} title="Options" />
@@ -449,14 +449,14 @@ export default function HooksAPI() {
       <Divider />
       <Title order={3}>useClient</Title>
       <Text>
-        Escape hatch to the underlying <InlineCode>BYOMClient</InlineCode>{" "}
+        Escape hatch to the underlying <InlineCode>ArlopassClient</InlineCode>{" "}
         instance. Returns <InlineCode>null</InlineCode> when the transport is
         unavailable or the client is in a{" "}
         <InlineCode>"disconnected"</InlineCode> or{" "}
         <InlineCode>"failed"</InlineCode> state.
       </Text>
       <CodeBlock
-        code={`import { useClient } from "@byom-ai/react";`}
+        code={`import { useClient } from "@arlopass/react";`}
         language="tsx"
       />
       <ApiTable data={useClientReturn} title="Return value" />

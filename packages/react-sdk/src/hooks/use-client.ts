@@ -1,10 +1,10 @@
 "use client";
 
-import type { BYOMClient } from "@byom-ai/web-sdk";
-import { useBYOMContext, useStoreSnapshot } from "./use-store.js";
+import type { ArlopassClient } from "@arlopass/web-sdk";
+import { useArlopassContext, useStoreSnapshot } from "./use-store.js";
 
-export function useClient(): BYOMClient | null {
-    const { store, transportAvailable } = useBYOMContext();
+export function useClient(): ArlopassClient | null {
+    const { store, transportAvailable } = useArlopassContext();
     const snapshot = useStoreSnapshot();
 
     if (!transportAvailable) return null;

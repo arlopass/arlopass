@@ -46,7 +46,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
           stroke={1.5}
         />
         <Text size="lg" fw={600} c={tokens.color.textPrimary} ta="center">
-          Welcome to BYOM
+          Welcome to Arlopass
         </Text>
         <Text size="sm" c={tokens.color.textSecondary} ta="center">
           Your AI Wallet
@@ -54,8 +54,8 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
       </Stack>
 
       <Text size="sm" c={tokens.color.textPrimary}>
-        BYOM lets you use AI on any website — with your own providers, your own
-        models, and your own rules.
+        Arlopass lets you use AI on any website — with your own providers, your
+        own models, and your own rules.
       </Text>
 
       <Stack gap={8}>

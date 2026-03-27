@@ -1,4 +1,4 @@
-export const BRIDGE_HOST_NAME = "com.byom.bridge" as const;
+export const BRIDGE_HOST_NAME = "com.arlopass.bridge" as const;
 export const HOST_TYPE = "stdio" as const;
 
 /** Chromium extension IDs: 32 lowercase chars in the range a-p. */
@@ -95,7 +95,7 @@ export function buildNativeHostManifest(
   );
   return {
     name: BRIDGE_HOST_NAME,
-    description: "BYOM AI Bridge — Secure native messaging host",
+    description: "Arlopass Bridge — Secure native messaging host",
     path: hostBinaryPath,
     type: HOST_TYPE,
     allowed_origins: chromiumEntries.map((entry) =>
@@ -116,7 +116,7 @@ export function buildFirefoxNativeHostManifest(
   );
   return {
     name: BRIDGE_HOST_NAME,
-    description: "BYOM AI Bridge — Secure native messaging host",
+    description: "Arlopass Bridge — Secure native messaging host",
     path: hostBinaryPath,
     type: HOST_TYPE,
     allowed_extensions: firefoxEntries.map((entry) => entry.extensionId),

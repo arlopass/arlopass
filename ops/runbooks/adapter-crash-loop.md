@@ -1,6 +1,6 @@
 # Runbook: Adapter Crash-Loop
 
-**Alert:** `BYOM_AdapterCrashLoop`, `BYOM_AdapterDegraded`  
+**Alert:** `ARLOPASS_AdapterCrashLoop`, `ARLOPASS_AdapterDegraded`  
 **SLO:** SLO-04 (Adapter health availability)  
 **Severity:** Critical (crash-loop), Warning (degraded)  
 **Owner:** Platform Reliability
@@ -11,10 +11,10 @@
 
 | Signal | Indicator |
 |--------|-----------|
-| `byom.adapter.health` gauge = 0 for > 2 min | Adapter health check consistently failing |
-| `byom.retry.total` > 3 in 10 min | Adapter host is repeatedly restarting the adapter |
+| `arlopass.adapter.health` gauge = 0 for > 2 min | Adapter health check consistently failing |
+| `arlopass.retry.total` > 3 in 10 min | Adapter host is repeatedly restarting the adapter |
 | `state = "failed"` in adapter health API | Adapter has exhausted restart limit |
-| `byom.request.failure.total` spike for specific `providerId` | Requests to affected provider are all failing |
+| `arlopass.request.failure.total` spike for specific `providerId` | Requests to affected provider are all failing |
 
 ---
 
@@ -29,12 +29,12 @@ Check adapter health status from the bridge logs or API:
 chrome.runtime.sendMessage({ type: "request.check" }, console.log);
 ```
 
-Or look for the `providerId` label on `byom.retry.total` metric.
+Or look for the `providerId` label on `arlopass.retry.total` metric.
 
 ### Step 2 — Examine adapter logs
 
 ```bash
-cat ~/.byom/adapters/<provider-id>/adapter.log | tail -100
+cat ~/.arlopass/adapters/<provider-id>/adapter.log | tail -100
 ```
 
 Common causes:
@@ -50,22 +50,22 @@ instructed to reload it:
 
 1. Deregister the adapter from the bridge (via settings UI or CLI):
    ```bash
-   byom adapter remove <provider-id>
+   arlopass adapter remove <provider-id>
    ```
 2. Re-register with fresh credentials if auth-related:
    ```bash
-   byom adapter add <provider-id> --reconfigure
+   arlopass adapter add <provider-id> --reconfigure
    ```
-3. Verify health via `byom adapter status <provider-id>`.
+3. Verify health via `arlopass adapter status <provider-id>`.
 
 ### Step 4 — Verify recovery
 
 ```bash
 # Watch adapter health gauge
-watch -n 5 'byom adapter status all'
+watch -n 5 'arlopass adapter status all'
 ```
 
-`byom.adapter.health` gauge should return to `1` within 60 seconds.
+`arlopass.adapter.health` gauge should return to `1` within 60 seconds.
 
 ### Step 5 — Short-term mitigation if adapter is unavailable
 
@@ -97,8 +97,8 @@ watch -n 5 'byom adapter status all'
 ## 5  Evidence Collection
 
 Before restarting:
-1. Capture `byom.adapter.health` gauge time series for the 30 min window
-2. Export `byom.retry.total` count for the affected `providerId`
+1. Capture `arlopass.adapter.health` gauge time series for the 30 min window
+2. Export `arlopass.retry.total` count for the affected `providerId`
 3. Capture adapter log tail (last 200 lines)
 4. Record `state` from `listAdapterHealth()` API response
 
@@ -106,7 +106,7 @@ Before restarting:
 
 ## 6  Related
 
-- Alert: `BYOM_AdapterDegraded`, `BYOM_AdapterCrashLoop`
+- Alert: `ARLOPASS_AdapterDegraded`, `ARLOPASS_AdapterCrashLoop`
 - Runbook: `ops/runbooks/bridge-unavailable.md`
 - Runbook: `ops/runbooks/auth-failure-spike.md`
 - SLO: `ops/slo/slo-definitions.md#slo-04`

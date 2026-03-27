@@ -6,12 +6,13 @@ const props = [
     name: "state",
     type: "ClientState",
     description:
-      'Connection state override. When omitted, reads from the nearest BYOMProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".',
+      'Connection state override. When omitted, reads from the nearest ArlopassProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".',
   },
   {
     name: "sessionId",
     type: "string",
-    description: "Session ID override. When omitted, reads from BYOMProvider.",
+    description:
+      "Session ID override. When omitted, reads from ArlopassProvider.",
   },
   {
     name: "children",
@@ -20,18 +21,18 @@ const props = [
   },
 ];
 
-const uncontrolledExample = `import { BYOMProvider } from "@byom-ai/react";
-import { ConnectionStatus } from "@byom-ai/react-ui";
+const uncontrolledExample = `import { ArlopassProvider } from "@arlopass/react";
+import { ConnectionStatus } from "@arlopass/react-ui";
 
 function StatusBar() {
   return (
-    <BYOMProvider>
+    <ArlopassProvider>
       <ConnectionStatus />
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const controlledExample = `import { ConnectionStatus } from "@byom-ai/react-ui";
+const controlledExample = `import { ConnectionStatus } from "@arlopass/react-ui";
 
 function CustomStatus({ state }) {
   return (
@@ -86,7 +87,7 @@ export default function ConnectionStatusPrimitive() {
       </div>
 
       <CodeBlock
-        code={`import { ConnectionStatus } from "@byom-ai/react-ui";`}
+        code={`import { ConnectionStatus } from "@arlopass/react-ui";`}
         language="tsx"
       />
 
@@ -96,7 +97,7 @@ export default function ConnectionStatusPrimitive() {
       <Divider />
       <Title order={3}>Uncontrolled usage</Title>
       <Text>
-        Inside a <InlineCode>{"<BYOMProvider>"}</InlineCode>, the component
+        Inside a <InlineCode>{"<ArlopassProvider>"}</InlineCode>, the component
         reads connection state automatically via{" "}
         <InlineCode>useConnection</InlineCode>.
       </Text>

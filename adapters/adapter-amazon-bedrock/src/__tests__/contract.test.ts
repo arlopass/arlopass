@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MANIFEST_SCHEMA_VERSION, type CloudAdapterContractV2 } from "@byom-ai/adapter-runtime";
+import { MANIFEST_SCHEMA_VERSION, type CloudAdapterContractV2 } from "@arlopass/adapter-runtime";
 
 import { AmazonBedrockAdapter, AMAZON_BEDROCK_MANIFEST } from "../index.js";
 
@@ -101,7 +101,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       input: {
         region: "us-east-1",
         modelAccessPolicy: "allow-listed",
-        roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+        roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
         accessKeyId: "AKIAEXAMPLEKEY",
         secretAccessKey: "secret-example",
       },
@@ -118,7 +118,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       expect.objectContaining({
         region: "us-east-1",
         modelAccessPolicy: "allow-listed",
-        roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+        roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
       }),
     );
 
@@ -146,7 +146,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       input: {
         region: "us-east-2",
         modelAccessPolicy: "catalog-only",
-        roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+        roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
         accessKeyId: "AKIAEXAMPLEKEY2",
         secretAccessKey: "secret-example-2",
       },
@@ -182,7 +182,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
         input: {
           region: "us-west-2",
           modelAccessPolicy: "cross-account",
-          roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+          roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
           hopDepth: 2,
         },
       }),
@@ -197,7 +197,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       input: {
         region: "us-west-2,us-east-1",
         modelAccessPolicy: "cross-account",
-        roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+        roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
       },
     });
 
@@ -236,7 +236,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       input: {
         region: "us-west-2",
         modelAccessPolicy: "allow-listed",
-        roleArn: "arn:aws:iam::111122223333:role/byom-bedrock-role",
+        roleArn: "arn:aws:iam::111122223333:role/arlopass-bedrock-role",
         accessKeyId: "AKIAEXAMPLEKEY3",
         secretAccessKey: "secret-example-3",
       },

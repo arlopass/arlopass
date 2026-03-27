@@ -118,7 +118,7 @@ export function createAuthenticatedOriginPolicyFromEnv(
 ): AuthenticatedOriginPolicy {
   const authenticatedOrigins = new Set<string>();
 
-  for (const entry of parseCsvEnv(env["BYOM_BRIDGE_AUTHENTICATED_ORIGINS"])) {
+  for (const entry of parseCsvEnv(env["ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS"])) {
     const normalizedOrigin = normalizeAuthenticatedOrigin(entry);
     if (normalizedOrigin !== undefined) {
       authenticatedOrigins.add(normalizedOrigin);
@@ -126,7 +126,7 @@ export function createAuthenticatedOriginPolicyFromEnv(
   }
 
   for (const extensionId of parseCsvEnv(
-    env["BYOM_BRIDGE_AUTHENTICATED_EXTENSION_IDS"],
+    env["ARLOPASS_BRIDGE_AUTHENTICATED_EXTENSION_IDS"],
   )) {
     const extensionOrigin = toChromeExtensionOrigin(extensionId);
     if (extensionOrigin !== undefined) {
@@ -135,7 +135,7 @@ export function createAuthenticatedOriginPolicyFromEnv(
   }
 
   const allowLoopbackOrigins = parseBooleanEnv(
-    env["BYOM_BRIDGE_ALLOW_LOOPBACK_ORIGINS"],
+    env["ARLOPASS_BRIDGE_ALLOW_LOOPBACK_ORIGINS"],
     true,
   );
   const authenticatedOriginMatcher = (origin: string): boolean => {

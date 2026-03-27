@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a MetaMask-inspired BYOM wallet popup UI for the extension, including provider/model switching, revoke actions, and connect-flow routing.
+**Goal:** Build a MetaMask-inspired Arlopass wallet popup UI for the extension, including provider/model switching, revoke actions, and connect-flow routing.
 
 **Architecture:** Keep UI logic separated into small units: storage contract parsing, action client, rendering, and background action handlers. The popup reads normalized state from `chrome.storage.local`, sends typed `chrome.runtime.sendMessage` actions, and updates UI only from authoritative background responses. Manifest/options integration provides a concrete connect destination for v1.
 
@@ -36,7 +36,7 @@
 **Modify**
 - `apps/extension/manifest.json` — add `action.default_popup` + `options_page`
 - `apps/extension/package.json` — include popup/options assets in package files
-- `apps/extension/src/background.ts` — add `byom.wallet` action handlers
+- `apps/extension/src/background.ts` — add `arlopass.wallet` action handlers
 - `apps/extension/src/index.ts` — export popup-related modules where appropriate
 
 ---
@@ -61,7 +61,7 @@ describe("normalizeWalletSnapshot", () => {
 
   it("drops malformed providers and records warnings", () => {
     const result = normalizeWalletSnapshot({
-      "byom.wallet.providers.v1": [{ id: 1 }],
+      "arlopass.wallet.providers.v1": [{ id: 1 }],
     });
     expect(result.providers).toHaveLength(0);
     expect(result.warnings.length).toBeGreaterThan(0);
@@ -109,12 +109,12 @@ import { describe, expect, it, vi } from "vitest";
 import { createWalletActionClient } from "../ui/popup-actions.js";
 
 describe("wallet action client", () => {
-  it("sends byom.wallet envelope with requestId", async () => {
+  it("sends arlopass.wallet envelope with requestId", async () => {
     const sendMessage = vi.fn().mockResolvedValue({ ok: true });
     const client = createWalletActionClient(sendMessage);
     await client.setActiveProvider({ providerId: "ollama" });
     expect(sendMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: "byom.wallet", action: "wallet.setActiveProvider" }),
+      expect.objectContaining({ channel: "arlopass.wallet", action: "wallet.setActiveProvider" }),
     );
   });
 });
@@ -201,7 +201,7 @@ Expected: PASS.
 
 ```bash
 git add apps/extension/src/ui/popup-render.ts apps/extension/src/popup.ts apps/extension/popup.html apps/extension/popup.css apps/extension/src/__tests__/popup-render.test.ts
-git commit -m "feat: add metamask-inspired byom wallet popup ui"
+git commit -m "feat: add metamask-inspired arlopass wallet popup ui"
 ```
 
 ---
@@ -240,7 +240,7 @@ const walletHandlers: Record<string, (payload: unknown) => Promise<WalletActionR
 - [ ] **Step 4: Wire message routing for popup transport envelope**
 
 Add explicit `chrome.runtime.onMessage` dispatcher in background:
-- route only messages where `channel === "byom.wallet"`
+- route only messages where `channel === "arlopass.wallet"`
 - validate shape (`action`, `requestId`, `payload`)
 - invoke `walletHandlers[action]`
 - return success/failure response envelope
@@ -292,8 +292,8 @@ Add/verify text and action wiring in popup render/controller tests.
 - [ ] **Step 4: Build and typecheck extension workspace**
 
 Run:
-- `npm run --workspace @byom-ai/extension build`
-- `npm run --workspace @byom-ai/extension typecheck`
+- `npm run --workspace @arlopass/extension build`
+- `npm run --workspace @arlopass/extension typecheck`
 
 Expected: PASS.
 
@@ -318,7 +318,7 @@ git commit -m "chore: wire extension popup and options routes"
 - [ ] **Step 1: Write failing tests for error-contract states**
 
 Cover:
-- render banner from `byom.wallet.ui.lastError.v1`
+- render banner from `arlopass.wallet.ui.lastError.v1`
 - `connect_flow_unavailable` shows toast/banner and keeps state unchanged
 - `invalid_selection` shows banner and retains previous active model/provider in UI
 
@@ -378,7 +378,7 @@ Expected: PASS.
 - [ ] **Step 4: Run extension build**
 
 Run:
-`npm run --workspace @byom-ai/extension build`
+`npm run --workspace @arlopass/extension build`
 
 Expected: PASS and `dist/popup.js` + `dist/options.js` emitted.
 
@@ -386,7 +386,7 @@ Expected: PASS and `dist/popup.js` + `dist/options.js` emitted.
 
 ```bash
 git add .
-git commit -m "test: validate byom wallet extension ui integration"
+git commit -m "test: validate arlopass wallet extension ui integration"
 ```
 
 ---

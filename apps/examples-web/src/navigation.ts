@@ -54,7 +54,7 @@ export const NAVIGATION: NavCategory[] = [
     {
         label: "React SDK Reference",
         items: [
-            { id: "reference/react/provider", label: "BYOMProvider" },
+            { id: "reference/react/provider", label: "ArlopassProvider" },
             { id: "reference/react/hooks", label: "Hooks" },
             { id: "reference/react/guards", label: "Guard components" },
             { id: "reference/react/types", label: "Types" },
@@ -64,7 +64,7 @@ export const NAVIGATION: NavCategory[] = [
     {
         label: "Web SDK Reference",
         items: [
-            { id: "reference/web-sdk/client", label: "BYOMClient" },
+            { id: "reference/web-sdk/client", label: "ArlopassClient" },
             { id: "reference/web-sdk/conversation-manager", label: "ConversationManager" },
             { id: "reference/web-sdk/types", label: "Types" },
             { id: "reference/web-sdk/error-codes", label: "Error codes" },
@@ -73,7 +73,7 @@ export const NAVIGATION: NavCategory[] = [
     {
         label: "Concepts",
         items: [
-            { id: "concepts/how-byom-works", label: "How BYOM works" },
+            { id: "concepts/how-arlopass-works", label: "How Arlopass works" },
             { id: "concepts/transport-model", label: "Transport model" },
             { id: "concepts/state-management", label: "State management" },
             { id: "concepts/web-sdk-vs-react", label: "Web SDK vs React SDK" },

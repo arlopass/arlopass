@@ -1,12 +1,12 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Install the BYOM AI Bridge daemon.
+    Install the Arlopass Bridge daemon.
 .DESCRIPTION
-    Downloads and installs the latest BYOM Bridge binary from GitHub Releases.
+    Downloads and installs the latest Arlopass Bridge binary from GitHub Releases.
     Verifies SHA256 checksums. Registers native messaging hosts for Chrome, Edge and Firefox.
 .PARAMETER Uninstall
-    Remove the BYOM Bridge installation.
+    Remove the Arlopass Bridge installation.
 .PARAMETER ChromeExtId
     Override the Chrome extension ID (32 lowercase a-p characters).
 .PARAMETER EdgeExtId
@@ -25,10 +25,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$REPO = "AltClick/byom-web"
-$INSTALL_DIR = Join-Path $env:LOCALAPPDATA "BYOM\bin"
-$BINARY_NAME = "byom-bridge.exe"
-$NATIVE_HOST_NAME = "com.byom.bridge"
+$REPO = "AltClick/arlopass"
+$INSTALL_DIR = Join-Path $env:LOCALAPPDATA "Arlopass\bin"
+$BINARY_NAME = "arlopass-bridge.exe"
+$NATIVE_HOST_NAME = "com.arlopass.bridge"
 
 function Get-Architecture {
     $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
@@ -54,7 +54,7 @@ function Get-LatestRelease {
 # ---- Default extension IDs (overridden via -ChromeExtId / -EdgeExtId / -FirefoxExtId) ----
 $DEFAULT_CHROME_EXT_ID  = "gebhamhhckkjfjibomllkpicongnebkh"
 $DEFAULT_EDGE_EXT_ID    = ""   # Set after Edge Add-ons store publishing
-$DEFAULT_FIREFOX_EXT_ID = "byom-ai-wallet@byomai.com"
+$DEFAULT_FIREFOX_EXT_ID = "arlopass-wallet@arlopassai.com"
 
 function Register-NativeHosts {
     param(
@@ -74,7 +74,7 @@ function Register-NativeHosts {
     if ($chromiumOrigins.Count -gt 0) {
         $chromiumManifest = @{
             name             = $NATIVE_HOST_NAME
-            description      = "BYOM AI Bridge native messaging host"
+            description      = "Arlopass Bridge native messaging host"
             path             = $BinaryPath
             type             = "stdio"
             allowed_origins  = $chromiumOrigins
@@ -105,7 +105,7 @@ function Register-NativeHosts {
     if ($firefoxId) {
         $firefoxManifest = @{
             name                = $NATIVE_HOST_NAME
-            description         = "BYOM AI Bridge native messaging host"
+            description         = "Arlopass Bridge native messaging host"
             path                = $BinaryPath
             type                = "stdio"
             allowed_extensions  = @($firefoxId)
@@ -147,16 +147,16 @@ function Install-Bridge {
     $release = Get-LatestRelease
     $version = $release.tag_name -replace '^bridge/', ''
 
-    Write-Host "Installing BYOM Bridge $version ($arch)..." -ForegroundColor Cyan
+    Write-Host "Installing Arlopass Bridge $version ($arch)..." -ForegroundColor Cyan
 
-    $binaryAsset = "byom-bridge-win-${arch}.exe"
+    $binaryAsset = "arlopass-bridge-win-${arch}.exe"
     $binaryUrl = ($release.assets | Where-Object { $_.name -eq $binaryAsset }).browser_download_url
     $checksumsUrl = ($release.assets | Where-Object { $_.name -eq 'SHA256SUMS.txt' }).browser_download_url
 
     if (-not $binaryUrl) { throw "No binary found for $binaryAsset in release $version" }
     if (-not $checksumsUrl) { throw "No checksums found in release $version" }
 
-    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "byom-install-$(Get-Random)"
+    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "arlopass-install-$(Get-Random)"
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
     try {
@@ -190,7 +190,7 @@ function Install-Bridge {
         Register-NativeHosts -BinaryPath (Join-Path $INSTALL_DIR $BINARY_NAME) -ManifestDir $INSTALL_DIR
 
         Write-Host ""
-        Write-Host "BYOM Bridge $version installed successfully!" -ForegroundColor Green
+        Write-Host "Arlopass Bridge $version installed successfully!" -ForegroundColor Green
         Write-Host "  Binary: $(Join-Path $INSTALL_DIR $BINARY_NAME)"
         Write-Host "  Restart your terminal to update PATH."
     }
@@ -200,7 +200,7 @@ function Install-Bridge {
 }
 
 function Uninstall-Bridge {
-    Write-Host "Uninstalling BYOM Bridge..." -ForegroundColor Yellow
+    Write-Host "Uninstalling Arlopass Bridge..." -ForegroundColor Yellow
 
     $binaryPath = Join-Path $INSTALL_DIR $BINARY_NAME
     if (Test-Path $binaryPath) { Remove-Item $binaryPath -Force }
@@ -230,7 +230,7 @@ function Uninstall-Bridge {
         Remove-Item $INSTALL_DIR -Force
     }
 
-    Write-Host "BYOM Bridge uninstalled." -ForegroundColor Green
+    Write-Host "Arlopass Bridge uninstalled." -ForegroundColor Green
 }
 
 if ($Uninstall) {

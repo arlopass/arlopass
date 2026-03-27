@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { BYOMInvalidStateTransitionError } from "../errors.js";
-import { BYOMStateMachine } from "../state-machine.js";
+import { ArlopassInvalidStateTransitionError } from "../errors.js";
+import { ArlopassStateMachine } from "../state-machine.js";
 
-describe("BYOMStateMachine", () => {
+describe("ArlopassStateMachine", () => {
   it("supports valid deterministic transitions", () => {
-    const machine = new BYOMStateMachine();
+    const machine = new ArlopassStateMachine();
 
     expect(machine.state).toBe("disconnected");
     machine.transition("connecting");
@@ -27,17 +27,17 @@ describe("BYOMStateMachine", () => {
   });
 
   it("rejects invalid transitions", () => {
-    const machine = new BYOMStateMachine();
+    const machine = new ArlopassStateMachine();
 
     expect(() => machine.transition("connected")).toThrowError(
-      BYOMInvalidStateTransitionError,
+      ArlopassInvalidStateTransitionError,
     );
 
     expect(machine.state).toBe("disconnected");
   });
 
   it("allows recovery from failed state only through supported edges", () => {
-    const machine = new BYOMStateMachine();
+    const machine = new ArlopassStateMachine();
 
     machine.transition("connecting");
     machine.transition("failed");

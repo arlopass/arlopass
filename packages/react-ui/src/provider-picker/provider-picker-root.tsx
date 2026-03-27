@@ -8,8 +8,8 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { useProviders } from "@byom-ai/react";
-import type { ProviderDescriptor, BYOMSDKError } from "../types.js";
+import { useProviders } from "@arlopass/react";
+import type { ProviderDescriptor, ArlopassSDKError } from "../types.js";
 import { createForwardRef } from "../utils/forward-ref.js";
 import {
   ProviderPickerProvider,
@@ -20,20 +20,23 @@ type ControlledProps = {
   providers: readonly ProviderDescriptor[];
   selectedProvider?: { providerId: string; modelId: string } | null;
   isLoading?: boolean;
-  error?: BYOMSDKError | null;
+  error?: ArlopassSDKError | null;
   onProviderChange?: (providerId: string) => void;
   onModelChange?: (modelId: string) => void;
   onSelect?: (providerId: string, modelId: string) => void;
 };
 
-type ProviderPickerRootProps = Omit<HTMLAttributes<HTMLDivElement>, "children"> &
+type ProviderPickerRootProps = Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "children"
+> &
   Partial<ControlledProps> & {
     children: ReactNode;
   };
 
 function getDataState(
   isLoading: boolean,
-  error: BYOMSDKError | null,
+  error: ArlopassSDKError | null,
 ): string {
   if (error) return "error";
   if (isLoading) return "loading";
@@ -65,10 +68,14 @@ export const Root = createForwardRef<HTMLDivElement, ProviderPickerRootProps>(
     const error = isControlled ? (errorProp ?? null) : hook.error;
 
     const [localProviderId, setLocalProviderId] = useState<string | null>(
-      isControlled ? (selectedProviderProp?.providerId ?? null) : (hook.selectedProvider?.providerId ?? null),
+      isControlled
+        ? (selectedProviderProp?.providerId ?? null)
+        : (hook.selectedProvider?.providerId ?? null),
     );
     const [localModelId, setLocalModelId] = useState<string | null>(
-      isControlled ? (selectedProviderProp?.modelId ?? null) : (hook.selectedProvider?.modelId ?? null),
+      isControlled
+        ? (selectedProviderProp?.modelId ?? null)
+        : (hook.selectedProvider?.modelId ?? null),
     );
 
     const selectedProviderId = localProviderId;
@@ -76,7 +83,9 @@ export const Root = createForwardRef<HTMLDivElement, ProviderPickerRootProps>(
 
     const models = useMemo(() => {
       if (!selectedProviderId) return [] as readonly string[];
-      const provider = providers.find((p) => p.providerId === selectedProviderId);
+      const provider = providers.find(
+        (p) => p.providerId === selectedProviderId,
+      );
       return provider?.models ?? ([] as readonly string[]);
     }, [providers, selectedProviderId]);
 

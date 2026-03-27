@@ -13,8 +13,8 @@ import {
   type RevokeCredentialRefInput,
   type ValidateCredentialRefInput,
   type ValidationResult,
-} from "@byom-ai/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@byom-ai/protocol";
+} from "@arlopass/adapter-runtime";
+import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
 
 export const VERTEX_CONNECTION_METHOD_IDS = {
   API_KEY: "vertex.api_key",
@@ -77,7 +77,7 @@ export const GOOGLE_VERTEX_AI_MANIFEST: AdapterManifest = {
     { host: "aiplatform.googleapis.com", protocol: "https" },
   ],
   riskLevel: "medium",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 const VERTEX_DEFAULT_MODEL = "gemini-2.0-flash";

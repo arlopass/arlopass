@@ -3,16 +3,16 @@ import {
   ProtocolError,
   normalizeReasonCode,
   type ProtocolReasonCode,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 import type { TransportErrorLike } from "./types.js";
 
 export const SDK_MACHINE_CODES = {
-  INVALID_STATE_TRANSITION: "BYOM_SDK_INVALID_STATE_TRANSITION",
-  INVALID_STATE_OPERATION: "BYOM_SDK_INVALID_STATE_OPERATION",
-  MISSING_PROVIDER_SELECTION: "BYOM_SDK_MISSING_PROVIDER_SELECTION",
-  PROTOCOL_VIOLATION: "BYOM_SDK_PROTOCOL_VIOLATION",
-  TRANSPORT_ERROR: "BYOM_SDK_TRANSPORT_ERROR",
+  INVALID_STATE_TRANSITION: "ARLOPASS_SDK_INVALID_STATE_TRANSITION",
+  INVALID_STATE_OPERATION: "ARLOPASS_SDK_INVALID_STATE_OPERATION",
+  MISSING_PROVIDER_SELECTION: "ARLOPASS_SDK_MISSING_PROVIDER_SELECTION",
+  PROTOCOL_VIOLATION: "ARLOPASS_SDK_PROTOCOL_VIOLATION",
+  TRANSPORT_ERROR: "ARLOPASS_SDK_TRANSPORT_ERROR",
 } as const;
 
 export type SDKMachineCode =
@@ -58,7 +58,7 @@ export type SDKErrorFallback = Readonly<{
   details?: SDKErrorDetails | undefined;
 }>;
 
-export class BYOMSDKError extends Error {
+export class ArlopassSDKError extends Error {
   readonly machineCode: SDKMachineCode;
   readonly reasonCode: ProtocolReasonCode;
   readonly retryable: boolean;
@@ -76,7 +76,7 @@ export class BYOMSDKError extends Error {
   }
 }
 
-export class BYOMStateError extends BYOMSDKError {
+export class ArlopassStateError extends ArlopassSDKError {
   constructor(message: string, options: SharedSDKErrorOptions = {}) {
     super(message, {
       machineCode: SDK_MACHINE_CODES.INVALID_STATE_OPERATION,
@@ -89,7 +89,7 @@ export class BYOMStateError extends BYOMSDKError {
   }
 }
 
-export class BYOMInvalidStateTransitionError extends BYOMSDKError {
+export class ArlopassInvalidStateTransitionError extends ArlopassSDKError {
   constructor(message: string, options: SharedSDKErrorOptions = {}) {
     super(message, {
       machineCode: SDK_MACHINE_CODES.INVALID_STATE_TRANSITION,
@@ -105,7 +105,7 @@ export class BYOMInvalidStateTransitionError extends BYOMSDKError {
 type ProtocolBoundaryOptions = SharedSDKErrorOptions &
   Readonly<{ machineCode?: SDKMachineCode | undefined }>;
 
-export class BYOMProtocolBoundaryError extends BYOMSDKError {
+export class ArlopassProtocolBoundaryError extends ArlopassSDKError {
   constructor(message: string, options: ProtocolBoundaryOptions = {}) {
     super(message, {
       machineCode: options.machineCode ?? SDK_MACHINE_CODES.PROTOCOL_VIOLATION,
@@ -118,7 +118,7 @@ export class BYOMProtocolBoundaryError extends BYOMSDKError {
   }
 }
 
-export class BYOMTransportError extends BYOMSDKError {
+export class ArlopassTransportError extends ArlopassSDKError {
   constructor(message: string, options: SharedSDKErrorOptions = {}) {
     super(message, {
       machineCode: SDK_MACHINE_CODES.TRANSPORT_ERROR,
@@ -131,7 +131,7 @@ export class BYOMTransportError extends BYOMSDKError {
   }
 }
 
-export class BYOMTimeoutError extends BYOMSDKError {
+export class ArlopassTimeoutError extends ArlopassSDKError {
   constructor(message: string, options: SharedSDKErrorOptions = {}) {
     super(message, {
       machineCode: PROTOCOL_MACHINE_CODES.TIMEOUT,
@@ -233,14 +233,14 @@ function normalizeUnknownCause(cause: unknown): Error | undefined {
 export function normalizeSDKError(
   error: unknown,
   fallback: SDKErrorFallback,
-): BYOMSDKError {
-  if (error instanceof BYOMSDKError) {
+): ArlopassSDKError {
+  if (error instanceof ArlopassSDKError) {
     return error;
   }
 
   if (error instanceof ProtocolError) {
     if (isTimeoutShape(error)) {
-      return new BYOMTimeoutError(error.message, {
+      return new ArlopassTimeoutError(error.message, {
         reasonCode: error.reasonCode,
         retryable: error.retryable,
         correlationId: error.correlationId ?? fallback.correlationId,
@@ -249,7 +249,7 @@ export function normalizeSDKError(
       });
     }
 
-    return new BYOMProtocolBoundaryError(error.message, {
+    return new ArlopassProtocolBoundaryError(error.message, {
       machineCode: castMachineCode(error.machineCode),
       reasonCode: error.reasonCode,
       retryable: error.retryable,
@@ -267,7 +267,7 @@ export function normalizeSDKError(
     const correlationId = transportLike.correlationId ?? fallback.correlationId;
 
     if (isTimeoutShape(transportLike)) {
-      return new BYOMTimeoutError(message, {
+      return new ArlopassTimeoutError(message, {
         reasonCode,
         retryable,
         correlationId,
@@ -276,7 +276,7 @@ export function normalizeSDKError(
       });
     }
 
-    return new BYOMTransportError(message, {
+    return new ArlopassTransportError(message, {
       reasonCode,
       retryable,
       correlationId,
@@ -287,7 +287,7 @@ export function normalizeSDKError(
 
   if (error instanceof Error) {
     if (isTimeoutShape(error)) {
-      return new BYOMTimeoutError(error.message, {
+      return new ArlopassTimeoutError(error.message, {
         reasonCode: fallback.reasonCode,
         retryable: fallback.retryable,
         correlationId: fallback.correlationId,
@@ -296,7 +296,7 @@ export function normalizeSDKError(
       });
     }
 
-    return new BYOMTransportError(error.message, {
+    return new ArlopassTransportError(error.message, {
       reasonCode: fallback.reasonCode,
       retryable: fallback.retryable,
       correlationId: fallback.correlationId,
@@ -305,7 +305,7 @@ export function normalizeSDKError(
     });
   }
 
-  return new BYOMSDKError(fallback.message, {
+  return new ArlopassSDKError(fallback.message, {
     machineCode: fallback.machineCode,
     reasonCode: fallback.reasonCode,
     retryable: fallback.retryable,

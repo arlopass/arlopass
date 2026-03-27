@@ -2,7 +2,7 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const createConversationReact = `import { useConversation } from "@byom-ai/react";
+const createConversationReact = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const {
@@ -32,9 +32,9 @@ function Chat() {
   );
 }`;
 
-const createConversationWeb = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const createConversationWeb = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 const convo = new ConversationManager({
@@ -53,7 +53,7 @@ for await (const event of convo.stream("Hello!")) {
 console.log("Tokens used:", convo.getTokenCount());
 console.log("Context window:", convo.getContextWindow());`;
 
-const pinExample = `import { useConversation } from "@byom-ai/react";
+const pinExample = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, pinMessage } = useConversation({
@@ -113,7 +113,7 @@ const summarizeWeb = `const convo = new ConversationManager({
 // Evicted messages are summarized automatically.
 // The summary is added as a system-level message in the context.`;
 
-const tokenMonitoring = `import { useConversation } from "@byom-ai/react";
+const tokenMonitoring = `import { useConversation } from "@arlopass/react";
 
 function ChatWithTokenDisplay() {
   const {
@@ -171,7 +171,7 @@ function ChatWithTokenDisplay() {
   );
 }`;
 
-const clearExample = `import { useConversation } from "@byom-ai/react";
+const clearExample = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, clearMessages, isStreaming } = useConversation({
@@ -196,7 +196,7 @@ function Chat() {
 }`;
 
 const fullExample = `import { useState } from "react";
-import { BYOMProvider, ChatReadyGate, useConversation } from "@byom-ai/react";
+import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
 
 function Chat() {
   const {
@@ -277,15 +277,15 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="managed-chat">
+    <ArlopassProvider appId="managed-chat">
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
-        noProvider={<p>Select a provider in the BYOM extension.</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
         error={(err) => <p>Error: {err.message}</p>}
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 

@@ -1,12 +1,12 @@
 import type { ClientState, ProviderDescriptor } from "../types.js";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
 
 export type ClientSnapshot = Readonly<{
     state: ClientState;
     sessionId: string | null;
     selectedProvider: Readonly<{ providerId: string; modelId: string }> | null;
     providers: readonly ProviderDescriptor[];
-    error: BYOMSDKError | null;
+    error: ArlopassSDKError | null;
 }>;
 
 export type SnapshotInput = {
@@ -14,7 +14,7 @@ export type SnapshotInput = {
     sessionId?: string | null;
     selectedProvider?: Readonly<{ providerId: string; modelId: string }> | null;
     providers?: readonly ProviderDescriptor[];
-    error?: BYOMSDKError | null;
+    error?: ArlopassSDKError | null;
 };
 
 export const EMPTY_PROVIDERS: readonly ProviderDescriptor[] = Object.freeze([]);

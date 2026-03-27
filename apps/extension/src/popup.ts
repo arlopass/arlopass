@@ -11,9 +11,9 @@ async function loadWalletSnapshot(): Promise<Record<string, unknown>> {
   return new Promise((resolve) => {
     chrome.storage.local.get(
       [
-        "byom.wallet.providers.v1",
-        "byom.wallet.activeProvider.v1",
-        "byom.wallet.ui.lastError.v1",
+        "arlopass.wallet.providers.v1",
+        "arlopass.wallet.activeProvider.v1",
+        "arlopass.wallet.ui.lastError.v1",
       ],
       (result) => {
         resolve(result as Record<string, unknown>);
@@ -28,7 +28,7 @@ async function sendWalletAction(
 ): Promise<WalletActionResponse> {
   const requestId = `req.popup.${Date.now()}.${Math.random().toString(36).slice(2)}`;
   const response = (await chrome.runtime.sendMessage({
-    channel: "byom.wallet",
+    channel: "arlopass.wallet",
     action,
     requestId,
     payload,
@@ -42,7 +42,7 @@ async function refreshPopup(container: HTMLElement): Promise<void> {
     const snapshot = normalizeWalletSnapshot(raw);
 
     if (snapshot.warnings.length > 0) {
-      console.warn("BYOM Wallet: snapshot warnings", snapshot.warnings);
+      console.warn("Arlopass Wallet: snapshot warnings", snapshot.warnings);
     }
 
     container.innerHTML = renderWalletView({
@@ -54,7 +54,7 @@ async function refreshPopup(container: HTMLElement): Promise<void> {
 
     bindProviderActions(container);
   } catch (err) {
-    console.error("BYOM Wallet: failed to load wallet state", err);
+    console.error("Arlopass Wallet: failed to load wallet state", err);
     container.innerHTML = `<div class="error-banner" role="alert"><span class="error-banner__icon" aria-hidden="true">&#9888;</span><span class="error-banner__message">Failed to load wallet state. Please try again.</span></div>`;
   }
 }
@@ -122,7 +122,7 @@ function bindProviderActions(container: HTMLElement): void {
 document.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("wallet-content");
   if (container === null) {
-    console.error("BYOM Wallet: popup container #wallet-content not found");
+    console.error("Arlopass Wallet: popup container #wallet-content not found");
     return;
   }
 

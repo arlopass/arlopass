@@ -6,8 +6,8 @@ import {
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,
-} from "@byom-ai/protocol";
-import type { ChatMessage } from "@byom-ai/web-sdk";
+} from "@arlopass/protocol";
+import type { ChatMessage } from "@arlopass/web-sdk";
 
 import {
   ensureBridgeHandshakeSession,
@@ -331,7 +331,7 @@ export async function runCloudBridgeCompletion(
   input: RunCloudBridgeCompletionInput,
 ): Promise<string> {
   const hostName = assertNativeHostName(
-    normalizeText(input.provider.metadata["nativeHostName"], "com.byom.bridge"),
+    normalizeText(input.provider.metadata["nativeHostName"], "com.arlopass.bridge"),
   );
   const bridgeProviderId = normalizeText(
     input.provider.metadata["providerId"],
@@ -540,7 +540,7 @@ export async function runCloudBridgeCompletionStream(
       : input.sendNativeMessage;
 
   const hostName = assertNativeHostName(
-    normalizeText(input.provider.metadata["nativeHostName"], "com.byom.bridge"),
+    normalizeText(input.provider.metadata["nativeHostName"], "com.arlopass.bridge"),
   );
   const bridgeProviderId = normalizeText(
     input.provider.metadata["providerId"],

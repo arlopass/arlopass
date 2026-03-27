@@ -7,7 +7,7 @@ type Props = Readonly<{
   children: ReactNode | (() => ReactNode);
 }>;
 
-export function BYOMDisconnected({ children }: Props): ReactNode {
+export function ArlopassDisconnected({ children }: Props): ReactNode {
   const snapshot = useStoreSnapshot();
 
   if (snapshot.state === "connected" || snapshot.state === "degraded") {

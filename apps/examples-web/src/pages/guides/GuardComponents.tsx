@@ -2,18 +2,18 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const connectionGateExample = `import { BYOMProvider, BYOMConnectionGate } from "@byom-ai/react";
+const connectionGateExample = `import { ArlopassProvider, ArlopassConnectionGate } from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="my-app">
-      <BYOMConnectionGate
-        fallback={<p>Connecting to BYOM extension...</p>}
+    <ArlopassProvider appId="my-app">
+      <ArlopassConnectionGate
+        fallback={<p>Connecting to Arlopass extension...</p>}
         notInstalledFallback={
           <div>
             <h2>Extension Required</h2>
-            <p>Install the BYOM browser extension to use this app.</p>
-            <a href="https://byom.ai/install">Install Extension</a>
+            <p>Install the Arlopass browser extension to use this app.</p>
+            <a href="https://arlopass.ai/install">Install Extension</a>
           </div>
         }
         errorFallback={({ error, retry }) => (
@@ -24,42 +24,42 @@ function App() {
         )}
       >
         <MainApp />
-      </BYOMConnectionGate>
-    </BYOMProvider>
+      </ArlopassConnectionGate>
+    </ArlopassProvider>
   );
 }`;
 
-const providerGateExample = `import { BYOMProviderGate } from "@byom-ai/react";
+const providerGateExample = `import { ArlopassProviderGate } from "@arlopass/react";
 
 function ConnectedApp() {
   return (
-    <BYOMProviderGate
+    <ArlopassProviderGate
       fallback={
         <div>
           <h2>Select a Provider</h2>
           <p>
-            Open the BYOM extension popup and choose an AI provider
+            Open the Arlopass extension popup and choose an AI provider
             before using the chat.
           </p>
         </div>
       }
     >
       <Chat />
-    </BYOMProviderGate>
+    </ArlopassProviderGate>
   );
 }`;
 
-const chatReadyGateExample = `import { BYOMChatReadyGate } from "@byom-ai/react";
+const chatReadyGateExample = `import { ArlopassChatReadyGate } from "@arlopass/react";
 
-// BYOMChatReadyGate combines connection + provider checks in one gate
+// ArlopassChatReadyGate combines connection + provider checks in one gate
 function App() {
   return (
-    <BYOMChatReadyGate
+    <ArlopassChatReadyGate
       connectingFallback={<p>Connecting...</p>}
       notInstalledFallback={
         <div>
-          <p>BYOM extension not detected.</p>
-          <a href="https://byom.ai/install">Install</a>
+          <p>Arlopass extension not detected.</p>
+          <a href="https://arlopass.ai/install">Install</a>
         </div>
       }
       providerFallback={<p>Please select a provider.</p>}
@@ -71,19 +71,19 @@ function App() {
       )}
     >
       <Chat />
-    </BYOMChatReadyGate>
+    </ArlopassChatReadyGate>
   );
 }`;
 
 const negativeGuardsExample = `import {
-  BYOMNotInstalled,
-  BYOMDisconnected,
-  BYOMConnected,
-  BYOMProviderNotReady,
-  BYOMHasError,
-  BYOMChatNotReady,
-  BYOMChatReady,
-} from "@byom-ai/react";
+  ArlopassNotInstalled,
+  ArlopassDisconnected,
+  ArlopassConnected,
+  ArlopassProviderNotReady,
+  ArlopassHasError,
+  ArlopassChatNotReady,
+  ArlopassChatReady,
+} from "@arlopass/react";
 
 function AppHeader() {
   return (
@@ -91,50 +91,50 @@ function AppHeader() {
       <h1>My App</h1>
 
       {/* Show install prompt when extension is missing */}
-      <BYOMNotInstalled>
-        <a href="https://byom.ai/install">Install BYOM</a>
-      </BYOMNotInstalled>
+      <ArlopassNotInstalled>
+        <a href="https://arlopass.ai/install">Install Arlopass</a>
+      </ArlopassNotInstalled>
 
       {/* Show reconnect button when disconnected */}
-      <BYOMDisconnected>
+      <ArlopassDisconnected>
         <span style={{ color: "orange" }}>Disconnected</span>
-      </BYOMDisconnected>
+      </ArlopassDisconnected>
 
       {/* Show green dot when connected */}
-      <BYOMConnected>
+      <ArlopassConnected>
         <span style={{ color: "green" }}>Connected</span>
-      </BYOMConnected>
+      </ArlopassConnected>
 
       {/* Prompt to select provider when none is chosen */}
-      <BYOMProviderNotReady>
+      <ArlopassProviderNotReady>
         <span>Select a provider →</span>
-      </BYOMProviderNotReady>
+      </ArlopassProviderNotReady>
 
       {/* Show errors in the header */}
-      <BYOMHasError>
+      <ArlopassHasError>
         {({ error, retry }) => (
           <span style={{ color: "red" }}>
             {error.message}
             {retry && <button onClick={retry}>Retry</button>}
           </span>
         )}
-      </BYOMHasError>
+      </ArlopassHasError>
     </header>
   );
 }`;
 
 const nestingExample = `import {
-  BYOMProvider,
-  BYOMConnectionGate,
-  BYOMProviderGate,
-  BYOMHasError,
-} from "@byom-ai/react";
+  ArlopassProvider,
+  ArlopassConnectionGate,
+  ArlopassProviderGate,
+  ArlopassHasError,
+} from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="my-app">
+    <ArlopassProvider appId="my-app">
       {/* Layer 1: Connection */}
-      <BYOMConnectionGate
+      <ArlopassConnectionGate
         fallback={<LoadingSpinner />}
         notInstalledFallback={<InstallPrompt />}
         errorFallback={({ error, retry }) => (
@@ -142,32 +142,32 @@ function App() {
         )}
       >
         {/* Layer 2: Provider selection */}
-        <BYOMProviderGate fallback={<ProviderPicker />}>
+        <ArlopassProviderGate fallback={<ProviderPicker />}>
           {/* Now fully ready for chat */}
           <AppLayout>
             <Sidebar>
-              <BYOMHasError>
+              <ArlopassHasError>
                 {({ error, retry }) => (
                   <ErrorBanner error={error} retry={retry} />
                 )}
-              </BYOMHasError>
+              </ArlopassHasError>
             </Sidebar>
             <MainContent>
               <Chat />
             </MainContent>
           </AppLayout>
-        </BYOMProviderGate>
-      </BYOMConnectionGate>
-    </BYOMProvider>
+        </ArlopassProviderGate>
+      </ArlopassConnectionGate>
+    </ArlopassProvider>
   );
 }`;
 
-const hasErrorRenderFn = `import { BYOMHasError } from "@byom-ai/react";
+const hasErrorRenderFn = `import { ArlopassHasError } from "@arlopass/react";
 
 function StatusBar() {
   return (
     <div>
-      <BYOMHasError>
+      <ArlopassHasError>
         {({ error, retry }) => {
           // Render function receives error and optional retry
           if (error.retryable) {
@@ -190,37 +190,37 @@ function StatusBar() {
             </div>
           );
         }}
-      </BYOMHasError>
+      </ArlopassHasError>
     </div>
   );
 }`;
 
 const comparisonReact = `import {
-  BYOMProvider,
-  BYOMChatReadyGate,
-  BYOMHasError,
+  ArlopassProvider,
+  ArlopassChatReadyGate,
+  ArlopassHasError,
   useConversation,
-} from "@byom-ai/react";
+} from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="my-app">
-      <BYOMChatReadyGate
+    <ArlopassProvider appId="my-app">
+      <ArlopassChatReadyGate
         connectingFallback={<p>Connecting...</p>}
         providerFallback={<p>Select a provider.</p>}
         errorFallback={({ error }) => <p>Error: {error.message}</p>}
       >
         <Chat />
-      </BYOMChatReadyGate>
-    </BYOMProvider>
+      </ArlopassChatReadyGate>
+    </ArlopassProvider>
   );
 }`;
 
-const comparisonWeb = `import { BYOMClient } from "@byom-ai/web-sdk";
+const comparisonWeb = `import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 
-if (!window.byom) {
+if (!window.arlopass) {
   showInstallPrompt();
 } else {
   try {
@@ -237,31 +237,31 @@ if (!window.byom) {
 }`;
 
 const fullExample = `import {
-  BYOMProvider,
-  BYOMConnectionGate,
-  BYOMProviderGate,
-  BYOMHasError,
-  BYOMConnected,
-  BYOMDisconnected,
-  BYOMNotInstalled,
+  ArlopassProvider,
+  ArlopassConnectionGate,
+  ArlopassProviderGate,
+  ArlopassHasError,
+  ArlopassConnected,
+  ArlopassDisconnected,
+  ArlopassNotInstalled,
   useConversation,
-} from "@byom-ai/react";
+} from "@arlopass/react";
 import { useState } from "react";
 
 function Header() {
   return (
     <header style={{ display: "flex", gap: 12, padding: 16, borderBottom: "1px solid #eee" }}>
       <h2 style={{ margin: 0 }}>Chat App</h2>
-      <BYOMNotInstalled>
+      <ArlopassNotInstalled>
         <span style={{ color: "red" }}>Extension not installed</span>
-      </BYOMNotInstalled>
-      <BYOMDisconnected>
+      </ArlopassNotInstalled>
+      <ArlopassDisconnected>
         <span style={{ color: "orange" }}>Disconnected</span>
-      </BYOMDisconnected>
-      <BYOMConnected>
+      </ArlopassDisconnected>
+      <ArlopassConnected>
         <span style={{ color: "green" }}>Connected</span>
-      </BYOMConnected>
-      <BYOMHasError>
+      </ArlopassConnected>
+      <ArlopassHasError>
         {({ error, retry }) => (
           <span style={{ color: "red" }}>
             {error.message}
@@ -270,7 +270,7 @@ function Header() {
             )}
           </span>
         )}
-      </BYOMHasError>
+      </ArlopassHasError>
     </header>
   );
 }
@@ -319,13 +319,13 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="guard-demo">
+    <ArlopassProvider appId="guard-demo">
       <Header />
-      <BYOMConnectionGate
+      <ArlopassConnectionGate
         fallback={<p style={{ padding: 16 }}>Connecting...</p>}
         notInstalledFallback={
           <div style={{ padding: 16 }}>
-            <h3>BYOM Extension Required</h3>
+            <h3>Arlopass Extension Required</h3>
             <p>Install the extension to use this app.</p>
           </div>
         }
@@ -336,17 +336,17 @@ export default function App() {
           </div>
         )}
       >
-        <BYOMProviderGate
+        <ArlopassProviderGate
           fallback={
             <div style={{ padding: 16 }}>
-              <p>Open the BYOM extension and select an AI provider.</p>
+              <p>Open the Arlopass extension and select an AI provider.</p>
             </div>
           }
         >
           <Chat />
-        </BYOMProviderGate>
-      </BYOMConnectionGate>
-    </BYOMProvider>
+        </ArlopassProviderGate>
+      </ArlopassConnectionGate>
+    </ArlopassProvider>
   );
 }`;
 
@@ -367,7 +367,7 @@ export default function GuardComponents() {
         fallback props for each negative state.
       </Text>
 
-      <Text fw={600}>BYOMConnectionGate</Text>
+      <Text fw={600}>ArlopassConnectionGate</Text>
       <Text>
         Renders children when connected. Shows <code>fallback</code> while
         connecting, <code>notInstalledFallback</code> if the extension isn't
@@ -375,14 +375,14 @@ export default function GuardComponents() {
       </Text>
       <CodeBlock title="ConnectionGate.tsx" code={connectionGateExample} />
 
-      <Text fw={600}>BYOMProviderGate</Text>
+      <Text fw={600}>ArlopassProviderGate</Text>
       <Text>
         Renders children when a provider is selected. Shows{" "}
         <code>fallback</code> if no provider is chosen yet.
       </Text>
       <CodeBlock title="ProviderGate.tsx" code={providerGateExample} />
 
-      <Text fw={600}>BYOMChatReadyGate</Text>
+      <Text fw={600}>ArlopassChatReadyGate</Text>
       <Text>
         Combines connection and provider checks in a single gate. This is the
         most common gate for chat UIs — it handles not-installed, connecting,
@@ -406,9 +406,9 @@ export default function GuardComponents() {
       </Text>
       <CodeBlock title="NestedGates.tsx" code={nestingExample} />
 
-      <Title order={3}>Render function on BYOMHasError</Title>
+      <Title order={3}>Render function on ArlopassHasError</Title>
       <Text>
-        <code>BYOMHasError</code> uses a render function as children. It
+        <code>ArlopassHasError</code> uses a render function as children. It
         receives the error object and an optional <code>retry</code> function.
         Use it to build different UIs for retryable vs fatal errors.
       </Text>

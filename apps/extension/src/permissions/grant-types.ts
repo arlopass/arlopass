@@ -2,7 +2,7 @@ import {
   CAPABILITY_CATALOG,
   isProtocolCapability,
   type ProtocolCapability,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 export const GRANT_SCOPE_WILDCARD = "*" as const;
 

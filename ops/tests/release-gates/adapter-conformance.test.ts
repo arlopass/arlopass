@@ -6,16 +6,16 @@ import {
   parseAdapterManifest,
   parseConnectionMethods,
   type AdapterContract,
-} from "@byom-ai/adapter-runtime";
-import { AmazonBedrockAdapter } from "@byom-ai/adapter-amazon-bedrock";
-import { ClaudeSubscriptionAdapter } from "@byom-ai/adapter-claude-subscription";
-import { GeminiAdapter } from "@byom-ai/adapter-gemini";
-import { GoogleVertexAiAdapter } from "@byom-ai/adapter-google-vertex-ai";
-import { LocalCliBridgeAdapter } from "@byom-ai/adapter-local-cli-bridge";
-import { MicrosoftFoundryAdapter } from "@byom-ai/adapter-microsoft-foundry";
-import { OllamaAdapter } from "@byom-ai/adapter-ollama";
-import { OpenAiAdapter } from "@byom-ai/adapter-openai";
-import { PerplexityAdapter } from "@byom-ai/adapter-perplexity";
+} from "@arlopass/adapter-runtime";
+import { AmazonBedrockAdapter } from "@arlopass/adapter-amazon-bedrock";
+import { ClaudeSubscriptionAdapter } from "@arlopass/adapter-claude-subscription";
+import { GeminiAdapter } from "@arlopass/adapter-gemini";
+import { GoogleVertexAiAdapter } from "@arlopass/adapter-google-vertex-ai";
+import { LocalCliBridgeAdapter } from "@arlopass/adapter-local-cli-bridge";
+import { MicrosoftFoundryAdapter } from "@arlopass/adapter-microsoft-foundry";
+import { OllamaAdapter } from "@arlopass/adapter-ollama";
+import { OpenAiAdapter } from "@arlopass/adapter-openai";
+import { PerplexityAdapter } from "@arlopass/adapter-perplexity";
 
 type FirstPartyAdapterSpec = Readonly<{
   providerId: string;

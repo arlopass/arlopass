@@ -9,14 +9,14 @@ import type {
     SelectProviderInput as WebSDKSelectProviderInput,
     ChatOperationOptions as WebSDKChatOperationOptions,
     ChatStreamEvent as WebSDKChatStreamEvent,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
 import type {
-    BYOMSDKError as WebSDKBYOMSDKError,
-    BYOMStateError as WebSDKBYOMStateError,
-} from "@byom-ai/web-sdk";
+    ArlopassSDKError as WebSDKArlopassSDKError,
+    ArlopassStateError as WebSDKArlopassStateError,
+} from "@arlopass/web-sdk";
 
-import type { BYOMTransport as WebSDKBYOMTransport } from "@byom-ai/web-sdk";
+import type { ArlopassTransport as WebSDKArlopassTransport } from "@arlopass/web-sdk";
 
 import type {
     ToolDefinition as WebSDKToolDefinition,
@@ -25,15 +25,15 @@ import type {
     ToolResult as WebSDKToolResult,
     ToolCallEvent as WebSDKToolCallEvent,
     ToolResultEvent as WebSDKToolResultEvent,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
 import type {
     ToolPrimingStartEvent as WebSDKToolPrimingStartEvent,
     ToolPrimingMatchEvent as WebSDKToolPrimingMatchEvent,
     ToolPrimingEndEvent as WebSDKToolPrimingEndEvent,
-} from "@byom-ai/web-sdk";
+} from "@arlopass/web-sdk";
 
-// Re-export web-sdk types so developers only need @byom-ai/react
+// Re-export web-sdk types so developers only need @arlopass/react
 export type ChatMessage = WebSDKChatMessage;
 export type ChatRole = WebSDKChatRole;
 export type ClientState = WebSDKClientState;
@@ -42,9 +42,9 @@ export type SelectProviderInput = WebSDKSelectProviderInput;
 export type ChatOperationOptions = WebSDKChatOperationOptions;
 export type ChatStreamEvent = WebSDKChatStreamEvent;
 export type ContextWindowInfo = WebSDKContextWindowInfo;
-export type { WebSDKBYOMSDKError as BYOMSDKError };
-export type { WebSDKBYOMStateError as BYOMStateError };
-export type { WebSDKBYOMTransport as BYOMTransport };
+export type { WebSDKArlopassSDKError as ArlopassSDKError };
+export type { WebSDKArlopassStateError as ArlopassStateError };
+export type { WebSDKArlopassTransport as ArlopassTransport };
 export type { WebSDKToolDefinition as ToolDefinition };
 export type { WebSDKConversationStreamEvent as ConversationStreamEvent };
 export type { WebSDKToolCall as ToolCall };
@@ -105,14 +105,14 @@ export type ChatSubscribe = {
     (
         event: "error",
         handler: (
-            error: WebSDKBYOMSDKError,
+            error: WebSDKArlopassSDKError,
             messageId: MessageId | null,
         ) => void,
     ): () => void;
     (
         event: "error",
         messageId: MessageId,
-        handler: (error: WebSDKBYOMSDKError) => void,
+        handler: (error: WebSDKArlopassSDKError) => void,
     ): () => void;
     (
         event: "tool_call",
@@ -160,7 +160,7 @@ export type ChatSubscribe = {
     ): () => void;
 };
 
-export type BYOMProviderProps = Readonly<{
+export type ArlopassProviderProps = Readonly<{
     /** Full appId. Auto-derived from origin if omitted. */
     appId?: string;
     /** Suffix appended to the auto-derived domain prefix. Ignored if appId is set. */
@@ -174,7 +174,7 @@ export type BYOMProviderProps = Readonly<{
     defaultProvider?: string;
     defaultModel?: string;
     autoConnect?: boolean;
-    onError?: (error: WebSDKBYOMSDKError) => void;
+    onError?: (error: WebSDKArlopassSDKError) => void;
     children: React.ReactNode;
 }>;
 
@@ -197,13 +197,13 @@ export type ChatSubscribeNoTools = {
     (
         event: "error",
         handler: (
-            error: WebSDKBYOMSDKError,
+            error: WebSDKArlopassSDKError,
             messageId: MessageId | null,
         ) => void,
     ): () => void;
     (
         event: "error",
         messageId: MessageId,
-        handler: (error: WebSDKBYOMSDKError) => void,
+        handler: (error: WebSDKArlopassSDKError) => void,
     ): () => void;
 };

@@ -163,8 +163,7 @@ export class IdempotencyStoreError extends Error {
 }
 
 export class InMemoryRequestIdempotencyStore
-  implements RequestIdempotencyStoreContract
-{
+  implements RequestIdempotencyStoreContract {
   readonly #now: () => Date;
   readonly #ttlMs: number;
   readonly #maxEntries: number;
@@ -451,7 +450,7 @@ export class InMemoryRequestIdempotencyStore
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       process.stderr.write(
-        `[byom-bridge] warning: failed to persist idempotency state to "${this.#stateFilePath}": ${message}\n`,
+        `[arlopass-bridge] warning: failed to persist idempotency state to "${this.#stateFilePath}": ${message}\n`,
       );
       const failure: IdempotencyPersistenceFailure = {
         stateFilePath: this.#stateFilePath,
@@ -465,7 +464,7 @@ export class InMemoryRequestIdempotencyStore
         this.#onPersistenceFailure?.(failure);
       } catch {
         process.stderr.write(
-          `[byom-bridge] warning: idempotency persistence failure callback threw unexpectedly\n`,
+          `[arlopass-bridge] warning: idempotency persistence failure callback threw unexpectedly\n`,
         );
       }
     }

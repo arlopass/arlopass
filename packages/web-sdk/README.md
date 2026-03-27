@@ -1,11 +1,11 @@
-# @byom-ai/web-sdk
+# @arlopass/web-sdk
 
 Connect web applications to a user's own AI providers without handling their credentials.
 
 ```ts
-import { BYOMClient } from "@byom-ai/web-sdk";
+import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom, origin: location.origin });
+const client = new ArlopassClient({ transport: window.arlopass, origin: location.origin });
 
 await client.connect({ appId: "com.acme.app" });
 
@@ -23,10 +23,10 @@ console.log(reply.message.content);
 await client.disconnect();
 ```
 
-The BYOM extension injects a transport at `window.byom`. Install with:
+The Arlopass extension injects a transport at `window.arlopass`. Install with:
 
 ```bash
-npm install @byom-ai/web-sdk
+npm install @arlopass/web-sdk
 ```
 
 ## Streaming
@@ -44,19 +44,19 @@ for await (const event of client.chat.stream({
 
 ## API Reference
 
-### `BYOMClient`
+### `ArlopassClient`
 
 Manages the full lifecycle: connect, select provider, chat, stream, disconnect.
 
 ```ts
-const client = new BYOMClient(options: BYOMClientOptions);
+const client = new ArlopassClient(options: ArlopassClientOptions);
 ```
 
-#### Constructor Options (`BYOMClientOptions`)
+#### Constructor Options (`ArlopassClientOptions`)
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `transport` | `BYOMTransport` | — | Required. Transport implementation |
+| `transport` | `ArlopassTransport` | — | Required. Transport implementation |
 | `origin` | `string` | — | Page origin for permission scoping |
 | `protocolVersion` | `string` | `"1.0.0"` | Protocol version to negotiate |
 | `timeoutMs` | `number` | `5000` | Request timeout in milliseconds |
@@ -81,7 +81,7 @@ const client = new BYOMClient(options: BYOMClientOptions);
 
 **`connect(options: ConnectOptions): Promise<ConnectResult>`**
 
-Establish a session with the BYOM wallet.
+Establish a session with the Arlopass wallet.
 
 ```ts
 type ConnectOptions = { appId: string; origin?: string; timeoutMs?: number }
@@ -133,14 +133,14 @@ Tear down the session and reset state.
 
 ---
 
-### `BYOMStateMachine`
+### `ArlopassStateMachine`
 
 Tracks client connection state with validated transitions.
 
 ```ts
-import { BYOMStateMachine } from "@byom-ai/web-sdk";
+import { ArlopassStateMachine } from "@arlopass/web-sdk";
 
-const sm = new BYOMStateMachine("disconnected");
+const sm = new ArlopassStateMachine("disconnected");
 sm.canTransition("connecting"); // true
 sm.transition("connecting");    // "connecting"
 sm.state;                       // "connecting"
@@ -153,12 +153,12 @@ sm.history;                     // [{ from: "disconnected", to: "connecting", ti
 
 ---
 
-### `BYOMTransport`
+### `ArlopassTransport`
 
-Interface for routing requests to the BYOM wallet. The extension injects one at `window.byom`.
+Interface for routing requests to the Arlopass wallet. The extension injects one at `window.arlopass`.
 
 ```ts
-interface BYOMTransport {
+interface ArlopassTransport {
   request<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportResponse<TRes>>;
   stream<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportStream<TRes>>;
   disconnect?(sessionId: string): Promise<void>;
@@ -173,10 +173,10 @@ type TransportStream<TPayload> = AsyncIterable<TransportResponse<TPayload>>
 
 ### Error Classes
 
-All errors extend `BYOMSDKError`:
+All errors extend `ArlopassSDKError`:
 
 ```ts
-class BYOMSDKError extends Error {
+class ArlopassSDKError extends Error {
   machineCode: SDKMachineCode;
   reasonCode: ProtocolReasonCode;
   retryable: boolean;
@@ -187,21 +187,21 @@ class BYOMSDKError extends Error {
 
 | Class | When thrown |
 |-------|------------|
-| `BYOMStateError` | Operating in wrong state (e.g., `chat.send` before `connect`) |
-| `BYOMInvalidStateTransitionError` | Invalid state transition attempted |
-| `BYOMProtocolBoundaryError` | Protocol-level failures from wallet/bridge |
-| `BYOMTransportError` | Transport layer failures |
-| `BYOMTimeoutError` | Request or stream exceeded timeout |
+| `ArlopassStateError` | Operating in wrong state (e.g., `chat.send` before `connect`) |
+| `ArlopassInvalidStateTransitionError` | Invalid state transition attempted |
+| `ArlopassProtocolBoundaryError` | Protocol-level failures from wallet/bridge |
+| `ArlopassTransportError` | Transport layer failures |
+| `ArlopassTimeoutError` | Request or stream exceeded timeout |
 
 **SDK Machine Codes (`SDK_MACHINE_CODES`):**
 
 | Code | Meaning |
 |------|---------|
-| `BYOM_SDK_INVALID_STATE_TRANSITION` | Attempted illegal state change |
-| `BYOM_SDK_INVALID_STATE_OPERATION` | Operation not valid for current state |
-| `BYOM_SDK_MISSING_PROVIDER_SELECTION` | Chat called without selecting provider |
-| `BYOM_SDK_PROTOCOL_VIOLATION` | Protocol envelope violated constraints |
-| `BYOM_SDK_TRANSPORT_ERROR` | Transport request failed |
+| `ARLOPASS_SDK_INVALID_STATE_TRANSITION` | Attempted illegal state change |
+| `ARLOPASS_SDK_INVALID_STATE_OPERATION` | Operation not valid for current state |
+| `ARLOPASS_SDK_MISSING_PROVIDER_SELECTION` | Chat called without selecting provider |
+| `ARLOPASS_SDK_PROTOCOL_VIOLATION` | Protocol envelope violated constraints |
+| `ARLOPASS_SDK_TRANSPORT_ERROR` | Transport request failed |
 
 ---
 
@@ -209,15 +209,15 @@ class BYOMSDKError extends Error {
 
 **`withTimeout<T>(operation: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T>`**
 
-Race a promise against a timeout. Throws `BYOMTimeoutError` on expiry.
+Race a promise against a timeout. Throws `ArlopassTimeoutError` on expiry.
 
 **`withStreamTimeout<T>(stream: TransportStream<T>, timeoutMs: number, timeoutMessage: string): AsyncIterable<TransportResponse<T>>`**
 
 Wrap an async iterable with per-chunk timeout enforcement.
 
-**`normalizeSDKError(error: unknown, fallback: SDKErrorFallback): BYOMSDKError`**
+**`normalizeSDKError(error: unknown, fallback: SDKErrorFallback): ArlopassSDKError`**
 
-Wrap any thrown value in the appropriate `BYOMSDKError` subclass based on protocol error codes.
+Wrap any thrown value in the appropriate `ArlopassSDKError` subclass based on protocol error codes.
 
 ---
 
@@ -234,5 +234,5 @@ Wrap any thrown value in the appropriate `BYOMSDKError` subclass based on protoc
 
 ### Dependencies
 
-- `@byom-ai/protocol` — Envelope, capability model, error taxonomy
-- `@byom-ai/telemetry` — Request metrics and trace propagation
+- `@arlopass/protocol` — Envelope, capability model, error taxonomy
+- `@arlopass/telemetry` — Request metrics and trace propagation

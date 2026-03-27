@@ -104,13 +104,13 @@ describe("cloud feature flags", () => {
 
   it("maps provider feature toggles to current cloud method ids", () => {
     const flags = createCloudFeatureFlagsFromEnv({
-      BYOM_CLOUD_BROKER_V2_ENABLED: "true",
-      BYOM_CLOUD_PROVIDER_FOUNDRY_ENABLED: "true",
-      BYOM_CLOUD_PROVIDER_VERTEX_ENABLED: "true",
-      BYOM_CLOUD_PROVIDER_BEDROCK_ENABLED: "true",
-      BYOM_CLOUD_PROVIDER_OPENAI_ENABLED: "true",
-      BYOM_CLOUD_PROVIDER_PERPLEXITY_ENABLED: "true",
-      BYOM_CLOUD_PROVIDER_GEMINI_ENABLED: "true",
+      ARLOPASS_CLOUD_BROKER_V2_ENABLED: "true",
+      ARLOPASS_CLOUD_PROVIDER_FOUNDRY_ENABLED: "true",
+      ARLOPASS_CLOUD_PROVIDER_VERTEX_ENABLED: "true",
+      ARLOPASS_CLOUD_PROVIDER_BEDROCK_ENABLED: "true",
+      ARLOPASS_CLOUD_PROVIDER_OPENAI_ENABLED: "true",
+      ARLOPASS_CLOUD_PROVIDER_PERPLEXITY_ENABLED: "true",
+      ARLOPASS_CLOUD_PROVIDER_GEMINI_ENABLED: "true",
     });
 
     expect(isCloudExecutionEnabled(flags, "foundry.api_key")).toBe(true);
@@ -127,8 +127,8 @@ describe("cloud feature flags", () => {
 
   it("supports legacy foundry method id aliases in explicit allowlist", () => {
     const flags = createCloudFeatureFlagsFromEnv({
-      BYOM_CLOUD_BROKER_V2_ENABLED: "true",
-      BYOM_CLOUD_METHOD_ALLOWLIST: "foundry.aad_client_credentials",
+      ARLOPASS_CLOUD_BROKER_V2_ENABLED: "true",
+      ARLOPASS_CLOUD_METHOD_ALLOWLIST: "foundry.aad_client_credentials",
     });
 
     expect(isCloudExecutionEnabled(flags, "foundry.api_key")).toBe(true);

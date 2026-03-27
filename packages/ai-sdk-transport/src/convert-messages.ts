@@ -1,4 +1,4 @@
-import type { ChatMessage } from "@byom-ai/web-sdk";
+import type { ChatMessage } from "@arlopass/web-sdk";
 
 type UIMessageLike = Readonly<{
     id: string;

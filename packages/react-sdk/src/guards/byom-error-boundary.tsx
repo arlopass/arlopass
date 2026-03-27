@@ -17,7 +17,7 @@ type State = {
   error: Error | null;
 };
 
-export class BYOMErrorBoundary extends Component<Props, State> {
+export class ArlopassErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { error: null };

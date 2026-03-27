@@ -49,8 +49,8 @@ const OS_LABELS: Record<OS, string> = {
 };
 
 const DOWNLOAD_URL =
-  "https://github.com/AltClick/byom-web/releases/latest/download/byom-bridge-win-x64.exe";
-const INSTALL_COMMAND = "curl -fsSL https://byomai.com/install.sh | sh";
+  "https://github.com/AltClick/arlopass/releases/latest/download/arlopass-bridge-win-x64.exe";
+const INSTALL_COMMAND = "curl -fsSL https://arlopassai.com/install.sh | sh";
 
 function WindowsInstructions() {
   return (
@@ -79,7 +79,7 @@ function WindowsInstructions() {
       >
         <Stack gap={0} align="center">
           <Text size="md" fw={500} c={tokens.color.btnPrimaryText}>
-            Download BYOM Bridge for Windows
+            Download Arlopass Bridge for Windows
           </Text>
           <Text
             size="xs"
@@ -87,7 +87,7 @@ function WindowsInstructions() {
             c={tokens.color.btnPrimaryText}
             opacity={0.7}
           >
-            byom-bridge-win-x64.exe
+            arlopass-bridge-win-x64.exe
           </Text>
         </Stack>
       </Button>
@@ -325,7 +325,7 @@ export function BridgeInstallGuide({
         {/* Description */}
         <Stack gap={8}>
           <Text size="lg" fw={600} c={tokens.color.textPrimary}>
-            Install the BYOM Bridge
+            Install the Arlopass Bridge
           </Text>
           <Text size="md" c={tokens.color.textSecondary}>
             The Bridge is a small app that runs quietly in the background. It
@@ -544,7 +544,7 @@ export function BridgeInstallGuide({
                     span
                     size="sm"
                     component="a"
-                    href="https://docs.byomai.com/bridge"
+                    href="https://docs.arlopassai.com/bridge"
                     target="_blank"
                     rel="noopener noreferrer"
                     c={tokens.color.textPrimary}
@@ -559,7 +559,7 @@ export function BridgeInstallGuide({
                     span
                     size="sm"
                     component="a"
-                    href="https://discord.gg/byom"
+                    href="https://discord.gg/arlopass"
                     target="_blank"
                     rel="noopener noreferrer"
                     c={tokens.color.textPrimary}

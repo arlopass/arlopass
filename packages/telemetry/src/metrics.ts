@@ -5,13 +5,13 @@ import {
 } from "./redaction.js";
 
 export const TELEMETRY_METRIC_NAMES = {
-  REQUEST_TOTAL: "byom.request.total",
-  REQUEST_DURATION_MS: "byom.request.duration_ms",
-  REQUEST_FAILURE_TOTAL: "byom.request.failure.total",
-  STREAM_CHUNK_TOTAL: "byom.stream.chunk.total",
-  STREAM_INTERRUPTION_TOTAL: "byom.stream.interruption.total",
-  RETRY_TOTAL: "byom.retry.total",
-  ADAPTER_HEALTH_GAUGE: "byom.adapter.health",
+  REQUEST_TOTAL: "arlopass.request.total",
+  REQUEST_DURATION_MS: "arlopass.request.duration_ms",
+  REQUEST_FAILURE_TOTAL: "arlopass.request.failure.total",
+  STREAM_CHUNK_TOTAL: "arlopass.stream.chunk.total",
+  STREAM_INTERRUPTION_TOTAL: "arlopass.stream.interruption.total",
+  RETRY_TOTAL: "arlopass.retry.total",
+  ADAPTER_HEALTH_GAUGE: "arlopass.adapter.health",
 } as const;
 
 export type TelemetryMetricName =
@@ -58,7 +58,7 @@ function isFiniteMetricValue(value: number): boolean {
 }
 
 function defaultMetricsEmitter(): MetricsEmitter {
-  return () => {};
+  return () => { };
 }
 
 const DEFAULT_REQUIRED_METRIC_METADATA_FIELDS = REQUIRED_SIGNAL_METADATA_FIELDS;

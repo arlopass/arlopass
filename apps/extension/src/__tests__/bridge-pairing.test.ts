@@ -18,7 +18,7 @@ describe("bridge pairing helpers", () => {
     const pairingBegin: PairingBeginPayload = {
       pairingSessionId: "ab".repeat(16),
       extensionId: "ext.runtime.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
       curve: "P-256",
       bridgePublicKey,
       salt: "cd".repeat(16),
@@ -47,7 +47,7 @@ describe("bridge pairing helpers", () => {
     const parsed = parsePairingBeginPayload({
       pairingSessionId: "ab".repeat(16),
       extensionId: "ext.runtime.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
       curve: "P-256",
       bridgePublicKey,
       salt: "cd".repeat(16),
@@ -67,7 +67,7 @@ describe("bridge pairing helpers", () => {
     const wrapped = await wrapPairingKeyMaterial({
       pairingHandle: "pairh.abcdefabcdefabcdefabcdefabcdefab",
       extensionId: "ext.runtime.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
       pairingKeyHex: "11".repeat(32),
       runtimeId: "ext.runtime.test",
       createdAt: "2026-03-24T16:00:00.000Z",

@@ -1,4 +1,4 @@
-# BYOM AI — Bookstore Test
+# Arlopass — Bookstore Test
 
 Adapted from the [Stitch SDK Bookstore Test](https://github.com/google-labs-code/stitch-sdk).
 A README earns a reader's attention the same way a book does: **Cover** → **Inner Flap** → **Reading the Book**.
@@ -12,7 +12,7 @@ Do not hard-code the API surface. Read it from the codebase at invocation time:
 | What you need | Where to find it |
 |---|---|
 | Web SDK public exports | `packages/web-sdk/src/index.ts` |
-| BYOMClient methods & options | `packages/web-sdk/src/client.ts` |
+| ArlopassClient methods & options | `packages/web-sdk/src/client.ts` |
 | SDK error classes & machine codes | `packages/web-sdk/src/errors.ts` |
 | Transport interface | `packages/web-sdk/src/transport.ts` |
 | Client state machine | `packages/web-sdk/src/state-machine.ts` |
@@ -45,7 +45,7 @@ Do not hard-code the API surface. Read it from the codebase at invocation time:
 
 A single sentence stating what problem this library solves — not what the library *is*. The reader should recognize their own situation.
 
-**For BYOM AI**, the cover is about using AI providers from web apps without handing over credentials.
+**For Arlopass**, the cover is about using AI providers from web apps without handing over credentials.
 
 **Good:** "Let web applications use your AI providers — local models, paid subscriptions, CLI tools — without exposing your credentials."
 **Bad:** "An enterprise-grade SDK and browser extension for AI provider mediation."
@@ -66,7 +66,7 @@ Immediately show the library in use. Code first, not setup.
 connect → listProviders → selectProvider → chat.send / chat.stream → disconnect
 ```
 
-Show this as the first code block. One line mentioning `window.byom` or the extension is enough context. Do not show installation, npm commands, or monorepo setup before this.
+Show this as the first code block. One line mentioning `window.arlopass` or the extension is enough context. Do not show installation, npm commands, or monorepo setup before this.
 
 **Secondary workflows** — reveal depth progressively:
 1. Streaming with `chat.stream` (AsyncIterable)
@@ -106,18 +106,18 @@ Each API entry should have:
 
 ### Package-Specific Checks
 
-#### @byom-ai/web-sdk
-- [ ] Documents `BYOMClient` constructor options with all fields and defaults
+#### @arlopass/web-sdk
+- [ ] Documents `ArlopassClient` constructor options with all fields and defaults
 - [ ] Documents `chat.send()` and `chat.stream()` with exact signatures
 - [ ] Documents all 5 error classes with machine codes
-- [ ] Documents `BYOMTransport` interface with all 3 methods (request, stream, disconnect)
-- [ ] Documents `BYOMStateMachine` with all states and `canTransition`/`transition`
+- [ ] Documents `ArlopassTransport` interface with all 3 methods (request, stream, disconnect)
+- [ ] Documents `ArlopassStateMachine` with all states and `canTransition`/`transition`
 - [ ] Documents `ClientState` type (all 6 states)
 - [ ] Documents helper functions: `withTimeout`, `withStreamTimeout`, `normalizeSDKError`
 - [ ] Documents `ChatInput`, `ConnectOptions`, `ConnectResult`, `ChatSendResult`, `ChatStreamEvent`
 - [ ] Documents constants: `SDK_PROTOCOL_VERSION`, `DEFAULT_REQUEST_TIMEOUT_MS`, `DEFAULT_ENVELOPE_TTL_MS`, `SDK_MACHINE_CODES`
 
-#### @byom-ai/protocol
+#### @arlopass/protocol
 - [ ] Documents `parseEnvelope` and `safeParseEnvelope` with options
 - [ ] Documents all 8 error classes (ProtocolError, AuthError, PermissionError, etc.)
 - [ ] Documents `CanonicalEnvelope<TPayload>` with all fields
@@ -128,7 +128,7 @@ Each API entry should have:
 - [ ] Documents all `PROTOCOL_MACHINE_CODES`
 - [ ] Documents `ProtocolReasonCode` type (all 14 values)
 
-#### @byom-ai/policy
+#### @arlopass/policy
 - [ ] Documents `evaluatePolicy()` with `PolicyEvaluationContext` and `PolicyDecision`
 - [ ] Documents `PolicyRuleSet` with all 8 allow/deny fields
 - [ ] Documents signature verification: `verifyPolicyBundleSignature()`
@@ -138,14 +138,14 @@ Each API entry should have:
 - [ ] Documents canonical/digest/signing functions
 - [ ] Documents error classes: `PolicySchemaError`, `PolicySignatureError`, `PolicyKeyManagementError`
 
-#### @byom-ai/audit
+#### @arlopass/audit
 - [ ] Documents `createAuditEvent()` and `validateAuditEvent()` with exact signatures
 - [ ] Documents `JsonlExporter` class with constructor options and `export()` method
 - [ ] Documents `OtlpExporter` class with `toLogRecord()` and `export()` methods
 - [ ] Documents `AuditSchemaError` with `missingFields` property
 - [ ] Documents `REQUIRED_AUDIT_FIELDS` constant (all 9 fields)
 
-#### @byom-ai/telemetry
+#### @arlopass/telemetry
 - [ ] Documents `TelemetryMetrics` class with `emit()`, `createCounter()`, `createHistogram()`
 - [ ] Documents `TelemetryTracing` class with `startSpan()`, `withSpan()`
 - [ ] Documents `TelemetrySpan` with `addEvent()`, `setStatus()`, `end()`
@@ -153,7 +153,7 @@ Each API entry should have:
 - [ ] Documents `MetricPoint` and `SpanRecord` types with all fields
 - [ ] Documents all metric names and span names constants
 
-#### @byom-ai/adapter-runtime
+#### @arlopass/adapter-runtime
 - [ ] Documents `AdapterContract` interface with all 8 methods
 - [ ] Documents `CloudAdapterContractV2` interface with all additional methods
 - [ ] Documents `AdapterHost` class with all methods
@@ -164,19 +164,19 @@ Each API entry should have:
 - [ ] Documents all error classes (6 types)
 - [ ] Documents `AdapterManifest` type with all fields
 
-#### @byom-ai/adapter-ollama
+#### @arlopass/adapter-ollama
 - [ ] Documents `OllamaAdapter` constructor with `OllamaAdapterOptions`
 - [ ] Documents all `AdapterContract` methods (8 methods, exact signatures)
 - [ ] Documents `OLLAMA_MANIFEST` constant
 
-#### @byom-ai/adapter-claude-subscription
+#### @arlopass/adapter-claude-subscription
 - [ ] Documents `ClaudeSubscriptionAdapter` with full `CloudAdapterContractV2` methods
 - [ ] Documents `ClaudeAdapterOptions` and `ClaudeAuthConfig`
 - [ ] Documents `buildAuthHeaders()` function
 - [ ] Documents `CLAUDE_CONNECTION_METHODS` and `ANTHROPIC_KNOWN_MODELS`
 - [ ] Documents connection flow: `beginConnect` → `completeConnect`
 
-#### @byom-ai/adapter-local-cli-bridge
+#### @arlopass/adapter-local-cli-bridge
 - [ ] Documents `LocalCliBridgeAdapter` with all contract methods
 - [ ] Documents `LocalCliBridgeOptions` with all fields
 - [ ] Documents the JSON-line stdin/stdout protocol

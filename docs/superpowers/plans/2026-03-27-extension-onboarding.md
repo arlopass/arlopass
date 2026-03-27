@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a warm, guided onboarding flow for first-time BYOM extension users — welcome screen, bridge detection/installation, provider setup, and success tour.
+**Goal:** Build a warm, guided onboarding flow for first-time Arlopass extension users — welcome screen, bridge detection/installation, provider setup, and success tour.
 
 **Architecture:** OnboardingController in popup detects state and routes to the right step. Bridge install guide opens in options page. Existing AddProviderWizard is reused with an onboarding banner wrapper. Setup state persisted in `chrome.storage.local`.
 
@@ -47,7 +47,7 @@ export type OnboardingSetupState = {
   currentStep: SetupStep;
 };
 
-const STORAGE_KEY = "byom.onboarding.setup";
+const STORAGE_KEY = "arlopass.onboarding.setup";
 
 const DEFAULT_STATE: OnboardingSetupState = {
   completed: false,
@@ -68,7 +68,7 @@ export async function markSetupComplete(): Promise<void> {
 }
 
 export async function detectBridge(): Promise<{ connected: boolean; version?: string }> {
-  // chrome.runtime.sendNativeMessage("com.byom.bridge", { type: "ping" })
+  // chrome.runtime.sendNativeMessage("com.arlopass.bridge", { type: "ping" })
   // 5 second timeout
   // Return { connected: true, version } or { connected: false }
 }
@@ -93,7 +93,7 @@ Props: `onNext: () => void`
 
 Content from spec Section 3:
 - IconShieldCheck (48px, #202225)
-- "Welcome to BYOM" heading, "Your AI Wallet" subheading
+- "Welcome to Arlopass" heading, "Your AI Wallet" subheading
 - 3 value prop cards (IconLock, IconHandStop, IconPlug)
 - "Let's get started →" primary button
 - "Setup takes about 3 minutes" hint text
@@ -156,7 +156,7 @@ Full-page component for the options page. Content from spec Section 5:
 - Expandable troubleshooting section
 - "← Back" link to return to popup
 
-Download URL: `https://github.com/AltClick/byom-web/releases/latest/download/byom-bridge-{os}-{arch}{ext}`
+Download URL: `https://github.com/AltClick/arlopass/releases/latest/download/arlopass-bridge-{os}-{arch}{ext}`
 
 - [ ] **Step 3: Commit**
 
@@ -192,7 +192,7 @@ Props: `onComplete: () => void`
 Celebration screen:
 - IconConfetti (48px)
 - "You're all set!" heading
-- "BYOM is ready to use." description
+- "Arlopass is ready to use." description
 - "Next →" button advances to TourCards
 - After TourCards completes, calls `markSetupComplete()` then `onComplete()`
 
@@ -254,7 +254,7 @@ Modifications to the existing popup.tsx:
    ```tsx
    if (view.type === "onboarding") {
      return (
-       <MantineProvider theme={byomTheme} forceColorScheme="light">
+       <MantineProvider theme={arlopassTheme} forceColorScheme="light">
          <OnboardingController
            onComplete={() => { updateView({ type: "main" }); refresh(); }}
            onOpenOptions={(route) => { chrome.tabs.create({ url: chrome.runtime.getURL(`options.html#${route}`) }); }}

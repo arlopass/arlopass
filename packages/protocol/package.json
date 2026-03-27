@@ -1,5 +1,5 @@
 {
-  "name": "@byom-ai/protocol",
+  "name": "@arlopass/protocol",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "packages/protocol"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/packages/protocol#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/packages/protocol#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
   "exports": {
     ".": {

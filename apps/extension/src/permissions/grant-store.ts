@@ -1,4 +1,4 @@
-import type { ProtocolCapability } from "@byom-ai/protocol";
+import type { ProtocolCapability } from "@arlopass/protocol";
 
 import {
   type ExtensionEventEmitter,
@@ -68,11 +68,11 @@ export type GrantPermissionMatch = Readonly<{
   allowed: boolean;
   grant?: Grant;
   reason:
-    | "allow"
-    | "grant-not-found"
-    | "grant-expired"
-    | "grant-consumed"
-    | "invalid-input";
+  | "allow"
+  | "grant-not-found"
+  | "grant-expired"
+  | "grant-consumed"
+  | "invalid-input";
 }>;
 
 const DEFAULT_RANDOM_ID = () =>
@@ -588,11 +588,11 @@ export class GrantStore {
 
     let normalizedTarget:
       | Readonly<{
-          origin: string;
-          providerId: GrantScope;
-          modelId: GrantScope;
-          capabilities: readonly ProtocolCapability[];
-        }>
+        origin: string;
+        providerId: GrantScope;
+        modelId: GrantScope;
+        capabilities: readonly ProtocolCapability[];
+      }>
       | undefined;
     try {
       normalizedTarget = canonicalizeGrantTarget({

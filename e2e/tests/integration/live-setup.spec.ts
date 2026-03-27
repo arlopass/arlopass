@@ -1,6 +1,6 @@
 import { test, expect } from "../../fixtures/test";
 import { ExamplesAppPage } from "../../pages/examples-app.page";
-import { waitForByomTransport } from "../../helpers/wait.helper";
+import { waitForArlopassTransport } from "../../helpers/wait.helper";
 import { isLiveIntegrationEnabled } from "../../helpers/env-credentials";
 import { attachContextDebugOnFailure } from "../../helpers/debug-on-failure";
 
@@ -25,7 +25,7 @@ test.describe("Live Connectivity Setup @live", () => {
         await page.goto(BASE_URL);
         await page.waitForLoadState("networkidle");
 
-        const hasTransport = await waitForByomTransport(page, 10_000);
+        const hasTransport = await waitForArlopassTransport(page, 10_000);
         expect(hasTransport).toBe(true);
 
         const app = new ExamplesAppPage(page);

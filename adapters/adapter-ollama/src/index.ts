@@ -4,14 +4,14 @@ import {
   type AdapterContract,
   type AdapterManifest,
   MANIFEST_SCHEMA_VERSION,
-} from "@byom-ai/adapter-runtime";
+} from "@arlopass/adapter-runtime";
 import {
   type ProtocolCapability,
   AuthError,
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 export const OLLAMA_MANIFEST: AdapterManifest = {
   schemaVersion: MANIFEST_SCHEMA_VERSION,
@@ -28,7 +28,7 @@ export const OLLAMA_MANIFEST: AdapterManifest = {
   requiredPermissions: ["network.egress"],
   egressRules: [{ host: "localhost", port: 11434, protocol: "http" }],
   riskLevel: "low",
-  signingKeyId: "byom-first-party-v1",
+  signingKeyId: "arlopass-first-party-v1",
 };
 
 export type OllamaAdapterOptions = Readonly<{

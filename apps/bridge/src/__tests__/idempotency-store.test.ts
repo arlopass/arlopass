@@ -264,7 +264,7 @@ describe("InMemoryRequestIdempotencyStore", () => {
   });
 
   it("loads persisted completed entries and replays deterministically", () => {
-    const tempRoot = mkdtempSync(join(process.cwd(), ".byom-idempotency-"));
+    const tempRoot = mkdtempSync(join(process.cwd(), ".arlopass-idempotency-"));
     const stateFilePath = join(tempRoot, "idempotency-state.json");
     try {
       const writer = new InMemoryRequestIdempotencyStore({

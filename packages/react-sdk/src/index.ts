@@ -4,7 +4,7 @@
 export * from "./types.js";
 
 // Provider
-export { BYOMProvider } from "./provider/byom-provider.js";
+export { ArlopassProvider } from "./provider/arlopass-provider.js";
 
 // Hooks
 export { useConnection } from "./hooks/use-connection.js";

@@ -1,12 +1,12 @@
 import { EventEmitter } from "node:events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MANIFEST_SCHEMA_VERSION } from "@byom-ai/adapter-runtime";
+import { MANIFEST_SCHEMA_VERSION } from "@arlopass/adapter-runtime";
 import {
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 import { LocalCliBridgeAdapter, LOCAL_CLI_BRIDGE_MANIFEST } from "../index.js";
 

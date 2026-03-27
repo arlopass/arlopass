@@ -2,7 +2,7 @@ import { Stack, Title, Text } from "@mantine/core";
 import { CodeBlock, Callout, CodeComparison } from "../../components";
 import { navigate } from "../../router";
 
-const autoExecuteReact = `import { useConversation } from "@byom-ai/react";
+const autoExecuteReact = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, streamingContent, isStreaming } = useConversation({
@@ -45,9 +45,9 @@ function Chat() {
   );
 }`;
 
-const autoExecuteWeb = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const autoExecuteWeb = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 const convo = new ConversationManager({
@@ -81,7 +81,7 @@ for await (const event of convo.stream("What's the weather in Tokyo?")) {
   if (event.type === "tool_result") console.log("Result:", event.result);
 }`;
 
-const manualReact = `import { useConversation } from "@byom-ai/react";
+const manualReact = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const {
@@ -128,9 +128,9 @@ function Chat() {
   );
 }`;
 
-const manualWeb = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const manualWeb = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 const convo = new ConversationManager({
@@ -167,7 +167,7 @@ for await (const event of convo.stream("Order 3 widgets")) {
   }
 }`;
 
-const mixedMode = `import { useConversation } from "@byom-ai/react";
+const mixedMode = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, submitToolResult, isStreaming } = useConversation({
@@ -235,7 +235,7 @@ const maxToolRoundsWeb = `const convo = new ConversationManager({
 // Prevents infinite tool-call loops.
 // After 3 rounds, the stream yields text without further tool calls.`;
 
-const streamEventsExample = `import { useConversation } from "@byom-ai/react";
+const streamEventsExample = `import { useConversation } from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, subscribe, isStreaming, streamingContent } =
@@ -279,7 +279,7 @@ function Chat() {
 }`;
 
 const fullExample = `import { useState } from "react";
-import { BYOMProvider, ChatReadyGate, useConversation } from "@byom-ai/react";
+import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
 
 const tools = [
   {
@@ -401,15 +401,15 @@ function Chat() {
 
 export default function App() {
   return (
-    <BYOMProvider appId="tool-calling-app">
+    <ArlopassProvider appId="tool-calling-app">
       <ChatReadyGate
         connecting={<p>Connecting...</p>}
-        noProvider={<p>Select a provider in the BYOM extension.</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
         error={(err) => <p>Error: {err.message}</p>}
       >
         <Chat />
       </ChatReadyGate>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 

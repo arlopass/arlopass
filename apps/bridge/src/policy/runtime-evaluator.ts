@@ -6,8 +6,8 @@ import {
   type PolicyDecision,
   type PolicyEvaluationContext,
   type PolicyEvaluationOptions,
-} from "@byom-ai/policy";
-import type { AuditEventFields } from "@byom-ai/audit";
+} from "@arlopass/policy";
+import type { AuditEventFields } from "@arlopass/audit";
 
 import type { AuditEmitter } from "../audit/audit-emitter.js";
 

@@ -46,7 +46,7 @@
 - `adapters/adapter-local-cli-bridge/package.json`
 - `adapters/adapter-local-cli-bridge/src/index.ts`
 - `adapters/adapter-local-cli-bridge/src/__tests__/contract.test.ts`
-- `adapters/tooling/create-byom-adapter.ts`
+- `adapters/tooling/create-arlopass-adapter.ts`
 - `adapters/tooling/contract-harness.ts`
 
 ---
@@ -162,7 +162,7 @@ git commit -m "feat: add first-party ollama claude and local-cli adapters"
 ### Task 4: Add adapter tooling and certification gates
 
 **Files:**
-- Create: `adapters/tooling/create-byom-adapter.ts`, `contract-harness.ts`
+- Create: `adapters/tooling/create-arlopass-adapter.ts`, `contract-harness.ts`
 - Create: `adapters/runtime/src/artifact-signature.ts`
 - Test: `adapters/runtime/src/__tests__/artifact-signature.test.ts`
 - Modify: runtime tests and adapter tests for certification matrix

@@ -1,6 +1,6 @@
 import { test, expect } from "../../fixtures/test";
 import { ExamplesAppPage } from "../../pages/examples-app.page";
-import { waitForByomTransport } from "../../helpers/wait.helper";
+import { waitForArlopassTransport } from "../../helpers/wait.helper";
 import { attachContextDebugOnFailure } from "../../helpers/debug-on-failure";
 
 /**
@@ -17,13 +17,13 @@ test.describe("Extension ↔ Web App Integration", () => {
         await attachContextDebugOnFailure(context, testInfo);
     });
 
-    test("extension injects window.byom into web app page", async ({
+    test("extension injects window.arlopass into web app page", async ({
         context,
     }) => {
         const page = await context.newPage();
         await page.goto(BASE_URL);
 
-        const hasTransport = await waitForByomTransport(page, 10_000);
+        const hasTransport = await waitForArlopassTransport(page, 10_000);
         expect(hasTransport).toBe(true);
     });
 

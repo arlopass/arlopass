@@ -1,31 +1,31 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { BYOMTransport } from "@byom-ai/web-sdk";
-import { BYOMProvider } from "../provider/byom-provider.js";
-import type { BYOMProviderProps } from "../types.js";
-import { mockWindowByom } from "./window-mock.js";
+import type { ArlopassTransport } from "@arlopass/web-sdk";
+import { ArlopassProvider } from "../provider/arlopass-provider.js";
+import type { ArlopassProviderProps } from "../types.js";
+import { mockWindowArlopass } from "./window-mock.js";
 
-type MockBYOMProviderProps = Omit<BYOMProviderProps, "appId"> & {
+type MockArlopassProviderProps = Omit<ArlopassProviderProps, "appId"> & {
   appId?: string;
-  transport: BYOMTransport;
+  transport: ArlopassTransport;
   children: ReactNode;
 };
 
 /**
- * Test wrapper that injects a mock transport into `window.byom`
- * and wraps children with `<BYOMProvider>`.
+ * Test wrapper that injects a mock transport into `window.arlopass`
+ * and wraps children with `<ArlopassProvider>`.
  */
-export function MockBYOMProvider({
+export function MockArlopassProvider({
   transport,
   appId = "test",
   children,
   ...rest
-}: MockBYOMProviderProps): ReactNode {
-  mockWindowByom(transport);
+}: MockArlopassProviderProps): ReactNode {
+  mockWindowArlopass(transport);
   return (
-    <BYOMProvider appId={appId} {...rest}>
+    <ArlopassProvider appId={appId} {...rest}>
       {children}
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }

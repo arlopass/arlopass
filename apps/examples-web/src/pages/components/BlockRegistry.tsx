@@ -1,54 +1,54 @@
 import { Stack, Title, Text, Table, Code } from "@mantine/core";
 import { CodeBlock, PreviewCode, Callout, InlineCode } from "../../components";
 
-const addCmd = `npx @byom-ai/ui add chat`;
+const addCmd = `npx @arlopass/ui add chat`;
 
 const cliCommands = `# Add a single block
-npx @byom-ai/ui add chat
+npx @arlopass/ui add chat
 
 # Add multiple blocks
-npx @byom-ai/ui add chat chatbot provider-picker
+npx @arlopass/ui add chat chatbot provider-picker
 
 # List available blocks
-npx @byom-ai/ui list
+npx @arlopass/ui list
 
 # Overwrite existing files
-npx @byom-ai/ui add chat --force
+npx @arlopass/ui add chat --force
 
 # Preview without writing files
-npx @byom-ai/ui add chat --dry-run
+npx @arlopass/ui add chat --dry-run
 
 # Custom output directory
-npx @byom-ai/ui add chat --out src/ui`;
+npx @arlopass/ui add chat --out src/ui`;
 
-const configFile = `// byom-ui.json — auto-created on first \`add\`
+const configFile = `// arlopass-ui.json — auto-created on first \`add\`
 {
-  "outputDir": "src/components/byom",
+  "outputDir": "src/components/arlopass",
   "typescript": true
 }`;
 
-const chatUsage = `import { BYOMProvider } from "@byom-ai/react";
-import { BYOMChat } from "./components/byom/chat";
+const chatUsage = `import { ArlopassProvider } from "@arlopass/react";
+import { ArlopassChat } from "./components/arlopass/chat";
 
 function App() {
   return (
-    <BYOMProvider>
-      <BYOMChat
+    <ArlopassProvider>
+      <ArlopassChat
         systemPrompt="You are a helpful assistant."
         placeholder="Ask me anything…"
       />
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const chatbotUsage = `import { BYOMChatbot } from "./components/byom/chatbot";
+const chatbotUsage = `import { ArlopassChatbot } from "./components/arlopass/chatbot";
 
 function App() {
   return (
     <div>
       <h1>My App</h1>
       {/* Floating chat widget — renders a bubble in the bottom-right */}
-      <BYOMChatbot
+      <ArlopassChatbot
         buttonLabel="Ask AI"
         position="bottom-right"
         systemPrompt="You are a customer support agent."
@@ -57,11 +57,11 @@ function App() {
   );
 }`;
 
-const providerPickerUsage = `import { BYOMProviderPicker } from "./components/byom/provider-picker";
+const providerPickerUsage = `import { ArlopassProviderPicker } from "./components/arlopass/provider-picker";
 
 function Settings() {
   return (
-    <BYOMProviderPicker
+    <ArlopassProviderPicker
       onSelect={(providerId, modelId) => {
         console.log("Selected:", providerId, modelId);
       }}
@@ -69,12 +69,12 @@ function Settings() {
   );
 }`;
 
-const connectionBannerUsage = `import { BYOMConnectionBanner } from "./components/byom/connection-banner";
+const connectionBannerUsage = `import { ArlopassConnectionBanner } from "./components/arlopass/connection-banner";
 
 function App() {
   return (
     <div>
-      <BYOMConnectionBanner installUrl="https://chromewebstore.google.com" />
+      <ArlopassConnectionBanner installUrl="https://chromewebstore.google.com" />
       {/* rest of your app */}
     </div>
   );
@@ -118,7 +118,7 @@ export default function BlockRegistry() {
 
       <Text>
         Blocks are complete, styled UI components built on top of the{" "}
-        <InlineCode>@byom-ai/react-ui</InlineCode> primitives. Instead of
+        <InlineCode>@arlopass/react-ui</InlineCode> primitives. Instead of
         installing them as a dependency, the CLI copies the source files into
         your project so you have full control over the code.
       </Text>
@@ -155,17 +155,17 @@ export default function BlockRegistry() {
 
       <Title order={3}>Configuration</Title>
       <Text>
-        On first run, the CLI creates a <InlineCode>byom-ui.json</InlineCode>{" "}
-        file in your project root. You can edit it to change the output
-        directory or other settings.
+        On first run, the CLI creates a{" "}
+        <InlineCode>arlopass-ui.json</InlineCode> file in your project root. You
+        can edit it to change the output directory or other settings.
       </Text>
-      <CodeBlock title="byom-ui.json" code={configFile} language="json" />
+      <CodeBlock title="arlopass-ui.json" code={configFile} language="json" />
 
       <Title order={3}>Chat block</Title>
       <Text>
         A full chat interface with message list, streaming indicator, input
         field, and send/stop buttons. Wrap it in a{" "}
-        <InlineCode>BYOMProvider</InlineCode> and you're ready to go.
+        <InlineCode>ArlopassProvider</InlineCode> and you're ready to go.
       </Text>
       <PreviewCode
         preview={
@@ -189,7 +189,7 @@ export default function BlockRegistry() {
                 color: "#6b7280",
               }}
             >
-              BYOM Chat
+              Arlopass Chat
             </div>
             <div
               style={{
@@ -225,7 +225,7 @@ export default function BlockRegistry() {
                 }}
               >
                 I can answer questions, search documentation, generate code
-                snippets, and help you integrate BYOM into your app.
+                snippets, and help you integrate Arlopass into your app.
               </div>
               <div
                 style={{
@@ -287,8 +287,8 @@ export default function BlockRegistry() {
       <Text>
         A floating chat widget that renders a toggle bubble in the corner of the
         screen. Opens an expandable panel with the full chat interface. It wraps{" "}
-        <InlineCode>BYOMProvider</InlineCode> and guard components internally —
-        just drop it anywhere.
+        <InlineCode>ArlopassProvider</InlineCode> and guard components
+        internally — just drop it anywhere.
       </Text>
       <PreviewCode
         preview={
@@ -551,8 +551,8 @@ export default function BlockRegistry() {
 
       <Title order={3}>Connection banner block</Title>
       <Text>
-        Shows contextual banners based on the BYOM extension connection state:
-        an install prompt when not detected, a reconnect message when
+        Shows contextual banners based on the Arlopass extension connection
+        state: an install prompt when not detected, a reconnect message when
         disconnected, and a success indicator when connected.
       </Text>
       <PreviewCode
@@ -583,7 +583,7 @@ export default function BlockRegistry() {
                   Extension not detected
                 </div>
                 <div style={{ fontSize: 12, color: "#a16207", marginTop: 2 }}>
-                  Install the BYOM browser extension to enable AI features.
+                  Install the Arlopass browser extension to enable AI features.
                 </div>
               </div>
               <button
@@ -656,7 +656,7 @@ export default function BlockRegistry() {
       <Callout type="info" title="You own the source">
         After copying, the block source lives in your project. Edit the markup,
         swap Tailwind for your own design system, add props — it's your code
-        now. The primitives from <InlineCode>@byom-ai/react-ui</InlineCode>{" "}
+        now. The primitives from <InlineCode>@arlopass/react-ui</InlineCode>{" "}
         remain as npm dependencies for behaviour and state management.
       </Callout>
     </Stack>

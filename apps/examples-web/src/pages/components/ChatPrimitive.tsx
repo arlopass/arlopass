@@ -76,12 +76,12 @@ const parts = [
   },
 ];
 
-const uncontrolledExample = `import { BYOMProvider } from "@byom-ai/react";
-import { Chat, Message, StreamingText } from "@byom-ai/react-ui";
+const uncontrolledExample = `import { ArlopassProvider } from "@arlopass/react";
+import { Chat, Message, StreamingText } from "@arlopass/react-ui";
 
 function MyChat() {
   return (
-    <BYOMProvider>
+    <ArlopassProvider>
       <Chat.Root systemPrompt="You are a helpful assistant.">
         <Chat.EmptyState>No messages yet — say hello!</Chat.EmptyState>
         <Chat.Messages>
@@ -104,12 +104,12 @@ function MyChat() {
         <Chat.SendButton>Send</Chat.SendButton>
         <Chat.StopButton>Stop</Chat.StopButton>
       </Chat.Root>
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }`;
 
-const controlledExample = `import { useConversation } from "@byom-ai/react";
-import { Chat, Message, StreamingText } from "@byom-ai/react-ui";
+const controlledExample = `import { useConversation } from "@arlopass/react";
+import { Chat, Message, StreamingText } from "@arlopass/react-ui";
 
 function ControlledChat() {
   const conv = useConversation({ systemPrompt: "Be concise." });
@@ -229,7 +229,7 @@ const controlledProps = [
   },
   {
     name: "error",
-    type: "BYOMSDKError | null",
+    type: "ArlopassSDKError | null",
     description: "Error from the last operation.",
   },
 ];
@@ -290,7 +290,7 @@ export default function ChatPrimitive() {
       </div>
 
       <CodeBlock
-        code={`import { Chat } from "@byom-ai/react-ui";`}
+        code={`import { Chat } from "@arlopass/react-ui";`}
         language="tsx"
       />
 
@@ -323,7 +323,7 @@ export default function ChatPrimitive() {
       <Divider />
       <Title order={3}>Uncontrolled usage</Title>
       <Text>
-        Wrap in a <InlineCode>{"<BYOMProvider>"}</InlineCode> and{" "}
+        Wrap in a <InlineCode>{"<ArlopassProvider>"}</InlineCode> and{" "}
         <InlineCode>Chat.Root</InlineCode> manages all conversation state
         internally via <InlineCode>useConversation</InlineCode>.
       </Text>
@@ -367,7 +367,7 @@ export default function ChatPrimitive() {
                   maxWidth: "75%",
                 }}
               >
-                What is BYOM?
+                What is Arlopass?
               </div>
               <div
                 style={{
@@ -379,8 +379,8 @@ export default function ChatPrimitive() {
                   maxWidth: "75%",
                 }}
               >
-                BYOM is an AI wallet for the web. It lets you use your own AI
-                providers…
+                Arlopass is an AI wallet for the web. It lets you use your own
+                AI providers…
               </div>
             </div>
             <div

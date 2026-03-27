@@ -8,8 +8,8 @@ export type OnboardingSetupState = {
     currentStep: SetupStep;
 };
 
-const STORAGE_KEY = "byom.onboarding.setup";
-const PAIRING_STATE_KEY = "byom.wallet.bridgePairing.v1";
+const STORAGE_KEY = "arlopass.onboarding.setup";
+const PAIRING_STATE_KEY = "arlopass.wallet.bridgePairing.v1";
 
 const DEFAULT_STATE: OnboardingSetupState = {
     completed: false,
@@ -54,7 +54,7 @@ export async function detectBridge(): Promise<{ connected: boolean; version?: st
 
         try {
             chrome.runtime.sendNativeMessage(
-                "com.byom.bridge",
+                "com.arlopass.bridge",
                 { type: "ping" },
                 (response) => {
                     clearTimeout(timeout);
@@ -94,11 +94,11 @@ export async function autoPair(): Promise<{ success: boolean; error?: string }> 
         const response = await new Promise<unknown>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error("Auto-pair timed out")), 10_000);
             chrome.runtime.sendNativeMessage(
-                "com.byom.bridge",
+                "com.arlopass.bridge",
                 {
                     type: "pairing.auto",
                     extensionId: chrome.runtime.id ?? "",
-                    hostName: "com.byom.bridge",
+                    hostName: "com.arlopass.bridge",
                 },
                 (resp: unknown) => {
                     clearTimeout(timeout);

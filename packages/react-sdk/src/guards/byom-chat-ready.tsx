@@ -7,10 +7,11 @@ type Props = Readonly<{
   children: ReactNode | (() => ReactNode);
 }>;
 
-export function BYOMChatReady({ children }: Props): ReactNode {
+export function ArlopassChatReady({ children }: Props): ReactNode {
   const snapshot = useStoreSnapshot();
 
-  const isConnected = snapshot.state === "connected" || snapshot.state === "degraded";
+  const isConnected =
+    snapshot.state === "connected" || snapshot.state === "degraded";
   const hasProvider = snapshot.selectedProvider !== null;
 
   if (!isConnected || !hasProvider) return null;

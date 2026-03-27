@@ -8,7 +8,7 @@ import type {
 
 export const CLOUD_ANTHROPIC_CONNECTOR_ID = "cloud-anthropic";
 
-const DEFAULT_NATIVE_HOST_NAME = "com.byom.bridge";
+const DEFAULT_NATIVE_HOST_NAME = "com.arlopass.bridge";
 const DEFAULT_PROVIDER_ID = "claude-subscription";
 const DEFAULT_METHOD_ID = "anthropic.api_key";
 const DEFAULT_BASE_URL = "https://api.anthropic.com";
@@ -243,12 +243,12 @@ async function completeViaBridge(
   config: Readonly<Record<string, string>>,
 ): Promise<
   | Readonly<{
-      ok: true;
-      connectionHandle: string;
-      models: readonly ProviderModel[];
-      message: string;
-      bindingMetadata: Readonly<Record<string, string>>;
-    }>
+    ok: true;
+    connectionHandle: string;
+    models: readonly ProviderModel[];
+    message: string;
+    bindingMetadata: Readonly<Record<string, string>>;
+  }>
   | Readonly<{ ok: false; message: string }>
 > {
   const methodId = normalizeText(config["methodId"], DEFAULT_METHOD_ID);
@@ -261,13 +261,13 @@ async function completeViaBridge(
   const input: Record<string, unknown> =
     methodId === "anthropic.api_key"
       ? {
-          apiKey: normalizeText(config["apiKey"]),
-          endpointProfile: { baseUrl },
-        }
+        apiKey: normalizeText(config["apiKey"]),
+        endpointProfile: { baseUrl },
+      }
       : {
-          accessToken: normalizeText(config["accessToken"]),
-          endpointProfile: { baseUrl },
-        };
+        accessToken: normalizeText(config["accessToken"]),
+        endpointProfile: { baseUrl },
+      };
 
   const completeResponse = await deps.sendNativeMessage(nativeHostName, {
     type: "cloud.connection.complete",
@@ -591,7 +591,7 @@ export function createCloudAnthropicConnector(
       return {
         ...apiValidationResult,
         status: "attention",
-        message: `${apiValidationResult.message} Native bridge cloud execution is currently disabled by policy. Enable bridge flags BYOM_CLOUD_BROKER_V2_ENABLED=true and BYOM_CLOUD_PROVIDER_ANTHROPIC_API_KEY_ENABLED=true to finalize a cloud connection handle.`,
+        message: `${apiValidationResult.message} Native bridge cloud execution is currently disabled by policy. Enable bridge flags ARLOPASS_CLOUD_BROKER_V2_ENABLED=true and ARLOPASS_CLOUD_PROVIDER_ANTHROPIC_API_KEY_ENABLED=true to finalize a cloud connection handle.`,
         metadata,
       };
     },

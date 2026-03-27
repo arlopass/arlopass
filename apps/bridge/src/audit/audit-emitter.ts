@@ -2,7 +2,7 @@ import {
   createAuditEvent,
   type AuditEvent,
   type AuditEventFields,
-} from "@byom-ai/audit";
+} from "@arlopass/audit";
 
 export type { AuditEvent, AuditEventFields };
 
@@ -136,18 +136,18 @@ function defaultLogEntrySink(entry: AuditEmitterLogEntry): void {
         ? undefined
         : String(entry.error);
   process.stderr.write(
-    `[byom-bridge][audit-emitter] ${entry.message} ` +
-      JSON.stringify({
-        reason: entry.reason,
-        exporterIndex: entry.exporterIndex,
-        attempt: entry.attempt,
-        queueDepth: entry.queueDepth,
-        correlationId: entry.correlationId,
-        providerId: entry.providerId,
-        reasonCode: entry.reasonCode,
-        ...(errorMessage !== undefined ? { error: errorMessage } : {}),
-      }) +
-      "\n",
+    `[arlopass-bridge][audit-emitter] ${entry.message} ` +
+    JSON.stringify({
+      reason: entry.reason,
+      exporterIndex: entry.exporterIndex,
+      attempt: entry.attempt,
+      queueDepth: entry.queueDepth,
+      correlationId: entry.correlationId,
+      providerId: entry.providerId,
+      reasonCode: entry.reasonCode,
+      ...(errorMessage !== undefined ? { error: errorMessage } : {}),
+    }) +
+    "\n",
   );
 }
 
@@ -579,7 +579,7 @@ export class AuditEmitter {
         message: "Audit onExportError callback threw unexpectedly.",
         event: {
           timestamp: this.#now().toISOString(),
-          origin: "byom.bridge",
+          origin: "arlopass.bridge",
           providerId: "bridge",
           modelId: "audit-emitter",
           capability: "audit.export",

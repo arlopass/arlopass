@@ -13,5 +13,5 @@ export function listCommand(): void {
   for (const block of registry.blocks) {
     console.log(`  ${block.id.padEnd(20)}${block.name.padEnd(20)}${block.description}`);
   }
-  console.log(`\n  ${registry.blocks.length} blocks available. Install with: npx @byom-ai/ui add <id>\n`);
+  console.log(`\n  ${registry.blocks.length} blocks available. Install with: npx @arlopass/ui add <id>\n`);
 }

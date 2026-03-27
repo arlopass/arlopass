@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a `ConversationManager` class to `@byom-ai/web-sdk` that provides automatic conversation history management with token-aware truncation, message pinning, and optional auto-summarization.
+**Goal:** Add a `ConversationManager` class to `@arlopass/web-sdk` that provides automatic conversation history management with token-aware truncation, message pinning, and optional auto-summarization.
 
-**Architecture:** The `ConversationManager` wraps a `BYOMClient` instance, maintains an internal `ManagedMessage[]` array, and uses token estimation to build an optimal context window before each `send()`/`stream()` call. A static model context window lookup table provides default token limits.
+**Architecture:** The `ConversationManager` wraps a `ArlopassClient` instance, maintains an internal `ManagedMessage[]` array, and uses token estimation to build an optimal context window before each `send()`/`stream()` call. A static model context window lookup table provides default token limits.
 
 **Tech Stack:** TypeScript, Vitest
 
@@ -214,14 +214,14 @@ git commit -m "feat(web-sdk): add static model context window lookup table"
 // packages/web-sdk/src/__tests__/conversation.test.ts
 import { describe, expect, it } from "vitest";
 import { ConversationManager } from "../conversation.js";
-import type { BYOMClient } from "../client.js";
+import type { ArlopassClient } from "../client.js";
 import type { ChatMessage } from "../types.js";
 
 // Minimal mock client — only needs selectedProvider for maxTokens resolution
-function mockClient(modelId = "gpt-4o"): BYOMClient {
+function mockClient(modelId = "gpt-4o"): ArlopassClient {
   return {
     selectedProvider: { providerId: "test-provider", modelId },
-  } as unknown as BYOMClient;
+  } as unknown as ArlopassClient;
 }
 
 describe("ConversationManager", () => {
@@ -300,7 +300,7 @@ Expected: FAIL
 Create `packages/web-sdk/src/conversation.ts` with:
 
 ```typescript
-import type { BYOMClient } from "./client.js";
+import type { ArlopassClient } from "./client.js";
 import type { ChatMessage, ChatStreamEvent } from "./types.js";
 import { estimateTokenCount } from "./token-estimation.js";
 import { resolveModelContextWindow } from "./model-context-windows.js";
@@ -317,7 +317,7 @@ export type PinOptions = {
 };
 
 export type ConversationManagerOptions = {
-  client: BYOMClient;
+  client: ArlopassClient;
   maxTokens?: number;
   reserveOutputTokens?: number;
   systemPrompt?: string;
@@ -328,7 +328,7 @@ export type ConversationManagerOptions = {
 const DEFAULT_RESERVE_OUTPUT_TOKENS = 1024;
 
 export class ConversationManager {
-  readonly #client: BYOMClient;
+  readonly #client: ArlopassClient;
   readonly #maxTokens: number;
   readonly #reserveOutputTokens: number;
   readonly #systemPrompt: string | undefined;
@@ -690,7 +690,7 @@ These tests use the `MockTransport` and test helpers from the existing test infr
 
 - [ ] **Step 1: Add send/stream tests**
 
-Append to the test file. These tests require a fully connected `BYOMClient`. Use the existing `setupConnectedClient` helper or build a minimal mock:
+Append to the test file. These tests require a fully connected `ArlopassClient`. Use the existing `setupConnectedClient` helper or build a minimal mock:
 
 ```typescript
 import {

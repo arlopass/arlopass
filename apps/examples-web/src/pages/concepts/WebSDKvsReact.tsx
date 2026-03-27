@@ -2,9 +2,9 @@ import { Stack, Title, Text, Table } from "@mantine/core";
 import { Callout, CodeBlock } from "../../components";
 import { navigate } from "../../router";
 
-const webSdkExample = `import { BYOMClient, ConversationManager } from "@byom-ai/web-sdk";
+const webSdkExample = `import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
 const providers = await client.listProviders();
@@ -17,13 +17,13 @@ for await (const event of convo.stream("Hello!")) {
 
 await client.disconnect();`;
 
-const reactSdkExample = `import { BYOMProvider, useConnection, useProviders, useChat } from "@byom-ai/react";
+const reactSdkExample = `import { ArlopassProvider, useConnection, useProviders, useChat } from "@arlopass/react";
 
 function App() {
   return (
-    <BYOMProvider appId="my-app">
+    <ArlopassProvider appId="my-app">
       <Chat />
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }
 
@@ -42,15 +42,15 @@ const hookMapping = `// Each React hook replaces a manual Web SDK pattern:
 // useProviders()      → client.listProviders() / client.selectProvider()
 // useChat()           → client.chat.send() / client.chat.stream()
 // useConversation()   → new ConversationManager({ client })
-// useClient()         → escape hatch — returns the raw BYOMClient
-// BYOMChatReadyGate   → if (state === "connected" && selectedProvider)`;
+// useClient()         → escape hatch — returns the raw ArlopassClient
+// ArlopassChatReadyGate   → if (state === "connected" && selectedProvider)`;
 
-const escapeHatch = `import { useClient } from "@byom-ai/react";
+const escapeHatch = `import { useClient } from "@arlopass/react";
 
 function AdvancedFeature() {
-  // useClient() gives you the raw BYOMClient when you need full control.
-  // The React SDK wraps @byom-ai/web-sdk — so all web-sdk types
-  // are re-exported from @byom-ai/react.
+  // useClient() gives you the raw ArlopassClient when you need full control.
+  // The React SDK wraps @arlopass/web-sdk — so all web-sdk types
+  // are re-exported from @arlopass/react.
   const client = useClient();
 
   // You can use client directly for operations not covered by hooks,
@@ -61,15 +61,15 @@ function AdvancedFeature() {
 const migrationPath = `// If you started with the Web SDK and want to add React SDK:
 
 // Before — manual state management
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 // ... manage state, re-renders, cleanup yourself
 
-// After — wrap in BYOMProvider, use hooks
-import { BYOMProvider, useConnection } from "@byom-ai/react";
+// After — wrap in ArlopassProvider, use hooks
+import { ArlopassProvider, useConnection } from "@arlopass/react";
 
 // The React SDK re-exports web-sdk types, so your existing
 // type imports still work:
-import type { ProviderDescriptor, ClientState } from "@byom-ai/react";
+import type { ProviderDescriptor, ClientState } from "@arlopass/react";
 
 // Migration is additive — you don't rewrite anything,
 // you wrap and replace imperative code with hooks.`;
@@ -78,7 +78,7 @@ const comparisonData = [
   {
     dimension: "Setup",
     webSdk: "Create client, pass transport, manage lifecycle manually",
-    reactSdk: "Wrap in <BYOMProvider>, hooks handle lifecycle",
+    reactSdk: "Wrap in <ArlopassProvider>, hooks handle lifecycle",
   },
   {
     dimension: "State management",
@@ -88,7 +88,7 @@ const comparisonData = [
   {
     dimension: "Error handling",
     webSdk: "try/catch around every operation",
-    reactSdk: "BYOMErrorBoundary + error state in hooks",
+    reactSdk: "ArlopassErrorBoundary + error state in hooks",
   },
   {
     dimension: "Streaming",
@@ -97,8 +97,8 @@ const comparisonData = [
   },
   {
     dimension: "Testing",
-    webSdk: "Mock the BYOMTransport interface directly",
-    reactSdk: "createMockTransport + render with BYOMProvider",
+    webSdk: "Mock the ArlopassTransport interface directly",
+    reactSdk: "createMockTransport + render with ArlopassProvider",
   },
   {
     dimension: "Bundle size",
@@ -124,10 +124,10 @@ export default function WebSDKvsReact() {
 
       <Title order={3}>Two SDKs, one protocol</Title>
       <Text>
-        BYOM ships two SDKs. The Web SDK (<code>@byom-ai/web-sdk</code>) is
+        Arlopass ships two SDKs. The Web SDK (<code>@arlopass/web-sdk</code>) is
         the core — a framework-agnostic TypeScript client that handles
         connections, state machines, envelope construction, and streaming. The
-        React SDK (<code>@byom-ai/react</code>) wraps the Web SDK with hooks,
+        React SDK (<code>@arlopass/react</code>) wraps the Web SDK with hooks,
         providers, error boundaries, and a reactive state layer. They speak the
         same protocol and use the same transport.
       </Text>
@@ -155,10 +155,9 @@ export default function WebSDKvsReact() {
       <Title order={3}>When to use the Web SDK</Title>
       <Text>
         Use the Web SDK when you're not using React — vanilla JavaScript, Vue,
-        Svelte, Angular, or any other framework. It's also the right choice
-        when you need full control over the client lifecycle, want to build
-        your own reactive abstraction on top, or need the smallest possible
-        bundle.
+        Svelte, Angular, or any other framework. It's also the right choice when
+        you need full control over the client lifecycle, want to build your own
+        reactive abstraction on top, or need the smallest possible bundle.
       </Text>
       <CodeBlock title="Web SDK usage" code={webSdkExample} />
 
@@ -167,8 +166,8 @@ export default function WebSDKvsReact() {
         Use the React SDK when you're building a React application and want
         managed state, automatic re-renders, streaming optimization, error
         boundaries, and a hooks-based API. It handles the hard parts — state
-        synchronization, concurrent rendering safety, and streaming batching
-        — so you can focus on your UI.
+        synchronization, concurrent rendering safety, and streaming batching —
+        so you can focus on your UI.
       </Text>
       <CodeBlock title="React SDK usage" code={reactSdkExample} />
 
@@ -182,7 +181,7 @@ export default function WebSDKvsReact() {
 
       <Callout type="info" title="useClient() — the escape hatch">
         The React SDK re-exports all Web SDK types. If you need the raw{" "}
-        <code>BYOMClient</code> for an operation not covered by hooks, call{" "}
+        <code>ArlopassClient</code> for an operation not covered by hooks, call{" "}
         <code>useClient()</code>. You lose automatic state sync for that
         operation, but you get full control. Use it sparingly.
       </Callout>
@@ -191,20 +190,20 @@ export default function WebSDKvsReact() {
       <Title order={3}>Using both</Title>
       <Text>
         Because the React SDK wraps the Web SDK, you're already using both.
-        Types like <code>ProviderDescriptor</code>,{" "}
-        <code>ClientState</code>, and <code>ChatStreamEvent</code> are
-        re-exported from <code>@byom-ai/react</code>. You don't need to
-        install <code>@byom-ai/web-sdk</code> separately unless you're
-        importing something the React SDK doesn't re-export (which is rare).
+        Types like <code>ProviderDescriptor</code>, <code>ClientState</code>,
+        and <code>ChatStreamEvent</code> are re-exported from{" "}
+        <code>@arlopass/react</code>. You don't need to install{" "}
+        <code>@arlopass/web-sdk</code> separately unless you're importing
+        something the React SDK doesn't re-export (which is rare).
       </Text>
 
       <Title order={3}>Migration path</Title>
       <Text>
-        If you started with the Web SDK and want to move to React, the
-        migration is additive. Wrap your app in <code>BYOMProvider</code>,
-        replace imperative client calls with hooks, and remove your manual
-        state management code. Your existing type imports keep working because
-        the React SDK re-exports them.
+        If you started with the Web SDK and want to move to React, the migration
+        is additive. Wrap your app in <code>ArlopassProvider</code>, replace
+        imperative client calls with hooks, and remove your manual state
+        management code. Your existing type imports keep working because the
+        React SDK re-exports them.
       </Text>
       <CodeBlock title="Additive migration" code={migrationPath} />
 

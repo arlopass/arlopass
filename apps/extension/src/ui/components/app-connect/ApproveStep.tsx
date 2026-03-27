@@ -52,8 +52,8 @@ export function ApproveStep({
             </Text>
           )}
           <Text fz="sm" c={tokens.color.textSecondary} ta="center">
-            This app wants to connect to your BYOM wallet to use AI providers
-            and models.
+            This app wants to connect to your Arlopass wallet to use AI
+            providers and models.
           </Text>
         </Stack>
       </Center>

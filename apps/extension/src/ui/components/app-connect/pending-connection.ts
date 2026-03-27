@@ -11,7 +11,7 @@
  * 6. Background polls/watches storage for result
  */
 
-const PENDING_KEY = "byom.wallet.pendingConnection.v1";
+const PENDING_KEY = "arlopass.wallet.pendingConnection.v1";
 
 export type PendingConnectionRequest = {
     origin: string;
@@ -50,7 +50,7 @@ export async function clearPendingConnection(): Promise<void> {
     });
 }
 
-const RESULT_KEY = "byom.wallet.connectionResult.v1";
+const RESULT_KEY = "arlopass.wallet.connectionResult.v1";
 
 export async function writeConnectionResult(origin: string, approved: boolean): Promise<void> {
     const result: ConnectionResult = { origin, approved, resolvedAt: Date.now() };

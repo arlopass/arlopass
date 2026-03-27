@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { ConversationManager } from "@byom-ai/web-sdk";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
+import { ConversationManager } from "@arlopass/web-sdk";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
 import type {
     ChatMessage,
     ChatSubscribe,
@@ -12,7 +12,7 @@ import type {
     TrackedChatMessage,
 } from "../types.js";
 import { Subscriptions } from "../store/subscriptions.js";
-import { useBYOMContext } from "./use-store.js";
+import { useArlopassContext } from "./use-store.js";
 
 function generateMessageId(): MessageId {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -41,7 +41,7 @@ type UseConversationReturn = Readonly<{
     streamingMessageId: MessageId | null;
     isStreaming: boolean;
     isSending: boolean;
-    error: BYOMSDKError | null;
+    error: ArlopassSDKError | null;
     tokenCount: number;
     contextWindow: readonly ChatMessage[];
     contextInfo: ContextWindowInfo;
@@ -56,7 +56,7 @@ type UseConversationReturn = Readonly<{
 }>;
 
 export function useConversation(options?: UseConversationOptions): UseConversationReturn {
-    const { store } = useBYOMContext();
+    const { store } = useArlopassContext();
     const [messages, setMessages] = useState<TrackedChatMessage[]>(
         () => options?.initialMessages ?? [],
     );
@@ -64,7 +64,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const [streamingMessageId, setStreamingMessageId] = useState<MessageId | null>(null);
     const [isStreaming, setIsStreaming] = useState(false);
     const [isSending, setIsSending] = useState(false);
-    const [error, setError] = useState<BYOMSDKError | null>(null);
+    const [error, setError] = useState<ArlopassSDKError | null>(null);
     const [tokenCount, setTokenCount] = useState(0);
     const [contextWindow, setContextWindow] = useState<readonly ChatMessage[]>([]);
     const [contextInfo, setContextInfo] = useState<ContextWindowInfo>({
@@ -149,7 +149,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
             subsRef.current.notify();
             return userMsgId;
         } catch (err) {
-            setError(err as BYOMSDKError);
+            setError(err as ArlopassSDKError);
             updateMessage(userMsgId, { status: "error" });
             throw err;
         } finally {
@@ -252,7 +252,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                 setStreamingMessageId(null);
                 return userMsgId;
             }
-            setError(err as BYOMSDKError);
+            setError(err as ArlopassSDKError);
             updateMessage(userMsgId, { status: "error" });
             setStreamingContent("");
             setStreamingMessageId(null);
@@ -297,7 +297,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         managerRef.current!.submitToolResult(toolCallId, result);
     }, []);
 
-    const retry = error !== null && (error as BYOMSDKError & { retryable?: boolean }).retryable === true && lastRequestRef.current !== null
+    const retry = error !== null && (error as ArlopassSDKError & { retryable?: boolean }).retryable === true && lastRequestRef.current !== null
         ? async () => {
             setError(null);
             const req = lastRequestRef.current!;

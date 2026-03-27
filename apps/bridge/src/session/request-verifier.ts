@@ -9,7 +9,7 @@ import {
   type CloudConnectionHandle,
   type CloudRequestProof,
   type EnvelopeValidationOptions,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 import {
   computeRequestPayloadHash,
@@ -494,13 +494,13 @@ export class RequestVerifier {
       binding: {
         ...(normalizedPolicyVersion !== undefined
           ? {
-              policyVersion: normalizedPolicyVersion,
-            }
+            policyVersion: normalizedPolicyVersion,
+          }
           : {}),
         ...(normalizedEndpointProfileHash !== undefined
           ? {
-              endpointProfileHash: normalizedEndpointProfileHash,
-            }
+            endpointProfileHash: normalizedEndpointProfileHash,
+          }
           : {}),
       },
     };

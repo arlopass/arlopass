@@ -1,26 +1,29 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { BYOMSDKError } from "@byom-ai/web-sdk";
-import { useBYOMContext, useStoreSnapshot } from "../hooks/use-store.js";
+import type { ArlopassSDKError } from "@arlopass/web-sdk";
+import { useArlopassContext, useStoreSnapshot } from "../hooks/use-store.js";
 import { useConnection } from "../hooks/use-connection.js";
 
 type Props = Readonly<{
   connectingFallback?: ReactNode;
   notInstalledFallback?: ReactNode;
   providerFallback?: ReactNode;
-  errorFallback?: (props: { error: BYOMSDKError; retry: (() => Promise<void>) | null }) => ReactNode;
+  errorFallback?: (props: {
+    error: ArlopassSDKError;
+    retry: (() => Promise<void>) | null;
+  }) => ReactNode;
   children: ReactNode;
 }>;
 
-export function BYOMChatReadyGate({
+export function ArlopassChatReadyGate({
   connectingFallback = null,
   notInstalledFallback,
   providerFallback = null,
   errorFallback,
   children,
 }: Props): ReactNode {
-  const { transportAvailable } = useBYOMContext();
+  const { transportAvailable } = useArlopassContext();
   const snapshot = useStoreSnapshot();
   const { retry } = useConnection();
 
@@ -28,7 +31,8 @@ export function BYOMChatReadyGate({
     return notInstalledFallback;
   }
 
-  const isConnected = snapshot.state === "connected" || snapshot.state === "degraded";
+  const isConnected =
+    snapshot.state === "connected" || snapshot.state === "degraded";
 
   if (!isConnected) {
     if (

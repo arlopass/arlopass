@@ -1,10 +1,10 @@
-# Design Spec: BYOM AI Wallet (Sub-Project 1)
+# Design Spec: Arlopass Wallet (Sub-Project 1)
 
 ## Document Metadata
 
 - **Date:** 2026-03-23
 - **Status:** Draft for review
-- **Project:** BYOM AI SDK ("MetaMask for AI")
+- **Project:** Arlopass SDK ("MetaMask for AI")
 - **Spec Scope:** First implementation slice for secure provider mediation
 - **Primary Pillars:** Security, Reliability, Robustness
 
@@ -20,7 +20,7 @@ We need an open source, enterprise-grade mechanism that lets users bring their o
 
 ## 2) Scope and Decomposition
 
-The overall BYOM initiative spans multiple independent subsystems. To keep planning and execution reliable, this spec intentionally focuses on **Sub-Project 1**:
+The overall Arlopass initiative spans multiple independent subsystems. To keep planning and execution reliable, this spec intentionally focuses on **Sub-Project 1**:
 
 **Sub-Project 1: Secure Provider Mediation Core**
 - Web SDK connection and request API
@@ -65,19 +65,19 @@ This slice produces an end-to-end path that proves architecture and security mod
 **Extension-first wallet model with local bridge runtime** (MetaMask-inspired trust model).
 
 ### Components
-1. **`@byom-ai/web-sdk` (app-facing library)**
+1. **`@arlopass/web-sdk` (app-facing library)**
    - Public API for connect, provider selection, request, and stream.
    - No direct access to provider secrets.
    - Strongly typed request/response and typed errors.
    - **Canonical app-facing interface** (apps should not call injected provider transport directly).
 
-2. **Browser Extension (`byom-wallet`)**
-   - Injects a low-level provider transport into the page (`window.byom`-style object).
+2. **Browser Extension (`arlopass-wallet`)**
+   - Injects a low-level provider transport into the page (`window.arlopass`-style object).
    - Owns consent prompts and permission lifecycle.
    - Stores origin-scoped grants and model/provider choices.
    - Preflight policy checks and request signing.
 
-3. **Local Bridge (`byom-bridge`)**
+3. **Local Bridge (`arlopass-bridge`)**
    - Runs as a local process on user machine.
    - Hosts provider adapters and executes authorized requests.
    - Performs authoritative runtime policy enforcement.
@@ -89,13 +89,13 @@ This slice produces an end-to-end path that proves architecture and security mod
      - `adapter-ollama` (local models)
      - `adapter-claude-subscription` (cloud subscription via OAuth device flow)
 
-5. **Protocol Package (`@byom-ai/protocol`)**
+5. **Protocol Package (`@arlopass/protocol`)**
    - Shared message schemas, capability descriptors, error taxonomy.
    - Version negotiation and compatibility rules.
 
 ## API Surface Ownership
-- **Supported public API for app developers:** `@byom-ai/web-sdk`.
-- `window.byom` is transport plumbing managed by extension and SDK, not a stable app contract.
+- **Supported public API for app developers:** `@arlopass/web-sdk`.
+- `window.arlopass` is transport plumbing managed by extension and SDK, not a stable app contract.
 - SDK owns compatibility negotiation, retries, and typed error normalization.
 
 ## Claude Subscription Adapter Auth Contract
@@ -135,7 +135,7 @@ This slice produces an end-to-end path that proves architecture and security mod
 - Secrets stored only in OS secure stores.
 
 ## Extension <-> Bridge Trust Bootstrap
-- **Primary transport:** browser Native Messaging host (`com.byom.bridge`) with allowlisted extension IDs.
+- **Primary transport:** browser Native Messaging host (`com.arlopass.bridge`) with allowlisted extension IDs.
 - **Binary trust:** bridge executable must be code-signed; host registration is pinned to expected publisher and install path.
 - **Handshake:** extension and bridge run challenge-response and derive an ephemeral session key before executing requests.
 - **Request integrity:** every executable request carries signed envelope, nonce, and short expiry.
@@ -181,7 +181,7 @@ Rules:
 ## 7) Core Data Flows
 
 ## Flow A: Initial Connect
-1. App calls `BYOM.connect({ appId })`.
+1. App calls `Arlopass.connect({ appId })`.
 2. SDK discovers extension provider object.
 3. Extension validates origin and opens Native Messaging channel to bridge.
 4. Extension and bridge complete challenge-response and establish session key.
@@ -241,7 +241,7 @@ Failure modes:
 - `healthCheck()`
 - `shutdown()`
 
-All adapter I/O must use shared schemas from `@byom-ai/protocol`.
+All adapter I/O must use shared schemas from `@arlopass/protocol`.
 
 ## Error Taxonomy (stable API)
 - `AuthError`

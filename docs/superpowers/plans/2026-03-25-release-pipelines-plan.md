@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement the full CI/CD release pipeline system for the BYOM AI Wallet monorepo as defined in `docs/superpowers/specs/2026-03-24-release-pipelines-design.md`.
+**Goal:** Implement the full CI/CD release pipeline system for the Arlopass Wallet monorepo as defined in `docs/superpowers/specs/2026-03-24-release-pipelines-design.md`.
 
 **Architecture:** Reusable GitHub Actions workflow composition. 17 workflow files, 2 installer scripts, package.json preparation across ~18 packages, extension build refactoring for multi-target support.
 
@@ -30,7 +30,7 @@ Update all 7 core packages to be publishable. Change `private` to `false`, add `
 Replace:
 ```json
 {
-  "name": "@byom-ai/protocol",
+  "name": "@arlopass/protocol",
   "version": "0.1.0",
   "private": true,
 ```
@@ -38,7 +38,7 @@ Replace:
 With:
 ```json
 {
-  "name": "@byom-ai/protocol",
+  "name": "@arlopass/protocol",
   "version": "0.1.0",
   "license": "MIT",
   "publishConfig": {
@@ -47,12 +47,12 @@ With:
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "packages/protocol"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/packages/protocol#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/packages/protocol#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
 ```
 
@@ -80,7 +80,7 @@ Same pattern with `"directory": "packages/telemetry"`.
 Same pattern with `"directory": "packages/policy"`. Also update dependency from `file:` to semver:
 ```json
   "dependencies": {
-    "@byom-ai/protocol": "0.1.0"
+    "@arlopass/protocol": "0.1.0"
   }
 ```
 
@@ -91,8 +91,8 @@ Same pattern with `"directory": "packages/policy"`. Also update dependency from 
 Same publish fields with `"directory": "packages/web-sdk"`. Update dependencies:
 ```json
   "dependencies": {
-    "@byom-ai/protocol": "0.1.0",
-    "@byom-ai/telemetry": "0.1.0"
+    "@arlopass/protocol": "0.1.0",
+    "@arlopass/telemetry": "0.1.0"
   }
 ```
 
@@ -138,8 +138,8 @@ Update all 9 adapter packages (independent versioning).
 For each adapter, apply the same pattern: remove `"private": true`, add `publishConfig`, `license`, `repository`, `homepage`, `bugs`. Update `file:` deps to semver:
 ```json
   "dependencies": {
-    "@byom-ai/adapter-runtime": "0.1.0",
-    "@byom-ai/protocol": "0.1.0"
+    "@arlopass/adapter-runtime": "0.1.0",
+    "@arlopass/protocol": "0.1.0"
   }
 ```
 
@@ -161,7 +161,7 @@ git commit -m "build: prepare adapter packages for npm publishing"
 
 ### Task 3: Prepare Bridge Package.json for npm CLI Publishing
 
-The bridge is published as a global CLI (`npm install -g @byom-ai/bridge`). Needs `bin` field and publish metadata.
+The bridge is published as a global CLI (`npm install -g @arlopass/bridge`). Needs `bin` field and publish metadata.
 
 **Files:**
 - Modify: `apps/bridge/package.json`
@@ -171,12 +171,12 @@ The bridge is published as a global CLI (`npm install -g @byom-ai/bridge`). Need
 Remove `"private": true`. Add publish fields and `bin`:
 ```json
 {
-  "name": "@byom-ai/bridge",
+  "name": "@arlopass/bridge",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "byom-bridge": "./dist/main.js"
+    "arlopass-bridge": "./dist/main.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -189,22 +189,22 @@ Remove `"private": true`. Add publish fields and `bin`:
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/byom-web.git",
+    "url": "https://github.com/AltClick/arlopass.git",
     "directory": "apps/bridge"
   },
-  "homepage": "https://github.com/AltClick/byom-web/tree/main/apps/bridge#readme",
+  "homepage": "https://github.com/AltClick/arlopass/tree/main/apps/bridge#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/byom-web/issues"
+    "url": "https://github.com/AltClick/arlopass/issues"
   },
 ```
 
 Update dependencies from `file:` to semver:
 ```json
   "dependencies": {
-    "@byom-ai/audit": "0.1.0",
-    "@byom-ai/policy": "0.1.0",
-    "@byom-ai/protocol": "0.1.0",
-    "@byom-ai/telemetry": "0.1.0"
+    "@arlopass/audit": "0.1.0",
+    "@arlopass/policy": "0.1.0",
+    "@arlopass/protocol": "0.1.0",
+    "@arlopass/telemetry": "0.1.0"
   }
 ```
 
@@ -881,7 +881,7 @@ async function transformManifestForFirefox() {
   // Add Firefox-specific settings
   manifest.browser_specific_settings = {
     gecko: {
-      id: "byom-ai-wallet@byomai.com",
+      id: "arlopass-wallet@arlopassai.com",
       strict_min_version: "109.0",
     },
   };
@@ -1071,13 +1071,13 @@ jobs:
       - name: Zip extension
         run: |
           cd "apps/extension/dist/${{ matrix.target }}"
-          zip -r "../../../../byom-extension-${{ matrix.target }}.zip" .
+          zip -r "../../../../arlopass-extension-${{ matrix.target }}.zip" .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: extension-${{ matrix.target }}
-          path: byom-extension-${{ matrix.target }}.zip
+          path: arlopass-extension-${{ matrix.target }}.zip
           retention-days: 5
 ```
 
@@ -1143,7 +1143,7 @@ jobs:
           MAX_RETRIES=3
           until [ $RETRY -ge $MAX_RETRIES ]; do
             if chrome-webstore-upload upload \
-              --source byom-extension-chromium.zip \
+              --source arlopass-extension-chromium.zip \
               --extension-id "${EXTENSION_ID}" \
               --client-id "${CLIENT_ID}" \
               --client-secret "${CLIENT_SECRET}" \
@@ -1231,7 +1231,7 @@ jobs:
               -X POST "https://api.addons.microsoftedge.microsoft.com/v1/products/${PRODUCT_ID}/submissions/draft/package" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/zip" \
-              --data-binary @byom-extension-chromium.zip)
+              --data-binary @arlopass-extension-chromium.zip)
             if [ "${HTTP_CODE}" = "202" ] || [ "${HTTP_CODE}" = "200" ]; then
               echo "✅ Upload succeeded (HTTP ${HTTP_CODE})"
               break
@@ -1291,7 +1291,7 @@ jobs:
               --api-key "${WEB_EXT_API_KEY}" \
               --api-secret "${WEB_EXT_API_SECRET}" \
               --channel listed \
-              --upload-source-map byom-extension-firefox.zip 2>&1; then
+              --upload-source-map arlopass-extension-firefox.zip 2>&1; then
               echo "✅ AMO upload succeeded"
               break
             fi
@@ -1443,27 +1443,27 @@ jobs:
           - os: win
             arch: x64
             runner: windows-latest
-            binary: byom-bridge-win-x64.exe
+            binary: arlopass-bridge-win-x64.exe
             ext: .exe
           - os: macos
             arch: x64
             runner: macos-13
-            binary: byom-bridge-macos-x64
+            binary: arlopass-bridge-macos-x64
             ext: ""
           - os: macos
             arch: arm64
             runner: macos-latest
-            binary: byom-bridge-macos-arm64
+            binary: arlopass-bridge-macos-arm64
             ext: ""
           - os: linux
             arch: x64
             runner: ubuntu-latest
-            binary: byom-bridge-linux-x64
+            binary: arlopass-bridge-linux-x64
             ext: ""
           - os: linux
             arch: arm64
             runner: ubuntu-latest
-            binary: byom-bridge-linux-arm64
+            binary: arlopass-bridge-linux-arm64
             ext: ""
     steps:
       - uses: actions/checkout@v4
@@ -1627,24 +1627,24 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag }}
-          name: "BYOM Bridge v${{ inputs.version }}"
+          name: "Arlopass Bridge v${{ inputs.version }}"
           body: |
-            ## BYOM Bridge v${{ inputs.version }}
+            ## Arlopass Bridge v${{ inputs.version }}
 
             ### Install
 
             **One-liner (recommended):**
             ```bash
             # macOS / Linux
-            curl -fsSL https://byomai.com/install.sh | sh
+            curl -fsSL https://arlopassai.com/install.sh | sh
 
             # Windows (PowerShell)
-            irm https://byomai.com/install.ps1 | iex
+            irm https://arlopassai.com/install.ps1 | iex
             ```
 
             **npm (requires Node.js):**
             ```bash
-            npm install -g @byom-ai/bridge@${{ inputs.version }}
+            npm install -g @arlopass/bridge@${{ inputs.version }}
             ```
 
             **Manual download:** Download the binary for your platform below.
@@ -1685,12 +1685,12 @@ PowerShell and Bash installer scripts for one-liner bridge installation.
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Install the BYOM AI Bridge daemon.
+    Install the Arlopass Bridge daemon.
 .DESCRIPTION
-    Downloads and installs the latest BYOM Bridge binary from GitHub Releases.
+    Downloads and installs the latest Arlopass Bridge binary from GitHub Releases.
     Verifies SHA256 checksums. Registers native messaging hosts.
 .PARAMETER Uninstall
-    Remove the BYOM Bridge installation.
+    Remove the Arlopass Bridge installation.
 #>
 [CmdletBinding()]
 param(
@@ -1700,10 +1700,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$REPO = "AltClick/byom-web"
-$INSTALL_DIR = Join-Path $env:LOCALAPPDATA "BYOM\bin"
-$BINARY_NAME = "byom-bridge.exe"
-$NATIVE_HOST_NAME = "com.byom.bridge"
+$REPO = "AltClick/arlopass"
+$INSTALL_DIR = Join-Path $env:LOCALAPPDATA "Arlopass\bin"
+$BINARY_NAME = "arlopass-bridge.exe"
+$NATIVE_HOST_NAME = "com.arlopass.bridge"
 
 function Get-Architecture {
     $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
@@ -1731,16 +1731,16 @@ function Install-Bridge {
     $release = Get-LatestRelease
     $version = $release.tag_name -replace '^bridge/', ''
 
-    Write-Host "Installing BYOM Bridge $version ($arch)..." -ForegroundColor Cyan
+    Write-Host "Installing Arlopass Bridge $version ($arch)..." -ForegroundColor Cyan
 
-    $binaryAsset = "byom-bridge-win-${arch}.exe"
+    $binaryAsset = "arlopass-bridge-win-${arch}.exe"
     $binaryUrl = ($release.assets | Where-Object { $_.name -eq $binaryAsset }).browser_download_url
     $checksumsUrl = ($release.assets | Where-Object { $_.name -eq 'SHA256SUMS.txt' }).browser_download_url
 
     if (-not $binaryUrl) { throw "No binary found for $binaryAsset in release $version" }
     if (-not $checksumsUrl) { throw "No checksums found in release $version" }
 
-    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "byom-install-$(Get-Random)"
+    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "arlopass-install-$(Get-Random)"
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
     try {
@@ -1774,7 +1774,7 @@ function Install-Bridge {
         # Register native host for Chrome/Edge
         $nativeHostManifest = @{
             name = $NATIVE_HOST_NAME
-            description = "BYOM AI Bridge native messaging host"
+            description = "Arlopass Bridge native messaging host"
             path = (Join-Path $INSTALL_DIR $BINARY_NAME)
             type = "stdio"
             allowed_origins = @("chrome-extension://*")
@@ -1794,7 +1794,7 @@ function Install-Bridge {
         }
 
         Write-Host ""
-        Write-Host "BYOM Bridge $version installed successfully!" -ForegroundColor Green
+        Write-Host "Arlopass Bridge $version installed successfully!" -ForegroundColor Green
         Write-Host "  Binary: $(Join-Path $INSTALL_DIR $BINARY_NAME)"
         Write-Host "  Restart your terminal to update PATH."
     }
@@ -1804,7 +1804,7 @@ function Install-Bridge {
 }
 
 function Uninstall-Bridge {
-    Write-Host "Uninstalling BYOM Bridge..." -ForegroundColor Yellow
+    Write-Host "Uninstalling Arlopass Bridge..." -ForegroundColor Yellow
 
     # Remove binary
     $binaryPath = Join-Path $INSTALL_DIR $BINARY_NAME
@@ -1833,7 +1833,7 @@ function Uninstall-Bridge {
         Remove-Item $INSTALL_DIR -Force
     }
 
-    Write-Host "BYOM Bridge uninstalled." -ForegroundColor Green
+    Write-Host "Arlopass Bridge uninstalled." -ForegroundColor Green
 }
 
 if ($Uninstall) {
@@ -1847,15 +1847,15 @@ if ($Uninstall) {
 
 ```bash
 #!/usr/bin/env sh
-# BYOM Bridge Installer
-# Usage: curl -fsSL https://byomai.com/install.sh | sh
-# Uninstall: curl -fsSL https://byomai.com/install.sh | sh -s -- --uninstall
+# Arlopass Bridge Installer
+# Usage: curl -fsSL https://arlopassai.com/install.sh | sh
+# Uninstall: curl -fsSL https://arlopassai.com/install.sh | sh -s -- --uninstall
 set -euo pipefail
 
-REPO="AltClick/byom-web"
+REPO="AltClick/arlopass"
 INSTALL_DIR="${HOME}/.local/bin"
-BINARY_NAME="byom-bridge"
-NATIVE_HOST_NAME="com.byom.bridge"
+BINARY_NAME="arlopass-bridge"
+NATIVE_HOST_NAME="com.arlopass.bridge"
 
 log()   { printf '\033[1;34m%s\033[0m\n' "$*"; }
 ok()    { printf '\033[1;32m%s\033[0m\n' "$*"; }
@@ -1895,8 +1895,8 @@ install_bridge() {
     err "Could not determine latest bridge version"
   fi
 
-  binary_name="byom-bridge-${os}-${arch}"
-  log "Installing BYOM Bridge ${version} (${os}/${arch})..."
+  binary_name="arlopass-bridge-${os}-${arch}"
+  log "Installing Arlopass Bridge ${version} (${os}/${arch})..."
 
   local tmp_dir
   tmp_dir=$(mktemp -d)
@@ -1951,7 +1951,7 @@ install_bridge() {
   install_native_hosts "${os}"
 
   echo ""
-  ok "BYOM Bridge ${version} installed successfully!"
+  ok "Arlopass Bridge ${version} installed successfully!"
   log "  Binary: ${INSTALL_DIR}/${BINARY_NAME}"
 }
 
@@ -1963,7 +1963,7 @@ install_native_hosts() {
   manifest_content=$(cat <<EOF
 {
   "name": "${NATIVE_HOST_NAME}",
-  "description": "BYOM AI Bridge native messaging host",
+  "description": "Arlopass Bridge native messaging host",
   "path": "${binary_path}",
   "type": "stdio",
   "allowed_origins": ["chrome-extension://*"]
@@ -1992,7 +1992,7 @@ EOF
 }
 
 uninstall_bridge() {
-  warn "Uninstalling BYOM Bridge..."
+  warn "Uninstalling Arlopass Bridge..."
 
   rm -f "${INSTALL_DIR}/${BINARY_NAME}"
 
@@ -2013,7 +2013,7 @@ uninstall_bridge() {
   rm -f "${chrome_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
   rm -f "${firefox_dir}/${NATIVE_HOST_NAME}.json" 2>/dev/null || true
 
-  ok "BYOM Bridge uninstalled."
+  ok "Arlopass Bridge uninstalled."
 }
 
 # Main

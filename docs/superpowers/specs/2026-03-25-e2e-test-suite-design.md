@@ -1,15 +1,15 @@
-# BYOM AI E2E Test Suite — Design Specification
+# Arlopass E2E Test Suite — Design Specification
 
 ## Overview
 
-Comprehensive E2E test suite for the BYOM AI browser extension and examples web app using Playwright. Tests Chrome extension popup, options page, content script injection, web SDK integration, and full user journeys through the examples web app.
+Comprehensive E2E test suite for the Arlopass browser extension and examples web app using Playwright. Tests Chrome extension popup, options page, content script injection, web SDK integration, and full user journeys through the examples web app.
 
 ## Architecture
 
 - **Framework**: Playwright with TypeScript
 - **Pattern**: Page Object Model (POM) with custom fixtures
 - **Extension testing**: Chromium persistent context with `--load-extension`
-- **Transport**: Extension-injected (`window.byom`) + mock/demo transports in examples web app
+- **Transport**: Extension-injected (`window.arlopass`) + mock/demo transports in examples web app
 - **Browser**: Chromium only (extensions require it)
 
 ## Directory Structure
@@ -64,7 +64,7 @@ e2e/
 | Options test connection | "Test Connection" runs in-memory validation |
 | Options save provider | "Save Provider" persists to chrome.storage |
 | Service worker starts | Service worker registers and is reachable |
-| Content script injection | `window.byom` is injected on web pages |
+| Content script injection | `window.arlopass` is injected on web pages |
 
 ### 2. Web App Tests (Mock Transport)
 
@@ -87,7 +87,7 @@ e2e/
 
 | Test | Description |
 |------|-------------|
-| Extension injects transport | `window.byom` available in examples app context |
+| Extension injects transport | `window.arlopass` available in examples app context |
 | Full happy path | Extension popup → options → connect → webapp chat |
 
 ## Fixtures

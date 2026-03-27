@@ -22,8 +22,8 @@ import {
   canonicalizePolicyBundle,
   createPolicyBundleDigest,
   type SignedPolicyBundle,
-} from "@byom-ai/policy";
-import type { AuditEvent } from "@byom-ai/audit";
+} from "@arlopass/policy";
+import type { AuditEvent } from "@arlopass/audit";
 
 import { RuntimeEvaluator, type RuntimeEvaluationRequest } from "../policy/runtime-evaluator.js";
 import { AuditEmitter, type AuditExporter } from "../audit/audit-emitter.js";
@@ -211,7 +211,7 @@ describe("RuntimeEvaluator — extension/bridge deny parity", () => {
       clock: () => new Date("2026-03-23T10:30:00.000Z"),
     };
 
-    // Both use the same evaluatePolicy core from @byom-ai/policy — same inputs produce same output.
+    // Both use the same evaluatePolicy core from @arlopass/policy — same inputs produce same output.
     const runtime1 = new RuntimeEvaluator(sharedOpts);
     const runtime2 = new RuntimeEvaluator(sharedOpts);
 
@@ -249,7 +249,7 @@ describe("RuntimeEvaluator — extension/bridge deny parity", () => {
 describe("RuntimeEvaluator — audit emission", () => {
   it("emits an audit event on a deny decision", async () => {
     const { exporter, captured } = captureExporter();
-    const auditEmitter = new AuditEmitter({ onLog: () => {} });
+    const auditEmitter = new AuditEmitter({ onLog: () => { } });
     auditEmitter.addExporter(exporter);
 
     const evaluator = new RuntimeEvaluator({}, auditEmitter);
@@ -267,7 +267,7 @@ describe("RuntimeEvaluator — audit emission", () => {
     keyManager.createKey({ keyId, publicKeyPem });
 
     const { exporter, captured } = captureExporter();
-    const auditEmitter = new AuditEmitter({ onLog: () => {} });
+    const auditEmitter = new AuditEmitter({ onLog: () => { } });
     auditEmitter.addExporter(exporter);
 
     const evaluator = new RuntimeEvaluator(
@@ -290,7 +290,7 @@ describe("RuntimeEvaluator — audit emission", () => {
 
   it("audit event contains all required fields", async () => {
     const { exporter, captured } = captureExporter();
-    const auditEmitter = new AuditEmitter({ onLog: () => {} });
+    const auditEmitter = new AuditEmitter({ onLog: () => { } });
     auditEmitter.addExporter(exporter);
 
     const evaluator = new RuntimeEvaluator({}, auditEmitter);
@@ -320,7 +320,7 @@ describe("RuntimeEvaluator — audit emission", () => {
       maxAttempts: 1,
       retryBaseDelayMs: 0,
       maxRetryDelayMs: 0,
-      onLog: () => {},
+      onLog: () => { },
     });
     auditEmitter.addExporter(faultyExporter);
 

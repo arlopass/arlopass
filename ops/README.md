@@ -1,6 +1,6 @@
-# @byom-ai/ops
+# @arlopass/ops
 
-Reliability engineering assets for BYOM AI — SLO definitions, alert rules, runbooks, and test suites.
+Reliability engineering assets for Arlopass — SLO definitions, alert rules, runbooks, and test suites.
 
 ## Structure
 

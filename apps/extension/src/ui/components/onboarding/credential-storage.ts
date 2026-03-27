@@ -15,10 +15,10 @@
  * - A hard cap prevents unbounded storage growth.
  * - The validator rejects malformed entries on read.
  *
- * Storage key: `byom.wallet.credentials.v1`
+ * Storage key: `arlopass.wallet.credentials.v1`
  */
 
-const STORAGE_KEY = "byom.wallet.credentials.v1";
+const STORAGE_KEY = "arlopass.wallet.credentials.v1";
 const MAX_CREDENTIALS = 50;
 const MAX_NAME_LENGTH = 120;
 const MAX_FIELD_VALUE_LENGTH = 2000;

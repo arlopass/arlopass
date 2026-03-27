@@ -18,7 +18,7 @@ function buildTranscript(input: Readonly<{
   extensionPublicKey: string;
 }>): string {
   return [
-    "byom.bridge.pairing.v1",
+    "arlopass.bridge.pairing.v1",
     input.pairingSessionId,
     input.extensionId,
     input.hostName,
@@ -37,7 +37,7 @@ describe("PairingManager", () => {
 
     const begin = manager.beginPairing({
       extensionId: "ext.runtime.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const extensionEcdh = createECDH("prime256v1");
     const extensionPublicKey = extensionEcdh.generateKeys("hex", "uncompressed");
@@ -101,7 +101,7 @@ describe("PairingManager", () => {
 
     const begin = manager.beginPairing({
       extensionId: "ext.runtime.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const extensionEcdh = createECDH("prime256v1");
     const extensionPublicKey = extensionEcdh.generateKeys("hex", "uncompressed");
@@ -173,7 +173,7 @@ describe("PairingManager", () => {
 
     const begin = manager.beginPairing({
       extensionId: "ext.runtime.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     const extensionEcdh = createECDH("prime256v1");
     const extensionPublicKey = extensionEcdh.generateKeys("hex", "uncompressed");
@@ -235,7 +235,7 @@ describe("PairingManager", () => {
     });
     const begin = manager.beginPairing({
       extensionId: "ext.runtime.test",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     });
     nowMs.value += 121_000;
     expect(() =>
@@ -250,7 +250,7 @@ describe("PairingManager", () => {
   });
 
   it("persists pending sessions and pairing handles across manager instances", () => {
-    const tmpRoot = mkdtempSync(join(tmpdir(), "byom-pairing-test-"));
+    const tmpRoot = mkdtempSync(join(tmpdir(), "arlopass-pairing-test-"));
     const stateFilePath = join(tmpRoot, "pairing-state.json");
     const nowMs = { value: Date.parse("2026-03-24T16:00:00.000Z") };
     try {
@@ -261,7 +261,7 @@ describe("PairingManager", () => {
       });
       const begin = managerA.beginPairing({
         extensionId: "ext.runtime.test",
-        hostName: "com.byom.bridge",
+        hostName: "com.arlopass.bridge",
       });
 
       const extensionEcdh = createECDH("prime256v1");

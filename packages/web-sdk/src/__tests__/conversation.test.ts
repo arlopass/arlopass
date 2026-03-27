@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ConversationManager } from "../conversation.js";
-import type { BYOMClient } from "../client.js";
+import type { ArlopassClient } from "../client.js";
 import {
     MockTransport,
     setupConnectedClient,
@@ -9,10 +9,10 @@ import {
     createDefaultStreamHandler,
 } from "./test-helpers.js";
 
-function mockClient(modelId = "gpt-4o"): BYOMClient {
+function mockClient(modelId = "gpt-4o"): ArlopassClient {
     return {
         selectedProvider: { providerId: "test-provider", modelId },
-    } as unknown as BYOMClient;
+    } as unknown as ArlopassClient;
 }
 
 describe("ConversationManager", () => {
@@ -166,7 +166,7 @@ describe("ConversationManager", () => {
 
             const mgr = new ConversationManager({ client, maxTokens: 10_000 });
             const response = await mgr.send("Hello");
-            expect(response.content).toBe("Hello from BYOM.");
+            expect(response.content).toBe("Hello from Arlopass.");
             expect(mgr.getMessages()).toHaveLength(2);
             expect(mgr.getMessages()[0]?.role).toBe("user");
             expect(mgr.getMessages()[1]?.role).toBe("assistant");

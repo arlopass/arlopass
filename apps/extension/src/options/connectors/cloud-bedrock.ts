@@ -8,7 +8,7 @@ import type {
 
 export const CLOUD_BEDROCK_CONNECTOR_ID = "cloud-bedrock";
 
-const DEFAULT_NATIVE_HOST_NAME = "com.byom.bridge";
+const DEFAULT_NATIVE_HOST_NAME = "com.arlopass.bridge";
 const DEFAULT_PROVIDER_ID = "amazon-bedrock";
 const DEFAULT_METHOD_ID = "bedrock.assume_role";
 const DEFAULT_REGION = "us-east-1";
@@ -191,11 +191,11 @@ async function completeViaBridge(
   config: Readonly<Record<string, string>>,
 ): Promise<
   | Readonly<{
-      ok: true;
-      connectionHandle: string;
-      models: readonly ProviderModel[];
-      bindingMetadata: Readonly<Record<string, string>>;
-    }>
+    ok: true;
+    connectionHandle: string;
+    models: readonly ProviderModel[];
+    bindingMetadata: Readonly<Record<string, string>>;
+  }>
   | Readonly<{ ok: false; message: string }>
 > {
   const nativeHostName = normalizeText(
@@ -206,18 +206,18 @@ async function completeViaBridge(
   const input: Record<string, unknown> =
     methodId === "bedrock.api_key"
       ? {
-          region: normalizeText(config["region"], DEFAULT_REGION),
-          modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
-          apiKey: normalizeText(config["apiKey"]),
-        }
+        region: normalizeText(config["region"], DEFAULT_REGION),
+        modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
+        apiKey: normalizeText(config["apiKey"]),
+      }
       : methodId === "bedrock.assume_role"
-      ? {
+        ? {
           region: normalizeText(config["region"], DEFAULT_REGION),
           modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
           roleArn: normalizeText(config["roleArn"]),
           externalId: normalizeText(config["externalId"]),
         }
-      : {
+        : {
           region: normalizeText(config["region"], DEFAULT_REGION),
           modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
           roleArn: normalizeText(config["roleArn"]),

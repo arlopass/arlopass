@@ -10,8 +10,8 @@ import {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const PINNED_PATHS = ["/opt/byom/bridge", "/usr/local/bin/byom-bridge"] as const;
-const CURRENT_PATH = "/opt/byom/bridge";
+const PINNED_PATHS = ["/opt/arlopass/bridge", "/usr/local/bin/arlopass-bridge"] as const;
+const CURRENT_PATH = "/opt/arlopass/bridge";
 
 function makeVerifier(
   opts: {
@@ -36,9 +36,9 @@ function makeVerifier(
 describe("PublisherVerifier.assertPathPinned", () => {
   it("does not throw when the path is in the pinned list", () => {
     const verifier = makeVerifier();
-    expect(() => verifier.assertPathPinned("/opt/byom/bridge")).not.toThrow();
+    expect(() => verifier.assertPathPinned("/opt/arlopass/bridge")).not.toThrow();
     expect(() =>
-      verifier.assertPathPinned("/usr/local/bin/byom-bridge"),
+      verifier.assertPathPinned("/usr/local/bin/arlopass-bridge"),
     ).not.toThrow();
   });
 
@@ -59,8 +59,8 @@ describe("PublisherVerifier.assertPathPinned", () => {
 
   it("throws for a path that is a substring of a pinned path", () => {
     const verifier = makeVerifier();
-    // "/opt/byom" is not in the set; only the full "/opt/byom/bridge" is.
-    expect(() => verifier.assertPathPinned("/opt/byom")).toThrow(
+    // "/opt/arlopass" is not in the set; only the full "/opt/arlopass/bridge" is.
+    expect(() => verifier.assertPathPinned("/opt/arlopass")).toThrow(
       PublisherVerificationError,
     );
   });

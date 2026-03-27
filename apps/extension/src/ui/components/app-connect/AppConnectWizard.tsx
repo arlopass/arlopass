@@ -20,15 +20,24 @@ export type AppConnectWizardProps = {
   onComplete: (approved: boolean) => void;
 };
 
-export function AppConnectWizard({ origin, providers, rawProviders, onComplete }: AppConnectWizardProps) {
+export function AppConnectWizard({
+  origin,
+  providers,
+  rawProviders,
+  onComplete,
+}: AppConnectWizardProps) {
   const [state, dispatch] = usePersistedReducer(
-    "byom.popup.appConnect.v1",
+    "arlopass.popup.appConnect.v1",
     appConnectReducer,
     createInitialState(origin),
   );
 
   const clearPersistedState = useCallback(() => {
-    try { chrome.storage.session.remove(["byom.popup.appConnect.v1"]); } catch { /* ignore */ }
+    try {
+      chrome.storage.session.remove(["arlopass.popup.appConnect.v1"]);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   // When entering model selection, pre-select all models from enabled providers
@@ -44,7 +53,12 @@ export function AppConnectWizard({ origin, providers, rawProviders, onComplete }
       }
       dispatch({ type: "SET_MODELS", modelIds });
     }
-  }, [state.step, state.enabledProviderIds, state.enabledModelIds.length, rawProviders]);
+  }, [
+    state.step,
+    state.enabledProviderIds,
+    state.enabledModelIds.length,
+    rawProviders,
+  ]);
 
   const handleBack = useCallback(() => {
     if (state.step === "approve") {
@@ -75,7 +89,11 @@ export function AppConnectWizard({ origin, providers, rawProviders, onComplete }
   return (
     <PopupShell>
       <WalletHeader
-        title={state.step === "approve" ? "Connection request" : `Connect ${state.displayName}`}
+        title={
+          state.step === "approve"
+            ? "Connection request"
+            : `Connect ${state.displayName}`
+        }
         onToggleCollapse={handleBack}
         onSettingsClick={() => onComplete(false)}
       />
@@ -104,7 +122,9 @@ export function AppConnectWizard({ origin, providers, rawProviders, onComplete }
           <SelectProvidersStep
             providers={providers}
             selectedIds={state.enabledProviderIds}
-            onToggle={(ids) => dispatch({ type: "SET_PROVIDERS", providerIds: ids })}
+            onToggle={(ids) =>
+              dispatch({ type: "SET_PROVIDERS", providerIds: ids })
+            }
             onNext={() => dispatch({ type: "GO_TO_MODELS" })}
           />
         )}
@@ -124,9 +144,15 @@ export function AppConnectWizard({ origin, providers, rawProviders, onComplete }
             rules={state.rules}
             permissions={state.permissions}
             limits={state.limits}
-            onRuleChange={(key, value) => dispatch({ type: "SET_RULE", key, value })}
-            onPermissionChange={(key, value) => dispatch({ type: "SET_PERMISSION", key, value })}
-            onLimitChange={(key, value) => dispatch({ type: "SET_LIMIT", key, value })}
+            onRuleChange={(key, value) =>
+              dispatch({ type: "SET_RULE", key, value })
+            }
+            onPermissionChange={(key, value) =>
+              dispatch({ type: "SET_PERMISSION", key, value })
+            }
+            onLimitChange={(key, value) =>
+              dispatch({ type: "SET_LIMIT", key, value })
+            }
             onSave={() => void handleSave()}
             saving={state.saving}
           />

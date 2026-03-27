@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ProtocolCapability } from "@byom-ai/protocol";
-import type { CanonicalEnvelope } from "@byom-ai/protocol";
+import type { ProtocolCapability } from "@arlopass/protocol";
+import type { CanonicalEnvelope } from "@arlopass/protocol";
 
 import {
   createTransportMessageHandler,
@@ -15,11 +15,11 @@ import {
   wrapPairingKeyMaterial,
 } from "../transport/bridge-pairing.js";
 
-const WALLET_KEY_PROVIDERS = "byom.wallet.providers.v1";
-const WALLET_KEY_ACTIVE = "byom.wallet.activeProvider.v1";
-const TRANSPORT_MESSAGE_LISTENER_FLAG = "__byom.transport.listener.registered.v1";
+const WALLET_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
+const WALLET_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
+const TRANSPORT_MESSAGE_LISTENER_FLAG = "__arlopass.transport.listener.registered.v1";
 const TRANSPORT_STREAM_PORT_LISTENER_FLAG =
-  "__byom.transport.stream-port.listener.registered.v1";
+  "__arlopass.transport.stream-port.listener.registered.v1";
 
 function makeStorageAdapter(
   seed: Record<string, unknown>,
@@ -95,7 +95,7 @@ describe("createTransportMessageHandler", () => {
     const handler = createTransportMessageHandler({ storage });
 
     const result = await handler({
-      channel: "byom.wallet",
+      channel: "arlopass.wallet",
       action: "wallet.openConnectFlow",
     });
 
@@ -131,7 +131,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({ storage });
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope("provider.list", {}),
@@ -166,7 +166,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({ storage });
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope("session.create", {
@@ -200,7 +200,7 @@ describe("createTransportMessageHandler", () => {
 
     const handler = createTransportMessageHandler({ storage });
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope("session.create", {
@@ -261,7 +261,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope("chat.completions", {
@@ -319,7 +319,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope("chat.completions", {
@@ -336,7 +336,7 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("routes cloud chat completion through native cloud.chat.execute", async () => {
-    const storedProviderId = "provider.byom-cloud-anthropic.test-1";
+    const storedProviderId = "provider.arlopass-cloud-anthropic.test-1";
     const storage = makeStorageAdapter({
       [WALLET_KEY_PROVIDERS]: [
         {
@@ -346,7 +346,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-test-1",
+            nativeHostName: "com.arlopass.bridge.cloud-test-1",
             providerId: "claude-subscription",
             methodId: "anthropic.api_key",
             connectionHandle:
@@ -403,7 +403,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -452,7 +452,7 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("forwards request timeout budget to cloud.chat.execute", async () => {
-    const storedProviderId = "provider.byom-cloud-anthropic.timeout";
+    const storedProviderId = "provider.arlopass-cloud-anthropic.timeout";
     const storage = makeStorageAdapter({
       [WALLET_KEY_PROVIDERS]: [
         {
@@ -462,7 +462,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-timeout",
+            nativeHostName: "com.arlopass.bridge.cloud-timeout",
             providerId: "claude-subscription",
             methodId: "anthropic.api_key",
             connectionHandle:
@@ -519,7 +519,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
     await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -540,7 +540,7 @@ describe("createTransportMessageHandler", () => {
   });
 
   it("hydrates missing cloud binding metadata via cloud.connection.validate before cloud.chat.execute", async () => {
-    const storedProviderId = "provider.byom-cloud-anthropic.no-policy";
+    const storedProviderId = "provider.arlopass-cloud-anthropic.no-policy";
     const storage = makeStorageAdapter({
       [WALLET_KEY_PROVIDERS]: [
         {
@@ -550,7 +550,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-no-policy",
+            nativeHostName: "com.arlopass.bridge.cloud-no-policy",
             providerId: "claude-subscription",
             methodId: "anthropic.api_key",
             connectionHandle:
@@ -615,7 +615,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
     await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -653,7 +653,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-test-2",
+            nativeHostName: "com.arlopass.bridge.cloud-test-2",
             methodId: "anthropic.api_key",
             connectionHandle:
               "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
@@ -704,7 +704,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -721,7 +721,7 @@ describe("createTransportMessageHandler", () => {
       return;
     }
     expect(result.error.reasonCode).toBe("policy.denied");
-    expect(result.error.machineCode).toBe("BYOM_POLICY_VIOLATION");
+    expect(result.error.machineCode).toBe("ARLOPASS_POLICY_VIOLATION");
   });
 
   it("surfaces auth.expired from bridge cloud execution", async () => {
@@ -734,7 +734,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-test-auth-expired",
+            nativeHostName: "com.arlopass.bridge.cloud-test-auth-expired",
             methodId: "anthropic.api_key",
             connectionHandle:
               "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
@@ -785,7 +785,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -802,7 +802,7 @@ describe("createTransportMessageHandler", () => {
       return;
     }
     expect(result.error.reasonCode).toBe("auth.expired");
-    expect(result.error.machineCode).toBe("BYOM_AUTH_FAILED");
+    expect(result.error.machineCode).toBe("ARLOPASS_AUTH_FAILED");
   });
 
   it("renegotiates handshake once when cloud execution reports unknown or expired handshake token", async () => {
@@ -815,7 +815,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-test-rehandshake",
+            nativeHostName: "com.arlopass.bridge.cloud-test-rehandshake",
             providerId: "claude-subscription",
             methodId: "anthropic.api_key",
             connectionHandle:
@@ -884,7 +884,7 @@ describe("createTransportMessageHandler", () => {
       },
     });
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -955,7 +955,7 @@ describe("createTransportMessageHandler", () => {
     try {
       const handler = createTransportMessageHandler({ storage });
       const result = await handler({
-        channel: "byom.transport",
+        channel: "arlopass.transport",
         action: "request",
         request: {
           envelope: makeEnvelope("chat.completions", {
@@ -980,7 +980,7 @@ describe("createTransportMessageHandler", () => {
           type: "cli",
           status: "connected",
           models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
-          metadata: { nativeHostName: "com.byom.bridge.cli-1", cliType: "copilot-cli" },
+          metadata: { nativeHostName: "com.arlopass.bridge.cli-1", cliType: "copilot-cli" },
         },
       ],
     });
@@ -1006,7 +1006,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -1045,7 +1045,7 @@ describe("createTransportMessageHandler", () => {
           type: "cli",
           status: "connected",
           models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
-          metadata: { nativeHostName: "com.byom.bridge.cli-2" },
+          metadata: { nativeHostName: "com.arlopass.bridge.cli-2" },
         },
       ],
     });
@@ -1070,7 +1070,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -1088,7 +1088,7 @@ describe("createTransportMessageHandler", () => {
       return;
     }
     expect(result.error.reasonCode).toBe("transport.timeout");
-    expect(result.error.machineCode).toBe("BYOM_TIMEOUT");
+    expect(result.error.machineCode).toBe("ARLOPASS_TIMEOUT");
   });
 
   it("maps native cloud execution cancellation to transport.cancelled", async () => {
@@ -1101,7 +1101,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-cancelled",
+            nativeHostName: "com.arlopass.bridge.cloud-cancelled",
             methodId: "anthropic.api_key",
             connectionHandle:
               "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
@@ -1154,7 +1154,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -1182,7 +1182,7 @@ describe("createTransportMessageHandler", () => {
           type: "cli",
           status: "connected",
           models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
-          metadata: { nativeHostName: "com.byom.bridge.cli-cache", cliType: "copilot-cli" },
+          metadata: { nativeHostName: "com.arlopass.bridge.cli-cache", cliType: "copilot-cli" },
         },
       ],
     });
@@ -1210,7 +1210,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -1223,7 +1223,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -1250,7 +1250,7 @@ describe("createTransportMessageHandler", () => {
           type: "cli",
           status: "connected",
           models: [{ id: "gpt-5.3-codex", name: "gpt-5.3-codex" }],
-          metadata: { nativeHostName: "com.byom.bridge.cli-resume", cliType: "copilot-cli" },
+          metadata: { nativeHostName: "com.arlopass.bridge.cli-resume", cliType: "copilot-cli" },
         },
       ],
     });
@@ -1279,7 +1279,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -1292,7 +1292,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request",
       request: {
         envelope: makeEnvelope(
@@ -1353,7 +1353,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request-stream",
       request: {
         envelope: makeEnvelope("chat.stream", {
@@ -1444,7 +1444,7 @@ describe("createTransportMessageHandler", () => {
     });
 
     const result = await handler({
-      channel: "byom.transport",
+      channel: "arlopass.transport",
       action: "request-stream",
       request: {
         envelope: makeEnvelope("chat.stream", {
@@ -1483,7 +1483,7 @@ describe("createTransportMessageHandler", () => {
     const wrappedPairingState = await wrapPairingKeyMaterial({
       pairingHandle,
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge.cloud-default",
+      hostName: "com.arlopass.bridge.cloud-default",
       pairingKeyHex: "ab".repeat(32),
       runtimeId: "ext.runtime.transport",
       createdAt: new Date().toISOString(),
@@ -1546,7 +1546,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-default",
+            nativeHostName: "com.arlopass.bridge.cloud-default",
             methodId: "anthropic.api_key",
             connectionHandle:
               "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
@@ -1597,7 +1597,7 @@ describe("createTransportMessageHandler", () => {
     const response = await new Promise<unknown>((resolve) => {
       const handled = listener(
         {
-          channel: "byom.transport",
+          channel: "arlopass.transport",
           action: "request",
           request: {
             envelope: makeEnvelope(
@@ -1635,7 +1635,7 @@ describe("createTransportMessageHandler", () => {
     const wrappedPairingState = await wrapPairingKeyMaterial({
       pairingHandle,
       extensionId: "ext.runtime.transport",
-      hostName: "com.byom.bridge.cloud-default",
+      hostName: "com.arlopass.bridge.cloud-default",
       pairingKeyHex: "ab".repeat(32),
       runtimeId: "ext.runtime.transport",
       createdAt: new Date().toISOString(),
@@ -1695,7 +1695,7 @@ describe("createTransportMessageHandler", () => {
           status: "connected",
           models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
           metadata: {
-            nativeHostName: "com.byom.bridge.cloud-default",
+            nativeHostName: "com.arlopass.bridge.cloud-default",
             methodId: "anthropic.api_key",
             connectionHandle:
               "connh.provider.claude.anthropic.api_key.00000000-0000-4000-8000-000000000001.0.sig",
@@ -1745,7 +1745,7 @@ describe("createTransportMessageHandler", () => {
     const response = await new Promise<unknown>((resolve) => {
       const handled = listener(
         {
-          channel: "byom.transport",
+          channel: "arlopass.transport",
           action: "request",
           request: {
             envelope: makeEnvelope(
@@ -1768,7 +1768,7 @@ describe("createTransportMessageHandler", () => {
     );
     const verifyPayload = verifyCall?.[1] as Record<string, unknown> | undefined;
     expect(verifyPayload?.["pairingHandle"]).toBe(pairingHandle);
-    expect(verifyPayload?.["hostName"]).toBe("com.byom.bridge.cloud-default");
+    expect(verifyPayload?.["hostName"]).toBe("com.arlopass.bridge.cloud-default");
   });
 });
 
@@ -1776,7 +1776,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
   type PortMessageListener = (message: unknown) => void;
   type PortDisconnectListener = () => void;
 
-  function createPortHarness(name = "byom.transport.stream.v1"): {
+  function createPortHarness(name = "arlopass.transport.stream.v1"): {
     port: {
       name: string;
       onMessage: { addListener: ReturnType<typeof vi.fn> };
@@ -1919,7 +1919,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     connectListener(harness.port);
 
     harness.emitMessage({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       action: "start",
       requestId: "req.stream.live.001",
       request: {
@@ -1933,12 +1933,12 @@ describe("registerDefaultTransportStreamPortListener", () => {
     await waitForCondition(() => harness.sentMessages.length >= 4);
 
     expect(harness.sentMessages[0]).toMatchObject({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       requestId: "req.stream.live.001",
       event: "start",
     });
     expect(harness.sentMessages[1]).toMatchObject({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       requestId: "req.stream.live.001",
       event: "chunk",
       envelope: {
@@ -1950,7 +1950,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
       },
     });
     expect(harness.sentMessages[2]).toMatchObject({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       requestId: "req.stream.live.001",
       event: "chunk",
       envelope: {
@@ -1962,7 +1962,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
       },
     });
     expect(harness.sentMessages[3]).toMatchObject({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       requestId: "req.stream.live.001",
       event: "done",
       envelope: {
@@ -1983,7 +1983,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
           status: "connected",
           models: [{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" }],
           metadata: {
-            nativeHostName: "com.byom.bridge",
+            nativeHostName: "com.arlopass.bridge",
             cliType: "copilot-cli",
           },
         },
@@ -2034,7 +2034,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     connectListener(harness.port);
 
     harness.emitMessage({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       action: "start",
       requestId: "req.stream.cancel.001",
       request: {
@@ -2051,7 +2051,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     await flushPort();
 
     harness.emitMessage({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       action: "cancel",
       requestId: "req.stream.cancel.001",
     });
@@ -2174,7 +2174,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
 
     connectListener(harness.port);
     harness.emitMessage({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       action: "start",
       requestId: "req.stream.portfail.001",
       request: {
@@ -2189,7 +2189,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
 
     await flushPort();
     harness.emitMessage({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       action: "start",
       requestId: "req.stream.portfail.001",
       request: {
@@ -2326,7 +2326,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     connectListener(harness.port);
 
     harness.emitMessage({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       action: "start",
       requestId: "req.stream.disconnect.001",
       request: {
@@ -2337,7 +2337,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     });
     await waitForCondition(() => harness.sentMessages.length > 0);
     expect(harness.sentMessages[0]).toMatchObject({
-      channel: "byom.transport.stream",
+      channel: "arlopass.transport.stream",
       requestId: "req.stream.disconnect.001",
       event: "start",
     });

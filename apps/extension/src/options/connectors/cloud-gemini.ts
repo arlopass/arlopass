@@ -8,7 +8,7 @@ import type {
 
 export const CLOUD_GEMINI_CONNECTOR_ID = "cloud-gemini";
 
-const DEFAULT_NATIVE_HOST_NAME = "com.byom.bridge";
+const DEFAULT_NATIVE_HOST_NAME = "com.arlopass.bridge";
 const DEFAULT_PROVIDER_ID = "gemini";
 const DEFAULT_METHOD_ID = "gemini.api_key";
 const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
@@ -184,11 +184,11 @@ async function completeViaBridge(
   config: Readonly<Record<string, string>>,
 ): Promise<
   | Readonly<{
-      ok: true;
-      connectionHandle: string;
-      models: readonly ProviderModel[];
-      bindingMetadata: Readonly<Record<string, string>>;
-    }>
+    ok: true;
+    connectionHandle: string;
+    models: readonly ProviderModel[];
+    bindingMetadata: Readonly<Record<string, string>>;
+  }>
   | Readonly<{ ok: false; message: string }>
 > {
   const nativeHostName = normalizeText(
@@ -199,17 +199,17 @@ async function completeViaBridge(
   const input: Record<string, unknown> =
     methodId === "gemini.oauth_access_token"
       ? {
-          accessToken: normalizeText(config["accessToken"]),
-          baseUrl: normalizeUrl(config["baseUrl"] ?? DEFAULT_BASE_URL),
-          projectId: normalizeText(config["projectId"]),
-          defaultModel: normalizeText(config["defaultModel"]),
-        }
+        accessToken: normalizeText(config["accessToken"]),
+        baseUrl: normalizeUrl(config["baseUrl"] ?? DEFAULT_BASE_URL),
+        projectId: normalizeText(config["projectId"]),
+        defaultModel: normalizeText(config["defaultModel"]),
+      }
       : {
-          apiKey: normalizeText(config["apiKey"]),
-          baseUrl: normalizeUrl(config["baseUrl"] ?? DEFAULT_BASE_URL),
-          projectId: normalizeText(config["projectId"]),
-          defaultModel: normalizeText(config["defaultModel"]),
-        };
+        apiKey: normalizeText(config["apiKey"]),
+        baseUrl: normalizeUrl(config["baseUrl"] ?? DEFAULT_BASE_URL),
+        projectId: normalizeText(config["projectId"]),
+        defaultModel: normalizeText(config["defaultModel"]),
+      };
   const completeResponse = await deps.sendNativeMessage(nativeHostName, {
     type: "cloud.connection.complete",
     providerId: DEFAULT_PROVIDER_ID,

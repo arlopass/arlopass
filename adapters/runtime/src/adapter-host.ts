@@ -2,7 +2,7 @@ import {
   TELEMETRY_METRIC_NAMES,
   TELEMETRY_METRIC_UNITS,
   type TelemetryMetrics,
-} from "@byom-ai/telemetry";
+} from "@arlopass/telemetry";
 
 import { AdapterHostError, RUNTIME_ERROR_CODES } from "./errors.js";
 import { type AdapterManifest } from "./manifest-schema.js";
@@ -344,7 +344,7 @@ export class AdapterHost {
       unit: TELEMETRY_METRIC_UNITS.ratio,
       metadata: {
         correlationId: `health.${providerId}`,
-        origin: "byom.adapter-host",
+        origin: "arlopass.adapter-host",
         providerId,
       },
     });
@@ -356,7 +356,7 @@ export class AdapterHost {
       value: 1,
       metadata: {
         correlationId: `restart.${providerId}`,
-        origin: "byom.adapter-host",
+        origin: "arlopass.adapter-host",
         providerId,
         attempt,
       },

@@ -1,9 +1,9 @@
-# @byom-ai/adapter-runtime
+# @arlopass/adapter-runtime
 
-Load, host, sandbox, and health-check BYOM AI provider adapters. Manages the full lifecycle from manifest validation through sandboxed execution.
+Load, host, sandbox, and health-check Arlopass provider adapters. Manages the full lifecycle from manifest validation through sandboxed execution.
 
 ```ts
-import { loadAdapter, AdapterHost } from "@byom-ai/adapter-runtime";
+import { loadAdapter, AdapterHost } from "@arlopass/adapter-runtime";
 
 const loaded = await loadAdapter(manifestJson, () => new OllamaAdapter(), {
   requireSignatureVerification: false,
@@ -214,6 +214,6 @@ Error codes are defined in `RUNTIME_ERROR_CODES` (30+ codes covering manifest, s
 
 ### Dependencies
 
-- `@byom-ai/protocol` — Capability model, error taxonomy
-- `@byom-ai/policy` — Permission and egress validation
-- `@byom-ai/telemetry` — Health and performance metrics
+- `@arlopass/protocol` — Capability model, error taxonomy
+- `@arlopass/policy` — Permission and egress validation
+- `@arlopass/telemetry` — Health and performance metrics

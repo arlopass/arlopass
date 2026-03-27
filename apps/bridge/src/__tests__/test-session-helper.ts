@@ -15,7 +15,7 @@ export async function obtainSessionToken(
     handler: BridgeHandler,
     _sharedSecret?: Buffer,
     extensionId = "abcdefghijklmnopabcdefghijklmnop",
-    hostName = "com.byom.bridge",
+    hostName = "com.arlopass.bridge",
 ): Promise<string> {
     // Step 1: auto-pair
     const autoPairingResponse = await handler.handle({

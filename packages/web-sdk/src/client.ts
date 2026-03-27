@@ -4,25 +4,25 @@ import {
   normalizeReasonCode,
   parseEnvelope,
   type ProtocolCapability,
-} from "@byom-ai/protocol";
+} from "@arlopass/protocol";
 
 import {
   TELEMETRY_SPAN_NAMES,
   type TelemetryTracing,
-} from "@byom-ai/telemetry";
+} from "@arlopass/telemetry";
 
 import { resolveAppId, validateAppIconUrl } from "./app-id.js";
 import { resolveModelContextWindow } from "./model-context-windows.js";
 import { estimateTokenCount } from "./token-estimation.js";
 import {
-  BYOMProtocolBoundaryError,
-  BYOMSDKError,
-  BYOMStateError,
+  ArlopassProtocolBoundaryError,
+  ArlopassSDKError,
+  ArlopassStateError,
   SDK_MACHINE_CODES,
   normalizeSDKError,
 } from "./errors.js";
-import { BYOMStateMachine } from "./state-machine.js";
-import { withStreamTimeout, withTimeout, type BYOMTransport } from "./transport.js";
+import { ArlopassStateMachine } from "./state-machine.js";
+import { withStreamTimeout, withTimeout, type ArlopassTransport } from "./transport.js";
 import {
   DEFAULT_ENVELOPE_TTL_MS,
   DEFAULT_REQUEST_TIMEOUT_MS,
@@ -64,8 +64,8 @@ type SelectedProvider = Readonly<{
   modelId: string;
 }>;
 
-type BYOMClientOptions = Readonly<{
-  transport: BYOMTransport;
+type ArlopassClientOptions = Readonly<{
+  transport: ArlopassTransport;
   protocolVersion?: string;
   origin?: string;
   timeoutMs?: number;
@@ -79,7 +79,7 @@ type BYOMClientOptions = Readonly<{
   tracing?: TelemetryTracing;
 }>;
 
-const DEFAULT_ORIGIN = "https://app.byom.local";
+const DEFAULT_ORIGIN = "https://app.arlopass.local";
 const DEFAULT_PROVIDER_ID = "provider.system";
 const DEFAULT_MODEL_ID = "model.default";
 
@@ -89,7 +89,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function assertNonEmptyString(value: unknown, fieldName: string): string {
   if (typeof value !== "string") {
-    throw new BYOMProtocolBoundaryError(`Field "${fieldName}" must be a string.`, {
+    throw new ArlopassProtocolBoundaryError(`Field "${fieldName}" must be a string.`, {
       reasonCode: "request.invalid",
       details: { field: fieldName },
     });
@@ -97,7 +97,7 @@ function assertNonEmptyString(value: unknown, fieldName: string): string {
 
   const trimmed = value.trim();
   if (trimmed.length === 0) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       `Field "${fieldName}" must not be empty.`,
       {
         reasonCode: "request.invalid",
@@ -111,7 +111,7 @@ function assertNonEmptyString(value: unknown, fieldName: string): string {
 
 function parseCapabilities(value: unknown): readonly ProtocolCapability[] {
   if (!Array.isArray(value)) {
-    throw new BYOMProtocolBoundaryError("Field \"capabilities\" must be an array.", {
+    throw new ArlopassProtocolBoundaryError("Field \"capabilities\" must be an array.", {
       reasonCode: "request.invalid",
       details: { field: "capabilities" },
     });
@@ -119,7 +119,7 @@ function parseCapabilities(value: unknown): readonly ProtocolCapability[] {
 
   const capabilities = value.map((entry) => {
     if (typeof entry !== "string" || !CAPABILITY_CATALOG.includes(entry as ProtocolCapability)) {
-      throw new BYOMProtocolBoundaryError(
+      throw new ArlopassProtocolBoundaryError(
         "Field \"capabilities\" includes unsupported entries.",
         {
           reasonCode: "protocol.unsupported_capability",
@@ -136,7 +136,7 @@ function parseCapabilities(value: unknown): readonly ProtocolCapability[] {
 
 function parseConnectPayload(value: unknown): ConnectResponsePayload {
   if (!isRecord(value)) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       "Connect response payload must be an object.",
       {
         reasonCode: "request.invalid",
@@ -152,7 +152,7 @@ function parseConnectPayload(value: unknown): ConnectResponsePayload {
 
 function parseProviderDescriptor(value: unknown): ProviderDescriptor {
   if (!isRecord(value)) {
-    throw new BYOMProtocolBoundaryError("Provider entry must be an object.", {
+    throw new ArlopassProtocolBoundaryError("Provider entry must be an object.", {
       reasonCode: "request.invalid",
       details: { field: "providers" },
     });
@@ -165,7 +165,7 @@ function parseProviderDescriptor(value: unknown): ProviderDescriptor {
   );
 
   if (!Array.isArray(value.models) || value.models.some((model) => typeof model !== "string")) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       "Provider entry must include a string[] models field.",
       {
         reasonCode: "request.invalid",
@@ -187,7 +187,7 @@ function parseProviderDescriptor(value: unknown): ProviderDescriptor {
 
 function parseProviderListPayload(value: unknown): ProviderListResponsePayload {
   if (!isRecord(value)) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       "Provider list payload must be an object.",
       {
         reasonCode: "request.invalid",
@@ -197,7 +197,7 @@ function parseProviderListPayload(value: unknown): ProviderListResponsePayload {
   }
 
   if (!Array.isArray(value.providers)) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       "Provider list payload must include providers[].",
       {
         reasonCode: "request.invalid",
@@ -213,7 +213,7 @@ function parseProviderListPayload(value: unknown): ProviderListResponsePayload {
 
 function parseSelectProviderPayload(value: unknown): SelectProviderResponsePayload {
   if (!isRecord(value)) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       "Provider selection payload must be an object.",
       {
         reasonCode: "request.invalid",
@@ -230,7 +230,7 @@ function parseSelectProviderPayload(value: unknown): SelectProviderResponsePaylo
 
 function parseChatMessage(value: unknown): ChatMessage {
   if (!isRecord(value)) {
-    throw new BYOMProtocolBoundaryError("Message payload must be an object.", {
+    throw new ArlopassProtocolBoundaryError("Message payload must be an object.", {
       reasonCode: "request.invalid",
       details: { field: "message" },
     });
@@ -238,7 +238,7 @@ function parseChatMessage(value: unknown): ChatMessage {
 
   const role = assertNonEmptyString(value.role, "message.role");
   if (!["system", "user", "assistant"].includes(role)) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       `Message role "${role}" is unsupported.`,
       {
         reasonCode: "request.invalid",
@@ -255,7 +255,7 @@ function parseChatMessage(value: unknown): ChatMessage {
 
 function parseChatSendPayload(value: unknown): ChatSendResponsePayload {
   if (!isRecord(value)) {
-    throw new BYOMProtocolBoundaryError("Chat send payload must be an object.", {
+    throw new ArlopassProtocolBoundaryError("Chat send payload must be an object.", {
       reasonCode: "request.invalid",
       details: { field: "payload" },
     });
@@ -268,7 +268,7 @@ function parseChatSendPayload(value: unknown): ChatSendResponsePayload {
 
 function parseChatStreamPayload(value: unknown): ChatStreamResponsePayload {
   if (!isRecord(value)) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       "Chat stream payload must be an object.",
       {
         reasonCode: "request.invalid",
@@ -283,14 +283,14 @@ function parseChatStreamPayload(value: unknown): ChatStreamResponsePayload {
   }
 
   if (type !== "chunk") {
-    throw new BYOMProtocolBoundaryError("Chat stream payload type is invalid.", {
+    throw new ArlopassProtocolBoundaryError("Chat stream payload type is invalid.", {
       reasonCode: "request.invalid",
       details: { field: "payload.type" },
     });
   }
 
   if (typeof value.delta !== "string" || value.delta.length === 0) {
-    throw new BYOMProtocolBoundaryError(
+    throw new ArlopassProtocolBoundaryError(
       `Field "payload.delta" must be a non-empty string.`,
       {
         reasonCode: "request.invalid",
@@ -300,7 +300,7 @@ function parseChatStreamPayload(value: unknown): ChatStreamResponsePayload {
   }
   const delta = value.delta;
   if (typeof value.index !== "number" || !Number.isInteger(value.index) || value.index < 0) {
-    throw new BYOMProtocolBoundaryError("Chat stream chunk index is invalid.", {
+    throw new ArlopassProtocolBoundaryError("Chat stream chunk index is invalid.", {
       reasonCode: "request.invalid",
       details: { field: "payload.index" },
     });
@@ -315,7 +315,7 @@ function parseChatStreamPayload(value: unknown): ChatStreamResponsePayload {
 
 function parseChatInput(input: ChatInput): readonly ChatMessage[] {
   if (!isRecord(input) || !Array.isArray(input.messages) || input.messages.length === 0) {
-    throw new BYOMStateError("Chat input requires a non-empty messages array.", {
+    throw new ArlopassStateError("Chat input requires a non-empty messages array.", {
       reasonCode: "request.invalid",
       details: { field: "messages" },
     });
@@ -341,7 +341,7 @@ function defaultRandomId(): string {
   return fallback;
 }
 
-function createInternalConfig(options: BYOMClientOptions): InternalClientConfig {
+function createInternalConfig(options: ArlopassClientOptions): InternalClientConfig {
   return {
     protocolVersion: options.protocolVersion ?? SDK_PROTOCOL_VERSION ?? DEFAULT_PROTOCOL_VERSION,
     origin: options.origin ?? DEFAULT_ORIGIN,
@@ -368,9 +368,9 @@ function createSessionId(randomId: () => string): SessionId {
   return `session.${randomId()}`;
 }
 
-export class BYOMClient {
-  readonly #transport: BYOMTransport;
-  readonly #stateMachine: BYOMStateMachine;
+export class ArlopassClient {
+  readonly #transport: ArlopassTransport;
+  readonly #stateMachine: ArlopassStateMachine;
   readonly #config: InternalClientConfig;
   readonly #tracing: TelemetryTracing | undefined;
 
@@ -387,9 +387,9 @@ export class BYOMClient {
     ) => AsyncIterable<ChatStreamEvent>;
   }>;
 
-  constructor(options: BYOMClientOptions) {
+  constructor(options: ArlopassClientOptions) {
     this.#transport = options.transport;
-    this.#stateMachine = new BYOMStateMachine();
+    this.#stateMachine = new ArlopassStateMachine();
     this.#config = createInternalConfig(options);
     this.#capabilities = this.#config.defaultCapabilities;
     this.#tracing = options.tracing;
@@ -541,7 +541,7 @@ export class BYOMClient {
       }).end();
 
       throw normalizeSDKError(error, {
-        message: "Failed to connect to the BYOM provider bridge.",
+        message: "Failed to connect to the Arlopass provider bridge.",
         machineCode: SDK_MACHINE_CODES.TRANSPORT_ERROR,
         reasonCode: "transport.transient_failure",
         retryable: true,
@@ -675,7 +675,7 @@ export class BYOMClient {
         );
       } catch (error) {
         throw normalizeSDKError(error, {
-          message: "Failed to disconnect from BYOM provider bridge.",
+          message: "Failed to disconnect from Arlopass provider bridge.",
           machineCode: SDK_MACHINE_CODES.TRANSPORT_ERROR,
           reasonCode: "transport.transient_failure",
           retryable: true,
@@ -884,7 +884,7 @@ export class BYOMClient {
       return;
     }
 
-    throw new BYOMStateError(
+    throw new ArlopassStateError(
       `Operation "${operation}" is not allowed while state is "${this.#stateMachine.state}".`,
       {
         reasonCode: "request.invalid",
@@ -901,7 +901,7 @@ export class BYOMClient {
       return this.#sessionId;
     }
 
-    throw new BYOMStateError("Client is not connected to a session.", {
+    throw new ArlopassStateError("Client is not connected to a session.", {
       reasonCode: "request.invalid",
       details: { field: "sessionId" },
     });
@@ -912,7 +912,7 @@ export class BYOMClient {
       return this.#selectedProvider;
     }
 
-    throw new BYOMSDKError(
+    throw new ArlopassSDKError(
       "A provider must be selected before chat operations can run.",
       {
         machineCode: SDK_MACHINE_CODES.MISSING_PROVIDER_SELECTION,
@@ -966,7 +966,7 @@ export class BYOMClient {
     },
   ): ProtocolEnvelopePayload<TPayload> {
     if (!isRecord(response) || !("envelope" in response)) {
-      throw new BYOMProtocolBoundaryError(
+      throw new ArlopassProtocolBoundaryError(
         "Transport response is missing the canonical envelope.",
         {
           reasonCode: "protocol.invalid_envelope",
@@ -982,7 +982,7 @@ export class BYOMClient {
     });
 
     if (parsedEnvelope.correlationId !== options.expectedCorrelationId) {
-      throw new BYOMProtocolBoundaryError(
+      throw new ArlopassProtocolBoundaryError(
         "Correlation ID mismatch detected in response envelope.",
         {
           reasonCode: normalizeReasonCode("request.invalid"),
@@ -995,7 +995,7 @@ export class BYOMClient {
     }
 
     if (parsedEnvelope.capability !== options.expectedCapability) {
-      throw new BYOMProtocolBoundaryError(
+      throw new ArlopassProtocolBoundaryError(
         "Capability mismatch detected in response envelope.",
         {
           reasonCode: "request.invalid",

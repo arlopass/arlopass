@@ -570,11 +570,11 @@ git commit -m "feat(web-sdk): add tool calling loop to ConversationManager"
 import { describe, expect, it, vi } from "vitest";
 import { ConversationManager } from "../conversation.js";
 import type { ToolDefinition } from "../tools.js";
-import type { BYOMClient } from "../client.js";
+import type { ArlopassClient } from "../client.js";
 import type { ChatSendResult, ChatStreamEvent } from "../types.js";
 
 // Mock client that returns configurable responses
-function mockToolClient(responses: string[]): BYOMClient {
+function mockToolClient(responses: string[]): ArlopassClient {
   let callIndex = 0;
   return {
     selectedProvider: { providerId: "test", modelId: "test-model" },
@@ -591,7 +591,7 @@ function mockToolClient(responses: string[]): BYOMClient {
         yield { type: "done" as const, correlationId: "corr.test" };
       },
     },
-  } as unknown as BYOMClient;
+  } as unknown as ArlopassClient;
 }
 
 describe("ConversationManager with tools", () => {

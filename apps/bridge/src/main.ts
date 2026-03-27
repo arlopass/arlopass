@@ -82,13 +82,13 @@ type CredentialEpochRequest = Readonly<{
 
 const PACKAGE_NAME_BY_PROVIDER_ID: Readonly<Record<string, string>> = Object.freeze(
   {
-    "claude-subscription": "@byom-ai/adapter-claude-subscription",
-    "microsoft-foundry": "@byom-ai/adapter-microsoft-foundry",
-    "google-vertex-ai": "@byom-ai/adapter-google-vertex-ai",
-    "amazon-bedrock": "@byom-ai/adapter-amazon-bedrock",
-    openai: "@byom-ai/adapter-openai",
-    perplexity: "@byom-ai/adapter-perplexity",
-    gemini: "@byom-ai/adapter-gemini",
+    "claude-subscription": "@arlopass/adapter-claude-subscription",
+    "microsoft-foundry": "@arlopass/adapter-microsoft-foundry",
+    "google-vertex-ai": "@arlopass/adapter-google-vertex-ai",
+    "amazon-bedrock": "@arlopass/adapter-amazon-bedrock",
+    openai: "@arlopass/adapter-openai",
+    perplexity: "@arlopass/adapter-perplexity",
+    gemini: "@arlopass/adapter-gemini",
   },
 );
 
@@ -210,7 +210,7 @@ function isModuleNotFoundError(error: unknown): boolean {
 }
 
 function shouldPreferWorkspaceAdapterSource(env: NodeJS.ProcessEnv): boolean {
-  return parseBooleanEnv(env["BYOM_BRIDGE_PREFER_WORKSPACE_ADAPTER_SOURCE"]) === true;
+  return parseBooleanEnv(env["ARLOPASS_BRIDGE_PREFER_WORKSPACE_ADAPTER_SOURCE"]) === true;
 }
 
 function isCloudAdapterContractV2Like(value: unknown): value is CloudAdapterContractV2Like {
@@ -844,7 +844,7 @@ export async function resolveCloudAdapter(
   ) {
     try {
       process.stderr.write(
-        `[byom-bridge] info: cloud adapter "${normalizedProviderId}" loading workspace source by preference from ${workspaceSourceUrl.pathname}\n`,
+        `[arlopass-bridge] info: cloud adapter "${normalizedProviderId}" loading workspace source by preference from ${workspaceSourceUrl.pathname}\n`,
       );
       const preferredNamespace = (await import(workspaceSourceUrl.href)) as unknown;
       if (!isRecord(preferredNamespace)) {
@@ -861,7 +861,7 @@ export async function resolveCloudAdapter(
       return buildCloudControlPlaneAdapter(preferredContract);
     } catch (error) {
       process.stderr.write(
-        `[byom-bridge] warning: cloud adapter "${normalizedProviderId}" workspace source preference failed; falling back to package import: ${toErrorMessage(error)}\n`,
+        `[arlopass-bridge] warning: cloud adapter "${normalizedProviderId}" workspace source preference failed; falling back to package import: ${toErrorMessage(error)}\n`,
       );
     }
   }
@@ -879,7 +879,7 @@ export async function resolveCloudAdapter(
 
       try {
         process.stderr.write(
-          `[byom-bridge] info: cloud adapter "${normalizedProviderId}" package entry is unavailable; loading workspace source fallback from ${workspaceSourceUrl.pathname}\n`,
+          `[arlopass-bridge] info: cloud adapter "${normalizedProviderId}" package entry is unavailable; loading workspace source fallback from ${workspaceSourceUrl.pathname}\n`,
         );
         return (await import(workspaceSourceUrl.href)) as unknown;
       } catch (fallbackError) {
@@ -911,7 +911,7 @@ async function loadRegisteredCloudAdapters(): Promise<
     } catch (error) {
       const errorMessage = toErrorMessage(error);
       process.stderr.write(
-        `[byom-bridge] warning: failed to load cloud adapter for "${providerId}": ${errorMessage}\n`,
+        `[arlopass-bridge] warning: failed to load cloud adapter for "${providerId}": ${errorMessage}\n`,
       );
     }
   }
@@ -921,13 +921,13 @@ async function loadRegisteredCloudAdapters(): Promise<
 function resolvePairingCodeRetrievalHintFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
-  const explicitHint = normalizeNonEmptyString(env["BYOM_BRIDGE_PAIRING_CODE_HINT"]);
+  const explicitHint = normalizeNonEmptyString(env["ARLOPASS_BRIDGE_PAIRING_CODE_HINT"]);
   if (explicitHint !== undefined) {
     return explicitHint;
   }
 
   const pairingCodeLogPath = normalizeNonEmptyString(
-    env["BYOM_BRIDGE_PAIRING_CODE_LOG_PATH"],
+    env["ARLOPASS_BRIDGE_PAIRING_CODE_LOG_PATH"],
   );
   if (pairingCodeLogPath !== undefined) {
     return `Bridge pairing code log: ${pairingCodeLogPath}`;
@@ -938,14 +938,14 @@ function resolvePairingCodeRetrievalHintFromEnv(
 function resolvePairingStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
-  const explicitPath = normalizeNonEmptyString(env["BYOM_BRIDGE_PAIRING_STATE_PATH"]);
+  const explicitPath = normalizeNonEmptyString(env["ARLOPASS_BRIDGE_PAIRING_STATE_PATH"]);
   if (explicitPath !== undefined) {
     return explicitPath;
   }
 
   const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
   if (localAppData !== undefined) {
-    return join(localAppData, "BYOM", "bridge", "state", "pairing-state.json");
+    return join(localAppData, "Arlopass", "bridge", "state", "pairing-state.json");
   }
   return undefined;
 }
@@ -953,14 +953,14 @@ function resolvePairingStateFilePathFromEnv(
 function resolveHandshakeStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
-  const explicitPath = normalizeNonEmptyString(env["BYOM_BRIDGE_HANDSHAKE_STATE_PATH"]);
+  const explicitPath = normalizeNonEmptyString(env["ARLOPASS_BRIDGE_HANDSHAKE_STATE_PATH"]);
   if (explicitPath !== undefined) {
     return explicitPath;
   }
 
   const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
   if (localAppData !== undefined) {
-    return join(localAppData, "BYOM", "bridge", "state", "handshake-state.json");
+    return join(localAppData, "Arlopass", "bridge", "state", "handshake-state.json");
   }
   return undefined;
 }
@@ -968,14 +968,14 @@ function resolveHandshakeStateFilePathFromEnv(
 function resolveSessionKeyStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
-  const explicitPath = normalizeNonEmptyString(env["BYOM_BRIDGE_SESSION_KEY_STATE_PATH"]);
+  const explicitPath = normalizeNonEmptyString(env["ARLOPASS_BRIDGE_SESSION_KEY_STATE_PATH"]);
   if (explicitPath !== undefined) {
     return explicitPath;
   }
 
   const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
   if (localAppData !== undefined) {
-    return join(localAppData, "BYOM", "bridge", "state", "session-key-state.json");
+    return join(localAppData, "Arlopass", "bridge", "state", "session-key-state.json");
   }
   return undefined;
 }
@@ -984,7 +984,7 @@ function resolveCloudConnectionStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
   const explicitPath = normalizeNonEmptyString(
-    env["BYOM_BRIDGE_CLOUD_CONNECTION_STATE_PATH"],
+    env["ARLOPASS_BRIDGE_CLOUD_CONNECTION_STATE_PATH"],
   );
   if (explicitPath !== undefined) {
     return explicitPath;
@@ -994,7 +994,7 @@ function resolveCloudConnectionStateFilePathFromEnv(
   if (localAppData !== undefined) {
     return join(
       localAppData,
-      "BYOM",
+      "Arlopass",
       "bridge",
       "state",
       "cloud-connection-state.json",
@@ -1007,7 +1007,7 @@ function resolveRequestIdempotencyStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
   const explicitPath = normalizeNonEmptyString(
-    env["BYOM_BRIDGE_REQUEST_IDEMPOTENCY_STATE_PATH"],
+    env["ARLOPASS_BRIDGE_REQUEST_IDEMPOTENCY_STATE_PATH"],
   );
   if (explicitPath !== undefined) {
     return explicitPath;
@@ -1017,7 +1017,7 @@ function resolveRequestIdempotencyStateFilePathFromEnv(
   if (localAppData !== undefined) {
     return join(
       localAppData,
-      "BYOM",
+      "Arlopass",
       "bridge",
       "state",
       "request-idempotency-state.json",
@@ -1026,13 +1026,13 @@ function resolveRequestIdempotencyStateFilePathFromEnv(
   return undefined;
 }
 
-registerCloudAdapterPackage("@byom-ai/adapter-claude-subscription");
-registerCloudAdapterPackage("@byom-ai/adapter-microsoft-foundry");
-registerCloudAdapterPackage("@byom-ai/adapter-google-vertex-ai");
-registerCloudAdapterPackage("@byom-ai/adapter-amazon-bedrock");
-registerCloudAdapterPackage("@byom-ai/adapter-openai");
-registerCloudAdapterPackage("@byom-ai/adapter-perplexity");
-registerCloudAdapterPackage("@byom-ai/adapter-gemini");
+registerCloudAdapterPackage("@arlopass/adapter-claude-subscription");
+registerCloudAdapterPackage("@arlopass/adapter-microsoft-foundry");
+registerCloudAdapterPackage("@arlopass/adapter-google-vertex-ai");
+registerCloudAdapterPackage("@arlopass/adapter-amazon-bedrock");
+registerCloudAdapterPackage("@arlopass/adapter-openai");
+registerCloudAdapterPackage("@arlopass/adapter-perplexity");
+registerCloudAdapterPackage("@arlopass/adapter-gemini");
 
 /**
  * Bridge entry point.
@@ -1051,10 +1051,10 @@ async function main(): Promise<void> {
   const requestIdempotencyStateFilePath =
     resolveRequestIdempotencyStateFilePathFromEnv(process.env);
   const requestIdempotencyTtlMs = parsePositiveIntegerEnv(
-    process.env["BYOM_BRIDGE_REQUEST_IDEMPOTENCY_TTL_MS"],
+    process.env["ARLOPASS_BRIDGE_REQUEST_IDEMPOTENCY_TTL_MS"],
   );
   const requestIdempotencyMaxEntries = parsePositiveIntegerEnv(
-    process.env["BYOM_BRIDGE_REQUEST_IDEMPOTENCY_MAX_ENTRIES"],
+    process.env["ARLOPASS_BRIDGE_REQUEST_IDEMPOTENCY_MAX_ENTRIES"],
   );
   const sessionKeyStateFilePath = resolveSessionKeyStateFilePathFromEnv(process.env);
   const sessionKeyRegistry = new SessionKeyRegistry({
@@ -1124,7 +1124,7 @@ async function main(): Promise<void> {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       process.stderr.write(
-        `[byom-bridge] warning: ${target.label} probe failed; that CLI path may be unavailable: ${errorMessage}\n`,
+        `[arlopass-bridge] warning: ${target.label} probe failed; that CLI path may be unavailable: ${errorMessage}\n`,
       );
     }
   }
@@ -1186,7 +1186,7 @@ async function main(): Promise<void> {
 
 if (process.env["VITEST"] !== "true") {
   main().catch((error: unknown) => {
-    process.stderr.write(`[byom-bridge] fatal: ${String(error)}\n`);
+    process.stderr.write(`[arlopass-bridge] fatal: ${String(error)}\n`);
     process.exitCode = 1;
   });
 }

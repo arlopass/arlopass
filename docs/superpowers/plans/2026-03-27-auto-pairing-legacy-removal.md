@@ -138,10 +138,10 @@ export async function autoPair(): Promise<{ success: boolean; error?: string }> 
   
   // 2. Send pairing.auto to bridge
   const response = await new Promise<unknown>((resolve) => {
-    chrome.runtime.sendNativeMessage("com.byom.bridge", {
+    chrome.runtime.sendNativeMessage("com.arlopass.bridge", {
       type: "pairing.auto",
       extensionId: chrome.runtime.id ?? "",
-      hostName: "com.byom.bridge",
+      hostName: "com.arlopass.bridge",
     }, resolve);
   });
   
@@ -152,7 +152,7 @@ export async function autoPair(): Promise<{ success: boolean; error?: string }> 
   const pairingState = await wrapPairingKeyMaterial({
     pairingHandle,
     extensionId: chrome.runtime.id ?? "",
-    hostName: "com.byom.bridge",
+    hostName: "com.arlopass.bridge",
     pairingKeyHex,
     runtimeId: chrome.runtime.id ?? "",
     createdAt,
@@ -160,7 +160,7 @@ export async function autoPair(): Promise<{ success: boolean; error?: string }> 
   
   // 5. Store in chrome.storage.local
   await new Promise<void>((resolve) => {
-    chrome.storage.local.set({ "byom.wallet.bridgePairing.v1": pairingState }, resolve);
+    chrome.storage.local.set({ "arlopass.wallet.bridgePairing.v1": pairingState }, resolve);
   });
   
   return { success: true };
@@ -213,7 +213,7 @@ Remove the legacy `WALLET_KEY_BRIDGE_SHARED_SECRET` constant and `resolveBridgeS
 ```ts
 import { parseBridgePairingState, unwrapPairingKeyMaterial } from "../../../transport/bridge-pairing.js";
 
-const PAIRING_STATE_KEY = "byom.wallet.bridgePairing.v1";
+const PAIRING_STATE_KEY = "arlopass.wallet.bridgePairing.v1";
 
 async function resolvePairingSecret(): Promise<string | undefined> {
   const state = await new Promise<Record<string, unknown>>((resolve) => {
@@ -270,7 +270,7 @@ git commit -m "feat(extension): AddProviderWizard uses pairing-based auth instea
 
 - [ ] **Step 1: Remove `resolveSharedSecretFromEnv()` from main.ts**
 
-Delete the function. Remove the `sharedSecret` variable. Remove the env var validation. Bridge no longer fails if `BYOM_BRIDGE_SHARED_SECRET` is not set.
+Delete the function. Remove the `sharedSecret` variable. Remove the env var validation. Bridge no longer fails if `ARLOPASS_BRIDGE_SHARED_SECRET` is not set.
 
 - [ ] **Step 2: Remove `sharedSecret` from `BridgeHandlerOptions`**
 
@@ -412,9 +412,9 @@ git commit -m "feat(bridge): self-generated signing key with state file persiste
 
 - [ ] **Step 1: Remove secret generation from dev scripts**
 
-In `run-dev.ps1`: remove `BYOM_BRIDGE_SHARED_SECRET` env var generation/loading. Bridge starts without it now.
+In `run-dev.ps1`: remove `ARLOPASS_BRIDGE_SHARED_SECRET` env var generation/loading. Bridge starts without it now.
 
-In native host scripts: remove `BYOM_BRIDGE_SHARED_SECRET_PATH` reading.
+In native host scripts: remove `ARLOPASS_BRIDGE_SHARED_SECRET_PATH` reading.
 
 - [ ] **Step 2: Update documentation**
 
@@ -425,7 +425,7 @@ README.md and RUNNING_AND_USAGE_GUIDE.md: remove "Generate shared secret" sectio
 ```bash
 cd apps/bridge && npx vitest run
 cd apps/extension && npm run build && npx vitest run
-cd d:\Projects\byom-web && npm test
+cd d:\Projects\arlopass && npm test
 ```
 
 - [ ] **Step 4: Commit**

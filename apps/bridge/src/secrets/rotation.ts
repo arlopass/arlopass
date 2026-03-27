@@ -3,7 +3,7 @@ import {
   type PolicyKeyRecord,
   type PolicyKeyRotateInput,
   type PolicyKeyCreateInput,
-} from "@byom-ai/policy";
+} from "@arlopass/policy";
 
 export type KeyRotationEvent = Readonly<{
   previousKeyId: string;

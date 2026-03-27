@@ -1,9 +1,9 @@
-# @byom-ai/audit
+# @arlopass/audit
 
-Record every BYOM decision — allow, deny, route, fail — as a structured event for compliance and investigation. Prompts and responses are excluded by default.
+Record every Arlopass decision — allow, deny, route, fail — as a structured event for compliance and investigation. Prompts and responses are excluded by default.
 
 ```ts
-import { createAuditEvent, JsonlExporter } from "@byom-ai/audit";
+import { createAuditEvent, JsonlExporter } from "@arlopass/audit";
 
 const event = createAuditEvent({
   timestamp: new Date().toISOString(),

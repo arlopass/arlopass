@@ -1,83 +1,85 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { BYOMProvider } from "../provider/byom-provider.js";
+import { ArlopassProvider } from "../provider/arlopass-provider.js";
 import {
-  BYOMNotInstalled,
-  BYOMDisconnected,
-  BYOMConnected,
-  BYOMConnectionGate,
-  BYOMHasError,
+  ArlopassNotInstalled,
+  ArlopassDisconnected,
+  ArlopassConnected,
+  ArlopassConnectionGate,
+  ArlopassHasError,
 } from "../guards/index.js";
 
 function wrapper(ui: React.ReactNode) {
   return (
-    <BYOMProvider appId="test" autoConnect={false}>
+    <ArlopassProvider appId="test" autoConnect={false}>
       {ui}
-    </BYOMProvider>
+    </ArlopassProvider>
   );
 }
 
 describe("Guard components", () => {
   afterEach(() => {
-    delete (window as unknown as Record<string, unknown>).byom;
+    delete (window as unknown as Record<string, unknown>).arlopass;
   });
 
-  it("BYOMNotInstalled renders when no window.byom", () => {
+  it("ArlopassNotInstalled renders when no window.arlopass", () => {
     render(
       wrapper(
-        <BYOMNotInstalled>
+        <ArlopassNotInstalled>
           <div data-testid="not-installed">no extension</div>
-        </BYOMNotInstalled>,
+        </ArlopassNotInstalled>,
       ),
     );
     expect(screen.getByTestId("not-installed")).toBeTruthy();
   });
 
-  it("BYOMDisconnected renders when disconnected", () => {
+  it("ArlopassDisconnected renders when disconnected", () => {
     render(
       wrapper(
-        <BYOMDisconnected>
+        <ArlopassDisconnected>
           <div data-testid="disconnected">offline</div>
-        </BYOMDisconnected>,
+        </ArlopassDisconnected>,
       ),
     );
     expect(screen.getByTestId("disconnected")).toBeTruthy();
   });
 
-  it("BYOMConnected does NOT render when disconnected", () => {
+  it("ArlopassConnected does NOT render when disconnected", () => {
     render(
       wrapper(
-        <BYOMConnected>
+        <ArlopassConnected>
           <div data-testid="connected">online</div>
-        </BYOMConnected>,
+        </ArlopassConnected>,
       ),
     );
     expect(screen.queryByTestId("connected")).toBeNull();
   });
 
-  it("BYOMConnectionGate shows fallback when disconnected", () => {
+  it("ArlopassConnectionGate shows fallback when disconnected", () => {
     render(
       wrapper(
-        <BYOMConnectionGate fallback={<div data-testid="fallback">wait</div>}>
+        <ArlopassConnectionGate
+          fallback={<div data-testid="fallback">wait</div>}
+        >
           <div data-testid="content">ready</div>
-        </BYOMConnectionGate>,
+        </ArlopassConnectionGate>,
       ),
     );
     expect(screen.getByTestId("fallback")).toBeTruthy();
     expect(screen.queryByTestId("content")).toBeNull();
   });
 
-  it("BYOMConnectionGate shows notInstalledFallback when no extension", () => {
+  it("ArlopassConnectionGate shows notInstalledFallback when no extension", () => {
     render(
       wrapper(
-        <BYOMConnectionGate
+        <ArlopassConnectionGate
           fallback={<div data-testid="fallback">wait</div>}
           notInstalledFallback={
             <div data-testid="no-ext">install extension</div>
           }
         >
           <div data-testid="content">ready</div>
-        </BYOMConnectionGate>,
+        </ArlopassConnectionGate>,
       ),
     );
     expect(screen.getByTestId("no-ext")).toBeTruthy();
@@ -88,20 +90,20 @@ describe("Guard components", () => {
   it("Negative guards accept render function children", () => {
     render(
       wrapper(
-        <BYOMDisconnected>
+        <ArlopassDisconnected>
           {() => <div data-testid="fn-child">from function</div>}
-        </BYOMDisconnected>,
+        </ArlopassDisconnected>,
       ),
     );
     expect(screen.getByTestId("fn-child").textContent).toBe("from function");
   });
 
-  it("BYOMHasError does NOT render when no error in initial state", () => {
+  it("ArlopassHasError does NOT render when no error in initial state", () => {
     render(
       wrapper(
-        <BYOMHasError>
+        <ArlopassHasError>
           {({ error }) => <div data-testid="error">{error.message}</div>}
-        </BYOMHasError>,
+        </ArlopassHasError>,
       ),
     );
     expect(screen.queryByTestId("error")).toBeNull();

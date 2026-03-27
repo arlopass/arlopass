@@ -62,20 +62,20 @@ export function useWalletProviders(): UseWalletResult {
 
         chrome.storage.local.get(
             [
-                "byom.wallet.providers.v1",
-                "byom.wallet.activeProvider.v1",
-                "byom.wallet.ui.lastError.v1",
+                "arlopass.wallet.providers.v1",
+                "arlopass.wallet.activeProvider.v1",
+                "arlopass.wallet.ui.lastError.v1",
             ],
             (result: Record<string, unknown>) => {
                 try {
                     const snapshot: WalletSnapshot = normalizeWalletSnapshot(result);
                     if (snapshot.warnings.length > 0) {
-                        console.warn("BYOM Wallet: snapshot warnings", snapshot.warnings);
+                        console.warn("Arlopass Wallet: snapshot warnings", snapshot.warnings);
                     }
                     setProviders(snapshot.providers.map(toProviderCardData));
                     setRawProviders(snapshot.providers);
                 } catch (err) {
-                    console.error("BYOM Wallet: failed to load wallet state", err);
+                    console.error("Arlopass Wallet: failed to load wallet state", err);
                     setError("Failed to load wallet state.");
                 } finally {
                     setLoading(false);
@@ -92,7 +92,7 @@ export function useWalletProviders(): UseWalletResult {
             changes: Record<string, chrome.storage.StorageChange>,
             area: string,
         ) => {
-            if (area === "local" && "byom.wallet.providers.v1" in changes) {
+            if (area === "local" && "arlopass.wallet.providers.v1" in changes) {
                 load();
             }
         };

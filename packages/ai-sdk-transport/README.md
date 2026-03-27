@@ -1,27 +1,27 @@
-# @byom-ai/ai-sdk-transport
+# @arlopass/ai-sdk-transport
 
-Use Vercel AI SDK's `useChat` with the BYOM browser extension. No API route, no API keys, no server.
+Use Vercel AI SDK's `useChat` with the Arlopass browser extension. No API route, no API keys, no server.
 
 ## Install
 
 ```bash
-npm install @byom-ai/ai-sdk-transport ai @byom-ai/web-sdk
+npm install @arlopass/ai-sdk-transport ai @arlopass/web-sdk
 ```
 
 > [!IMPORTANT]
-> The [BYOM browser extension](https://byomai.com) must be installed for the transport to work. It provides the AI model that powers your app.
+> The [Arlopass browser extension](https://arlopassai.com) must be installed for the transport to work. It provides the AI model that powers your app.
 
 ## Quick Start
 
-Zero-config — just pass a `BYOMChatTransport` instance to `useChat`:
+Zero-config — just pass a `ArlopassChatTransport` instance to `useChat`:
 
 ```tsx
 import { useChat } from "@ai-sdk/react";
-import { BYOMChatTransport } from "@byom-ai/ai-sdk-transport";
+import { ArlopassChatTransport } from "@arlopass/ai-sdk-transport";
 
 function Chat() {
   const { messages, sendMessage, status } = useChat({
-    transport: new BYOMChatTransport(),
+    transport: new ArlopassChatTransport(),
   });
 
   return (
@@ -42,7 +42,7 @@ function Chat() {
 Identify your app in the extension's connection list:
 
 ```tsx
-new BYOMChatTransport({
+new ArlopassChatTransport({
   appId: "com.acme.copilot",
   appName: "Acme Copilot",
   appDescription: "AI assistant for Acme",
@@ -51,15 +51,15 @@ new BYOMChatTransport({
 
 ## Advanced: Pre-connected Client
 
-If you manage the `BYOMClient` lifecycle yourself, pass it directly:
+If you manage the `ArlopassClient` lifecycle yourself, pass it directly:
 
 ```tsx
-import { BYOMClient } from "@byom-ai/web-sdk";
+import { ArlopassClient } from "@arlopass/web-sdk";
 
-const client = new BYOMClient({ transport: window.byom });
+const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
-useChat({ transport: new BYOMChatTransport({ client }) });
+useChat({ transport: new ArlopassChatTransport({ client }) });
 ```
 
 ## Options
@@ -71,14 +71,14 @@ useChat({ transport: new BYOMChatTransport({ client }) });
 | `appName` | `string` | — | Human-readable app name |
 | `appDescription` | `string` | — | Short description |
 | `appIcon` | `string` | — | URL to a square icon |
-| `client` | `BYOMClient` | — | Pre-connected client (skips auto-connect) |
+| `client` | `ArlopassClient` | — | Pre-connected client (skips auto-connect) |
 | `timeoutMs` | `number` | `120000` | Request timeout in ms |
 
 ## How It Works
 
-The transport detects the BYOM browser extension (`window.byom`), auto-connects, and routes `useChat` messages through the extension to whatever AI provider the user has configured. Messages are converted from AI SDK `UIMessage` format to BYOM `ChatMessage` format. Streaming responses are converted back to AI SDK `UIMessageChunk` events that `useChat` consumes natively.
+The transport detects the Arlopass browser extension (`window.arlopass`), auto-connects, and routes `useChat` messages through the extension to whatever AI provider the user has configured. Messages are converted from AI SDK `UIMessage` format to Arlopass `ChatMessage` format. Streaming responses are converted back to AI SDK `UIMessageChunk` events that `useChat` consumes natively.
 
 ## Links
 
-- [BYOM website](https://byomai.com)
-- [GitHub](https://github.com/AltClick/byom-web/tree/main/packages/ai-sdk-transport)
+- [Arlopass website](https://arlopassai.com)
+- [GitHub](https://github.com/AltClick/arlopass/tree/main/packages/ai-sdk-transport)

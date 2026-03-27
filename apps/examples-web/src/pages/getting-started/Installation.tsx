@@ -2,19 +2,19 @@ import { Stack, Title, Text, List } from "@mantine/core";
 import { CodeBlock, Callout, InlineCode } from "../../components";
 import { navigate } from "../../router";
 
-const installReact = `npm install @byom-ai/react`;
+const installReact = `npm install @arlopass/react`;
 
-const installWeb = `npm install @byom-ai/web-sdk`;
+const installWeb = `npm install @arlopass/web-sdk`;
 
-const installUI = `npm install @byom-ai/react-ui`;
+const installUI = `npm install @arlopass/react-ui`;
 
-const registryCmd = `npx @byom-ai/ui add chat`;
+const registryCmd = `npx @arlopass/ui add chat`;
 
-const verifyReact = `import { BYOMProvider, useConversation } from "@byom-ai/react";
+const verifyReact = `import { ArlopassProvider, useConversation } from "@arlopass/react";
 
 console.log("React SDK loaded ✓");`;
 
-const verifyWeb = `import { BYOMClient } from "@byom-ai/web-sdk";
+const verifyWeb = `import { ArlopassClient } from "@arlopass/web-sdk";
 
 console.log("Web SDK loaded ✓");`;
 
@@ -42,8 +42,8 @@ export default function Installation() {
         </List.Item>
         <List.Item>
           <Text fz="sm">
-            <strong>BYOM browser extension</strong> — installed in the user's
-            browser to provide AI credentials
+            <strong>Arlopass browser extension</strong> — installed in the
+            user's browser to provide AI credentials
           </Text>
         </List.Item>
       </List>
@@ -63,17 +63,17 @@ export default function Installation() {
       <CodeBlock title="Terminal" code={installWeb} language="bash" />
 
       <Callout type="info" title="You don't need both">
-        The React SDK includes <InlineCode>@byom-ai/web-sdk</InlineCode> as a
+        The React SDK includes <InlineCode>@arlopass/web-sdk</InlineCode> as a
         dependency — you don't need to install both. Only install the Web SDK
         directly if you're not using React.
       </Callout>
 
       <Title order={3}>Browser extension</Title>
       <Text>
-        BYOM requires the browser extension to be installed in the end user's
-        browser. The extension manages provider credentials and exposes the
-        secure transport that the SDKs connect to. Install the BYOM browser
-        extension from the Chrome Web Store.
+        Arlopass requires the browser extension to be installed in the end
+        user's browser. The extension manages provider credentials and exposes
+        the secure transport that the SDKs connect to. Install the Arlopass
+        browser extension from the Chrome Web Store.
       </Text>
 
       <Title order={3}>Verify installation</Title>

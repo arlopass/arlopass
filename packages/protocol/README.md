@@ -1,9 +1,9 @@
-# @byom-ai/protocol
+# @arlopass/protocol
 
 Wire format and contracts shared by the SDK, extension, bridge, and all adapters. Zero dependencies.
 
 ```ts
-import { parseEnvelope, ProtocolError, type CanonicalEnvelope } from "@byom-ai/protocol";
+import { parseEnvelope, ProtocolError, type CanonicalEnvelope } from "@arlopass/protocol";
 
 const envelope = parseEnvelope<{ messages: Array<{ role: string; content: string }> }>(raw);
 console.log(envelope.requestId, envelope.capability, envelope.payload.messages);
@@ -15,7 +15,7 @@ console.log(envelope.requestId, envelope.capability, envelope.payload.messages);
 
 ### Envelope
 
-All BYOM messages are wrapped in a `CanonicalEnvelope<TPayload>`:
+All Arlopass messages are wrapped in a `CanonicalEnvelope<TPayload>`:
 
 ```ts
 type CanonicalEnvelope<TPayload> = {
@@ -87,14 +87,14 @@ class ProtocolError extends Error {
 
 | Class | Machine Code | Retryable |
 |-------|-------------|-----------|
-| `AuthError` | `BYOM_AUTH_FAILED` | No |
-| `PermissionError` | `BYOM_PERMISSION_DENIED` | No |
-| `ProviderUnavailableError` | `BYOM_PROVIDER_UNAVAILABLE` | Yes |
-| `PolicyViolationError` | `BYOM_POLICY_VIOLATION` | No |
-| `TimeoutError` | `BYOM_TIMEOUT` | Yes |
-| `TransientNetworkError` | `BYOM_TRANSIENT_NETWORK` | Yes |
-| `EnvelopeValidationError` | `BYOM_PROTOCOL_INVALID_ENVELOPE` | No |
-| `ProtocolVersionError` | `BYOM_PROTOCOL_UNSUPPORTED_VERSION` | No |
+| `AuthError` | `ARLOPASS_AUTH_FAILED` | No |
+| `PermissionError` | `ARLOPASS_PERMISSION_DENIED` | No |
+| `ProviderUnavailableError` | `ARLOPASS_PROVIDER_UNAVAILABLE` | Yes |
+| `PolicyViolationError` | `ARLOPASS_POLICY_VIOLATION` | No |
+| `TimeoutError` | `ARLOPASS_TIMEOUT` | Yes |
+| `TransientNetworkError` | `ARLOPASS_TRANSIENT_NETWORK` | Yes |
+| `EnvelopeValidationError` | `ARLOPASS_PROTOCOL_INVALID_ENVELOPE` | No |
+| `ProtocolVersionError` | `ARLOPASS_PROTOCOL_UNSUPPORTED_VERSION` | No |
 
 **`isProtocolError(error: unknown): boolean`** — Type guard for `ProtocolError` instances.
 
@@ -104,18 +104,18 @@ class ProtocolError extends Error {
 
 | Code | Constant |
 |------|----------|
-| `BYOM_AUTH_FAILED` | `AUTH_FAILED` |
-| `BYOM_PERMISSION_DENIED` | `PERMISSION_DENIED` |
-| `BYOM_PROVIDER_UNAVAILABLE` | `PROVIDER_UNAVAILABLE` |
-| `BYOM_POLICY_VIOLATION` | `POLICY_VIOLATION` |
-| `BYOM_TIMEOUT` | `TIMEOUT` |
-| `BYOM_TRANSIENT_NETWORK` | `TRANSIENT_NETWORK` |
-| `BYOM_PROTOCOL_INVALID_ENVELOPE` | `INVALID_ENVELOPE` |
-| `BYOM_PROTOCOL_MISSING_REQUIRED_FIELD` | `MISSING_REQUIRED_FIELD` |
-| `BYOM_PROTOCOL_ENVELOPE_EXPIRED` | `ENVELOPE_EXPIRED` |
-| `BYOM_PROTOCOL_REPLAY_PRONE_METADATA` | `REPLAY_PRONE_METADATA` |
-| `BYOM_PROTOCOL_UNSUPPORTED_VERSION` | `UNSUPPORTED_PROTOCOL_VERSION` |
-| `BYOM_PROTOCOL_UNSUPPORTED_CAPABILITY` | `UNSUPPORTED_CAPABILITY` |
+| `ARLOPASS_AUTH_FAILED` | `AUTH_FAILED` |
+| `ARLOPASS_PERMISSION_DENIED` | `PERMISSION_DENIED` |
+| `ARLOPASS_PROVIDER_UNAVAILABLE` | `PROVIDER_UNAVAILABLE` |
+| `ARLOPASS_POLICY_VIOLATION` | `POLICY_VIOLATION` |
+| `ARLOPASS_TIMEOUT` | `TIMEOUT` |
+| `ARLOPASS_TRANSIENT_NETWORK` | `TRANSIENT_NETWORK` |
+| `ARLOPASS_PROTOCOL_INVALID_ENVELOPE` | `INVALID_ENVELOPE` |
+| `ARLOPASS_PROTOCOL_MISSING_REQUIRED_FIELD` | `MISSING_REQUIRED_FIELD` |
+| `ARLOPASS_PROTOCOL_ENVELOPE_EXPIRED` | `ENVELOPE_EXPIRED` |
+| `ARLOPASS_PROTOCOL_REPLAY_PRONE_METADATA` | `REPLAY_PRONE_METADATA` |
+| `ARLOPASS_PROTOCOL_UNSUPPORTED_VERSION` | `UNSUPPORTED_PROTOCOL_VERSION` |
+| `ARLOPASS_PROTOCOL_UNSUPPORTED_CAPABILITY` | `UNSUPPORTED_CAPABILITY` |
 
 ---
 

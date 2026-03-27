@@ -8,7 +8,7 @@ import type {
 
 export const CLOUD_FOUNDRY_CONNECTOR_ID = "cloud-foundry";
 
-const DEFAULT_NATIVE_HOST_NAME = "com.byom.bridge";
+const DEFAULT_NATIVE_HOST_NAME = "com.arlopass.bridge";
 const DEFAULT_PROVIDER_ID = "microsoft-foundry";
 const DEFAULT_METHOD_ID = "foundry.api_key";
 const DEFAULT_API_URL = "https://example-resource.openai.azure.com/openai/v1";

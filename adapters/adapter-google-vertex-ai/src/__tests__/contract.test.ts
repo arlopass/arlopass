@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MANIFEST_SCHEMA_VERSION, type CloudAdapterContractV2 } from "@byom-ai/adapter-runtime";
+import { MANIFEST_SCHEMA_VERSION, type CloudAdapterContractV2 } from "@arlopass/adapter-runtime";
 
 import { GoogleVertexAiAdapter, GOOGLE_VERTEX_AI_MANIFEST } from "../index.js";
 

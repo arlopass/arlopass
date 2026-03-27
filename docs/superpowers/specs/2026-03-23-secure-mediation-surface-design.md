@@ -3,7 +3,7 @@
 ## Metadata
 - **Date:** 2026-03-23
 - **Status:** Draft for review
-- **Program:** BYOM AI SDK
+- **Program:** Arlopass SDK
 - **Pillars:** Security, Reliability, Robustness
 
 ---
@@ -42,7 +42,7 @@ The system needs a trusted mediation boundary between untrusted web apps and use
 
 ### Components
 - `apps/extension`
-  - Provider injection transport (`window.byom` low-level bridge only)
+  - Provider injection transport (`window.arlopass` low-level bridge only)
   - Consent dialogs and grant management UI
   - Origin registry and permission cache
 - `apps/bridge`

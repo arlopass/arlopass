@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { type ReactNode } from "react";
-import { BYOMProvider } from "@byom-ai/react";
+import { ArlopassProvider } from "@arlopass/react";
 import { ConnectionStatus } from "../connection-status/index.js";
 
 function setup() {
@@ -11,12 +11,12 @@ function setup() {
     request: vi.fn().mockResolvedValue({ envelope: {} }),
     stream: vi.fn(),
   };
-  (window as unknown as Record<string, unknown>).byom = mockTransport;
+  (window as unknown as Record<string, unknown>).arlopass = mockTransport;
   return mockTransport;
 }
 
 afterEach(() => {
-  delete (window as unknown as Record<string, unknown>).byom;
+  delete (window as unknown as Record<string, unknown>).arlopass;
 });
 
 beforeEach(() => {
@@ -24,7 +24,7 @@ beforeEach(() => {
 });
 
 function Wrapper({ children }: { children: ReactNode }) {
-  return <BYOMProvider appId="test">{children}</BYOMProvider>;
+  return <ArlopassProvider appId="test">{children}</ArlopassProvider>;
 }
 
 describe("ConnectionStatus", () => {
@@ -62,13 +62,17 @@ describe("ConnectionStatus", () => {
   it("forwards className", () => {
     render(
       <Wrapper>
-        <ConnectionStatus state="connected" className="my-class" data-testid="conn" />
+        <ConnectionStatus
+          state="connected"
+          className="my-class"
+          data-testid="conn"
+        />
       </Wrapper>,
     );
     expect(screen.getByTestId("conn").className).toBe("my-class");
   });
 
-  it("renders in uncontrolled mode inside BYOMProvider", () => {
+  it("renders in uncontrolled mode inside ArlopassProvider", () => {
     render(
       <Wrapper>
         <ConnectionStatus data-testid="conn" />

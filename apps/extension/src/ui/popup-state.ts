@@ -8,13 +8,13 @@ export type WalletProvider = {
   name: string;
   type: "local" | "cloud" | "cli";
   status:
-    | "connected"
-    | "disconnected"
-    | "attention"
-    | "reconnecting"
-    | "failed"
-    | "revoked"
-    | "degraded";
+  | "connected"
+  | "disconnected"
+  | "attention"
+  | "reconnecting"
+  | "failed"
+  | "revoked"
+  | "degraded";
   models: WalletProviderModel[];
   lastSyncedAt?: number;
   statusDetail?: string;
@@ -235,11 +235,11 @@ export function normalizeWalletSnapshot(raw: unknown): WalletSnapshot {
 
   const data = raw as Record<string, unknown>;
 
-  const rawProviders = data["byom.wallet.providers.v1"];
+  const rawProviders = data["arlopass.wallet.providers.v1"];
   const providers: WalletProvider[] = [];
   if (rawProviders !== undefined) {
     if (!Array.isArray(rawProviders)) {
-      warnings.push("byom.wallet.providers.v1 is not an array; ignoring");
+      warnings.push("arlopass.wallet.providers.v1 is not an array; ignoring");
     } else {
       for (const p of rawProviders) {
         const parsed = parseProvider(p, warnings);
@@ -250,8 +250,8 @@ export function normalizeWalletSnapshot(raw: unknown): WalletSnapshot {
     }
   }
 
-  const activeProvider = parseActiveProvider(data["byom.wallet.activeProvider.v1"]);
-  const lastError = parseLastError(data["byom.wallet.ui.lastError.v1"]);
+  const activeProvider = parseActiveProvider(data["arlopass.wallet.activeProvider.v1"]);
+  const lastError = parseLastError(data["arlopass.wallet.ui.lastError.v1"]);
 
   return { providers, activeProvider, lastError, warnings };
 }

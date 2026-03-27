@@ -62,11 +62,11 @@ run_validate() {
 
 start_watchers() {
   cd "$REPO_ROOT"
-  npm run build -w @byom-ai/bridge -- --watch &
+  npm run build -w @arlopass/bridge -- --watch &
   WATCH_PIDS+=("$!")
   echo "Started bridge watcher (PID: ${WATCH_PIDS[-1]})."
 
-  npm run build -w @byom-ai/extension -- --watch &
+  npm run build -w @arlopass/extension -- --watch &
   WATCH_PIDS+=("$!")
   echo "Started extension watcher (PID: ${WATCH_PIDS[-1]})."
 }
@@ -75,7 +75,7 @@ run_bridge() {
   ensure_dev_tooling
 
   cd "$REPO_ROOT"
-  npm run typecheck -w @byom-ai/bridge
+  npm run typecheck -w @arlopass/bridge
   echo "Bridge starting. Load extension from: $REPO_ROOT/apps/extension"
   node --loader "$REPO_ROOT/scripts/dev/ts-js-specifier-loader.mjs" \
     "$REPO_ROOT/apps/bridge/src/main.ts"

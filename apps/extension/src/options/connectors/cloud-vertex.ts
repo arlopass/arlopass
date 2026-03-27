@@ -8,7 +8,7 @@ import type {
 
 export const CLOUD_VERTEX_CONNECTOR_ID = "cloud-vertex";
 
-const DEFAULT_NATIVE_HOST_NAME = "com.byom.bridge";
+const DEFAULT_NATIVE_HOST_NAME = "com.arlopass.bridge";
 const DEFAULT_PROVIDER_ID = "google-vertex-ai";
 const DEFAULT_METHOD_ID = "vertex.service_account";
 const DEFAULT_API_KEY_PROJECT_ID = "express-mode";
@@ -188,11 +188,11 @@ async function completeViaBridge(
   config: Readonly<Record<string, string>>,
 ): Promise<
   | Readonly<{
-      ok: true;
-      connectionHandle: string;
-      models: readonly ProviderModel[];
-      bindingMetadata: Readonly<Record<string, string>>;
-    }>
+    ok: true;
+    connectionHandle: string;
+    models: readonly ProviderModel[];
+    bindingMetadata: Readonly<Record<string, string>>;
+  }>
   | Readonly<{ ok: false; message: string }>
 > {
   const nativeHostName = normalizeText(
@@ -203,21 +203,21 @@ async function completeViaBridge(
   const completeInput: Record<string, unknown> =
     methodId === "vertex.api_key"
       ? {
-          projectId: normalizeText(config["projectId"], DEFAULT_API_KEY_PROJECT_ID),
-          location: normalizeText(config["location"], DEFAULT_API_KEY_LOCATION),
-          apiKey: normalizeText(config["apiKey"]),
-          publisher: normalizeText(config["publisher"]),
-          defaultModel: normalizeText(config["defaultModel"]),
-        }
+        projectId: normalizeText(config["projectId"], DEFAULT_API_KEY_PROJECT_ID),
+        location: normalizeText(config["location"], DEFAULT_API_KEY_LOCATION),
+        apiKey: normalizeText(config["apiKey"]),
+        publisher: normalizeText(config["publisher"]),
+        defaultModel: normalizeText(config["defaultModel"]),
+      }
       : methodId === "vertex.service_account"
-      ? {
+        ? {
           projectId: normalizeText(config["projectId"]),
           location: normalizeText(config["location"]),
           serviceAccountJson: normalizeText(config["serviceAccountJson"]),
           publisher: normalizeText(config["publisher"]),
           defaultModel: normalizeText(config["defaultModel"]),
         }
-      : {
+        : {
           projectId: normalizeText(config["projectId"]),
           location: normalizeText(config["location"]),
           audience: normalizeText(config["audience"]),

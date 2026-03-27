@@ -1,12 +1,25 @@
 {
-  "name": "@byom-ai/ui",
+  "name": "@arlopass/ui",
   "version": "0.1.0",
   "license": "MIT",
   "type": "module",
-  "bin": { "byom-ui": "./dist/bin/cli.js" },
-  "publishConfig": { "access": "public", "provenance": true },
-  "repository": { "type": "git", "url": "https://github.com/AltClick/byom-web.git", "directory": "packages/ui-registry" },
-  "files": ["dist", "registry.json", "src/blocks"],
+  "bin": {
+    "arlopass-ui": "./dist/bin/cli.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AltClick/arlopass.git",
+    "directory": "packages/ui-registry"
+  },
+  "files": [
+    "dist",
+    "registry.json",
+    "src/blocks"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"

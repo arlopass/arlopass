@@ -1,5 +1,5 @@
 {
-  "name": "@byom-ai/examples-web",
+  "name": "@arlopass/examples-web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,9 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@byom-ai/react": "file:../../packages/react-sdk",
-    "@byom-ai/react-ui": "file:../../packages/react-ui",
-    "@byom-ai/web-sdk": "file:../../packages/web-sdk",
+    "@arlopass/react": "file:../../packages/react-sdk",
+    "@arlopass/react-ui": "file:../../packages/react-ui",
+    "@arlopass/web-sdk": "file:../../packages/web-sdk",
     "@mantine/core": "^7.17.8",
     "@mantine/hooks": "^7.17.8",
     "@mantine/notifications": "^7.17.8",
@@ -25,6 +25,7 @@
     "marked": "^17.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "geist": "^1.0.0",
     "shiki": "^4.0.2"
   },
   "devDependencies": {

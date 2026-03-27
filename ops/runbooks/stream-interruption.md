@@ -1,6 +1,6 @@
 # Runbook: Stream Interruption Surge
 
-**Alert:** `BYOM_HighStreamInterruptionRate`  
+**Alert:** `ARLOPASS_HighStreamInterruptionRate`  
 **SLO:** SLO-03 (Stream interruption rate)  
 **Severity:** Warning  
 **Owner:** Platform Reliability
@@ -11,8 +11,8 @@
 
 | Signal | Indicator |
 |--------|-----------|
-| `byom.stream.interruption.total` rate > 0.5 % of sessions | Streams ending without a `done` event |
-| `byom.stream.chunk.total` drops while `interruption.total` rises | Data pipeline is truncating |
+| `arlopass.stream.interruption.total` rate > 0.5 % of sessions | Streams ending without a `done` event |
+| `arlopass.stream.chunk.total` drops while `interruption.total` rises | Data pipeline is truncating |
 | Users report incomplete AI responses | Visible symptom of stream breakage |
 
 ---
@@ -22,13 +22,13 @@
 ### Step 1 — Confirm the scope
 
 Determine whether the interruptions are:
-- **Provider-specific** (`providerId` label on `byom.stream.interruption.total`)
+- **Provider-specific** (`providerId` label on `arlopass.stream.interruption.total`)
 - **Global** (all providers affected)
 - **Time-correlated** (did a deployment or network change occur recently?)
 
 ```promql
 # Per-provider interruption rate
-rate(byom_stream_interruption_total[5m]) by (providerId)
+rate(arlopass_stream_interruption_total[5m]) by (providerId)
 ```
 
 ### Step 2 — Check network path stability
@@ -48,8 +48,8 @@ ip route get <provider-host-ip>
 
 ```bash
 # Look for connection reset or EOF errors
-grep -i "interrupted\|connection reset\|EOF\|ECONNRESET" ~/.byom/bridge.log | tail -50
-grep -i "stream\|disconnect\|abort" ~/.byom/adapters/<provider-id>/adapter.log | tail -50
+grep -i "interrupted\|connection reset\|EOF\|ECONNRESET" ~/.arlopass/bridge.log | tail -50
+grep -i "stream\|disconnect\|abort" ~/.arlopass/adapters/<provider-id>/adapter.log | tail -50
 ```
 
 ### Step 4 — Increase stream timeout if warranted
@@ -58,11 +58,11 @@ If slow provider responses are causing premature timeout interruptions:
 
 1. Check current `timeoutMs` configuration in the adapter manifest
 2. Increase if the provider's documented response time exceeds the current threshold
-3. Re-load the adapter: `byom adapter reload <provider-id>`
+3. Re-load the adapter: `arlopass adapter reload <provider-id>`
 
 ### Step 5 — Check backpressure
 
-High `byom.stream.chunk.total` rates with backpressure drops indicate the
+High `arlopass.stream.chunk.total` rates with backpressure drops indicate the
 consumer (extension/SDK) is not reading fast enough:
 
 - Check extension background worker CPU usage
@@ -93,17 +93,17 @@ consumer (extension/SDK) is not reading fast enough:
 
 ## 5  Evidence Collection
 
-1. Export `byom.stream.interruption.total` and `byom.stream.chunk.total` time series
+1. Export `arlopass.stream.interruption.total` and `arlopass.stream.chunk.total` time series
 2. Correlate with deployment timeline (check git log / release notes)
 3. Capture bridge log lines containing `stream` or `interrupt` keywords
 4. Record provider availability status at time of surge
-5. Note P99 stream duration from `byom.request.duration_ms` for `capability=chat.stream`
+5. Note P99 stream duration from `arlopass.request.duration_ms` for `capability=chat.stream`
 
 ---
 
 ## 6  Related
 
-- Alert: `BYOM_HighStreamInterruptionRate`
+- Alert: `ARLOPASS_HighStreamInterruptionRate`
 - Runbook: `ops/runbooks/adapter-crash-loop.md`
 - Runbook: `ops/runbooks/bridge-unavailable.md`
 - Soak test: `ops/tests/soak/stream-soak.test.ts`
