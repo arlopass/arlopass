@@ -52,7 +52,7 @@ import {
 } from "./native-host-manifest.js";
 
 export type BridgeHandlerOptions = Readonly<{
-  sharedSecret: Buffer;
+  signingKey?: Buffer;
   handshakeManager?: HandshakeManager;
   requestVerifier?: RequestVerifier;
   requestIdempotencyStore?: RequestIdempotencyStoreContract;
@@ -141,10 +141,17 @@ function toRequestFingerprint(payload: unknown): string {
     .digest("hex")}`;
 }
 
-function deriveCloudConnectionCompleteIdempotencyNamespace(sharedSecret: Buffer): string {
+const DEFAULT_IDEMPOTENCY_NAMESPACE = createHash("sha256")
+  .update("byom.bridge.cloud.connection.complete.idempotency.v1.default", "utf8")
+  .digest("hex");
+
+function deriveCloudConnectionCompleteIdempotencyNamespace(signingKey: Buffer | undefined): string {
+  if (signingKey === undefined || signingKey.length === 0) {
+    return DEFAULT_IDEMPOTENCY_NAMESPACE;
+  }
   return createHash("sha256")
     .update("byom.bridge.cloud.connection.complete.idempotency.v1", "utf8")
-    .update(sharedSecret)
+    .update(signingKey)
     .digest("hex");
 }
 
@@ -215,7 +222,7 @@ function errorResponse(
  * response — there are no silent fallbacks.
  */
 export class BridgeHandler {
-  readonly #sharedSecret: Buffer;
+  readonly #signingKey: Buffer;
   readonly #handshakeManager: HandshakeManager;
   readonly #requestVerifier: RequestVerifier;
   readonly #requestIdempotencyStore: RequestIdempotencyStoreContract;
@@ -232,9 +239,9 @@ export class BridgeHandler {
   readonly #cloudConnectionCompleteIdempotencyNamespace: string;
 
   constructor(options: BridgeHandlerOptions) {
-    this.#sharedSecret = options.sharedSecret;
+    this.#signingKey = options.signingKey ?? Buffer.alloc(32);
     this.#cloudConnectionCompleteIdempotencyNamespace =
-      deriveCloudConnectionCompleteIdempotencyNamespace(this.#sharedSecret);
+      deriveCloudConnectionCompleteIdempotencyNamespace(this.#signingKey);
     this.#handshakeManager =
       options.handshakeManager ?? new HandshakeManager();
     this.#sessionKeyRegistry =
@@ -263,7 +270,7 @@ export class BridgeHandler {
       new CloudConnectionService({
         adaptersByProvider: {},
         connectionRegistry: new ConnectionRegistry({
-          signatureKey: this.#sharedSecret,
+          signatureKey: this.#signingKey,
         }),
       });
     this.#cloudChatExecutor = options.cloudChatExecutor;
@@ -502,42 +509,39 @@ export class BridgeHandler {
     const response: HandshakeChallengeResponse = { nonce, hmac, extensionId };
     const pairingHandle = normalizeOptionalNonEmptyString(message["pairingHandle"]);
     const hostName = normalizeOptionalNonEmptyString(message["hostName"]);
-    let handshakeSecret = this.#sharedSecret;
-    if (pairingHandle !== undefined || hostName !== undefined) {
-      if (pairingHandle === undefined || hostName === undefined) {
-        return errorResponse(
-          "request.invalid",
-          "handshake.verify with pairing requires non-empty pairingHandle and hostName.",
-        );
-      }
-      const resolvedPairingSecret = this.#pairingManager.resolvePairingSecret({
-        pairingHandle,
+    if (pairingHandle === undefined || hostName === undefined) {
+      return errorResponse(
+        "auth.required",
+        "This bridge requires pairing. Send pairing.auto first.",
+      );
+    }
+    const resolvedPairingSecret = this.#pairingManager.resolvePairingSecret({
+      pairingHandle,
+      extensionId,
+      hostName,
+    });
+    if (resolvedPairingSecret === undefined) {
+      this.#emitPairingAuditEvent({
+        action: "complete",
+        outcome: "deny",
+        reasonCode: "auth.invalid",
         extensionId,
         hostName,
+        pairingHandle,
       });
-      if (resolvedPairingSecret === undefined) {
-        this.#emitPairingAuditEvent({
-          action: "complete",
-          outcome: "deny",
-          reasonCode: "auth.invalid",
-          extensionId,
-          hostName,
-          pairingHandle,
-        });
-        return errorResponse(
-          "auth.invalid",
-          "Pairing handle is missing, revoked, or not bound to this extension and host.",
-          {
-            details: {
-              pairingHandle,
-              extensionId,
-              hostName,
-            },
+      return errorResponse(
+        "auth.invalid",
+        "Pairing handle is invalid or revoked.",
+        {
+          details: {
+            pairingHandle,
+            extensionId,
+            hostName,
           },
-        );
-      }
-      handshakeSecret = resolvedPairingSecret;
+        },
+      );
     }
+    const handshakeSecret = resolvedPairingSecret;
 
     try {
       const session = this.#handshakeManager.verifyResponse(
