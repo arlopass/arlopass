@@ -202,53 +202,18 @@ async function sendNativeMessage(
     });
     cachedSessionToken = session.sessionToken;
 
-    const timeoutMs = _options?.timeoutMs ?? 30_000;
-
     const enrichedMessage = withCloudConnectionBinding({
       ...message,
       sessionToken: cachedSessionToken,
     });
 
-    return await new Promise((resolve) => {
-      let settled = false;
-      const timeoutHandle = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        resolve({
-          ok: false,
-          errorMessage: `Native host response timed out after ${String(timeoutMs)}ms.`,
-        });
-      }, timeoutMs);
-
-      try {
-        chrome.runtime.sendNativeMessage(
-          hostName,
-          enrichedMessage,
-          (response: unknown) => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timeoutHandle);
-            const runtimeError = chrome.runtime.lastError;
-            if (runtimeError !== undefined) {
-              resolve({
-                ok: false,
-                errorMessage: runtimeError.message ?? "unknown error",
-              });
-              return;
-            }
-            resolve({ ok: true, response });
-          },
-        );
-      } catch (error) {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timeoutHandle);
-        resolve({
-          ok: false,
-          errorMessage: error instanceof Error ? error.message : String(error),
-        });
-      }
-    });
+    return await rawSendNativeMessage(hostName, enrichedMessage).then(
+      (response) => ({ ok: true as const, response }),
+      (error) => ({
+        ok: false as const,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      }),
+    );
   } catch (error) {
     return {
       ok: false,
