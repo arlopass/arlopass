@@ -14,6 +14,55 @@ import {
   clearBridgeHandshakeSessionCache,
 } from "./transport/bridge-handshake.js";
 
+async function sendVaultMessage(message: Record<string, unknown>): Promise<Record<string, unknown>> {
+  // Options page needs its own bridge session for vault calls
+  const pairingData = await new Promise<Record<string, unknown>>((resolve, reject) => {
+    chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY], (rawState) => {
+      const runtimeError = chrome.runtime.lastError;
+      if (runtimeError !== undefined) {
+        reject(new Error(runtimeError.message ?? "Failed to read bridge pairing state."));
+        return;
+      }
+      resolve(rawState as Record<string, unknown>);
+    });
+  });
+  const pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
+  const pairingKeyMaterial = pairingState !== undefined
+    ? await unwrapPairingKeyMaterial({ pairingState, runtimeId: chrome.runtime.id })
+    : null;
+
+  const session = await ensureBridgeHandshakeSession({
+    hostName: "com.arlopass.bridge",
+    extensionId: chrome.runtime.id,
+    sendNativeMessage: (host, msg) => new Promise<unknown>((resolve, reject) => {
+      chrome.runtime.sendNativeMessage(host, msg, (resp) => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(resp);
+      });
+    }),
+    resolveBridgeSharedSecret: async () => null,
+    ...(pairingKeyMaterial !== null && pairingKeyMaterial !== undefined
+      ? { resolveBridgePairingHandle: async () => pairingKeyMaterial.pairingHandle }
+      : {}),
+  });
+
+  const resp = await new Promise<unknown>((resolve, reject) => {
+    chrome.runtime.sendNativeMessage(
+      "com.arlopass.bridge",
+      { ...message, sessionToken: session.sessionToken },
+      (response) => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else resolve(response);
+      },
+    );
+  });
+
+  if (typeof resp !== "object" || resp === null) {
+    throw new Error("Invalid vault response.");
+  }
+  return resp as Record<string, unknown>;
+}
+
 type ProviderModel = Readonly<{
   id: string;
   name: string;
@@ -89,7 +138,6 @@ type ProviderEditState = Readonly<{
   providerName: string;
 }>;
 
-const STORAGE_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
 const STORAGE_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 const STORAGE_KEY_LAST_ERROR = "arlopass.wallet.ui.lastError.v1";
 const PROVIDER_ID_PREFIX = "provider";
@@ -720,17 +768,31 @@ function parseActiveProvider(value: unknown): ActiveProviderRef | null {
 }
 
 async function getStorageSnapshot(): Promise<ProviderStorageSnapshot> {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([STORAGE_KEY_PROVIDERS, STORAGE_KEY_ACTIVE], (rawState) => {
-      const rawProviders = rawState[STORAGE_KEY_PROVIDERS];
-      const providers = Array.isArray(rawProviders)
-        ? rawProviders.map(parseStoredProvider).filter((provider): provider is StoredProvider => provider !== null)
-        : [];
-      const activeProvider = parseActiveProvider(rawState[STORAGE_KEY_ACTIVE]);
+  let providers: StoredProvider[] = [];
+  try {
+    const resp = await sendVaultMessage({ type: "vault.providers.list" });
+    const vaultProviders = (resp["providers"] ?? []) as Array<Record<string, unknown>>;
+    providers = vaultProviders
+      .map((vp) => parseStoredProvider({
+        id: vp["id"],
+        name: vp["name"],
+        type: vp["type"],
+        status: vp["status"] ?? "disconnected",
+        models: (vp["models"] as string[] ?? []).map(m => ({ id: m, name: m })),
+        metadata: vp["metadata"],
+      }))
+      .filter((p): p is StoredProvider => p !== null);
+  } catch (err) {
+    console.error("Failed to load providers from vault:", err);
+  }
 
-      resolve({ providers, activeProvider });
-    });
+  // Active provider stays in chrome.storage (per-browser)
+  const activeRaw = await new Promise<Record<string, unknown>>((resolve) => {
+    chrome.storage.local.get([STORAGE_KEY_ACTIVE], (r) => resolve(r as Record<string, unknown>));
   });
+  const activeProvider = parseActiveProvider(activeRaw[STORAGE_KEY_ACTIVE]);
+
+  return { providers, activeProvider };
 }
 
 async function writeStorageState(state: {
@@ -738,22 +800,32 @@ async function writeStorageState(state: {
   activeProvider: ActiveProviderRef | null;
   clearError?: boolean;
 }): Promise<void> {
+  // Write each provider to vault
+  for (const provider of state.providers) {
+    await sendVaultMessage({
+      type: "vault.providers.save",
+      id: provider.id,
+      name: provider.name,
+      providerType: provider.type,
+      connectorId: provider.metadata?.["connectorId"] ?? provider.type,
+      credentialId: provider.metadata?.["credentialId"] ?? "",
+      metadata: provider.metadata ?? {},
+      models: provider.models.map(m => m.id),
+      status: provider.status,
+    });
+  }
+
+  // Active provider stays in chrome.storage
   const update: Record<string, unknown> = {
-    [STORAGE_KEY_PROVIDERS]: state.providers,
     [STORAGE_KEY_ACTIVE]: state.activeProvider,
   };
   if (state.clearError === true) {
     update[STORAGE_KEY_LAST_ERROR] = null;
   }
-
-  return new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     chrome.storage.local.set(update, () => {
-      const runtimeError = chrome.runtime.lastError;
-      if (runtimeError !== undefined) {
-        reject(new Error(runtimeError.message ?? "Failed to write wallet state."));
-        return;
-      }
-      resolve();
+      if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+      else resolve();
     });
   });
 }
