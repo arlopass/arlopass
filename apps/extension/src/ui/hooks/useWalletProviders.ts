@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-    normalizeWalletSnapshot,
-    type WalletProvider,
-    type WalletSnapshot,
-} from "../popup-state.js";
+import type { WalletProvider } from "../popup-state.js";
 import type { ProviderCardData } from "../components/ProviderCard.js";
+import { useVaultContext } from "./VaultContext.js";
 
 /** Map provider type/name to a providerKey for the icon avatar. */
 function deriveProviderKey(provider: WalletProvider): string {
@@ -52,53 +49,48 @@ export type UseWalletResult = {
 };
 
 export function useWalletProviders(): UseWalletResult {
+    const { sendVaultMessage } = useVaultContext();
     const [providers, setProviders] = useState<ProviderCardData[]>([]);
     const [rawProviders, setRawProviders] = useState<WalletProvider[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const load = useCallback(() => {
+    const load = useCallback(async () => {
         setLoading(true);
         setError(null);
 
-        chrome.storage.local.get(
-            [
-                "arlopass.wallet.providers.v1",
-                "arlopass.wallet.activeProvider.v1",
-                "arlopass.wallet.ui.lastError.v1",
-            ],
-            (result: Record<string, unknown>) => {
-                try {
-                    const snapshot: WalletSnapshot = normalizeWalletSnapshot(result);
-                    if (snapshot.warnings.length > 0) {
-                        console.warn("Arlopass Wallet: snapshot warnings", snapshot.warnings);
-                    }
-                    setProviders(snapshot.providers.map(toProviderCardData));
-                    setRawProviders(snapshot.providers);
-                } catch (err) {
-                    console.error("Arlopass Wallet: failed to load wallet state", err);
-                    setError("Failed to load wallet state.");
-                } finally {
-                    setLoading(false);
-                }
-            },
-        );
-    }, []);
+        try {
+            const resp = await sendVaultMessage({ type: "vault.providers.list" });
+            const vaultProviders = resp["providers"] as Array<{
+                id: string;
+                name: string;
+                type: string;
+                status: string;
+                models: string[];
+                metadata?: Record<string, string>;
+            }>;
+
+            const mapped: WalletProvider[] = (vaultProviders ?? []).map((vp) => ({
+                id: vp.id,
+                name: vp.name,
+                type: vp.type as WalletProvider["type"],
+                status: (vp.status || "disconnected") as WalletProvider["status"],
+                models: vp.models.map((m) => ({ id: m, name: m })),
+                ...(vp.metadata != null && { metadata: vp.metadata }),
+            }));
+
+            setProviders(mapped.map(toProviderCardData));
+            setRawProviders(mapped);
+        } catch (err) {
+            console.error("Arlopass Wallet: failed to load wallet state", err);
+            setError("Failed to load wallet state.");
+        } finally {
+            setLoading(false);
+        }
+    }, [sendVaultMessage]);
 
     useEffect(() => {
         load();
-
-        // Re-load when storage changes (e.g. provider connected/disconnected)
-        const listener = (
-            changes: Record<string, chrome.storage.StorageChange>,
-            area: string,
-        ) => {
-            if (area === "local" && "arlopass.wallet.providers.v1" in changes) {
-                load();
-            }
-        };
-        chrome.storage.onChanged.addListener(listener);
-        return () => chrome.storage.onChanged.removeListener(listener);
     }, [load]);
 
     return { providers, rawProviders, loading, error, refresh: load };
