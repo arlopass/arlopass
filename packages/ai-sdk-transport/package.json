@@ -1,0 +1,38 @@
+{
+  "name": "@byom-ai/ai-sdk-transport",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AltClick/byom-web.git",
+    "directory": "packages/ai-sdk-transport"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "peerDependencies": {
+    "ai": "^6.0.0",
+    "@byom-ai/web-sdk": "^0.1.0"
+  },
+  "devDependencies": {
+    "ai": "^6.0.0",
+    "@byom-ai/web-sdk": "0.1.0"
+  }
+}
