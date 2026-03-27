@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
   Collapse,
   Divider,
   Group,
+  PasswordInput,
   ScrollArea,
   Stack,
   Text,
   UnstyledButton,
 } from "@mantine/core";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconChevronDown, IconKey, IconShieldLock } from "@tabler/icons-react";
 import { ProviderAvatar } from "./ProviderAvatar.js";
 import { PrimaryButton } from "./PrimaryButton.js";
 import { useVaultContext } from "../hooks/VaultContext.js";
@@ -56,6 +57,7 @@ function formatAge(timestamp: string): string {
 export function VaultTabContent() {
   const [credentials, setCredentials] = useState<VaultCredential[]>([]);
   const [loading, setLoading] = useState(true);
+  const [keyMode, setKeyMode] = useState<"password" | "keychain" | null>(null);
   const { sendVaultMessage } = useVaultContext();
 
   const reload = () =>
@@ -64,8 +66,15 @@ export function VaultTabContent() {
     );
 
   useEffect(() => {
-    void sendVaultMessage({ type: "vault.credentials.list" }).then((resp) => {
-      setCredentials((resp.credentials ?? []) as VaultCredential[]);
+    void Promise.all([
+      sendVaultMessage({ type: "vault.credentials.list" }),
+      sendVaultMessage({ type: "vault.status" }),
+    ]).then(([credResp, statusResp]) => {
+      setCredentials((credResp.credentials ?? []) as VaultCredential[]);
+      const mode = statusResp["keyMode"] as string | undefined;
+      if (mode === "password" || mode === "keychain") {
+        setKeyMode(mode);
+      }
       setLoading(false);
     });
   }, [sendVaultMessage]);
@@ -83,13 +92,18 @@ export function VaultTabContent() {
             Loading…
           </Text>
         )}
-        {!loading && credentials.length === 0 && (
-          <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">
-            No credentials stored. Add a provider to create credentials.
-          </Text>
-        )}
-        {!loading && credentials.length > 0 && (
+        {!loading && (
           <Stack gap={tokens.spacing.sectionGap}>
+            <VaultSecuritySection keyMode={keyMode} sendVaultMessage={sendVaultMessage} onKeyModeChange={setKeyMode} />
+            <Divider color={tokens.color.border} />
+            <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+              Stored credentials
+            </Text>
+            {credentials.length === 0 && (
+              <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="md">
+                No credentials stored. Add a provider to create credentials.
+              </Text>
+            )}
             {credentials.map((cred) => (
               <CredentialCard
                 key={cred.id}
@@ -107,6 +121,162 @@ export function VaultTabContent() {
       </ScrollArea>
       <PrimaryButton>Manage credentials</PrimaryButton>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Vault Security Settings
+// ---------------------------------------------------------------------------
+
+function VaultSecuritySection({
+  keyMode,
+  sendVaultMessage,
+  onKeyModeChange,
+}: {
+  keyMode: "password" | "keychain" | null;
+  sendVaultMessage: (msg: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  onKeyModeChange: (mode: "password" | "keychain") => void;
+}) {
+  const [switching, setSwitching] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const passwordsMatch = password.length > 0 && password === confirm;
+  const tooShort = password.length > 0 && password.length < 8;
+
+  const handleSwitchToKeychain = useCallback(async () => {
+    setSwitching(true);
+    setError(null);
+    try {
+      const resp = await sendVaultMessage({ type: "vault.rekey.keychain" });
+      if (resp["type"] === "error") {
+        setError(resp["message"] as string ?? "Failed to switch to keychain.");
+      } else {
+        onKeyModeChange("keychain");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Switch failed.");
+    } finally {
+      setSwitching(false);
+    }
+  }, [sendVaultMessage, onKeyModeChange]);
+
+  const handleSwitchToPassword = useCallback(async () => {
+    if (!passwordsMatch || tooShort) return;
+    setSwitching(true);
+    setError(null);
+    try {
+      const resp = await sendVaultMessage({ type: "vault.rekey", password });
+      if (resp["type"] === "error") {
+        setError(resp["message"] as string ?? "Failed to switch to password.");
+      } else {
+        onKeyModeChange("password");
+        setShowPasswordForm(false);
+        setPassword("");
+        setConfirm("");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Switch failed.");
+    } finally {
+      setSwitching(false);
+    }
+  }, [sendVaultMessage, password, passwordsMatch, tooShort, onKeyModeChange]);
+
+  return (
+    <Box
+      style={{
+        background: tokens.color.bgSurface,
+        border: `1px solid ${tokens.color.border}`,
+        borderRadius: tokens.radius.card,
+        padding: tokens.spacing.cardPadding,
+      }}
+    >
+      <Group gap={8} mb={8}>
+        {keyMode === "password" ? (
+          <IconShieldLock size={18} color={tokens.color.brand} />
+        ) : (
+          <IconKey size={18} color={tokens.color.brand} />
+        )}
+        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+          Vault security
+        </Text>
+      </Group>
+
+      <Text fz="xs" c={tokens.color.textSecondary} mb={8}>
+        {keyMode === "password"
+          ? "Your vault is protected by a master password."
+          : keyMode === "keychain"
+            ? "Your vault is protected by the OS credential store. Unlocks automatically."
+            : "Loading…"}
+      </Text>
+
+      {error !== null && (
+        <Text fz="xs" c={tokens.color.danger} mb={8}>
+          {error}
+        </Text>
+      )}
+
+      {keyMode === "password" && !showPasswordForm && (
+        <Button
+          size="compact-xs"
+          variant="light"
+          loading={switching}
+          onClick={handleSwitchToKeychain}
+        >
+          Switch to OS keychain
+        </Button>
+      )}
+
+      {keyMode === "keychain" && !showPasswordForm && (
+        <Button
+          size="compact-xs"
+          variant="light"
+          onClick={() => setShowPasswordForm(true)}
+        >
+          Switch to master password
+        </Button>
+      )}
+
+      {showPasswordForm && (
+        <Stack gap="xs" mt={8}>
+          <PasswordInput
+            size="xs"
+            label="New master password"
+            placeholder="At least 8 characters"
+            value={password}
+            onChange={(e) => setPassword(e.currentTarget.value)}
+            error={tooShort ? "Must be at least 8 characters" : undefined}
+          />
+          <PasswordInput
+            size="xs"
+            label="Confirm password"
+            placeholder="Re-enter password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.currentTarget.value)}
+            error={confirm.length > 0 && !passwordsMatch ? "Passwords don't match" : undefined}
+          />
+          <Group gap={8}>
+            <Button
+              size="compact-xs"
+              loading={switching}
+              disabled={!passwordsMatch || tooShort}
+              onClick={handleSwitchToPassword}
+            >
+              Set password
+            </Button>
+            <Button
+              size="compact-xs"
+              variant="subtle"
+              onClick={() => { setShowPasswordForm(false); setPassword(""); setConfirm(""); setError(null); }}
+            >
+              Cancel
+            </Button>
+          </Group>
+        </Stack>
+      )}
+    </Box>
   );
 }
 

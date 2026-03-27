@@ -483,6 +483,10 @@ export class BridgeHandler {
         return this.#handleVaultUsageRead();
       case "vault.usage.flush":
         return this.#handleVaultUsageFlush(message);
+      case "vault.rekey":
+        return this.#handleVaultRekey(message);
+      case "vault.rekey.keychain":
+        return this.#handleVaultRekeyKeychain();
 
       default:
         return errorResponse(
@@ -2293,5 +2297,35 @@ export class BridgeHandler {
       store.flushUsage({ entries: message["entries"] as UsageEntry[] });
       return { type: "vault.usage.flush" };
     });
+  }
+
+  #handleVaultRekey(message: NativeMessage): NativeMessage {
+    return this.#handleVaultOp(() => {
+      const store = this.#requireVaultStore();
+      const password = typeof message["password"] === "string" ? message["password"] : undefined;
+      if (password === undefined) {
+        throw new VaultError("Password is required to switch to password mode.", "request.invalid");
+      }
+      store.rekey({ keyMode: "password", password });
+      return { type: "vault.rekey", ...store.status() };
+    });
+  }
+
+  async #handleVaultRekeyKeychain(): Promise<NativeMessage> {
+    try {
+      const store = this.#requireVaultStore();
+      const keychain = createKeychainAdapter();
+      const { randomBytes } = await import("node:crypto");
+      const key = randomBytes(32);
+      await keychain.setKey(key);
+      store.rekey({ keyMode: "keychain", keychainKey: key });
+      return { type: "vault.rekey", ...store.status() };
+    } catch (error) {
+      if (error instanceof VaultError) {
+        return errorResponse(error.reasonCode, error.message);
+      }
+      return errorResponse("vault.keychain_unavailable",
+        error instanceof Error ? error.message : "OS credential store is unavailable.");
+    }
   }
 }

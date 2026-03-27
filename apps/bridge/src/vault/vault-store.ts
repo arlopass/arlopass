@@ -312,6 +312,42 @@ export class VaultStore {
         this.#persist();
     }
 
+    // -- Rekey ------------------------------------------------------------------
+
+    /**
+     * Change the vault's key mode while the vault is unlocked.
+     * Re-encrypts all data with the new key. The old key is wiped.
+     */
+    rekey(input: { keyMode: KeyMode; password?: string; keychainKey?: Buffer }): void {
+        this.#requireUnlocked();
+        this.#touchAutoLock();
+
+        const salt = randomBytes(32);
+        let newKey: Buffer;
+
+        if (input.keyMode === "password") {
+            if (!input.password || input.password.length === 0) {
+                throw new VaultError("Password is required for password mode.", "request.invalid");
+            }
+            newKey = deriveKey(input.password, salt);
+        } else {
+            if (!input.keychainKey || input.keychainKey.length !== 32) {
+                throw new VaultError("Keychain key must be 32 bytes.", "request.invalid");
+            }
+            newKey = input.keychainKey;
+        }
+
+        // Wipe old key before replacing
+        if (this.#key) {
+            secureWipe(this.#key);
+        }
+
+        this.#key = newKey;
+        this.#salt = salt;
+        this.#keyMode = input.keyMode;
+        this.#persist();
+    }
+
     // -- Private ----------------------------------------------------------------
 
     #requireUnlocked(): void {
