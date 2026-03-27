@@ -34,12 +34,10 @@ import type {
   GrantRevocationReason,
   GrantType,
 } from "./permissions/grant-types.js";
-import { ensureBridgeHandshakeSession } from "./transport/bridge-handshake.js";
 import {
-  BRIDGE_PAIRING_STATE_STORAGE_KEY,
-  parseBridgePairingState,
-  unwrapPairingKeyMaterial,
-} from "./transport/bridge-pairing.js";
+  registerVaultProxyListener,
+  sendVaultMessageViaProxy,
+} from "./vault-proxy.js";
 
 export type BridgeGrantSynchronizer = Readonly<{
   publishGrant(event: BridgeGrantSynchronizationEvent): Promise<void>;
@@ -149,54 +147,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-function sendNativeMessagePromise(
-  host: string,
-  msg: Record<string, unknown>,
-): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendNativeMessage(host, msg, (resp) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-      } else {
-        resolve(resp);
-      }
-    });
-  });
-}
-
-async function sendVaultMessageFromBackground(
-  message: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  const extensionId = chrome.runtime.id;
-  const pairingData = await chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-  const pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-  const pairingKeyMaterial = pairingState !== undefined
-    ? await unwrapPairingKeyMaterial({ pairingState, runtimeId: extensionId })
-    : null;
-
-  const resolveBridgePairingHandle: ((hostName: string) => Promise<string | undefined | null>) | undefined =
-    pairingKeyMaterial !== null && pairingKeyMaterial !== undefined
-      ? async () => pairingKeyMaterial.pairingHandle
-      : undefined;
-
-  const session = await ensureBridgeHandshakeSession({
-    hostName: "com.arlopass.bridge",
-    extensionId,
-    sendNativeMessage: sendNativeMessagePromise,
-    resolveBridgeSharedSecret: async () => null,
-    ...(resolveBridgePairingHandle !== undefined ? { resolveBridgePairingHandle } : {}),
-  });
-
-  const resp = await sendNativeMessagePromise(
-    "com.arlopass.bridge",
-    { ...message, sessionToken: session.sessionToken },
-  );
-
-  if (typeof resp !== "object" || resp === null) {
-    throw new Error("Invalid vault response from bridge.");
-  }
-  return resp as Record<string, unknown>;
-}
+// Use the centralized vault proxy for all vault operations
+const sendVaultMessageFromBackground = sendVaultMessageViaProxy;
 
 async function walletHandleSetActiveProvider(
   payload: unknown,
@@ -604,6 +556,7 @@ export function registerDefaultWalletMessageListener(options: {
 }
 
 registerDefaultWalletMessageListener();
+registerVaultProxyListener();
 registerDefaultTransportMessageListener();
 registerDefaultTransportStreamPortListener();
 

@@ -1,84 +1,15 @@
 // apps/extension/src/ui/hooks/useVault.ts
+//
+// React hook for vault lifecycle. All vault messages go through the
+// background-owned persistent bridge port via chrome.runtime.sendMessage.
+// This ensures ONE bridge process stays alive for the entire browser session.
+//
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ensureBridgeHandshakeSession, clearBridgeHandshakeSessionCache } from "../../transport/bridge-handshake.js";
-import {
-    BRIDGE_PAIRING_STATE_STORAGE_KEY,
-    parseBridgePairingState,
-    unwrapPairingKeyMaterial,
-} from "../../transport/bridge-pairing.js";
-import { autoPair } from "../components/onboarding/setup-state.js";
-
-const HOST_NAME = "com.arlopass.bridge";
-
-// ---------------------------------------------------------------------------
-// Persistent native port — keeps 1 bridge process alive for all vault calls
-// ---------------------------------------------------------------------------
-
-type PendingRequest = {
-    resolve: (response: unknown) => void;
-    reject: (error: Error) => void;
-};
-
-let sharedPort: chrome.runtime.Port | null = null;
-const pendingRequests = new Map<string, PendingRequest>();
-let nextRequestId = 0;
+import { sendVaultMessageFromPage } from "../../vault-proxy.js";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
     return typeof v === "object" && v !== null && !Array.isArray(v);
 }
-
-function ensurePort(): chrome.runtime.Port {
-    if (sharedPort !== null) return sharedPort;
-    const port = chrome.runtime.connectNative(HOST_NAME);
-    port.onMessage.addListener((msg: unknown) => {
-        if (!isRecord(msg)) return;
-        const reqId = msg["_bridgeRequestId"];
-        if (typeof reqId !== "string") return;
-        const pending = pendingRequests.get(reqId);
-        if (!pending) return;
-        pendingRequests.delete(reqId);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { _bridgeRequestId: _, ...clean } = msg;
-        pending.resolve(clean);
-    });
-    port.onDisconnect.addListener(() => {
-        sharedPort = null;
-        const err = new Error("Bridge port disconnected.");
-        for (const [, p] of pendingRequests) p.reject(err);
-        pendingRequests.clear();
-        // Clear cached sessions since the bridge process died
-        clearBridgeHandshakeSessionCache();
-    });
-    sharedPort = port;
-    return port;
-}
-
-/** Send a message over the persistent port and await the response. */
-function sendViaPort(message: Record<string, unknown>): Promise<unknown> {
-    const port = ensurePort();
-    const reqId = `_vr.${String(++nextRequestId)}.${Date.now().toString(36)}`;
-    return new Promise<unknown>((resolve, reject) => {
-        pendingRequests.set(reqId, { resolve, reject });
-        try {
-            port.postMessage({ ...message, _bridgeRequestId: reqId });
-        } catch (err) {
-            pendingRequests.delete(reqId);
-            reject(err instanceof Error ? err : new Error(String(err)));
-        }
-    });
-}
-
-/** Wrapper matching the sendNativeMessage signature expected by ensureBridgeHandshakeSession. */
-async function sendNativeMessageViaPersistentPort(
-    _hostName: string,
-    message: Record<string, unknown>,
-): Promise<unknown> {
-    return sendViaPort(message);
-}
-
-// ---------------------------------------------------------------------------
-// Session establishment
-// ---------------------------------------------------------------------------
 
 export type VaultStatus =
     | { state: "connecting" }
@@ -100,88 +31,32 @@ export type UseVaultResult = {
     needsReauth: boolean;
 };
 
-type SessionRef = { sessionToken: string };
-
-async function establishSession(): Promise<SessionRef> {
-    const extensionId = chrome.runtime.id;
-
-    // Auto-pair if no pairing state exists (first run or reinstall)
-    let pairingData = await chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-    let pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-    if (pairingState === undefined) {
-        const pairResult = await autoPair();
-        if (!pairResult.success) {
-            throw new Error(pairResult.error ?? "Auto-pairing with bridge failed.");
-        }
-        pairingData = await chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-        pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-        if (pairingState === undefined) {
-            throw new Error("Pairing succeeded but state was not persisted.");
-        }
-    }
-
-    const pairingKeyMaterial = await unwrapPairingKeyMaterial({ pairingState, runtimeId: extensionId });
-
-    if (pairingKeyMaterial === undefined || pairingKeyMaterial === null) {
-        throw new Error("Failed to unwrap pairing key material.");
-    }
-
-    const session = await ensureBridgeHandshakeSession({
-        hostName: HOST_NAME,
-        extensionId,
-        sendNativeMessage: sendNativeMessageViaPersistentPort,
-        resolveBridgeSharedSecret: async () => pairingKeyMaterial.pairingKeyHex,
-        resolveBridgePairingHandle: async () => pairingKeyMaterial.pairingHandle,
-    });
-
-    return { sessionToken: session.sessionToken };
-}
-
 export function useVault(): UseVaultResult {
     const [status, setStatus] = useState<VaultStatus>({ state: "connecting" });
-    const sessionRef = useRef<SessionRef | null>(null);
     const mountedRef = useRef(true);
-    // Tracks whether vault was unlocked then auto-locked mid-session.
-    // When true, VaultGate shows an unlock overlay instead of full re-gating.
     const [needsReauth, setNeedsReauth] = useState(false);
 
+    // All vault operations go through the background proxy
     const sendVaultMessage = useCallback(async (message: Record<string, unknown>): Promise<Record<string, unknown>> => {
-        if (sessionRef.current === null) {
-            throw new Error("No bridge session. Vault not ready.");
-        }
-        const response = await sendViaPort({
-            ...message,
-            sessionToken: sessionRef.current.sessionToken,
-        });
-        if (!isRecord(response)) {
-            throw new Error("Invalid bridge response.");
-        }
+        const response = await sendVaultMessageFromPage(message);
         // If vault became locked mid-session (auto-lock), set needsReauth overlay
         if (response["type"] === "error" && response["reasonCode"] === "vault.locked") {
             setNeedsReauth(true);
             setStatus({ state: "locked" });
         }
-        if (response["type"] === "error" && response["reasonCode"] === "auth.expired") {
-            // Session expired — need to re-establish
-            sessionRef.current = null;
-            setStatus({ state: "connecting" });
-        }
-        return response as Record<string, unknown>;
+        return response;
     }, []);
 
     const checkStatus = useCallback(async () => {
         try {
-            const session = await establishSession();
-            if (!mountedRef.current) return;
-            sessionRef.current = session;
-
-            const resp = await sendViaPort({
-                type: "vault.status",
-                sessionToken: session.sessionToken,
-            });
+            const resp = await sendVaultMessageFromPage({ type: "vault.status" });
             if (!mountedRef.current) return;
             if (!isRecord(resp)) {
                 setStatus({ state: "bridge-unavailable", error: "Invalid response from bridge." });
+                return;
+            }
+            if (resp["type"] === "error") {
+                setStatus({ state: "bridge-unavailable", error: resp["message"] as string ?? "Bridge error." });
                 return;
             }
             const vaultState = resp["state"] as string;
@@ -193,15 +68,11 @@ export function useVault(): UseVaultResult {
                     // Auto-unlock for keychain mode
                     setStatus({ state: "locked", keyMode: "keychain" });
                     try {
-                        const unlockResp = await sendViaPort({
-                            type: "vault.unlock.keychain",
-                            sessionToken: session.sessionToken,
-                        });
+                        const unlockResp = await sendVaultMessageFromPage({ type: "vault.unlock.keychain" });
                         if (!mountedRef.current) return;
                         if (isRecord(unlockResp) && unlockResp["type"] !== "error") {
                             setStatus({ state: "unlocked" });
                         } else {
-                            // Keychain auto-unlock failed — show password fallback
                             setStatus({ state: "locked", keyMode: "keychain" });
                         }
                     } catch {

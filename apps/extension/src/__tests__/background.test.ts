@@ -36,6 +36,12 @@ vi.mock("../transport/bridge-pairing.js", () => ({
   unwrapPairingKeyMaterial: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock("../vault-proxy.js", () => ({
+  registerVaultProxyListener: vi.fn(),
+  sendVaultMessageViaProxy: vi.fn().mockResolvedValue({ type: "vault.providers.list", providers: [] }),
+  sendVaultMessageFromPage: vi.fn().mockResolvedValue({ type: "vault.providers.list", providers: [] }),
+}));
+
 import { PermissionError } from "@arlopass/protocol";
 import type { CanonicalEnvelope } from "@arlopass/protocol";
 import type {
@@ -638,52 +644,41 @@ function makeFakeStorage(initial: FakeStorageState = {}): {
 // Vault mock infrastructure for wallet handler tests
 // ---------------------------------------------------------------------------
 
+import { sendVaultMessageViaProxy } from "../vault-proxy.js";
+
 type VaultProvider = { id: string; models: string[] };
 
-let _vaultProviders: VaultProvider[] = [];
+const mockedSendVault = vi.mocked(sendVaultMessageViaProxy);
 
 function setVaultProviders(providers: VaultProvider[]): void {
-  _vaultProviders = providers;
+  mockedSendVault.mockImplementation(async (msg: Record<string, unknown>) => {
+    if (msg["type"] === "vault.providers.list") {
+      return { type: "vault.providers.list", providers };
+    }
+    if (msg["type"] === "vault.providers.delete") {
+      return { type: "vault.providers.delete" };
+    }
+    return { type: "error", reasonCode: "request.invalid", message: `Unknown: ${String(msg["type"])}` };
+  });
 }
 
-/**
- * Installs a minimal global `chrome` stub so that
- * `sendVaultMessageFromBackground` (called by wallet handlers) can resolve.
- */
 function installChromeVaultStub(): void {
+  // With the vault-proxy mock, no chrome stub needed for vault calls.
+  // Only set up the minimal chrome.runtime for non-vault code.
   const g = globalThis as Record<string, unknown>;
-  g["chrome"] = {
-    runtime: {
-      id: "test-extension-id",
-      lastError: undefined,
-      sendNativeMessage: vi.fn(
-        (
-          _host: string,
-          msg: Record<string, unknown>,
-          callback: (resp: unknown) => void,
-        ) => {
-          if (msg["type"] === "vault.providers.list") {
-            callback({ type: "vault.providers.list", providers: _vaultProviders });
-          } else if (msg["type"] === "vault.providers.delete") {
-            callback({ type: "vault.providers.delete" });
-          } else {
-            callback({ error: "unknown vault message type" });
-          }
-        },
-      ),
-    },
-    storage: {
-      local: {
-        get: vi.fn().mockResolvedValue({}),
-      },
-    },
-  };
+  if (g["chrome"] === undefined) {
+    g["chrome"] = {
+      runtime: { id: "test-extension-id", lastError: undefined },
+      storage: { local: { get: vi.fn().mockResolvedValue({}) } },
+    };
+  }
 }
 
 function uninstallChromeVaultStub(): void {
   const g = globalThis as Record<string, unknown>;
   delete g["chrome"];
-  _vaultProviders = [];
+  mockedSendVault.mockReset();
+  mockedSendVault.mockResolvedValue({ type: "vault.providers.list", providers: [] });
 }
 
 // ---------------------------------------------------------------------------

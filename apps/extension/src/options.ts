@@ -12,55 +12,10 @@ import {
 import {
   ensureBridgeHandshakeSession,
 } from "./transport/bridge-handshake.js";
+import { sendVaultMessageFromPage } from "./vault-proxy.js";
 
-async function sendVaultMessage(message: Record<string, unknown>): Promise<Record<string, unknown>> {
-  // Options page needs its own bridge session for vault calls
-  const pairingData = await new Promise<Record<string, unknown>>((resolve, reject) => {
-    chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY], (rawState) => {
-      const runtimeError = chrome.runtime.lastError;
-      if (runtimeError !== undefined) {
-        reject(new Error(runtimeError.message ?? "Failed to read bridge pairing state."));
-        return;
-      }
-      resolve(rawState as Record<string, unknown>);
-    });
-  });
-  const pairingState = parseBridgePairingState(pairingData[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-  const pairingKeyMaterial = pairingState !== undefined
-    ? await unwrapPairingKeyMaterial({ pairingState, runtimeId: chrome.runtime.id })
-    : null;
-
-  const session = await ensureBridgeHandshakeSession({
-    hostName: "com.arlopass.bridge",
-    extensionId: chrome.runtime.id,
-    sendNativeMessage: (host, msg) => new Promise<unknown>((resolve, reject) => {
-      chrome.runtime.sendNativeMessage(host, msg, (resp) => {
-        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-        else resolve(resp);
-      });
-    }),
-    resolveBridgeSharedSecret: async () => null,
-    ...(pairingKeyMaterial !== null && pairingKeyMaterial !== undefined
-      ? { resolveBridgePairingHandle: async () => pairingKeyMaterial.pairingHandle }
-      : {}),
-  });
-
-  const resp = await new Promise<unknown>((resolve, reject) => {
-    chrome.runtime.sendNativeMessage(
-      "com.arlopass.bridge",
-      { ...message, sessionToken: session.sessionToken },
-      (response) => {
-        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-        else resolve(response);
-      },
-    );
-  });
-
-  if (typeof resp !== "object" || resp === null) {
-    throw new Error("Invalid vault response.");
-  }
-  return resp as Record<string, unknown>;
-}
+// Use the background-owned persistent bridge port for vault calls
+const sendVaultMessage = sendVaultMessageFromPage;
 
 type ProviderModel = Readonly<{
   id: string;
