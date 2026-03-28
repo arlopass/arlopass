@@ -62,11 +62,15 @@ export function useProviders(): UseProvidersReturn {
     // Auto-refresh when extension signals provider/app changes
     useEffect(() => {
         if (snapshot.state !== "connected" && snapshot.state !== "degraded") return;
-        const unsubscribe = store.client.onProvidersChanged(() => {
-            void listProviders();
+        const unsubscribe = store.client.onProvidersChanged((event) => {
+            // SDK already updated its internal providers + invalidated selection
+            store.setProviders(event.providers);
+            if (event.selectionInvalidated) {
+                store.refreshSnapshot(); // clears selectedProvider in React state
+            }
         });
         return unsubscribe;
-    }, [store, snapshot.state, listProviders]);
+    }, [store, snapshot.state]);
 
     return {
         providers: snapshot.providers,

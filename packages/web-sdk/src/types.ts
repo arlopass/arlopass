@@ -50,6 +50,10 @@ export type ConnectOptions = Readonly<{
   appIcon?: string;
   origin?: string;
   timeoutMs?: number;
+  /** Models the app supports — at least one must be available. */
+  supportedModels?: readonly string[];
+  /** Models the app always requires — all must be available. */
+  requiredModels?: readonly string[];
 }>;
 
 export type ConnectResult = Readonly<{
@@ -68,6 +72,12 @@ export type ProviderDescriptor = Readonly<{
 export type ListProvidersResult = Readonly<{
   providers: readonly ProviderDescriptor[];
   correlationId: CorrelationId;
+}>;
+
+export type ProvidersChangedEvent = Readonly<{
+  providers: readonly ProviderDescriptor[];
+  selectionInvalidated: boolean;
+  previousSelection?: Readonly<{ providerId: string; modelId: string }>;
 }>;
 
 export type SelectProviderInput = Readonly<{
@@ -213,4 +223,28 @@ export type ContextWindowInfo = Readonly<{
 export type DeterministicFailure = Readonly<{
   reasonCode: ProtocolReasonCode;
   machineCode: string;
+}>;
+
+export type ModelRequirements = Readonly<{
+  /** Models the app works with. App functions if the user has at least ONE. */
+  supported?: readonly string[];
+  /** Models the app ALWAYS needs. ALL must be available. */
+  required?: readonly string[];
+}>;
+
+export type ModelAvailabilityStatus = Readonly<{
+  /** True if all requirements are satisfied. */
+  satisfied: boolean;
+  /** Which supported models the user has available. */
+  availableSupported: readonly string[];
+  /** Which supported models the user is missing. */
+  missingSupported: readonly string[];
+  /** Which required models the user has available. */
+  availableRequired: readonly string[];
+  /** Which required models the user is missing. */
+  missingRequired: readonly string[];
+  /** True if at least one supported model is available (or no supported list specified). */
+  hasSupportedModel: boolean;
+  /** True if ALL required models are available (or no required list specified). */
+  hasAllRequired: boolean;
 }>;

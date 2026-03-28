@@ -49,6 +49,7 @@ import {
   type ListProvidersResult,
   type ModelAvailabilityStatus,
   type ModelRequirements,
+  type ProvidersChangedEvent,
   type ProtocolEnvelopePayload,
   type ProviderDescriptor,
   type ProviderListPayload,
@@ -719,23 +720,82 @@ export class ArlopassClient {
   // Provider change notifications
   // ---------------------------------------------------------------------------
 
+  #providersChangedListeners = new Set<(event: ProvidersChangedEvent) => void>();
+
   /**
-   * Register a callback that fires when the extension signals that
-   * providers or app-connection settings have changed.  Call
-   * `listProviders()` inside the callback to get the updated list.
+   * Register a callback that fires when the extension signals providers
+   * or app-connection settings have changed.  The SDK automatically
+   * re-fetches the provider list and invalidates the current selection
+   * if the selected provider/model is no longer available.
+   *
+   * The callback receives an event with the updated providers and
+   * whether the selection was invalidated.
    *
    * Returns an unsubscribe function.
    */
-  onProvidersChanged(callback: () => void): () => void {
-    const handler = () => callback();
-    if (typeof window !== "undefined") {
-      window.addEventListener("arlopass:providers-changed", handler);
+  onProvidersChanged(callback: (event: ProvidersChangedEvent) => void): () => void {
+    this.#providersChangedListeners.add(callback);
+
+    // Set up the window listener lazily (first subscriber)
+    if (this.#providersChangedListeners.size === 1) {
+      this.#installProvidersChangedWindowListener();
     }
+
     return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("arlopass:providers-changed", handler);
-      }
+      this.#providersChangedListeners.delete(callback);
     };
+  }
+
+  #providersChangedWindowHandler: (() => void) | null = null;
+
+  #installProvidersChangedWindowListener(): void {
+    if (this.#providersChangedWindowHandler !== null) return;
+    if (typeof window === "undefined") return;
+
+    this.#providersChangedWindowHandler = () => {
+      void this.#handleProvidersChanged();
+    };
+    window.addEventListener("arlopass:providers-changed", this.#providersChangedWindowHandler);
+  }
+
+  async #handleProvidersChanged(): Promise<void> {
+    if (this.#stateMachine.state !== "connected" && this.#stateMachine.state !== "degraded") return;
+
+    try {
+      const result = await this.listProviders();
+      const providers = result.providers;
+      let selectionInvalidated = false;
+
+      // Check if current selection is still valid
+      if (this.#selectedProvider !== undefined) {
+        const currentProv = providers.find(
+          (p) => p.providerId === this.#selectedProvider?.providerId,
+        );
+        if (!currentProv) {
+          // Provider removed entirely
+          this.#selectedProvider = undefined;
+          selectionInvalidated = true;
+        } else if (!currentProv.models.includes(this.#selectedProvider.modelId)) {
+          // Model removed from provider
+          this.#selectedProvider = undefined;
+          selectionInvalidated = true;
+        }
+      }
+
+      const event: ProvidersChangedEvent = {
+        providers,
+        selectionInvalidated,
+        ...(this.#selectedProvider !== undefined && !selectionInvalidated
+          ? { previousSelection: this.#selectedProvider }
+          : {}),
+      };
+
+      for (const listener of this.#providersChangedListeners) {
+        try { listener(event); } catch { /* don't let one listener break others */ }
+      }
+    } catch {
+      // Vault locked or bridge unavailable — listeners will get notified on next successful refresh
+    }
   }
 
   async #sendChat(
