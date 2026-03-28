@@ -66,7 +66,7 @@ function parseDiscoveredModels(value: unknown): readonly ProviderModel[] {
     // Deployment name is the primary identifier used in API calls
     const id = typeof entry["name"] === "string" ? entry["name"].trim()
       : typeof entry["id"] === "string" ? entry["id"].trim()
-      : "";
+        : "";
     if (id.length === 0) {
       continue;
     }
@@ -198,6 +198,7 @@ async function validateFoundryApiEndpoint(
     response = await runFetchCheck(deploymentsUrl.toString(), {
       headers: {
         "api-key": apiKey,
+        Authorization: `Bearer ${apiKey}`,
       },
     });
   } catch (error) {

@@ -567,6 +567,7 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
         method: "GET",
         headers: {
           "api-key": apiKey,
+          Authorization: `Bearer ${apiKey}`,
         },
         signal: AbortSignal.timeout(30_000),
       });
@@ -693,6 +694,7 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
         headers: {
           "content-type": "application/json",
           "api-key": session.apiKey,
+          Authorization: `Bearer ${session.apiKey}`,
         },
         body: JSON.stringify({
           messages: session.messages,
