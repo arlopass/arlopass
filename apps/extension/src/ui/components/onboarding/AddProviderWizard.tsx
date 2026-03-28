@@ -725,12 +725,46 @@ export function AddProviderWizard({
     return content;
   }
 
+  const stepTitle = (() => {
+    switch (state.step) {
+      case "select-provider":
+        return "Add provider";
+      case "choose-credential":
+        return selectedProvider?.label ?? "Credentials";
+      case "enter-credentials":
+        return "Enter credentials";
+      case "test-connection":
+        return "Testing connection";
+      case "connection-result":
+        return state.testResult?.ok ? "Connected" : "Connection failed";
+      default:
+        return "Add provider";
+    }
+  })();
+
+  const stepLabel = (() => {
+    switch (state.step) {
+      case "select-provider":
+        return undefined;
+      case "choose-credential":
+        return "Step 1 of 3";
+      case "enter-credentials":
+        return "Step 2 of 3";
+      case "test-connection":
+        return "Step 3 of 3";
+      case "connection-result":
+        return undefined;
+      default:
+        return undefined;
+    }
+  })();
+
   return (
     <PopupShell>
       <WalletHeader
-        title="Add provider"
-        onToggleCollapse={handleBack}
-        onSettingsClick={onClose}
+        title={stepTitle}
+        onBack={handleBack}
+        stepLabel={stepLabel}
       />
       {content}
     </PopupShell>

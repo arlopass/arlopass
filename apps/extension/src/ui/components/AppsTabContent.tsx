@@ -1,16 +1,4 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Center,
-  Collapse,
-  Divider,
-  Group,
-  ScrollArea,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { MetadataDivider } from "./MetadataDivider.js";
 import { PrimaryButton } from "./PrimaryButton.js";
@@ -20,7 +8,7 @@ import {
   type ConnectedApp,
 } from "./app-connect/app-storage.js";
 import { useVaultContext } from "../hooks/VaultContext.js";
-import { tokens } from "./theme.js";
+import { staggerDelay } from "./animation-utils.js";
 
 function formatAge(timestamp: number): string {
   const diffMs = Date.now() - timestamp;
@@ -59,47 +47,38 @@ export function AppsTabContent() {
 
   return (
     <>
-      <ScrollArea
-        style={{ flex: 1, minHeight: 0 }}
-        type="scroll"
-        offsetScrollbars
-        scrollbarSize={6}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
         {loading && (
-          <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">
-            Loading…
-          </Text>
+          <div className="flex items-center justify-center py-8">
+            <span className="text-xs text-[var(--ap-text-secondary)]">
+              Loading…
+            </span>
+          </div>
         )}
         {!loading && apps.length === 0 && (
-          <Center py="xl">
-            <Stack gap={8} align="center">
-              <Text fz="sm" fw={500} c={tokens.color.textPrimary}>
-                Connected Apps
-              </Text>
-              <Text
-                fz="xs"
-                c={tokens.color.textSecondary}
-                ta="center"
-                maw={280}
-              >
-                Apps that connect to your wallet will appear here. Visit a web
-                app that uses Arlopass to get started.
-              </Text>
-            </Stack>
-          </Center>
+          <div className="flex flex-col items-center justify-center py-8 gap-2 animate-fade-in">
+            <span className="text-xs font-medium text-[var(--ap-text-primary)]">
+              Connected Apps
+            </span>
+            <span className="text-[10px] text-[var(--ap-text-secondary)] text-center max-w-[280px]">
+              Apps that connect to your wallet will appear here. Visit a web app
+              that uses Arlopass to get started.
+            </span>
+          </div>
         )}
         {!loading && apps.length > 0 && (
-          <Stack gap={tokens.spacing.sectionGap}>
-            {apps.map((app) => (
+          <div className="flex flex-col gap-2">
+            {apps.map((app, i) => (
               <AppCard
                 key={app.id}
                 app={app}
+                index={i}
                 onRemove={(origin) => void removeApp(origin, sendVaultMessage)}
               />
             ))}
-          </Stack>
+          </div>
         )}
-      </ScrollArea>
+      </div>
       <PrimaryButton>Manage apps</PrimaryButton>
     </>
   );
@@ -107,34 +86,24 @@ export function AppsTabContent() {
 
 function AppCard({
   app,
+  index = 0,
   onRemove,
 }: {
   app: ConnectedApp;
+  index?: number;
   onRemove: (origin: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <Box
-      style={{
-        width: "100%",
-        background: tokens.color.bgSurface,
-        border: `1px solid ${tokens.color.border}`,
-        borderRadius: tokens.radius.card,
-        overflow: "hidden",
-      }}
+    <div
+      className="w-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md overflow-hidden transition-all duration-250 hover:border-[var(--ap-border-strong)] animate-fade-in-up"
+      style={staggerDelay(index, 80)}
     >
-      <UnstyledButton
+      <button
+        type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: tokens.spacing.cardPadding,
-          cursor: "pointer",
-          gap: 10,
-        }}
+        className="flex items-center justify-between w-full px-3 py-2.5 bg-transparent border-none cursor-pointer gap-3 text-left"
       >
         {app.iconUrl ? (
           <img
@@ -142,148 +111,104 @@ function AppCard({
             alt=""
             width={28}
             height={28}
-            style={{ borderRadius: 6, flexShrink: 0 }}
+            className="rounded-md shrink-0"
           />
         ) : (
-          <Box
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 6,
-              background: "var(--mantine-color-blue-1)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Text fz={12} fw={700} c="blue">
+          <div className="w-7 h-7 rounded-md bg-[var(--ap-brand-subtle)] flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-[var(--color-brand)]">
               {app.displayName[0]?.toUpperCase() ?? "A"}
-            </Text>
-          </Box>
+            </span>
+          </div>
         )}
-        <Stack gap={0} style={{ overflow: "hidden", minWidth: 0, flex: 1 }}>
-          <Group gap={4} wrap="nowrap">
-            <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>
+        <div className="flex flex-col gap-0 overflow-hidden min-w-0 flex-1">
+          <div className="flex items-center gap-1 overflow-hidden">
+            <span className="text-xs font-semibold text-[var(--ap-text-primary)] truncate">
               {app.displayName}
-            </Text>
-            <Text fw={400} fz="xs" c={tokens.color.textSecondary}>
+            </span>
+            <span className="text-[10px] text-[var(--ap-text-secondary)] truncate shrink-0">
               ({extractDomain(app.origin)})
-            </Text>
-          </Group>
-          <Group
-            gap={tokens.spacing.metadataGap}
-            wrap="nowrap"
-            style={{ overflow: "hidden" }}
-          >
+            </span>
+          </div>
+          <div className="flex items-center gap-2 overflow-hidden truncate">
             {app.description && (
               <>
-                <Text
-                  fw={500}
-                  fz="xs"
-                  c={tokens.color.textSecondary}
-                  truncate
-                  style={{ whiteSpace: "nowrap" }}
-                >
+                <span className="text-[10px] font-medium text-[var(--ap-text-secondary)] truncate whitespace-nowrap">
                   {app.description}
-                </Text>
+                </span>
                 <MetadataDivider />
               </>
             )}
-            <Text
-              fw={500}
-              fz="xs"
-              c={tokens.color.textSecondary}
-              style={{ whiteSpace: "nowrap" }}
-            >
+            <span className="text-[10px] font-medium text-[var(--ap-text-secondary)] whitespace-nowrap">
               {app.status === "active" ? "Full permissions" : "Disabled"}
-            </Text>
+            </span>
             <MetadataDivider />
-            <Text
-              fw={500}
-              fz="xs"
-              c={tokens.color.textSecondary}
-              style={{ whiteSpace: "nowrap" }}
-            >
+            <span className="text-[10px] font-medium text-[var(--ap-text-secondary)] whitespace-nowrap">
               Last used {formatAge(app.lastUsedAt)}
-            </Text>
-          </Group>
-        </Stack>
+            </span>
+          </div>
+        </div>
         <IconChevronDown
-          size={20}
-          color={tokens.color.textSecondary}
-          style={{
-            transform: expanded ? undefined : "rotate(-90deg)",
-            transition: "transform 150ms ease",
-            flexShrink: 0,
-          }}
+          size={16}
+          className={`text-[var(--ap-text-secondary)] shrink-0 transition-transform duration-200 ${expanded ? "" : "-rotate-90"}`}
           aria-hidden
         />
-      </UnstyledButton>
-      <Collapse in={expanded}>
-        <Box
-          style={{
-            padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px`,
-          }}
-        >
-          <Divider mb={tokens.spacing.sectionGap} color={tokens.color.border} />
-          <Stack gap={8}>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Origin
-              </Text>
-              <Text
-                fz="xs"
-                fw={500}
-                c={tokens.color.textPrimary}
-                truncate
-                maw={200}
-              >
-                {app.origin}
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Providers
-              </Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                {app.enabledProviderIds.length} enabled
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Models
-              </Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                {app.enabledModelIds.length} enabled
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Status
-              </Text>
-              <Text
-                fz="xs"
-                fw={500}
-                c={app.status === "active" ? "#137333" : "#8e2e2e"}
-              >
-                {app.status}
-              </Text>
-            </Group>
-            <Group gap={8} mt={4}>
-              <Button
-                size="compact-xs"
-                variant="light"
-                color="red"
-                radius={tokens.radius.card}
-                onClick={() => onRemove(app.origin)}
-              >
-                Disconnect
-              </Button>
-            </Group>
-          </Stack>
-        </Box>
-      </Collapse>
-    </Box>
+      </button>
+
+      <div
+        className={`grid transition-all duration-300 ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)" }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 pb-3">
+            <div className="h-px bg-[var(--ap-border)] mb-3" />
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Origin
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)] truncate max-w-[200px]">
+                  {app.origin}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Providers
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                  {app.enabledProviderIds.length} enabled
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Models
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                  {app.enabledModelIds.length} enabled
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Status
+                </span>
+                <span
+                  className={`text-[10px] font-medium ${app.status === "active" ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"}`}
+                >
+                  {app.status}
+                </span>
+              </div>
+              <div className="flex gap-1.5 mt-1">
+                <button
+                  type="button"
+                  onClick={() => onRemove(app.origin)}
+                  className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--color-danger)] bg-[var(--color-danger-subtle)] border border-[var(--color-danger)]/20 rounded-sm cursor-pointer hover:bg-[var(--color-danger)] hover:text-[var(--ap-text-primary)] transition-all duration-150 active:scale-95"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

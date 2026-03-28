@@ -1,7 +1,5 @@
-import { Box, Center, Group, Loader, ScrollArea, Stack, Text, ActionIcon, Tooltip } from "@mantine/core";
 import { IconTrash } from "@tabler/icons-react";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
-import { tokens } from "./theme.js";
 
 function formatTokenCount(count: number): string {
   if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
@@ -23,19 +21,19 @@ export function UsageTabContent() {
 
   if (loading) {
     return (
-      <Center py="xl">
-        <Loader size="sm" color={tokens.color.textSecondary} />
-      </Center>
+      <div className="flex items-center justify-center py-8">
+        <div className="w-5 h-5 border-2 border-[var(--ap-text-secondary)]/30 border-t-[var(--ap-text-secondary)] rounded-full animate-spin-slow" />
+      </div>
     );
   }
 
   if (summaries.length === 0) {
     return (
-      <Center py="xl">
-        <Text fz="sm" c={tokens.color.textSecondary} ta="center">
+      <div className="flex items-center justify-center py-8 animate-fade-in">
+        <span className="text-xs text-[var(--ap-text-secondary)] text-center">
           No token usage recorded yet.
-        </Text>
-      </Center>
+        </span>
+      </div>
     );
   }
 
@@ -45,70 +43,67 @@ export function UsageTabContent() {
   );
 
   return (
-    <Stack gap={8} style={{ flex: 1, minHeight: 0 }}>
-      <Group justify="space-between" px={0}>
-        <Text fz="xs" fw={600} c={tokens.color.textPrimary}>
+    <div className="flex flex-col gap-2 flex-1 min-h-0">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold text-[var(--ap-text-primary)]">
           Total: {formatTokenCount(totalTokens)} tokens
-        </Text>
-        <Tooltip label="Reset all usage" position="left">
-          <ActionIcon
-            variant="subtle"
-            size="xs"
-            color="red"
-            onClick={() => void resetAll()}
-          >
-            <IconTrash size={12} />
-          </ActionIcon>
-        </Tooltip>
-      </Group>
+        </span>
+        <button
+          type="button"
+          onClick={() => void resetAll()}
+          className="flex items-center justify-center w-6 h-6 rounded-sm bg-transparent border-none cursor-pointer text-[var(--color-danger)] hover:bg-[var(--color-danger-subtle)] transition-all duration-150 active:scale-90"
+          title="Reset all usage"
+        >
+          <IconTrash size={12} />
+        </button>
+      </div>
 
-      <ScrollArea style={{ flex: 1, minHeight: 0 }} type="scroll" offsetScrollbars scrollbarSize={6}>
-        <Stack gap={6}>
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
+        <div className="flex flex-col gap-1.5">
           {summaries.map((summary) => (
-            <Box
+            <div
               key={summary.origin}
-              style={{
-                background: tokens.color.bgSurface,
-                borderRadius: tokens.radius.card,
-                padding: "8px 10px",
-              }}
+              className="bg-[var(--ap-bg-surface)] rounded-md px-2.5 py-2 animate-fade-in"
             >
-              <Group justify="space-between" mb={4}>
-                <Text fz={11} fw={600} c={tokens.color.textPrimary} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220 }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-semibold text-[var(--ap-text-primary)] truncate max-w-[220px]">
                   {shortenOrigin(summary.origin)}
-                </Text>
-                <Group gap={6}>
-                  <Text fz={10} c={tokens.color.textSecondary}>
-                    {formatTokenCount(summary.totalInputTokens + summary.totalOutputTokens)}
-                  </Text>
-                  <Tooltip label="Reset this app" position="left">
-                    <ActionIcon
-                      variant="subtle"
-                      size={14}
-                      color="red"
-                      onClick={() => void resetOrigin(summary.origin)}
-                    >
-                      <IconTrash size={10} />
-                    </ActionIcon>
-                  </Tooltip>
-                </Group>
-              </Group>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                    {formatTokenCount(
+                      summary.totalInputTokens + summary.totalOutputTokens,
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void resetOrigin(summary.origin)}
+                    className="flex items-center justify-center w-4 h-4 rounded-sm bg-transparent border-none cursor-pointer text-[var(--color-danger)] hover:bg-[var(--color-danger-subtle)] transition-all duration-150"
+                    title="Reset this app"
+                  >
+                    <IconTrash size={10} />
+                  </button>
+                </div>
+              </div>
 
               {summary.byProvider.map((p) => (
-                <Group key={`${p.providerId}-${p.modelId}`} justify="space-between" pl={6}>
-                  <Text fz={10} c={tokens.color.textSecondary} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
+                <div
+                  key={`${p.providerId}-${p.modelId}`}
+                  className="flex items-center justify-between pl-1.5"
+                >
+                  <span className="text-[10px] text-[var(--ap-text-secondary)] truncate max-w-[160px]">
                     {p.modelId}
-                  </Text>
-                  <Text fz={10} c={tokens.color.textSecondary}>
-                    ↑{formatTokenCount(p.inputTokens)} ↓{formatTokenCount(p.outputTokens)}
-                  </Text>
-                </Group>
+                  </span>
+                  <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                    ↑{formatTokenCount(p.inputTokens)} ↓
+                    {formatTokenCount(p.outputTokens)}
+                  </span>
+                </div>
               ))}
-            </Box>
+            </div>
           ))}
-        </Stack>
-      </ScrollArea>
-    </Stack>
+        </div>
+      </div>
+    </div>
   );
 }
-

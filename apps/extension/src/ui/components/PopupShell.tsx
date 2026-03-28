@@ -1,40 +1,20 @@
-import { Box, Paper } from "@mantine/core";
 import type { ReactNode } from "react";
-import { tokens } from "./theme.js";
 
 export type PopupShellProps = {
   children: ReactNode;
 };
 
+/**
+ * Root container for the extension popup.
+ * 360px fixed width, full viewport height, warm stone surface.
+ * Matches the landing page preview card aesthetic.
+ */
 export function PopupShell({ children }: PopupShellProps) {
   return (
-    <Box
-      style={{
-        width: tokens.size.popupWidth,
-        minWidth: tokens.size.popupWidth,
-        maxWidth: tokens.size.popupWidth,
-        height: "100vh",
-        maxHeight: "100vh",
-        background: tokens.color.bgBase,
-        padding: tokens.spacing.outerPadding,
-        boxSizing: "border-box",
-        overflow: "hidden",
-      }}
-    >
-      <Paper
-        radius={tokens.radius.container}
-        shadow="none"
-        style={{
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          background: tokens.color.bgSurface,
-          border: `1px solid ${tokens.color.border}`,
-        }}
-      >
+    <div className="w-[360px] min-w-[360px] max-w-[360px] h-screen max-h-screen bg-[var(--ap-bg-base)] p-2.5 overflow-hidden">
+      <div className="flex flex-col h-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg overflow-hidden">
         {children}
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 }

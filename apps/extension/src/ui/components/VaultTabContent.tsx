@@ -1,21 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Collapse,
-  Divider,
-  Group,
-  PasswordInput,
-  ScrollArea,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
+import { PasswordInput } from "@mantine/core";
 import { IconChevronDown, IconKey, IconShieldLock } from "@tabler/icons-react";
 import { ProviderAvatar } from "./ProviderAvatar.js";
 import { PrimaryButton } from "./PrimaryButton.js";
 import { useVaultContext } from "../hooks/VaultContext.js";
-import { tokens } from "./theme.js";
+import { staggerDelay } from "./animation-utils.js";
 
 type VaultCredential = {
   id: string;
@@ -54,6 +43,21 @@ function formatAge(timestamp: string): string {
   return `Last refreshed ${String(months)} month${months > 1 ? "s" : ""} ago`;
 }
 
+function formatSavedAge(timestamp: string): string {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return "Saved just now";
+  if (mins < 60) return `Saved ${String(mins)}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Saved ${String(hours)}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `Saved ${String(days)}d ago`;
+  if (days < 30)
+    return `Saved ${String(Math.floor(days / 7))} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
+  const months = Math.floor(days / 30);
+  return `Saved ${String(months)} month${months > 1 ? "s" : ""} ago`;
+}
+
 export function VaultTabContent() {
   const [credentials, setCredentials] = useState<VaultCredential[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,38 +90,36 @@ export function VaultTabContent() {
 
   return (
     <>
-      <ScrollArea
-        style={{ flex: 1, minHeight: 0 }}
-        type="scroll"
-        offsetScrollbars
-        scrollbarSize={6}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
         {loading && (
-          <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">
-            Loading…
-          </Text>
+          <div className="flex items-center justify-center py-8">
+            <span className="text-xs text-[var(--ap-text-secondary)]">
+              Loading…
+            </span>
+          </div>
         )}
         {!loading && (
-          <Stack gap={tokens.spacing.sectionGap}>
+          <div className="flex flex-col gap-3">
             <VaultSecuritySection
               keyMode={keyMode}
               minPasswordLength={minPasswordLength}
               sendVaultMessage={sendVaultMessage}
               onKeyModeChange={setKeyMode}
             />
-            <Divider color={tokens.color.border} />
-            <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+            <div className="h-px bg-[var(--ap-border)]" />
+            <span className="text-xs font-semibold text-[var(--ap-text-primary)]">
               Stored credentials
-            </Text>
+            </span>
             {credentials.length === 0 && (
-              <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="md">
+              <span className="text-xs text-[var(--ap-text-secondary)] text-center py-4">
                 No credentials stored. Add a provider to create credentials.
-              </Text>
+              </span>
             )}
-            {credentials.map((cred) => (
+            {credentials.map((cred, i) => (
               <CredentialCard
                 key={cred.id}
                 credential={cred}
+                index={i}
                 onDelete={(id) => {
                   void sendVaultMessage({
                     type: "vault.credentials.delete",
@@ -126,9 +128,9 @@ export function VaultTabContent() {
                 }}
               />
             ))}
-          </Stack>
+          </div>
         )}
-      </ScrollArea>
+      </div>
       <PrimaryButton>Manage credentials</PrimaryButton>
     </>
   );
@@ -203,62 +205,55 @@ function VaultSecuritySection({
   }, [sendVaultMessage, password, passwordsMatch, tooShort, onKeyModeChange]);
 
   return (
-    <Box
-      style={{
-        background: tokens.color.bgSurface,
-        border: `1px solid ${tokens.color.border}`,
-        borderRadius: tokens.radius.card,
-        padding: tokens.spacing.cardPadding,
-      }}
-    >
-      <Group gap={8} mb={8}>
+    <div className="bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md p-3">
+      <div className="flex items-center gap-2 mb-2">
         {keyMode === "password" ? (
-          <IconShieldLock size={18} color={tokens.color.brand} />
+          <IconShieldLock size={18} className="text-[var(--color-brand)]" />
         ) : (
-          <IconKey size={18} color={tokens.color.brand} />
+          <IconKey size={18} className="text-[var(--color-brand)]" />
         )}
-        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+        <span className="text-xs font-semibold text-[var(--ap-text-primary)]">
           Vault security
-        </Text>
-      </Group>
+        </span>
+      </div>
 
-      <Text fz="xs" c={tokens.color.textSecondary} mb={8}>
+      <p className="text-[10px] text-[var(--ap-text-secondary)] mb-2">
         {keyMode === "password"
           ? "Your vault is protected by a master password."
           : keyMode === "keychain"
             ? "Your vault is protected by the OS credential store. Unlocks automatically."
             : "Loading…"}
-      </Text>
+      </p>
 
       {error !== null && (
-        <Text fz="xs" c={tokens.color.danger} mb={8}>
+        <span className="text-[10px] text-[var(--color-danger)] block mb-2 animate-fade-in">
           {error}
-        </Text>
+        </span>
       )}
 
       {keyMode === "password" && !showPasswordForm && (
-        <Button
-          size="compact-xs"
-          variant="light"
-          loading={switching}
+        <button
+          type="button"
           onClick={handleSwitchToKeychain}
+          disabled={switching}
+          className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--ap-text-secondary)] bg-[var(--ap-bg-elevated)] border border-[var(--ap-border)] rounded-sm cursor-pointer hover:text-[var(--ap-text-primary)] hover:border-[var(--ap-border-strong)] transition-all duration-150 active:scale-95 disabled:opacity-50"
         >
-          Switch to OS keychain
-        </Button>
+          {switching ? "Switching…" : "Switch to OS keychain"}
+        </button>
       )}
 
       {keyMode === "keychain" && !showPasswordForm && (
-        <Button
-          size="compact-xs"
-          variant="light"
+        <button
+          type="button"
           onClick={() => setShowPasswordForm(true)}
+          className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--ap-text-secondary)] bg-[var(--ap-bg-elevated)] border border-[var(--ap-border)] rounded-sm cursor-pointer hover:text-[var(--ap-text-primary)] hover:border-[var(--ap-border-strong)] transition-all duration-150 active:scale-95"
         >
           Switch to master password
-        </Button>
+        </button>
       )}
 
       {showPasswordForm && (
-        <Stack gap="xs" mt={8}>
+        <div className="flex flex-col gap-2 mt-2 animate-fade-in">
           <PasswordInput
             size="xs"
             label="New master password"
@@ -270,6 +265,20 @@ function VaultSecuritySection({
                 ? `Must be at least ${String(minPasswordLength)} characters`
                 : undefined
             }
+            styles={{
+              label: {
+                color: "var(--ap-text-body)",
+                fontSize: 10,
+                fontWeight: 500,
+                marginBottom: 2,
+              },
+              input: {
+                background: "var(--ap-bg-base)",
+                borderColor: "var(--ap-border)",
+                color: "var(--ap-text-primary)",
+                fontSize: 11,
+              },
+            }}
           />
           <PasswordInput
             size="xs"
@@ -282,141 +291,147 @@ function VaultSecuritySection({
                 ? "Passwords don't match"
                 : undefined
             }
+            styles={{
+              label: {
+                color: "var(--ap-text-body)",
+                fontSize: 10,
+                fontWeight: 500,
+                marginBottom: 2,
+              },
+              input: {
+                background: "var(--ap-bg-base)",
+                borderColor: "var(--ap-border)",
+                color: "var(--ap-text-primary)",
+                fontSize: 11,
+              },
+            }}
           />
-          <Group gap={8}>
-            <Button
-              size="compact-xs"
-              loading={switching}
-              disabled={!passwordsMatch || tooShort}
+          <div className="flex gap-1.5">
+            <button
+              type="button"
               onClick={handleSwitchToPassword}
+              disabled={switching || !passwordsMatch || tooShort}
+              className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--ap-text-primary)] bg-[var(--color-brand)] border-none rounded-sm cursor-pointer hover:bg-[var(--color-brand-hover)] transition-all duration-150 active:scale-95 disabled:opacity-40"
             >
-              Set password
-            </Button>
-            <Button
-              size="compact-xs"
-              variant="subtle"
+              {switching ? "Setting…" : "Set password"}
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setShowPasswordForm(false);
                 setPassword("");
                 setConfirm("");
                 setError(null);
               }}
+              className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--ap-text-secondary)] bg-transparent border-none cursor-pointer hover:text-[var(--ap-text-primary)] transition-all duration-150"
             >
               Cancel
-            </Button>
-          </Group>
-        </Stack>
+            </button>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
 
 function CredentialCard({
   credential,
+  index = 0,
   onDelete,
 }: {
   credential: VaultCredential;
+  index?: number;
   onDelete: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const created = new Date(credential.createdAt).toLocaleDateString();
   return (
-    <Box
-      style={{
-        width: "100%",
-        background: tokens.color.bgSurface,
-        border: `1px solid ${tokens.color.border}`,
-        borderRadius: tokens.radius.card,
-        overflow: "hidden",
-      }}
+    <div
+      className="w-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md overflow-hidden transition-all duration-250 hover:border-[var(--ap-border-strong)] animate-fade-in-up"
+      style={staggerDelay(index, 60)}
     >
-      <UnstyledButton
+      <button
+        type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: tokens.spacing.cardPadding,
-          cursor: "pointer",
-        }}
+        className="flex items-center justify-between w-full px-3 py-2.5 bg-transparent border-none cursor-pointer text-left gap-3"
       >
-        <Group
-          gap={tokens.spacing.iconTextGap}
-          align="center"
-          wrap="nowrap"
-          style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
-        >
+        <div className="flex items-center gap-2.5 overflow-hidden flex-1 min-w-0">
           <ProviderAvatar
             providerKey={deriveProviderKeyFromConnectorId(
               credential.connectorId,
             )}
-            size={tokens.size.providerIcon}
+            size={24}
           />
-          <Stack gap={0} style={{ overflow: "hidden", minWidth: 0 }}>
-            <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>
+          <div className="flex flex-col justify-center overflow-hidden min-w-0">
+            <span className="text-xs font-semibold text-[var(--ap-text-primary)] truncate leading-tight">
               {credential.name}
-            </Text>
-            <Text
-              fw={500}
-              fz="xs"
-              c={tokens.color.textSecondary}
-              style={{ whiteSpace: "nowrap" }}
-            >
-              {formatAge(credential.lastUsedAt)}
-            </Text>
-          </Stack>
-        </Group>
-        <IconChevronDown
-          size={20}
-          color={tokens.color.textSecondary}
-          style={{
-            transform: expanded ? undefined : "rotate(-90deg)",
-            transition: "transform 150ms ease",
-            flexShrink: 0,
-          }}
-          aria-hidden
-        />
-      </UnstyledButton>
-      <Collapse in={expanded}>
-        <Box
-          style={{
-            padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px`,
-          }}
-        >
-          <Divider mb={tokens.spacing.sectionGap} color={tokens.color.border} />
-          <Stack gap={8}>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Connector
-              </Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                {credential.connectorId}
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Created
-              </Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                {created}
-              </Text>
-            </Group>
-            <Group gap={8} mt={4}>
-              <Button
-                size="compact-xs"
-                variant="light"
-                color="red"
-                radius={tokens.radius.card}
-                onClick={() => onDelete(credential.id)}
-              >
-                Delete
-              </Button>
-            </Group>
-          </Stack>
-        </Box>
-      </Collapse>
-    </Box>
+            </span>
+            <span className="text-[10px] text-[var(--ap-text-tertiary)] truncate leading-tight">
+              {formatSavedAge(credential.createdAt)}
+            </span>
+          </div>
+        </div>
+        {/* Green checkmark — matching SecureVault preview */}
+        <div className="flex items-center gap-2 shrink-0">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--color-success)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="shrink-0"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <IconChevronDown
+            size={16}
+            className={`text-[var(--ap-text-secondary)] shrink-0 transition-transform duration-200 ${expanded ? "" : "-rotate-90"}`}
+            aria-hidden
+          />
+        </div>
+      </button>
+
+      <div
+        className={`grid transition-all duration-300 ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)" }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 pb-3">
+            <div className="h-px bg-[var(--ap-border)] mb-3" />
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Connector
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                  {credential.connectorId}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Created
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                  {created}
+                </span>
+              </div>
+              <div className="flex gap-1.5 mt-1">
+                <button
+                  type="button"
+                  onClick={() => onDelete(credential.id)}
+                  className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--color-danger)] bg-[var(--color-danger-subtle)] border border-[var(--color-danger)]/20 rounded-sm cursor-pointer hover:bg-[var(--color-danger)] hover:text-[var(--ap-text-primary)] transition-all duration-150 active:scale-95"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,296 @@
+@import "tailwindcss";
+
+/* ============================================
+   Tailwind v4 Theme — Arlopass Extension
+   Mirrors the landing page design tokens.
+   ============================================ */
+@theme {
+  /* Brand */
+  --color-brand: #db4d12;
+  --color-brand-hover: #9a3412;
+  --color-brand-subtle: #2c1a0e;
+  --color-success: #4d7c0f;
+  --color-success-subtle: #1a2e05;
+  --color-warning: #ca8a04;
+  --color-warning-subtle: #2e2204;
+  --color-danger: #b91c1c;
+  --color-danger-subtle: #2e0505;
+
+  /* Fonts */
+  --font-sans:
+    "Geist Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Border radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Custom easings */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Animations */
+  --animate-fade-in: fade-in 400ms ease both;
+  --animate-fade-in-up: fade-in-up 400ms var(--ease-out-expo) both;
+  --animate-scale-in: scale-in 200ms var(--ease-out-quart) both;
+  --animate-slide-in: slide-in-right 300ms var(--ease-out-expo) both;
+  --animate-bounce-dot: bounce-dot 0.8s ease-in-out infinite;
+  --animate-spin-slow: spin 1.2s linear infinite;
+  --animate-ping-wave: ping-wave 600ms cubic-bezier(0, 0, 0.2, 1) forwards;
+  --animate-check-draw: check-draw 300ms var(--ease-out-quart) both;
+  --animate-knob-slide: knob-slide 250ms var(--ease-out-quart) both;
+}
+
+/* ============================================
+   Semantic color tokens (dark-first)
+   ============================================ */
+:root {
+  --ap-bg-base: #1c1917;
+  --ap-bg-surface: #292524;
+  --ap-bg-elevated: #3d3835;
+  --ap-bg-code: #1a1412;
+  --ap-border: #44403c;
+  --ap-border-strong: #57534e;
+  --ap-text-primary: #fafaf9;
+  --ap-text-body: #d6d3d1;
+  --ap-text-secondary: #a8a29e;
+  --ap-text-tertiary: #78716c;
+  --ap-brand-subtle: #2c1a0e;
+  --ap-success-subtle: #1a2e05;
+}
+
+/* ============================================
+   Keyframes
+   ============================================ */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounce-dot {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes ping-wave {
+  from {
+    transform: scale(0.3);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 20;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes knob-slide {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ============================================
+   Base styles
+   ============================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--ap-bg-base);
+  color: var(--ap-text-body);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Popup sizing */
+body:has(#popup-root) {
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
+  height: 600px;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+/* ============================================
+   Focus styles (WCAG AA)
+   ============================================ */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Scrollbar styling
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ap-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ap-border-strong);
+}
+
+/* ============================================
+   Reduced motion
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   Utility: stagger animation delays
+   ============================================ */
+.stagger-1 {
+  animation-delay: 50ms;
+}
+.stagger-2 {
+  animation-delay: 100ms;
+}
+.stagger-3 {
+  animation-delay: 150ms;
+}
+.stagger-4 {
+  animation-delay: 200ms;
+}
+.stagger-5 {
+  animation-delay: 250ms;
+}
+.stagger-6 {
+  animation-delay: 300ms;
+}
+.stagger-7 {
+  animation-delay: 350ms;
+}
+.stagger-8 {
+  animation-delay: 400ms;
+}
+
+/* ============================================
+   Utility: sr-only (screen reader only)
+   ============================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================
+   Options page styles (legacy compat)
+   ============================================ */
+.arlopass-wallet-options *,
+.arlopass-wallet-options *::before,
+.arlopass-wallet-options *::after {
+  box-sizing: border-box;
+}
+
+.arlopass-wallet-options {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--ap-text-primary);
+  background: var(--ap-bg-base);
+  width: 100%;
+  max-width: 100%;
+}

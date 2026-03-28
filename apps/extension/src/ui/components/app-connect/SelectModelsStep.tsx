@@ -1,16 +1,7 @@
-import {
-  Badge,
-  Checkbox,
-  Group,
-  ScrollArea,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
 import { ProviderAvatar } from "../ProviderAvatar.js";
 import { PrimaryButton } from "../PrimaryButton.js";
 import type { WalletProvider } from "../../popup-state.js";
-import { tokens } from "../theme.js";
+import { staggerDelay } from "../animation-utils.js";
 
 type ModelItem = { id: string; name: string; providerKey: string };
 
@@ -62,6 +53,10 @@ export type SelectModelsStepProps = {
   onNext: () => void;
 };
 
+/**
+ * Model selection step matching the ModelPicker preview.
+ * Checkbox selection with brand highlight on selected items.
+ */
 export function SelectModelsStep({
   rawProviders,
   selectedProviderIds,
@@ -92,79 +87,87 @@ export function SelectModelsStep({
 
   return (
     <>
-      <Group justify="space-between">
-        <Text fw={500} fz="sm" c={tokens.color.textPrimary}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-[var(--ap-text-primary)]">
           Select models
-        </Text>
-        <UnstyledButton onClick={toggleAll}>
-          <Text fz="xs" c="#2f70ff" fw={500}>
-            {allSelected ? "Deselect all" : "Select all"}
-          </Text>
-        </UnstyledButton>
-      </Group>
+        </span>
+        <button
+          type="button"
+          onClick={toggleAll}
+          className="text-[10px]! font-medium text-[var(--color-brand)] bg-transparent border-none cursor-pointer hover:underline"
+        >
+          {allSelected ? "Deselect all" : "Select all"}
+        </button>
+      </div>
 
-      <ScrollArea
-        style={{ flex: 1, minHeight: 0 }}
-        type="scroll"
-        offsetScrollbars
-        scrollbarSize={6}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
         {models.length === 0 ? (
-          <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">
-            No models available from selected providers.
-          </Text>
+          <div className="flex items-center justify-center py-8">
+            <span className="text-xs text-[var(--ap-text-secondary)] text-center">
+              No models available from selected providers.
+            </span>
+          </div>
         ) : (
-          <Stack gap={8}>
-            {models.map((model) => (
-              <UnstyledButton
-                key={model.id}
-                onClick={() => toggle(model.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: tokens.spacing.iconTextGap,
-                  width: "100%",
-                  padding: tokens.spacing.cardPadding,
-                  background: tokens.color.bgSurface,
-                  border: selectedModelIds.includes(model.id)
-                    ? "2px solid #2f70ff"
-                    : `1px solid ${tokens.color.border}`,
-                  borderRadius: tokens.radius.card,
-                  cursor: "pointer",
-                }}
-              >
-                <Checkbox
-                  checked={selectedModelIds.includes(model.id)}
-                  onChange={() => toggle(model.id)}
-                  size="xs"
-                  color="#2f70ff"
-                  styles={{ input: { cursor: "pointer" } }}
-                />
-                <ProviderAvatar providerKey={model.providerKey} size={20} />
-                <Text
-                  fw={600}
-                  fz="sm"
-                  c={tokens.color.textPrimary}
-                  truncate
-                  style={{ flex: 1, minWidth: 0 }}
+          <div className="flex flex-col gap-1.5">
+            {models.map((model, i) => {
+              const selected = selectedModelIds.includes(model.id);
+              return (
+                <button
+                  key={model.id}
+                  type="button"
+                  onClick={() => toggle(model.id)}
+                  className={`flex items-center gap-2 w-full py-2 px-2.5 rounded-md border cursor-pointer transition-all duration-250 animate-fade-in-up
+                    ${
+                      selected
+                        ? "border-[var(--color-brand)] bg-[var(--ap-brand-subtle)]"
+                        : "border-[var(--ap-border)] bg-transparent hover:border-[var(--ap-border-strong)]"
+                    }`}
+                  style={staggerDelay(i, 60)}
                 >
-                  {model.name}
-                </Text>
-                {requiredSet.has(model.id) && (
-                  <Badge size="xs" variant="light" color="red" radius="sm">
-                    Required
-                  </Badge>
-                )}
-                {!requiredSet.has(model.id) && supportedSet.has(model.id) && (
-                  <Badge size="xs" variant="light" color="blue" radius="sm">
-                    Supported
-                  </Badge>
-                )}
-              </UnstyledButton>
-            ))}
-          </Stack>
+                  {/* Custom checkbox */}
+                  <div
+                    className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center shrink-0 transition-all duration-200
+                    ${
+                      selected
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
+                        : "border-[var(--ap-border-strong)] bg-transparent"
+                    }`}
+                  >
+                    {selected && (
+                      <svg
+                        width="8"
+                        height="8"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </div>
+                  <ProviderAvatar providerKey={model.providerKey} size={16} />
+                  <span className="text-[10px] font-medium text-[var(--ap-text-primary)] truncate flex-1 min-w-0 text-left">
+                    {model.name}
+                  </span>
+                  {requiredSet.has(model.id) && (
+                    <span className="px-1.5 py-0.5 text-[8px] font-medium bg-[var(--color-danger-subtle)] text-[var(--color-danger)] border border-[var(--color-danger)]/20 rounded-sm shrink-0">
+                      Required
+                    </span>
+                  )}
+                  {!requiredSet.has(model.id) && supportedSet.has(model.id) && (
+                    <span className="px-1.5 py-0.5 text-[8px] font-medium bg-[var(--ap-brand-subtle)] text-[var(--color-brand)] border border-[var(--color-brand)]/20 rounded-sm shrink-0">
+                      Supported
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         )}
-      </ScrollArea>
+      </div>
 
       <PrimaryButton onClick={onNext} disabled={selectedModelIds.length === 0}>
         Continue

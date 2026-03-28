@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react";
-import { Box } from "@mantine/core";
 import { PopupShell } from "../PopupShell.js";
 import { WalletHeader } from "../WalletHeader.js";
 import { ApproveStep } from "./ApproveStep.js";
@@ -12,7 +11,6 @@ import { usePersistedReducer } from "../../hooks/usePersistedReducer.js";
 import type { ProviderCardData } from "../ProviderCard.js";
 import type { WalletProvider } from "../../popup-state.js";
 import { useVaultContext } from "../../hooks/VaultContext.js";
-import { tokens } from "../theme.js";
 
 export type AppConnectWizardProps = {
   origin: string;
@@ -101,29 +99,37 @@ export function AppConnectWizard({
     onComplete(true);
   }, [state, onComplete, clearPersistedState, sendVaultMessage]);
 
+  const stepLabel = (() => {
+    switch (state.step) {
+      case "approve":
+        return undefined; // No step number for the initial request
+      case "select-providers":
+        return "Step 1 of 3";
+      case "select-models":
+        return "Step 2 of 3";
+      case "configure-settings":
+        return "Step 3 of 3";
+      default:
+        return undefined;
+    }
+  })();
+
   return (
     <PopupShell>
       <WalletHeader
         title={
           state.step === "approve"
             ? "Connection request"
-            : `Connect ${state.displayName}`
+            : state.step === "select-providers"
+              ? "Select providers"
+              : state.step === "select-models"
+                ? "Select models"
+                : "Configure settings"
         }
-        onToggleCollapse={handleBack}
-        onSettingsClick={() => onComplete(false)}
+        onBack={handleBack}
+        stepLabel={stepLabel}
       />
-      <Box
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
-          padding: tokens.spacing.contentHPadding,
-          paddingTop: tokens.spacing.contentTopPadding,
-          paddingBottom: tokens.spacing.contentBottomPadding,
-          gap: tokens.spacing.sectionGap,
-        }}
-      >
+      <div className="flex flex-col flex-1 min-h-0 px-3 pt-1.5 pb-2.5 gap-2.5">
         {state.step === "approve" && (
           <ApproveStep
             origin={state.origin}
@@ -178,7 +184,7 @@ export function AppConnectWizard({
             saving={state.saving}
           />
         )}
-      </Box>
+      </div>
     </PopupShell>
   );
 }

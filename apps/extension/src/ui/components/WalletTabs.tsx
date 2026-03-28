@@ -1,5 +1,4 @@
-import { Tabs } from "@mantine/core";
-import { tokens } from "./theme.js";
+import { useRef, useState, useEffect } from "react";
 
 export type WalletTabId = "providers" | "models" | "apps" | "vault" | "usage";
 
@@ -16,51 +15,56 @@ const tabItems: { id: WalletTabId; label: string }[] = [
   { id: "usage", label: "Usage" },
 ];
 
+/**
+ * Tab bar with a smooth sliding underline indicator.
+ * Matches the landing page header tab aesthetic.
+ */
 export function WalletTabs({ activeTab, onTabChange }: WalletTabsProps) {
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  // Update indicator position when activeTab changes
+  useEffect(() => {
+    if (!tabsRef.current) return;
+    const activeButton = tabsRef.current.querySelector(
+      `[data-tab="${activeTab}"]`,
+    ) as HTMLElement | null;
+    if (activeButton) {
+      const containerRect = tabsRef.current.getBoundingClientRect();
+      const buttonRect = activeButton.getBoundingClientRect();
+      setIndicator({
+        left: buttonRect.left - containerRect.left,
+        width: buttonRect.width,
+      });
+    }
+  }, [activeTab]);
+
   return (
-    <Tabs
-      value={activeTab}
-      onChange={(value) => { if (value !== null) onTabChange(value as WalletTabId); }}
-      variant="unstyled"
-      styles={{
-        root: { overflow: "hidden" },
-        list: { display: "flex", width: "100%" },
-        tab: {
-          flex: "1 0 0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: tokens.spacing.tabPadding,
-          borderBottom: `1px solid ${tokens.color.border}`,
-          background: "transparent",
-          cursor: "pointer",
-          fontFamily: "inherit",
-          fontSize: 12,
-          fontWeight: 500,
-          color: tokens.color.textSecondary,
-          transition: "border-color 150ms ease, color 150ms ease",
-          whiteSpace: "nowrap" as const,
-          "&[dataActive]": {
-            borderBottomColor: tokens.color.textPrimary,
-            color: tokens.color.textPrimary,
-          },
-        },
-      }}
+    <div
+      ref={tabsRef}
+      className="relative flex w-full border-b border-[var(--ap-border)]"
     >
-      <Tabs.List>
-        {tabItems.map((tab) => (
-          <Tabs.Tab
-            key={tab.id}
-            value={tab.id}
-            style={tab.id === activeTab ? {
-              borderBottomColor: tokens.color.textPrimary,
-              color: tokens.color.textPrimary,
-            } : undefined}
-          >
-            {tab.label}
-          </Tabs.Tab>
-        ))}
-      </Tabs.List>
-    </Tabs>
+      {tabItems.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          data-tab={tab.id}
+          onClick={() => onTabChange(tab.id)}
+          className={`flex-1 flex items-center justify-center py-1.5 bg-transparent border-none cursor-pointer text-[10px]! font-medium whitespace-nowrap transition-colors duration-200
+            ${tab.id === activeTab ? "text-[var(--ap-text-primary)]" : "text-[var(--ap-text-secondary)] hover:text-[var(--ap-text-body)]"}`}
+        >
+          {tab.label}
+        </button>
+      ))}
+      {/* Animated underline indicator */}
+      <div
+        className="absolute bottom-0 h-[2px] bg-[var(--ap-text-primary)] rounded-full transition-all duration-250"
+        style={{
+          left: indicator.left,
+          width: indicator.width,
+          transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)",
+        }}
+      />
+    </div>
   );
 }

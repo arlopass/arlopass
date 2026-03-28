@@ -1,16 +1,8 @@
-import {
-  Group,
-  NumberInput,
-  ScrollArea,
-  Stack,
-  Switch,
-  Text,
-} from "@mantine/core";
+import { useState } from "react";
+import { NumberInput } from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { PrimaryButton } from "../PrimaryButton.js";
 import type { AppPermissions, AppRules, AppLimits } from "./app-storage.js";
-import { tokens } from "../theme.js";
-import { useDisclosure } from "@mantine/hooks";
 
 type SectionProps = {
   title: string;
@@ -20,6 +12,9 @@ type SectionProps = {
   onMasterToggle?: (() => void) | undefined;
 };
 
+/**
+ * Collapsible section matching the PermissionsManagement preview.
+ */
 function CollapsibleSection({
   title,
   badge,
@@ -27,59 +22,77 @@ function CollapsibleSection({
   masterToggle,
   onMasterToggle,
 }: SectionProps) {
-  const [opened, { toggle }] = useDisclosure(true);
+  const [opened, setOpened] = useState(true);
   return (
-    <Stack
-      gap={0}
-      style={{
-        border: `1px solid ${tokens.color.border}`,
-        borderRadius: tokens.radius.card,
-        overflow: "hidden",
-      }}
-    >
-      <Group
-        justify="space-between"
-        style={{
-          padding: `${tokens.spacing.cardPadding}px`,
-          borderBottom: opened ? `1px solid ${tokens.color.border}` : undefined,
-          cursor: "pointer",
-        }}
-        onClick={toggle}
+    <div className="border border-[var(--ap-border)] rounded-md overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpened((v) => !v)}
+        className="flex items-center justify-between w-full px-3 py-2.5 bg-transparent border-none cursor-pointer"
       >
-        <Group gap={8}>
+        <div className="flex items-center gap-2">
           <IconChevronDown
             size={14}
-            color={tokens.color.textPrimary}
-            style={{
-              transform: opened ? undefined : "rotate(-90deg)",
-              transition: "transform 150ms ease",
-            }}
+            className={`text-[var(--ap-text-primary)] transition-transform duration-200 ${opened ? "" : "-rotate-90"}`}
           />
-          <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+          <span className="text-xs font-semibold text-[var(--ap-text-primary)]">
             {title}
-          </Text>
-          <Text fw={400} fz="xs" c={tokens.color.textSecondary}>
-            ({badge})
-          </Text>
-        </Group>
+          </span>
+          {badge && (
+            <span className="text-[10px] font-normal text-[var(--ap-text-secondary)]">
+              ({badge})
+            </span>
+          )}
+        </div>
         {masterToggle !== undefined && (
-          <Switch
-            checked={masterToggle}
-            onChange={(e) => {
-              e.stopPropagation();
-              onMasterToggle?.();
-            }}
-            size="xs"
-            color="#2f70ff"
-          />
+          <Toggle checked={masterToggle} onChange={() => onMasterToggle?.()} />
         )}
-      </Group>
-      {opened && (
-        <Stack gap={0} style={{ padding: `${tokens.spacing.cardPadding}px` }}>
-          {children}
-        </Stack>
-      )}
-    </Stack>
+      </button>
+      <div
+        className={`grid transition-all duration-300 ${opened ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)" }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 pb-3 border-t border-[var(--ap-border)]">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Custom toggle switch matching the PermissionsIllustration preview.
+ * w-6 h-3.5, smooth 250ms knob transition.
+ */
+function Toggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange();
+      }}
+      className={`relative w-7 h-4 rounded-full border-none cursor-pointer shrink-0 transition-colors duration-250 ${
+        checked ? "bg-[var(--color-success)]" : "bg-[var(--ap-border)]"
+      }`}
+    >
+      <div
+        className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-all duration-250 ${
+          checked ? "left-[calc(100%-14px)]" : "left-0.5"
+        }`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)" }}
+      />
+    </button>
   );
 }
 
@@ -95,22 +108,17 @@ function SettingRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <Group justify="space-between" align="flex-start" wrap="nowrap" py={8}>
-      <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+    <div className="flex items-start justify-between gap-3 py-2">
+      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+        <span className="text-xs font-semibold text-[var(--ap-text-primary)]">
           {title}
-        </Text>
-        <Text fz="xs" c={tokens.color.textSecondary}>
+        </span>
+        <span className="text-[10px] text-[var(--ap-text-secondary)] leading-snug">
           {description}
-        </Text>
-      </Stack>
-      <Switch
-        checked={checked}
-        onChange={(e) => onChange(e.currentTarget.checked)}
-        size="xs"
-        color="#2f70ff"
-      />
-    </Group>
+        </span>
+      </div>
+      <Toggle checked={checked} onChange={() => onChange(!checked)} />
+    </div>
   );
 }
 
@@ -126,15 +134,15 @@ function LimitRow({
   onChange: (v: number) => void;
 }) {
   return (
-    <Group justify="space-between" align="flex-start" wrap="nowrap" py={8}>
-      <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-        <Text fw={600} fz="sm" c={tokens.color.textPrimary}>
+    <div className="flex items-start justify-between gap-3 py-2">
+      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+        <span className="text-xs font-semibold text-[var(--ap-text-primary)]">
           {title}
-        </Text>
-        <Text fz="xs" c={tokens.color.textSecondary}>
+        </span>
+        <span className="text-[10px] text-[var(--ap-text-secondary)] leading-snug">
           {description}
-        </Text>
-      </Stack>
+        </span>
+      </div>
       <NumberInput
         value={value}
         onChange={(v) => {
@@ -143,18 +151,20 @@ function LimitRow({
         min={1}
         max={1_000_000}
         size="xs"
-        w={90}
+        w={80}
         styles={{
           input: {
-            height: 28,
-            fontSize: 12,
+            height: 26,
+            fontSize: 11,
             textAlign: "right",
-            borderColor: tokens.color.border,
-            borderRadius: tokens.radius.card,
+            borderColor: "var(--ap-border)",
+            borderRadius: 4,
+            background: "var(--ap-bg-base)",
+            color: "var(--ap-text-primary)",
           },
         }}
       />
-    </Group>
+    </div>
   );
 }
 
@@ -192,13 +202,8 @@ export function ConfigureSettingsStep({
 
   return (
     <>
-      <ScrollArea
-        style={{ flex: 1, minHeight: 0 }}
-        type="scroll"
-        offsetScrollbars
-        scrollbarSize={6}
-      >
-        <Stack gap={tokens.spacing.sectionGap}>
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
+        <div className="flex flex-col gap-3">
           <CollapsibleSection
             title="Rules"
             badge={`${String(rulesCount)}/3 enforced`}
@@ -267,10 +272,10 @@ export function ConfigureSettingsStep({
               onChange={(v) => onLimitChange("concurrentCalls", v)}
             />
           </CollapsibleSection>
-        </Stack>
-      </ScrollArea>
+        </div>
+      </div>
 
-      <PrimaryButton onClick={onSave} disabled={saving}>
+      <PrimaryButton onClick={onSave} disabled={saving} loading={saving}>
         {saving ? "Saving..." : "Save settings"}
       </PrimaryButton>
     </>

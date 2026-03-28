@@ -1,10 +1,9 @@
 // apps/extension/src/ui/components/VaultGate.tsx
 import { useState, type ReactNode } from "react";
-import { Box, Text, Button, Loader, Modal } from "@mantine/core";
-import { tokens } from "./theme.js";
 import { VaultSetup } from "./VaultSetup.js";
 import { VaultUnlock } from "./VaultUnlock.js";
 import type { VaultStatus } from "../hooks/useVault.js";
+import { PrimaryButton } from "./PrimaryButton.js";
 
 export type VaultGateProps = {
   status: VaultStatus;
@@ -14,7 +13,6 @@ export type VaultGateProps = {
   onUnlockKeychain: () => Promise<void>;
   onDestroyVault: () => Promise<void>;
   onRetry: () => void;
-  /** When true, vault was unlocked then auto-locked. Show unlock as overlay, not full gate. */
   needsReauth: boolean;
   children: ReactNode;
 };
@@ -30,7 +28,7 @@ export function VaultGate({
   needsReauth,
   children,
 }: VaultGateProps) {
-  // Auto-lock mid-session: show unlock overlay on top of existing content
+  // Auto-lock mid-session: show unlock overlay
   if (
     needsReauth &&
     (status.state === "locked" || status.state === "locked_out")
@@ -38,80 +36,68 @@ export function VaultGate({
     return (
       <>
         {children}
-        <Modal
-          opened
-          onClose={() => {
-            /* cannot dismiss — must unlock */
-          }}
-          withCloseButton={false}
-          centered
-          size="sm"
-          overlayProps={{ backgroundOpacity: 0.7 }}
-        >
-          {status.state === "locked_out" ? (
-            <VaultUnlock
-              onUnlock={onUnlock}
-              lockedOut
-              secondsRemaining={status.secondsRemaining}
-            />
-          ) : (
-            <VaultUnlock onUnlock={onUnlock} />
-          )}
-        </Modal>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ap-bg-base)]/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-[320px] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg p-6 animate-scale-in shadow-xl">
+            {status.state === "locked_out" ? (
+              <VaultUnlock
+                onUnlock={onUnlock}
+                lockedOut
+                secondsRemaining={status.secondsRemaining}
+                compact
+              />
+            ) : (
+              <VaultUnlock onUnlock={onUnlock} compact />
+            )}
+          </div>
+        </div>
       </>
     );
   }
 
   if (status.state === "connecting") {
     return (
-      <Box
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 400,
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
-        <Loader size="sm" color={tokens.color.brand} />
-        <Text size="sm" style={{ color: tokens.color.textSecondary }}>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 animate-fade-in">
+        <div className="w-6 h-6 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin-slow" />
+        <span className="text-xs text-[var(--ap-text-secondary)]">
           Connecting to bridge...
-        </Text>
-      </Box>
+        </span>
+      </div>
     );
   }
 
   if (status.state === "bridge-unavailable") {
     return (
-      <Box
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 400,
-          flexDirection: "column",
-          gap: 12,
-          padding: tokens.spacing.contentHPadding,
-        }}
-      >
-        <Text size="lg" fw={600} style={{ color: tokens.color.textPrimary }}>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 px-3 animate-fade-in-up">
+        <div className="w-12 h-12 rounded-full bg-[var(--color-danger-subtle)] flex items-center justify-center">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--color-danger)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <span className="text-base font-semibold text-[var(--ap-text-primary)]">
           Bridge not connected
-        </Text>
-        <Text
-          size="sm"
-          style={{
-            color: tokens.color.textSecondary,
-            textAlign: "center",
-            maxWidth: 280,
-          }}
-        >
+        </span>
+        <span className="text-xs text-[var(--ap-text-secondary)] text-center max-w-[280px]">
           {status.error}
-        </Text>
-        <Button variant="outline" onClick={onRetry} style={{ marginTop: 8 }}>
+        </span>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="px-4 py-2 text-[11px]! font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border)] rounded-sm cursor-pointer hover:bg-[var(--ap-bg-elevated)] hover:border-[var(--ap-border-strong)] transition-all duration-150 active:scale-95 mt-2"
+        >
           Retry
-        </Button>
-      </Box>
+        </button>
+      </div>
     );
   }
 
@@ -128,9 +114,7 @@ export function VaultGate({
   }
 
   if (status.state === "locked") {
-    // Keychain mode: auto-unlock in progress or failed.
     if (status.keyMode === "keychain") {
-      // Keychain unlock failed — show error with retry and reset
       if (status.keychainError) {
         return (
           <KeychainErrorView
@@ -140,23 +124,13 @@ export function VaultGate({
           />
         );
       }
-      // Auto-unlock in progress
       return (
-        <Box
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: 400,
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <Loader size="sm" color={tokens.color.brand} />
-          <Text size="sm" style={{ color: tokens.color.textSecondary }}>
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 animate-fade-in">
+          <div className="w-6 h-6 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin-slow" />
+          <span className="text-xs text-[var(--ap-text-secondary)]">
             Unlocking vault...
-          </Text>
-        </Box>
+          </span>
+        </div>
       );
     }
     return <VaultUnlock onUnlock={onUnlock} />;
@@ -172,13 +146,8 @@ export function VaultGate({
     );
   }
 
-  // state === "unlocked"
   return <>{children}</>;
 }
-
-// ---------------------------------------------------------------------------
-// Keychain error with reset option
-// ---------------------------------------------------------------------------
 
 function KeychainErrorView({
   error,
@@ -196,47 +165,46 @@ function KeychainErrorView({
     error.includes("does not match") || error.includes("deleted or replaced");
 
   return (
-    <Box
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: 400,
-        flexDirection: "column",
-        gap: 12,
-        padding: tokens.spacing.contentHPadding,
-      }}
-    >
-      <Text size="lg" fw={600} style={{ color: tokens.color.textPrimary }}>
+    <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 px-3 animate-fade-in-up">
+      <div className="w-12 h-12 rounded-full bg-[var(--color-danger-subtle)] flex items-center justify-center">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--color-danger)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0110 0v4" />
+          <line x1="12" y1="16" x2="12" y2="16.01" />
+        </svg>
+      </div>
+      <span className="text-base font-semibold text-[var(--ap-text-primary)]">
         Keychain unlock failed
-      </Text>
-      <Text
-        size="sm"
-        style={{
-          color: tokens.color.textSecondary,
-          textAlign: "center",
-          maxWidth: 280,
-        }}
-      >
+      </span>
+      <span className="text-xs text-[var(--ap-text-secondary)] text-center max-w-[280px]">
         {error}
-      </Text>
-      <Box style={{ display: "flex", gap: 8, marginTop: 8 }}>
+      </span>
+      <div className="flex gap-2 mt-2">
         {!isMismatch && (
-          <Button variant="outline" onClick={onRetry}>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="px-3 py-1.5 text-[11px]! font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border)] rounded-sm cursor-pointer hover:bg-[var(--ap-bg-elevated)] transition-all duration-150 active:scale-95"
+          >
             Retry
-          </Button>
+          </button>
         )}
         {!confirmReset ? (
-          <Button
-            variant="outline"
-            color="red"
-            onClick={() => setConfirmReset(true)}
-          >
+          <PrimaryButton variant="danger" onClick={() => setConfirmReset(true)}>
             Reset vault
-          </Button>
+          </PrimaryButton>
         ) : (
-          <Button
-            color="red"
+          <PrimaryButton
+            variant="danger"
             loading={resetting}
             onClick={async () => {
               setResetting(true);
@@ -248,22 +216,15 @@ function KeychainErrorView({
             }}
           >
             Confirm — erase all data
-          </Button>
+          </PrimaryButton>
         )}
-      </Box>
+      </div>
       {confirmReset && !resetting && (
-        <Text
-          size="xs"
-          style={{
-            color: tokens.color.textSecondary,
-            textAlign: "center",
-            maxWidth: 280,
-          }}
-        >
+        <span className="text-[10px] text-[var(--ap-text-secondary)] text-center max-w-[280px]">
           This will permanently delete all saved providers, credentials, and app
           connections. You'll need to set everything up again.
-        </Text>
+        </span>
       )}
-    </Box>
+    </div>
   );
 }

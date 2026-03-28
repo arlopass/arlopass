@@ -25,7 +25,6 @@ import {
   createWalletActionClient,
   type SendMessageFn,
 } from "./ui/popup-actions.js";
-import type { HeaderMenuItem } from "./ui/components/WalletHeader.js";
 
 const sendMessage: SendMessageFn = (message) =>
   chrome.runtime.sendMessage(message);
@@ -212,29 +211,9 @@ function WalletContent() {
 
   if (!restored) return null;
 
-  // Build header dropdown menu items when an app is detected
-  const headerMenuItems: HeaderMenuItem[] = [];
-  if (activeApp !== null) {
-    const isAppView = view.type === "main";
-    const domain = (() => {
-      try {
-        return new URL(activeApp.app.origin).hostname;
-      } catch {
-        return activeApp.app.origin;
-      }
-    })();
-    headerMenuItems.push({
-      label: activeApp.app.displayName,
-      subtitle: domain,
-      active: isAppView,
-      onClick: () => updateView({ type: "main" }),
-    });
-    headerMenuItems.push({
-      label: "Arlopass Wallet",
-      active: !isAppView,
-      onClick: () => updateView({ type: "wallet" }),
-    });
-  }
+  // Build navigation context when an app is detected
+  const appDisplayName = activeApp?.app.displayName ?? null;
+  const isAppView = view.type === "main" && activeApp !== null;
 
   return (
     <>
@@ -292,7 +271,10 @@ function WalletContent() {
           onSettingsClick={() => {
             void walletActions.openConnectFlow();
           }}
-          headerMenuItems={headerMenuItems}
+          navLink={{
+            label: "Go to Wallet →",
+            onClick: () => updateView({ type: "wallet" }),
+          }}
         />
       )}
       {view.type !== "onboarding" &&
@@ -317,7 +299,14 @@ function WalletContent() {
             onSettingsClick={() => {
               void walletActions.openConnectFlow();
             }}
-            headerMenuItems={headerMenuItems}
+            navLink={
+              appDisplayName != null
+                ? {
+                    label: `Go to ${appDisplayName} →`,
+                    onClick: () => updateView({ type: "main" }),
+                  }
+                : undefined
+            }
           />
         )}
     </>

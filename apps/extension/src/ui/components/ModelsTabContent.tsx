@@ -1,21 +1,11 @@
 import { useState } from "react";
-import {
-  Box,
-  Collapse,
-  Divider,
-  Group,
-  ScrollArea,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { ProviderAvatar } from "./ProviderAvatar.js";
 import { MetadataDivider } from "./MetadataDivider.js";
 import { PrimaryButton } from "./PrimaryButton.js";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
 import type { WalletProvider } from "../popup-state.js";
-import { tokens } from "./theme.js";
+import { staggerDelay } from "./animation-utils.js";
 
 type ModelEntry = {
   id: string;
@@ -107,28 +97,26 @@ export function ModelsTabContent({ providers }: ModelsTabContentProps) {
 
   return (
     <>
-      <ScrollArea
-        style={{ flex: 1, minHeight: 0 }}
-        type="scroll"
-        offsetScrollbars
-        scrollbarSize={6}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
         {models.length === 0 ? (
-          <Text fz="sm" c={tokens.color.textSecondary} ta="center" py="xl">
-            No models available. Connect a provider to see models.
-          </Text>
+          <div className="flex items-center justify-center py-8">
+            <span className="text-xs text-[var(--ap-text-secondary)] text-center">
+              No models available. Connect a provider to see models.
+            </span>
+          </div>
         ) : (
-          <Stack gap={tokens.spacing.sectionGap}>
-            {models.map((model) => (
+          <div className="flex flex-col gap-2">
+            {models.map((model, i) => (
               <ModelCard
                 key={model.id}
                 model={model}
                 tokenUsage={modelUsageMap[model.id] ?? 0}
+                index={i}
               />
             ))}
-          </Stack>
+          </div>
         )}
-      </ScrollArea>
+      </div>
       <PrimaryButton>Manage models</PrimaryButton>
     </>
   );
@@ -143,134 +131,91 @@ function formatTokenCount(count: number): string {
 function ModelCard({
   model,
   tokenUsage,
+  index = 0,
 }: {
   model: ModelEntry;
   tokenUsage: number;
+  index?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <Box
-      style={{
-        width: "100%",
-        background: tokens.color.bgSurface,
-        border: `1px solid ${tokens.color.border}`,
-        borderRadius: tokens.radius.card,
-        overflow: "hidden",
-      }}
+    <div
+      className="w-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md overflow-hidden transition-all duration-250 hover:border-[var(--ap-border-strong)] animate-fade-in-up"
+      style={staggerDelay(index, 60)}
     >
-      <UnstyledButton
+      <button
+        type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: tokens.spacing.cardPadding,
-          cursor: "pointer",
-        }}
+        className="flex items-center justify-between w-full px-3 py-2.5 bg-transparent border-none cursor-pointer text-left gap-3"
       >
-        <Group
-          gap={tokens.spacing.iconTextGap}
-          align="center"
-          wrap="nowrap"
-          style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
-        >
-          <ProviderAvatar
-            providerKey={model.providerKey}
-            size={tokens.size.providerIcon}
-          />
-          <Stack gap={0} style={{ overflow: "hidden", minWidth: 0 }}>
-            <Text fw={600} fz="sm" c={tokens.color.textPrimary} truncate>
+        <div className="flex items-center gap-2.5 overflow-hidden flex-1 min-w-0">
+          <ProviderAvatar providerKey={model.providerKey} size={24} />
+          <div className="flex flex-col gap-0 overflow-hidden min-w-0">
+            <span className="text-xs font-semibold text-[var(--ap-text-primary)] truncate">
               {model.name}
-            </Text>
-            <Group
-              gap={tokens.spacing.metadataGap}
-              wrap="nowrap"
-              style={{ overflow: "hidden" }}
-            >
-              <Text
-                fw={500}
-                fz="xs"
-                c={tokens.color.textSecondary}
-                lh="normal"
-                style={{ whiteSpace: "nowrap" }}
-              >
+            </span>
+            <div className="flex items-center gap-2 overflow-hidden truncate">
+              <span className="text-[10px] font-medium text-[var(--ap-text-secondary)] whitespace-nowrap">
                 {model.providerCount}{" "}
                 {model.providerCount === 1 ? "provider" : "providers"} available
-              </Text>
+              </span>
               {tokenUsage > 0 && (
                 <>
                   <MetadataDivider />
-                  <Text
-                    fw={500}
-                    fz="xs"
-                    c={tokens.color.textSecondary}
-                    lh="normal"
-                    style={{ whiteSpace: "nowrap" }}
-                  >
+                  <span className="text-[10px] font-medium text-[var(--ap-text-secondary)] whitespace-nowrap">
                     {formatTokenCount(tokenUsage)} tokens
-                  </Text>
+                  </span>
                 </>
               )}
-            </Group>
-          </Stack>
-        </Group>
+            </div>
+          </div>
+        </div>
         <IconChevronDown
-          size={20}
-          color={tokens.color.textSecondary}
-          style={{
-            transform: expanded ? undefined : "rotate(-90deg)",
-            transition: "transform 150ms ease",
-            flexShrink: 0,
-          }}
+          size={16}
+          className={`text-[var(--ap-text-secondary)] shrink-0 transition-transform duration-200 ${expanded ? "" : "-rotate-90"}`}
           aria-hidden
         />
-      </UnstyledButton>
-      <Collapse in={expanded}>
-        <Box
-          style={{
-            padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px`,
-          }}
-        >
-          <Divider mb={tokens.spacing.sectionGap} color={tokens.color.border} />
-          <Stack gap={8}>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Model ID
-              </Text>
-              <Text
-                fz="xs"
-                fw={500}
-                c={tokens.color.textPrimary}
-                truncate
-                maw={180}
-              >
-                {model.id}
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Providers
-              </Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                {model.providerCount} available
-              </Text>
-            </Group>
-            {tokenUsage > 0 && (
-              <Group justify="space-between">
-                <Text fz="xs" c={tokens.color.textSecondary}>
-                  Token usage
-                </Text>
-                <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                  {formatTokenCount(tokenUsage)}
-                </Text>
-              </Group>
-            )}
-          </Stack>
-        </Box>
-      </Collapse>
-    </Box>
+      </button>
+
+      <div
+        className={`grid transition-all duration-300 ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)" }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 pb-3">
+            <div className="h-px bg-[var(--ap-border)] mb-3" />
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Model ID
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)] truncate max-w-[180px]">
+                  {model.id}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Providers
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                  {model.providerCount} available
+                </span>
+              </div>
+              {tokenUsage > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                    Token usage
+                  </span>
+                  <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                    {formatTokenCount(tokenUsage)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
-

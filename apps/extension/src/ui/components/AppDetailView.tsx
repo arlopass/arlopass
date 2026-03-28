@@ -11,6 +11,8 @@ import {
   Tabs,
   Text,
   UnstyledButton,
+  NumberInput,
+  Switch,
 } from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
@@ -21,7 +23,6 @@ import { MetadataDivider } from "./MetadataDivider.js";
 import { PrimaryButton } from "./PrimaryButton.js";
 import { ConfigureSettingsStep } from "./app-connect/ConfigureSettingsStep.js";
 import { saveApp, type ConnectedApp } from "./app-connect/app-storage.js";
-import type { HeaderMenuItem } from "./WalletHeader.js";
 import type { WalletProvider } from "../popup-state.js";
 import { useVaultContext } from "../hooks/VaultContext.js";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
@@ -68,7 +69,7 @@ export type AppDetailViewProps = {
   rawProviders: WalletProvider[];
   onBack: () => void;
   onSettingsClick?: (() => void) | undefined;
-  headerMenuItems?: readonly HeaderMenuItem[] | undefined;
+  navLink?: { label: string; onClick: () => void } | undefined;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -77,7 +78,7 @@ export function AppDetailView({
   rawProviders,
   onBack: _onBack,
   onSettingsClick,
-  headerMenuItems,
+  navLink,
 }: AppDetailViewProps) {
   const [activeTab, setActiveTab] = useState<AppTabId>("providers");
   const [opened, { toggle }] = useDisclosure(true);
@@ -255,20 +256,19 @@ export function AppDetailView({
         subtitle={
           subView === "none" ? extractDomain(localApp.origin) : undefined
         }
-        collapsed={!opened}
-        onToggleCollapse={
+        navLink={subView === "none" ? navLink : undefined}
+        onBack={
           subView !== "none"
             ? () => {
                 setSubView("none");
                 setPickedProviderId(null);
                 setPickedModelIds([]);
               }
-            : headerMenuItems != null && headerMenuItems.length > 0
-              ? undefined
-              : toggle
+            : undefined
         }
+        collapsed={!opened}
+        onToggleCollapse={subView === "none" ? toggle : undefined}
         onSettingsClick={subView !== "none" ? undefined : onSettingsClick}
-        menuItems={subView === "none" ? headerMenuItems : undefined}
       />
       <Collapse
         in={opened}

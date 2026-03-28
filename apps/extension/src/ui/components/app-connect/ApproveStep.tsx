@@ -1,8 +1,4 @@
-import { Badge, Center, Group, Stack, Text } from "@mantine/core";
-import { IconPlugConnected } from "@tabler/icons-react";
 import { PrimaryButton } from "../PrimaryButton.js";
-import { tokens } from "../theme.js";
-import { Button } from "@mantine/core";
 
 export type ApproveStepProps = {
   origin: string;
@@ -15,6 +11,10 @@ export type ApproveStepProps = {
   onDecline: () => void;
 };
 
+/**
+ * Connection approval screen matching the AppConnectionApproval landing preview.
+ * Centered layout with app info, badge, and dual action buttons.
+ */
 export function ApproveStep({
   origin,
   displayName,
@@ -31,117 +31,105 @@ export function ApproveStep({
 
   return (
     <>
-      <Center style={{ flex: 1 }}>
-        <Stack gap={16} align="center" maw={300}>
+      <div className="flex-1 flex items-center justify-center animate-fade-in-up">
+        <div className="flex flex-col items-center gap-4 max-w-[300px]">
+          {/* App icon */}
           {iconUrl ? (
             <img
               src={iconUrl}
               alt=""
               width={48}
               height={48}
-              style={{ borderRadius: 10 }}
+              className="rounded-lg"
             />
           ) : (
-            <IconPlugConnected
-              size={48}
-              color={tokens.color.textSecondary}
-              stroke={1.5}
-            />
+            <div className="w-12 h-12 rounded-lg bg-[var(--ap-bg-elevated)] border border-[var(--ap-border)] flex items-center justify-center">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--ap-text-secondary)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            </div>
           )}
-          <Text fw={600} fz="lg" c={tokens.color.textPrimary} ta="center">
+
+          {/* "New request" badge */}
+          <span className="px-2 py-0.5 text-[9px] font-semibold bg-[var(--color-brand)]/10 text-[var(--color-brand)] border border-[var(--color-brand)]/20 rounded-full">
+            New request
+          </span>
+
+          <h3 className="text-base font-semibold text-[var(--ap-text-primary)] text-center">
             {displayName}
-          </Text>
-          <Text fz="xs" c={tokens.color.textSecondary} ta="center">
+          </h3>
+          <span className="text-[10px] text-[var(--ap-text-secondary)] text-center font-mono">
             {origin}
-          </Text>
+          </span>
           {description && (
-            <Text fz="xs" c={tokens.color.textSecondary} ta="center">
+            <span className="text-[10px] text-[var(--ap-text-secondary)] text-center">
               {description}
-            </Text>
+            </span>
           )}
-          <Text fz="sm" c={tokens.color.textSecondary} ta="center">
+          <span className="text-xs text-[var(--ap-text-secondary)] text-center">
             This app wants to connect to your Arlopass wallet to use AI
             providers and models.
-          </Text>
+          </span>
 
+          {/* Model requirements */}
           {hasModelRequirements && (
-            <Stack gap={8} w="100%">
+            <div className="flex flex-col gap-2 w-full">
               {requiredModels !== undefined && requiredModels.length > 0 && (
-                <Stack gap={4}>
-                  <Text
-                    fz={10}
-                    fw={600}
-                    c={tokens.color.textSecondary}
-                    tt="uppercase"
-                  >
+                <div className="flex flex-col gap-1">
+                  <span className="text-[9px] font-semibold text-[var(--ap-text-secondary)] uppercase tracking-wide">
                     Required models
-                  </Text>
-                  <Group gap={4} wrap="wrap">
+                  </span>
+                  <div className="flex flex-wrap gap-1">
                     {requiredModels.map((m) => (
-                      <Badge
+                      <span
                         key={m}
-                        size="xs"
-                        variant="light"
-                        color="red"
-                        radius="sm"
+                        className="px-1.5 py-0.5 text-[9px] bg-[var(--color-danger-subtle)] text-[var(--color-danger)] border border-[var(--color-danger)]/20 rounded-sm"
                       >
                         {m}
-                      </Badge>
+                      </span>
                     ))}
-                  </Group>
-                </Stack>
+                  </div>
+                </div>
               )}
               {supportedModels !== undefined && supportedModels.length > 0 && (
-                <Stack gap={4}>
-                  <Text
-                    fz={10}
-                    fw={600}
-                    c={tokens.color.textSecondary}
-                    tt="uppercase"
-                  >
+                <div className="flex flex-col gap-1">
+                  <span className="text-[9px] font-semibold text-[var(--ap-text-secondary)] uppercase tracking-wide">
                     Supported models
-                  </Text>
-                  <Group gap={4} wrap="wrap">
+                  </span>
+                  <div className="flex flex-wrap gap-1">
                     {supportedModels.map((m) => (
-                      <Badge
+                      <span
                         key={m}
-                        size="xs"
-                        variant="light"
-                        color="blue"
-                        radius="sm"
+                        className="px-1.5 py-0.5 text-[9px] bg-[var(--ap-brand-subtle)] text-[var(--color-brand)] border border-[var(--color-brand)]/20 rounded-sm"
                       >
                         {m}
-                      </Badge>
+                      </span>
                     ))}
-                  </Group>
-                </Stack>
+                  </div>
+                </div>
               )}
-            </Stack>
+            </div>
           )}
-        </Stack>
-      </Center>
-      <Stack gap={tokens.spacing.sectionGap}>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex flex-col gap-2">
         <PrimaryButton onClick={onApprove}>Allow connection</PrimaryButton>
-        <Button
-          variant="default"
-          fullWidth
-          radius={tokens.radius.button}
-          fz="md"
-          fw={500}
-          onClick={onDecline}
-          styles={{
-            root: {
-              height: "auto",
-              padding: `${tokens.spacing.buttonPaddingY}px 0`,
-              background: tokens.color.bgSurface,
-              borderColor: tokens.color.bgSurface,
-              color: tokens.color.textPrimary,
-            },
-          }}
-        >
+        <PrimaryButton variant="secondary" onClick={onDecline}>
           Decline
-        </Button>
-      </Stack>
+        </PrimaryButton>
+      </div>
     </>
   );
 }

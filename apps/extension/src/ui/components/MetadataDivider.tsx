@@ -1,14 +1,8 @@
-import { Divider } from "@mantine/core";
-import { tokens } from "./theme.js";
-
 export function MetadataDivider() {
   return (
-    <Divider
-      orientation="vertical"
-      size={1}
-      color={tokens.color.border}
+    <div
+      className="w-px h-3 bg-[var(--ap-border)] self-center shrink-0"
       aria-hidden="true"
-      style={{ height: 12, alignSelf: "center" }}
     />
   );
 }

@@ -128,11 +128,26 @@ function createContentScriptBundleConfig() {
   };
 }
 
+async function buildTailwindCSS() {
+  const cliPkgDir = path.dirname(
+    require.resolve("@tailwindcss/cli/package.json"),
+  );
+  const tailwindCli = path.join(cliPkgDir, "dist", "index.mjs");
+  const inputCss = path.join(sourceRoot, "styles", "app.css");
+  const outputCss = path.join(distRoot, "app.css");
+  await runCommand(
+    process.execPath,
+    [tailwindCli, "-i", inputCss, "-o", outputCss, "--minify"],
+    packageRoot,
+  );
+}
+
 async function runOneShotBuild() {
   await buildTypeDeclarations();
   await Promise.all([
     build(createModuleBundleConfig()),
     build(createContentScriptBundleConfig()),
+    buildTailwindCSS(),
   ]);
   await processManifest();
   await copyStaticAssets();
@@ -270,6 +285,7 @@ async function syncLegacyDistRuntimeAssets() {
     "popup.js.map",
     "popup.css",
     "popup.css.map",
+    "app.css",
   ];
 
   for (const asset of runtimeAssets) {
@@ -287,6 +303,7 @@ async function runWatchBuild() {
   await copyStaticAssets();
   await copyExtensionIcons();
   await copyProviderIcons();
+  await buildTailwindCSS();
 
   const moduleContext = await context(createModuleBundleConfig());
   const contentContext = await context(createContentScriptBundleConfig());

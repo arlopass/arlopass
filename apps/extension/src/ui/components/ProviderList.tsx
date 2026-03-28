@@ -1,6 +1,4 @@
-import { Stack } from "@mantine/core";
 import { ProviderCard, type ProviderCardData } from "./ProviderCard.js";
-import { tokens } from "./theme.js";
 
 export type ProviderListProps = {
   providers: ProviderCardData[];
@@ -10,10 +8,16 @@ export type ProviderListProps = {
   onEditProvider?: ((providerId: string) => void) | undefined;
 };
 
-export function ProviderList({ providers, tokenUsageByProvider, onProviderClick, onRemoveProvider, onEditProvider }: ProviderListProps) {
+export function ProviderList({
+  providers,
+  tokenUsageByProvider,
+  onProviderClick,
+  onRemoveProvider,
+  onEditProvider,
+}: ProviderListProps) {
   return (
-    <Stack gap={tokens.spacing.sectionGap}>
-      {providers.map((provider) => (
+    <div className="flex flex-col gap-2">
+      {providers.map((provider, i) => (
         <ProviderCard
           key={provider.id}
           provider={provider}
@@ -21,8 +25,9 @@ export function ProviderList({ providers, tokenUsageByProvider, onProviderClick,
           onClick={onProviderClick}
           onRemove={onRemoveProvider}
           onEdit={onEditProvider}
+          index={i}
         />
       ))}
-    </Stack>
+    </div>
   );
 }

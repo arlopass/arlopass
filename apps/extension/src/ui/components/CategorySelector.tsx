@@ -1,6 +1,4 @@
-import { Group, Text, UnstyledButton } from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
-import { tokens } from "./theme.js";
 
 export type CategorySelectorProps = {
   label: string;
@@ -9,17 +7,21 @@ export type CategorySelectorProps = {
 
 export function CategorySelector({ label, onClick }: CategorySelectorProps) {
   return (
-    <UnstyledButton onClick={onClick} aria-haspopup="listbox" aria-label={`Filter: ${label}`}>
-      <Group gap={4} align="center" justify="flex-start">
-        <Text fw={500} fz="sm" c={tokens.color.textPrimary} lh="normal" style={{ whiteSpace: "nowrap" }}>
-          {label}
-        </Text>
-        <IconChevronDown
-          size={tokens.size.categorySelectorIcon}
-          color={tokens.color.textPrimary}
-          aria-hidden
-        />
-      </Group>
-    </UnstyledButton>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-haspopup="listbox"
+      aria-label={`Filter: ${label}`}
+      className="flex items-center gap-1 bg-transparent border-none cursor-pointer p-0 group"
+    >
+      <span className="text-xs font-medium text-[var(--ap-text-primary)] whitespace-nowrap leading-normal">
+        {label}
+      </span>
+      <IconChevronDown
+        size={12}
+        className="text-[var(--ap-text-primary)]"
+        aria-hidden
+      />
+    </button>
   );
 }

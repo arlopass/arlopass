@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { Box, Center, Collapse, Loader, ScrollArea, Text } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { PopupShell } from "./PopupShell.js";
 import { WalletHeader } from "./WalletHeader.js";
 import { WalletTabs, type WalletTabId } from "./WalletTabs.js";
@@ -13,9 +11,7 @@ import { AppsTabContent } from "./AppsTabContent.js";
 import { UsageTabContent } from "./UsageTabContent.js";
 import type { ProviderCardData } from "./ProviderCard.js";
 import type { WalletProvider } from "../popup-state.js";
-import type { HeaderMenuItem } from "./WalletHeader.js";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
-import { tokens } from "./theme.js";
 
 export type WalletPopupProps = {
   providers: ProviderCardData[];
@@ -27,7 +23,7 @@ export type WalletPopupProps = {
   onEditProvider?: ((providerId: string) => void) | undefined;
   onManageProviders?: (() => void) | undefined;
   onSettingsClick?: (() => void) | undefined;
-  headerMenuItems?: readonly HeaderMenuItem[] | undefined;
+  navLink?: { label: string; onClick: () => void } | undefined;
 };
 
 export function WalletPopup({
@@ -40,10 +36,10 @@ export function WalletPopup({
   onEditProvider,
   onManageProviders,
   onSettingsClick,
-  headerMenuItems,
+  navLink,
 }: WalletPopupProps) {
   const [activeTab, setActiveTab] = useState<WalletTabId>("providers");
-  const [opened, { toggle }] = useDisclosure(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   const { summaries: usageSummaries } = useTokenUsage();
   const tokenUsageByProvider: Record<string, number> = {};
@@ -60,105 +56,83 @@ export function WalletPopup({
     <PopupShell>
       <WalletHeader
         title="Arlopass Wallet"
-        collapsed={!opened}
-        onToggleCollapse={
-          headerMenuItems != null && headerMenuItems.length > 0
-            ? undefined
-            : toggle
-        }
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((v) => !v)}
         onSettingsClick={onSettingsClick}
-        menuItems={headerMenuItems}
+        navLink={navLink}
       />
-      <Collapse
-        in={opened}
-        transitionDuration={200}
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
-        }}
+
+      {/* Collapsible body with CSS grid transition */}
+      <div
+        className={`grid transition-all duration-300 ${collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"} flex-1 min-h-0`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)" }}
       >
-        <Box
-          style={{
-            flex: 1,
-            minHeight: 0,
-            display: "flex",
-            flexDirection: "column",
-            paddingLeft: tokens.spacing.contentHPadding,
-            paddingRight: tokens.spacing.contentHPadding,
-            paddingTop: tokens.spacing.contentTopPadding,
-            paddingBottom: tokens.spacing.contentBottomPadding,
-            gap: tokens.spacing.sectionGap,
-          }}
-        >
-          {/* Tabs — always visible at top */}
-          <WalletTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="overflow-hidden flex flex-col min-h-0">
+          <div className="flex flex-col flex-1 min-h-0 px-3 pt-1.5 pb-2.5 gap-2.5">
+            {/* Tabs */}
+            <WalletTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-          {activeTab === "providers" && (
-            <>
-              {/* Category selector — always visible below tabs */}
-              <CategorySelector label="All Providers" />
+            {activeTab === "providers" && (
+              <>
+                <CategorySelector label="All Providers" />
 
-              {/* Provider list — scrollable, takes remaining space */}
-              <ScrollArea
-                style={{ flex: 1, minHeight: 0 }}
-                type="scroll"
-                offsetScrollbars
-                scrollbarSize={6}
-              >
-                {loading === true && (
-                  <Center py="xl">
-                    <Loader size="sm" color={tokens.color.textSecondary} />
-                  </Center>
-                )}
-                {error != null && (
-                  <Center py="xl">
-                    <Text fz="sm" c="red" ta="center">
-                      {error}
-                    </Text>
-                  </Center>
-                )}
-                {loading !== true &&
-                  error == null &&
-                  providers.length === 0 && (
-                    <Center py="xl">
-                      <Text fz="sm" c={tokens.color.textSecondary} ta="center">
-                        No providers connected.{"\n"}Connect one to get started.
-                      </Text>
-                    </Center>
+                {/* Provider list — scrollable */}
+                <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
+                  {loading === true && (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="w-5 h-5 border-2 border-[var(--ap-text-secondary)]/30 border-t-[var(--ap-text-secondary)] rounded-full animate-spin-slow" />
+                    </div>
                   )}
-                {loading !== true && error == null && providers.length > 0 && (
-                  <ProviderList
-                    providers={providers}
-                    tokenUsageByProvider={tokenUsageByProvider}
-                    onProviderClick={onProviderClick}
-                    onRemoveProvider={onRemoveProvider}
-                    onEditProvider={onEditProvider}
-                  />
-                )}
-              </ScrollArea>
+                  {error != null && (
+                    <div className="flex items-center justify-center py-8">
+                      <span className="text-xs text-[var(--color-danger)] text-center">
+                        {error}
+                      </span>
+                    </div>
+                  )}
+                  {loading !== true &&
+                    error == null &&
+                    providers.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-8 gap-2 animate-fade-in">
+                        <span className="text-xs text-[var(--ap-text-secondary)] text-center max-w-[240px]">
+                          No providers connected.{"\n"}Connect one to get
+                          started.
+                        </span>
+                      </div>
+                    )}
+                  {loading !== true &&
+                    error == null &&
+                    providers.length > 0 && (
+                      <ProviderList
+                        providers={providers}
+                        tokenUsageByProvider={tokenUsageByProvider}
+                        onProviderClick={onProviderClick}
+                        onRemoveProvider={onRemoveProvider}
+                        onEditProvider={onEditProvider}
+                      />
+                    )}
+                </div>
 
-              {/* Bottom button — always visible */}
-              <PrimaryButton onClick={onManageProviders}>
-                {providers.length === 0
-                  ? "Connect provider"
-                  : "Manage providers"}
-              </PrimaryButton>
-            </>
-          )}
+                <PrimaryButton onClick={onManageProviders}>
+                  {providers.length === 0
+                    ? "Connect provider"
+                    : "Manage providers"}
+                </PrimaryButton>
+              </>
+            )}
 
-          {activeTab === "models" && (
-            <ModelsTabContent providers={rawProviders ?? []} />
-          )}
+            {activeTab === "models" && (
+              <ModelsTabContent providers={rawProviders ?? []} />
+            )}
 
-          {activeTab === "apps" && <AppsTabContent />}
+            {activeTab === "apps" && <AppsTabContent />}
 
-          {activeTab === "vault" && <VaultTabContent />}
+            {activeTab === "vault" && <VaultTabContent />}
 
-          {activeTab === "usage" && <UsageTabContent />}
-        </Box>
-      </Collapse>
+            {activeTab === "usage" && <UsageTabContent />}
+          </div>
+        </div>
+      </div>
     </PopupShell>
   );
 }

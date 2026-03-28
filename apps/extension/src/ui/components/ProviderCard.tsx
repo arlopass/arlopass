@@ -1,18 +1,8 @@
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  Collapse,
-  Divider,
-  Group,
-  Stack,
-  Text,
-  UnstyledButton,
-} from "@mantine/core";
 import { IconChevronDown } from "@tabler/icons-react";
 import { ProviderAvatar } from "./ProviderAvatar.js";
 import { MetadataDivider } from "./MetadataDivider.js";
-import { tokens } from "./theme.js";
+import { staggerDelay } from "./animation-utils.js";
 
 const STATUS_LABELS: Record<string, string> = {
   connected: "Connected",
@@ -29,16 +19,29 @@ function statusLabel(status: string): string {
 }
 
 function statusColor(status: string): string {
-  if (status === "connected") return "#137333";
+  if (status === "connected") return "var(--color-success)";
   if (
     status === "attention" ||
     status === "degraded" ||
     status === "reconnecting"
   )
-    return "#9f580a";
+    return "var(--color-warning)";
   if (status === "failed" || status === "revoked" || status === "disconnected")
-    return "#8e2e2e";
-  return tokens.color.textSecondary;
+    return "var(--color-danger)";
+  return "var(--ap-text-secondary)";
+}
+
+function statusDotColor(status: string): string {
+  if (status === "connected") return "bg-[var(--color-success)]";
+  if (
+    status === "attention" ||
+    status === "degraded" ||
+    status === "reconnecting"
+  )
+    return "bg-[var(--color-warning)]";
+  if (status === "failed" || status === "revoked" || status === "disconnected")
+    return "bg-[var(--color-danger)]";
+  return "bg-[var(--ap-text-tertiary)]";
 }
 
 function formatTokenCount(count: number): string {
@@ -58,204 +61,150 @@ export type ProviderCardData = {
 
 export type ProviderCardProps = {
   provider: ProviderCardData;
-  /** Total tokens (input+output) for this provider, from usage tracking. */
   tokenUsage?: number | undefined;
   onClick?: ((providerId: string) => void) | undefined;
   onRemove?: ((providerId: string) => void) | undefined;
   onEdit?: ((providerId: string) => void) | undefined;
+  index?: number | undefined;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+/**
+ * Provider card with expand/collapse, matching the ConnectProviders preview style.
+ * Features staggered fade-in, smooth expand, and status indicator dot.
+ */
 export function ProviderCard({
   provider,
   tokenUsage,
   onClick: _onClick,
   onRemove,
   onEdit,
+  index = 0,
 }: ProviderCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <Box
-      style={{
-        width: "100%",
-        background: tokens.color.bgSurface,
-        border: `1px solid ${tokens.color.border}`,
-        borderRadius: tokens.radius.card,
-        overflow: "hidden",
-        transition: "border-color 150ms ease",
-      }}
+    <div
+      className="w-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md overflow-hidden transition-all duration-250 hover:border-[var(--ap-border-strong)] animate-fade-in-up"
+      style={staggerDelay(index, 80)}
     >
-      <UnstyledButton
+      {/* Header row */}
+      <button
+        type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-          padding: tokens.spacing.cardPadding,
-          cursor: "pointer",
-        }}
+        className="flex items-center justify-between w-full px-3 py-2.5 bg-transparent border-none cursor-pointer text-left gap-3"
       >
-        <Group
-          gap={tokens.spacing.iconTextGap}
-          align="center"
-          wrap="nowrap"
-          style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
-        >
-          <ProviderAvatar
-            providerKey={provider.providerKey}
-            size={tokens.size.providerIcon}
-          />
-          <Stack
-            gap={0}
-            justify="center"
-            style={{ overflow: "hidden", minWidth: 0 }}
-          >
-            <Text
-              fw={600}
-              fz="sm"
-              c={tokens.color.textPrimary}
-              lh="normal"
-              truncate
-            >
+        <div className="flex items-center gap-2.5 overflow-hidden flex-1 min-w-0">
+          <ProviderAvatar providerKey={provider.providerKey} size={24} />
+          <div className="flex flex-col gap-0 overflow-hidden min-w-0">
+            <span className="text-xs font-semibold text-[var(--ap-text-primary)] leading-normal truncate">
               {provider.name}
-            </Text>
-            <Group
-              gap={tokens.spacing.metadataGap}
-              wrap="nowrap"
-              style={{ overflow: "hidden" }}
-            >
-              <Text
-                fw={500}
-                fz="xs"
-                c={tokens.color.textSecondary}
-                lh="normal"
-                style={{ whiteSpace: "nowrap" }}
-              >
+            </span>
+            <div className="flex items-center gap-2 overflow-hidden truncate">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotColor(provider.status)}`}
+                />
+                <span
+                  className="text-[10px] font-medium whitespace-nowrap"
+                  style={{ color: statusColor(provider.status) }}
+                >
+                  {statusLabel(provider.status)}
+                </span>
+              </div>
+              <MetadataDivider />
+              <span className="text-[10px] font-medium text-[var(--ap-text-secondary)] whitespace-nowrap">
                 {provider.modelsAvailable}{" "}
                 {provider.modelsAvailable === 1 ? "model" : "models"}
-              </Text>
-              <MetadataDivider />
-              <Text
-                fw={500}
-                fz="xs"
-                c={tokens.color.textSecondary}
-                lh="normal"
-                style={{ whiteSpace: "nowrap" }}
-              >
-                {provider.providerType}
-              </Text>
+              </span>
               {tokenUsage != null && tokenUsage > 0 && (
                 <>
                   <MetadataDivider />
-                  <Text
-                    fw={500}
-                    fz="xs"
-                    c={tokens.color.textSecondary}
-                    lh="normal"
-                    style={{ whiteSpace: "nowrap" }}
-                  >
+                  <span className="text-[10px] font-medium text-[var(--ap-text-secondary)] whitespace-nowrap">
                     {formatTokenCount(tokenUsage)} tokens
-                  </Text>
+                  </span>
                 </>
               )}
-              <MetadataDivider />
-              <Text
-                fw={500}
-                fz="xs"
-                c={statusColor(provider.status)}
-                lh="normal"
-                truncate
-              >
-                {statusLabel(provider.status)}
-              </Text>
-            </Group>
-          </Stack>
-        </Group>
+            </div>
+          </div>
+        </div>
         <IconChevronDown
-          size={tokens.size.cardChevronIcon}
-          color={tokens.color.textSecondary}
-          style={{
-            transform: expanded ? undefined : "rotate(-90deg)",
-            transition: "transform 150ms ease",
-            flexShrink: 0,
-          }}
+          size={16}
+          className={`text-[var(--ap-text-secondary)] shrink-0 transition-transform duration-200 ${expanded ? "" : "-rotate-90"}`}
           aria-hidden
         />
-      </UnstyledButton>
+      </button>
 
-      <Collapse in={expanded}>
-        <Box
-          style={{
-            padding: `0 ${tokens.spacing.cardPadding}px ${tokens.spacing.cardPadding}px`,
-          }}
-        >
-          <Divider mb={tokens.spacing.sectionGap} color={tokens.color.border} />
-          <Stack gap={8}>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Status
-              </Text>
-              <Text fz="xs" fw={500} c={statusColor(provider.status)}>
-                {statusLabel(provider.status)}
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Type
-              </Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                {provider.providerType}
-              </Text>
-            </Group>
-            <Group justify="space-between">
-              <Text fz="xs" c={tokens.color.textSecondary}>
-                Models
-              </Text>
-              <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                {provider.modelsAvailable} available
-              </Text>
-            </Group>
-            {tokenUsage != null && tokenUsage > 0 && (
-              <Group justify="space-between">
-                <Text fz="xs" c={tokens.color.textSecondary}>
-                  Token usage
-                </Text>
-                <Text fz="xs" fw={500} c={tokens.color.textPrimary}>
-                  {formatTokenCount(tokenUsage)}
-                </Text>
-              </Group>
-            )}
-            <Group gap={8} mt={4}>
-              {onEdit != null && (
-                <Button
-                  size="compact-xs"
-                  variant="light"
-                  color="gray"
-                  radius={tokens.radius.card}
-                  onClick={() => onEdit(provider.id)}
+      {/* Expanded detail */}
+      <div
+        className={`grid transition-all duration-300 ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.25, 1, 0.5, 1)" }}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 pb-3">
+            <div className="h-px bg-[var(--ap-border)] mb-3" />
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Status
+                </span>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{ color: statusColor(provider.status) }}
                 >
-                  Edit
-                </Button>
+                  {statusLabel(provider.status)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Type
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                  {provider.providerType}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                  Models
+                </span>
+                <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                  {provider.modelsAvailable} available
+                </span>
+              </div>
+              {tokenUsage != null && tokenUsage > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-[10px] text-[var(--ap-text-secondary)]">
+                    Token usage
+                  </span>
+                  <span className="text-[10px] font-medium text-[var(--ap-text-primary)]">
+                    {formatTokenCount(tokenUsage)}
+                  </span>
+                </div>
               )}
-              {onRemove != null && (
-                <Button
-                  size="compact-xs"
-                  variant="light"
-                  color="red"
-                  radius={tokens.radius.card}
-                  onClick={() => onRemove(provider.id)}
-                >
-                  Remove
-                </Button>
-              )}
-            </Group>
-          </Stack>
-        </Box>
-      </Collapse>
-    </Box>
+              <div className="flex gap-1.5 mt-1">
+                {onEdit != null && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(provider.id)}
+                    className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--ap-text-secondary)] bg-[var(--ap-bg-elevated)] border border-[var(--ap-border)] rounded-sm cursor-pointer hover:text-[var(--ap-text-primary)] hover:border-[var(--ap-border-strong)] transition-all duration-150 active:scale-95"
+                  >
+                    Edit
+                  </button>
+                )}
+                {onRemove != null && (
+                  <button
+                    type="button"
+                    onClick={() => onRemove(provider.id)}
+                    className="px-1.5 py-0.5 text-[10px]! font-medium leading-tight text-[var(--color-danger)] bg-[var(--color-danger-subtle)] border border-[var(--color-danger)]/20 rounded-sm cursor-pointer hover:bg-[var(--color-danger)] hover:text-[var(--ap-text-primary)] transition-all duration-150 active:scale-95"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
-

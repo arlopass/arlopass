@@ -1,10 +1,6 @@
-import { Image } from "@mantine/core";
-import { tokens } from "./theme.js";
-
 /**
  * Map of provider keys to their @lobehub/icons-static-svg slug.
  * SVG files are copied into dist/icons/ at build time.
- * Color variants are preferred when available.
  */
 const slugMap: Record<string, string> = {
   anthropic: "anthropic",
@@ -22,10 +18,10 @@ const slugMap: Record<string, string> = {
 };
 
 /**
- * Icons that use dark fills and need a light container to remain
- * visible on the dark stone background.
+ * Icons that use dark fills and need brightness inversion
+ * to remain visible on the dark stone background.
  */
-const needsLightBg = new Set([
+const needsInvert = new Set([
   "anthropic",
   "openai",
   "githubcopilot",
@@ -41,54 +37,37 @@ export type ProviderAvatarProps = {
 export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
   const slug = slugMap[providerKey];
   if (slug != null) {
-    const invertToWhite = needsLightBg.has(providerKey);
+    const invert = needsInvert.has(providerKey);
+    const imgSize = invert ? size : Math.round(size * 0.75);
     return (
       <div
+        className="flex items-center justify-center shrink-0 rounded-sm"
         style={{
           width: size,
           height: size,
-          borderRadius: tokens.radius.button,
-          background: invertToWhite
-            ? "transparent"
-            : "rgba(250, 250, 249, 0.1)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
+          background: invert ? "transparent" : "rgba(250, 250, 249, 0.1)",
         }}
       >
-        <Image
+        <img
           src={`icons/${slug}.svg`}
           alt=""
-          w={invertToWhite ? size : Math.round(size * 0.75)}
-          h={invertToWhite ? size : Math.round(size * 0.75)}
-          fit="contain"
-          style={{
-            flexShrink: 0,
-            ...(invertToWhite
+          width={imgSize}
+          height={imgSize}
+          className="shrink-0 object-contain"
+          style={
+            invert
               ? { filter: "brightness(0) invert(1) opacity(0.9)" }
-              : {}),
-          }}
+              : undefined
+          }
         />
       </div>
     );
   }
-  // Fallback: first-letter circle for unknown providers
+  // Fallback: first-letter circle
   return (
     <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        background: tokens.color.bgElevated,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: size * 0.4,
-        fontWeight: 600,
-        color: tokens.color.textSecondary,
-        flexShrink: 0,
-      }}
+      className="flex items-center justify-center shrink-0 rounded-full bg-[var(--ap-bg-elevated)] text-[var(--ap-text-secondary)] font-semibold"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
       aria-hidden
     >
       {providerKey.charAt(0).toUpperCase()}
