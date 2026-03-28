@@ -58,6 +58,7 @@ export function VaultTabContent() {
   const [credentials, setCredentials] = useState<VaultCredential[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyMode, setKeyMode] = useState<"password" | "keychain" | null>(null);
+  const [minPasswordLength, setMinPasswordLength] = useState(8);
   const { sendVaultMessage } = useVaultContext();
 
   const reload = () =>
@@ -74,6 +75,10 @@ export function VaultTabContent() {
       const mode = statusResp["keyMode"] as string | undefined;
       if (mode === "password" || mode === "keychain") {
         setKeyMode(mode);
+      }
+      const minPw = statusResp["minPasswordLength"];
+      if (typeof minPw === "number" && minPw > 0) {
+        setMinPasswordLength(minPw);
       }
       setLoading(false);
     });
@@ -96,6 +101,7 @@ export function VaultTabContent() {
           <Stack gap={tokens.spacing.sectionGap}>
             <VaultSecuritySection
               keyMode={keyMode}
+              minPasswordLength={minPasswordLength}
               sendVaultMessage={sendVaultMessage}
               onKeyModeChange={setKeyMode}
             />
@@ -134,10 +140,12 @@ export function VaultTabContent() {
 
 function VaultSecuritySection({
   keyMode,
+  minPasswordLength,
   sendVaultMessage,
   onKeyModeChange,
 }: {
   keyMode: "password" | "keychain" | null;
+  minPasswordLength: number;
   sendVaultMessage: (
     msg: Record<string, unknown>,
   ) => Promise<Record<string, unknown>>;
@@ -150,7 +158,7 @@ function VaultSecuritySection({
   const [error, setError] = useState<string | null>(null);
 
   const passwordsMatch = password.length > 0 && password === confirm;
-  const tooShort = password.length > 0 && password.length < 8;
+  const tooShort = password.length > 0 && password.length < minPasswordLength;
 
   const handleSwitchToKeychain = useCallback(async () => {
     setSwitching(true);
@@ -254,10 +262,14 @@ function VaultSecuritySection({
           <PasswordInput
             size="xs"
             label="New master password"
-            placeholder="At least 8 characters"
+            placeholder={`At least ${String(minPasswordLength)} characters`}
             value={password}
             onChange={(e) => setPassword(e.currentTarget.value)}
-            error={tooShort ? "Must be at least 8 characters" : undefined}
+            error={
+              tooShort
+                ? `Must be at least ${String(minPasswordLength)} characters`
+                : undefined
+            }
           />
           <PasswordInput
             size="xs"

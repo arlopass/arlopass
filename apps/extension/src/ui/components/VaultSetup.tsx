@@ -13,9 +13,10 @@ import { tokens } from "./theme.js";
 export type VaultSetupProps = {
   onSetup: (password: string) => Promise<void>;
   onSetupKeychain: () => Promise<void>;
+  minPasswordLength?: number;
 };
 
-export function VaultSetup({ onSetup, onSetupKeychain }: VaultSetupProps) {
+export function VaultSetup({ onSetup, onSetupKeychain, minPasswordLength = 8 }: VaultSetupProps) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export function VaultSetup({ onSetup, onSetupKeychain }: VaultSetupProps) {
   const [keychainLoading, setKeychainLoading] = useState(false);
 
   const passwordsMatch = password.length > 0 && password === confirm;
-  const passwordTooShort = password.length > 0 && password.length < 8;
+  const passwordTooShort = password.length > 0 && password.length < minPasswordLength;
 
   const handleSubmit = useCallback(async () => {
     if (!passwordsMatch || passwordTooShort) return;
@@ -80,10 +81,10 @@ export function VaultSetup({ onSetup, onSetupKeychain }: VaultSetupProps) {
       <Stack gap="sm" style={{ width: "100%", maxWidth: 280, marginTop: 8 }}>
         <PasswordInput
           label="Master password"
-          placeholder="At least 8 characters"
+          placeholder={`At least ${minPasswordLength} characters`}
           value={password}
           onChange={(e) => setPassword(e.currentTarget.value)}
-          error={passwordTooShort ? "Must be at least 8 characters" : undefined}
+          error={passwordTooShort ? `Must be at least ${minPasswordLength} characters` : undefined}
           autoFocus
         />
         <PasswordInput

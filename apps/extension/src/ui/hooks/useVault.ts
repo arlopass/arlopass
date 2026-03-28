@@ -14,10 +14,10 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 export type VaultStatus =
     | { state: "connecting" }
     | { state: "bridge-unavailable"; error: string }
-    | { state: "uninitialized" }
-    | { state: "locked"; keyMode?: "password" | "keychain" }
-    | { state: "unlocked" }
-    | { state: "locked_out"; secondsRemaining: number };
+    | { state: "uninitialized"; minPasswordLength?: number }
+    | { state: "locked"; keyMode?: "password" | "keychain"; minPasswordLength?: number }
+    | { state: "unlocked"; minPasswordLength?: number }
+    | { state: "locked_out"; secondsRemaining: number; minPasswordLength?: number };
 
 export type UseVaultResult = {
     status: VaultStatus;
@@ -61,29 +61,30 @@ export function useVault(): UseVaultResult {
             }
             const vaultState = resp["state"] as string;
             const keyMode = resp["keyMode"] as string | undefined;
+            const minPwLen = typeof resp["minPasswordLength"] === "number" ? resp["minPasswordLength"] as number : undefined;
+            const mpOpt = minPwLen !== undefined ? { minPasswordLength: minPwLen } : {};
             if (vaultState === "uninitialized") {
-                setStatus({ state: "uninitialized" });
+                setStatus({ state: "uninitialized", ...mpOpt });
             } else if (vaultState === "locked") {
                 if (keyMode === "keychain") {
-                    // Auto-unlock for keychain mode
-                    setStatus({ state: "locked", keyMode: "keychain" });
+                    setStatus({ state: "locked", keyMode: "keychain", ...mpOpt });
                     try {
                         const unlockResp = await sendVaultMessageFromPage({ type: "vault.unlock.keychain" });
                         if (!mountedRef.current) return;
                         if (isRecord(unlockResp) && unlockResp["type"] !== "error") {
-                            setStatus({ state: "unlocked" });
+                            setStatus({ state: "unlocked", ...mpOpt });
                         } else {
-                            setStatus({ state: "locked", keyMode: "keychain" });
+                            setStatus({ state: "locked", keyMode: "keychain", ...mpOpt });
                         }
                     } catch {
                         if (!mountedRef.current) return;
-                        setStatus({ state: "locked", keyMode: "keychain" });
+                        setStatus({ state: "locked", keyMode: "keychain", ...mpOpt });
                     }
                 } else {
-                    setStatus({ state: "locked", keyMode: "password" });
+                    setStatus({ state: "locked", keyMode: "password", ...mpOpt });
                 }
             } else if (vaultState === "unlocked") {
-                setStatus({ state: "unlocked" });
+                setStatus({ state: "unlocked", ...mpOpt });
             } else {
                 setStatus({ state: "bridge-unavailable", error: `Unknown vault state: ${vaultState}` });
             }

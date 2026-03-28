@@ -1221,10 +1221,12 @@ async function main(): Promise<void> {
   const vaultFilePath = resolveVaultFilePathFromEnv(process.env) ?? "vault.encrypted";
   const vaultLockoutFilePath = resolveVaultLockoutFilePathFromEnv(process.env) ?? "vault-lockout.json";
   const vaultAutoLockMs = parsePositiveIntegerEnv(process.env["ARLOPASS_VAULT_AUTO_LOCK_MS"]);
+  const vaultMinPasswordLength = parsePositiveIntegerEnv(process.env["ARLOPASS_VAULT_MIN_PASSWORD_LENGTH"]);
   const vaultStore = new VaultStore({
     vaultFilePath,
     lockoutFilePath: vaultLockoutFilePath,
     ...(vaultAutoLockMs !== undefined ? { autoLockMs: vaultAutoLockMs } : {}),
+    ...(vaultMinPasswordLength !== undefined ? { minPasswordLength: vaultMinPasswordLength } : {}),
   });
 
   const bridgeHandler = new BridgeHandler({

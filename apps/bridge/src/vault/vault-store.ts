@@ -23,6 +23,7 @@ export type VaultStoreOptions = {
     vaultFilePath: string;
     lockoutFilePath: string;
     autoLockMs?: number;
+    minPasswordLength?: number;
     now?: () => Date;
 };
 
@@ -32,6 +33,7 @@ export class VaultStore {
     readonly #vaultFilePath: string;
     readonly #lockout: VaultLockout;
     readonly #autoLockMs: number;
+    readonly #minPasswordLength: number;
     readonly #now: () => Date;
 
     #state: VaultState;
@@ -46,6 +48,7 @@ export class VaultStore {
         this.#vaultFilePath = options.vaultFilePath;
         this.#lockout = new VaultLockout(options.lockoutFilePath, options.now ? () => options.now!().getTime() : undefined);
         this.#autoLockMs = options.autoLockMs ?? 30 * 60 * 1000;
+        this.#minPasswordLength = options.minPasswordLength ?? 8;
         this.#now = options.now ?? (() => new Date());
 
         this.#state = existsSync(this.#vaultFilePath) ? "locked" : "uninitialized";
@@ -55,21 +58,21 @@ export class VaultStore {
         return this.#state;
     }
 
-    status(): { state: VaultState; keyMode?: KeyMode } {
+    status(): { state: VaultState; keyMode?: KeyMode; minPasswordLength: number } {
         if (this.#state === "uninitialized") {
-            return { state: this.#state };
+            return { state: this.#state, minPasswordLength: this.#minPasswordLength };
         }
         // When locked, read keyMode from file header without decrypting
         if (this.#state === "locked") {
             try {
                 const fileData = readFileSync(this.#vaultFilePath);
                 const header = parseHeader(fileData);
-                return { state: this.#state, keyMode: header.keyMode };
+                return { state: this.#state, keyMode: header.keyMode, minPasswordLength: this.#minPasswordLength };
             } catch {
-                return { state: this.#state };
+                return { state: this.#state, minPasswordLength: this.#minPasswordLength };
             }
         }
-        return { state: this.#state, keyMode: this.#keyMode };
+        return { state: this.#state, keyMode: this.#keyMode, minPasswordLength: this.#minPasswordLength };
     }
 
     // -- Setup ------------------------------------------------------------------
@@ -85,6 +88,9 @@ export class VaultStore {
         if (input.keyMode === "password") {
             if (!input.password || input.password.length === 0) {
                 throw new VaultError("Password is required for password mode.", "request.invalid");
+            }
+            if (input.password.length < this.#minPasswordLength) {
+                throw new VaultError(`Password must be at least ${this.#minPasswordLength} characters.`, "request.invalid");
             }
             key = deriveKey(input.password, salt);
         } else {
@@ -328,6 +334,9 @@ export class VaultStore {
         if (input.keyMode === "password") {
             if (!input.password || input.password.length === 0) {
                 throw new VaultError("Password is required for password mode.", "request.invalid");
+            }
+            if (input.password.length < this.#minPasswordLength) {
+                throw new VaultError(`Password must be at least ${this.#minPasswordLength} characters.`, "request.invalid");
             }
             newKey = deriveKey(input.password, salt);
         } else {

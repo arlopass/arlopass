@@ -114,7 +114,7 @@ export function VaultGate({
   }
 
   if (status.state === "uninitialized") {
-    return <VaultSetup onSetup={onSetup} onSetupKeychain={onSetupKeychain} />;
+    return <VaultSetup onSetup={onSetup} onSetupKeychain={onSetupKeychain} {...(status.minPasswordLength !== undefined ? { minPasswordLength: status.minPasswordLength } : {})} />;
   }
 
   if (status.state === "locked") {
