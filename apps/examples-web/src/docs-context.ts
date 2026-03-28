@@ -22,11 +22,13 @@ const DOCS: DocEntry[] = [
 - A Chrome extension that acts as a secure wallet for AI provider credentials
 - A web SDK (@arlopass/web-sdk) that web apps use to communicate with the extension
 - A native bridge that routes requests to cloud providers (Anthropic, OpenAI, Gemini, etc.) and local runtimes (Ollama)
+- An encrypted vault on the bridge that stores credentials, providers, app connections, and token usage (AES-256-GCM)
 - A consent/permission system where users control which apps can access which providers and models
 
-The extension popup shows connected providers, models, apps, and stored credentials (vault).
+The extension acts as a thin client — all sensitive data lives in the encrypted vault on the bridge.
+On first use, the user sets up the vault with a master password or OS keychain.
 Web apps connect via window.arlopass which is injected by the extension's content script.`,
-    keywords: ["arlopass", "overview", "what is", "architecture", "how does", "wallet", "extension"],
+    keywords: ["arlopass", "overview", "what is", "architecture", "how does", "wallet", "extension", "vault", "encryption"],
   },
   {
     id: "web-sdk",
@@ -119,13 +121,17 @@ If not approved:
 6. App connection is saved
 
 Once connected, the app can only see/use providers and models that were explicitly enabled.
-App connections are stored in chrome.storage.local under arlopass.wallet.apps.v1.`,
+App connections are stored in the encrypted vault on the bridge (vault.apps.save/list/delete).`,
     keywords: ["connect", "connection", "app", "approve", "permission", "settings", "rules", "limits", "consent", "appId", "appSuffix", "appName", "appDescription", "appIcon", "validation", "origin"],
   },
   {
     id: "credentials",
     title: "Credentials & Vault",
-    content: `Credentials are stored in the extension's vault (chrome.storage.local under arlopass.wallet.credentials.v1).
+    content: `Credentials are stored in an encrypted vault on the native bridge — NOT in chrome.storage.
+
+The vault uses AES-256-GCM encryption with either:
+- Master password: PBKDF2 key derivation (210,000 iterations, SHA-256) → AES-256-GCM
+- OS keychain: random 32-byte key stored in Windows Credential Manager / macOS Keychain / Linux libsecret → AES-256-GCM
 
 Each credential contains:
 - Connector ID (which provider type, e.g., "cloud-anthropic")
@@ -133,10 +139,60 @@ Each credential contains:
 - Fields including the API key/secret
 - Created and last-used timestamps
 
-Credentials persist across provider removal — if you delete a provider, the credential stays in the vault and can be reused when adding a new provider of the same type.
+Vault lifecycle:
+- First run: user chooses master password or OS keychain → empty encrypted vault created on bridge
+- Browser open: extension checks vault status → if locked, shows unlock screen → if keychain mode, auto-unlocks
+- During use: all reads/writes go through vault.* messages via a single persistent bridge connection
+- Auto-lock: 30 minutes of inactivity → vault locks → user must re-authenticate
+- Cross-browser: vault lives on the bridge, works with Chrome, Edge, Firefox simultaneously
 
-Security: chrome.storage.local is extension-private and encrypted at rest by Chrome.`,
-    keywords: ["credential", "vault", "api key", "secret", "storage", "security", "store"],
+The vault file format: 64-byte plaintext header (magic "ARLO", version, keyMode, salt for PBKDF2, IV for GCM, reserved) followed by encrypted JSON + 16-byte GCM auth tag.
+
+Credentials persist across provider removal and can be reused when adding a new provider of the same type.
+
+Zero-knowledge: web apps never see API keys. The bridge reads them from the vault and attaches them to outgoing requests. The extension popup reads credentials on demand via vault.credentials.list (redacted) and vault.credentials.get (with fields).`,
+    keywords: ["credential", "vault", "api key", "secret", "storage", "security", "store", "encryption", "aes", "password", "keychain", "pbkdf2", "master password", "auto-lock", "cross-browser"],
+  },
+  {
+    id: "vault-security",
+    title: "Vault Security Architecture",
+    content: `The Arlopass vault is an encrypted file owned by the native bridge, storing all sensitive data: credentials, providers, app connections, and token usage.
+
+Encryption:
+- AES-256-GCM authenticated encryption
+- Password mode: PBKDF2 with 210,000 iterations (OWASP 2024 recommendation), SHA-256, 32-byte key
+- Keychain mode: random 32-byte key stored in OS credential store (Windows Credential Manager, macOS Keychain, Linux libsecret)
+- Salt generated once at vault creation, stored permanently in file header
+- IV (nonce) freshly randomized on every write — required for GCM security
+
+Vault file format:
+- 64-byte plaintext header: magic "ARLO" (4 bytes), version (1), keyMode (1), salt (32), IV (12), reserved (14)
+- Ciphertext: AES-256-GCM encrypted JSON + 16-byte authentication tag
+
+Brute force protection:
+- Failed password attempts tracked to disk (survives bridge restarts)
+- Escalating lockout: 5 failures → 30s, 10 → 5min, 20+ → 30min delay
+- Keychain failures don't count (infrastructure errors, not auth failures)
+- Resets only after successful unlock, NOT on restart
+
+Auto-lock:
+- 30 minutes of inactivity (configurable via ARLOPASS_VAULT_AUTO_LOCK_MS)
+- Timer resets on vault.* messages (rate-limited: max 1 reset per 10 seconds)
+- On expiry: re-encrypt to disk, wipe memory, state → locked
+
+Atomic writes: every mutation writes to vault.encrypted.tmp then renames — prevents corruption on crash.
+
+Zero-knowledge design:
+- Web apps never see API keys — bridge reads from vault and attaches to outgoing requests
+- Extension popup never holds keys in memory — vault.credentials.list returns redacted data
+- Vault file unreadable without password/keychain — even if copied
+
+The vault is cross-browser: one bridge, one vault file, works with Chrome + Edge + Firefox simultaneously.
+
+Switching modes: the vault supports rekey (vault.rekey / vault.rekey.keychain) to switch between password and keychain modes without losing data.
+
+Web SDK integration: if a web app calls the SDK and the vault is locked, the extension opens automatically for the user to unlock. The SDK retries transparently after unlock (2-second polling, up to 60 seconds).`,
+    keywords: ["vault", "security", "encryption", "aes", "gcm", "pbkdf2", "keychain", "password", "master password", "brute force", "lockout", "auto-lock", "atomic", "zero-knowledge", "cross-browser", "rekey"],
   },
   {
     id: "extension-snippet",
