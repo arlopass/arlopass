@@ -71,16 +71,10 @@ function parseDiscoveredModels(value: unknown): readonly ProviderModel[] {
       continue;
     }
 
-    // Filter: only include models with chat completion capability
-    const capabilities = entry["capabilities"];
-    if (isRecord(capabilities)) {
-      const hasChatCompletion =
-        capabilities["chat_completion"] === true ||
-        capabilities["completion"] === true ||
-        capabilities["inference"] === true;
-      if (!hasChatCompletion) {
-        continue;
-      }
+    // Only skip non-model deployments
+    const deploymentType = typeof entry["type"] === "string" ? entry["type"].trim() : "";
+    if (deploymentType.length > 0 && deploymentType !== "ModelDeployment") {
+      continue;
     }
 
     const modelName = typeof entry["modelName"] === "string" ? entry["modelName"].trim() : "";

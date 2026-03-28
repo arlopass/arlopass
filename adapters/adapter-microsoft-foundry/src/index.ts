@@ -345,16 +345,10 @@ function extractDeploymentDescriptors(
       continue;
     }
 
-    // Filter: only include models with chat completion capability.
-    const capabilities = candidate["capabilities"];
-    if (isRecord(capabilities)) {
-      const hasChatCompletion =
-        capabilities["chat_completion"] === true ||
-        capabilities["completion"] === true ||
-        capabilities["inference"] === true;
-      if (!hasChatCompletion) {
-        continue;
-      }
+    // Only skip non-model deployments (e.g. type !== "ModelDeployment")
+    const deploymentType = normalizeNonEmptyString(candidate["type"]);
+    if (deploymentType !== undefined && deploymentType !== "ModelDeployment") {
+      continue;
     }
 
     const modelName = normalizeNonEmptyString(candidate["modelName"]);
