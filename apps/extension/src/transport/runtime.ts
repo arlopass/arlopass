@@ -1351,43 +1351,20 @@ class PersistentBridgePort {
 const BRIDGE_PORT_SINGLETON_KEY = "__arlopass.bridge.persistent_port.v1";
 const DEFAULT_BRIDGE_HOST_NAME = "com.arlopass.bridge";
 
-/**
- * Returns a bridge port adapter for cloud streaming.
- *
- * Prefers the vault-proxy's bridge port (shared via globalThis) so that cloud
- * chat requests go through the *same* bridge process that holds the connection
- * state. Falls back to a standalone PersistentBridgePort only if the
- * vault-proxy globals are not yet initialised.
- */
 function getSharedBridgePort(): PersistentBridgePort | undefined {
-  // Prefer the vault-proxy bridge port (same bridge process as connection setup).
-  const g = globalThis as Record<string, unknown>;
-  const bridgeSend = g["__arlopass_bridge_send"] as
-    | ((msg: Record<string, unknown>) => Promise<unknown>)
-    | undefined;
-  const bridgeStream = g["__arlopass_bridge_stream"] as
-    | ((msg: Record<string, unknown>, onChunk: (c: string) => void) => Promise<unknown>)
-    | undefined;
-  if (bridgeSend !== undefined && bridgeStream !== undefined) {
-    // Return a duck-typed PersistentBridgePort that delegates to vault-proxy.
-    return {
-      send: bridgeSend,
-      sendWithChunks: bridgeStream,
-      dispose() { /* no-op — vault-proxy owns the lifecycle */ },
-    } as unknown as PersistentBridgePort;
-  }
-
-  // Fallback: create a standalone port (only if connectNative is available).
   if (
     typeof chrome === "undefined" ||
     typeof chrome.runtime?.connectNative !== "function"
   ) {
     return undefined;
   }
-  let port = g[BRIDGE_PORT_SINGLETON_KEY] as PersistentBridgePort | undefined;
+  const globalState = globalThis as Record<string, unknown>;
+  let port = globalState[BRIDGE_PORT_SINGLETON_KEY] as
+    | PersistentBridgePort
+    | undefined;
   if (port === undefined) {
     port = new PersistentBridgePort(DEFAULT_BRIDGE_HOST_NAME);
-    g[BRIDGE_PORT_SINGLETON_KEY] = port;
+    globalState[BRIDGE_PORT_SINGLETON_KEY] = port;
   }
   return port;
 }
