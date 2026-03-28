@@ -35,6 +35,7 @@ const HOST_NAME = "com.arlopass.bridge";
 type PendingRequest = {
     resolve: (response: unknown) => void;
     reject: (error: Error) => void;
+    onChunk?: (chunk: string) => void;
 };
 
 let port: chrome.runtime.Port | null = null;
@@ -54,6 +55,20 @@ function ensurePort(): chrome.runtime.Port {
         if (typeof reqId !== "string") return;
         const req = pending.get(reqId);
         if (!req) return;
+
+        // Intermediate streaming chunk — forward and keep waiting.
+        if (
+            msg["type"] === "cloud.chat.stream.chunk" ||
+            msg["type"] === "cli.chat.stream.chunk"
+        ) {
+            if (req.onChunk !== undefined) {
+                const delta = typeof msg["delta"] === "string" ? msg["delta"] : "";
+                if (delta.length > 0) req.onChunk(delta);
+            }
+            return;
+        }
+
+        // Terminal response — resolve the pending request.
         pending.delete(reqId);
         const { _bridgeRequestId: _, ...clean } = msg; // eslint-disable-line @typescript-eslint/no-unused-vars
         req.resolve(clean);
@@ -90,6 +105,42 @@ async function sendNativeViaPort(
 ): Promise<unknown> {
     return sendViaPort(message);
 }
+
+/**
+ * Send a message through the vault-proxy bridge port.
+ * Exported so the transport streaming layer can reuse the same bridge process
+ * that holds the cloud connection state.
+ */
+export function sendBridgeMessage(message: Record<string, unknown>): Promise<unknown> {
+    return sendViaPort(message);
+}
+
+/**
+ * Send a streaming message through the vault-proxy bridge port.
+ * Intermediate `cloud.chat.stream.chunk` messages are forwarded to onChunk.
+ * The promise resolves with the terminal response.
+ */
+export function sendBridgeStreamingMessage(
+    message: Record<string, unknown>,
+    onChunk: (chunk: string) => void,
+): Promise<unknown> {
+    const p = ensurePort();
+    const reqId = `_vp.${String(++nextId)}.${Date.now().toString(36)}`;
+    return new Promise<unknown>((resolve, reject) => {
+        pending.set(reqId, { resolve, reject, onChunk });
+        try {
+            p.postMessage({ ...message, _bridgeRequestId: reqId });
+        } catch (err) {
+            pending.delete(reqId);
+            reject(err instanceof Error ? err : new Error(String(err)));
+        }
+    });
+}
+
+// Expose on globalThis so the transport layer (runtime.ts) can reuse the
+// same bridge process without a circular import.
+(globalThis as Record<string, unknown>)["__arlopass_bridge_send"] = sendBridgeMessage;
+(globalThis as Record<string, unknown>)["__arlopass_bridge_stream"] = sendBridgeStreamingMessage;
 
 // ---------------------------------------------------------------------------
 // Session management
