@@ -327,6 +327,26 @@ function extractModelDescriptors(
     if (id === undefined) {
       continue;
     }
+
+    // Filter: only include models with chat completion capability.
+    // Azure AI Foundry returns all catalog models; we only want chat-capable ones.
+    const capabilities = candidate["capabilities"];
+    if (isRecord(capabilities)) {
+      const hasChatCompletion =
+        capabilities["chat_completion"] === true ||
+        capabilities["completion"] === true ||
+        capabilities["inference"] === true;
+      if (!hasChatCompletion) {
+        continue;
+      }
+    }
+
+    // Skip models with lifecycle_stage "retired" or "preview" that are unusable
+    const lifecycleStage = normalizeNonEmptyString(candidate["lifecycle_stage"]);
+    if (lifecycleStage === "retired") {
+      continue;
+    }
+
     const displayName =
       normalizeNonEmptyString(candidate["displayName"]) ??
       normalizeNonEmptyString(candidate["name"]) ??
