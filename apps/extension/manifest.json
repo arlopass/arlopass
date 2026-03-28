@@ -8,7 +8,8 @@
   "permissions": [
     "storage",
     "nativeMessaging",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "http://*/*",
