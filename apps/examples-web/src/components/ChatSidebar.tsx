@@ -22,26 +22,14 @@ import {
   IconTool,
   IconX,
 } from "@tabler/icons-react";
-import {
-  ArlopassClient,
-  ConversationManager,
-  type ArlopassTransport,
-  type ChatMessage,
-  type ContextWindowInfo,
-  type ProviderDescriptor,
-} from "@arlopass/web-sdk";
+import { useConnection, useProviders, useConversation } from "@arlopass/react";
+import type { ContextWindowInfo, ToolDefinition } from "@arlopass/react";
 import { searchDocs } from "../docs-context";
 import { NAVIGATION } from "../navigation";
 import { Markdown } from "./Markdown";
 
-type ChatState = "disconnected" | "connecting" | "connected" | "error";
-
 const CHAT_PROV_KEY = "arlopass.examples.chat.lastProvider";
 const CHAT_MODEL_KEY = "arlopass.examples.chat.lastModel";
-
-function getInjected(): ArlopassTransport | null {
-  return (window as Window & { arlopass?: ArlopassTransport }).arlopass ?? null;
-}
 
 function fmtModel(m: string): string {
   return m
@@ -58,122 +46,229 @@ export type ChatSidebarProps = {
   onNavigate?: ((pageId: string) => void) | undefined;
 };
 
-type ToolActivityState =
-  | { phase: "idle" }
-  | { phase: "priming" }
-  | { phase: "matched"; tools: readonly string[] }
-  | { phase: "executing"; name: string; detail?: string | undefined }
-  | { phase: "result"; name: string };
+// ─── Tool definitions ────────────────────────────────────────────────
 
-const TOOL_IDLE: ToolActivityState = { phase: "idle" };
+const CHAT_SYSTEM_PROMPT = `You are a helpful assistant for the Arlopass Wallet documentation website. You answer questions about the Arlopass extension, web SDK, providers, app connections, credentials, and how to integrate with Arlopass.
 
-type DisplayMessage = ChatMessage & {
-  /** Tool names that were called to produce this response. */
-  usedTools?: readonly string[];
-};
+When the user asks about Arlopass features, SDK usage, providers, or integration, use the search_docs tool to find relevant documentation before answering.
+When the user asks to see a specific page, demo, or example, use the navigate_to_page tool to take them there.
+
+Important:
+- Be concise and accurate
+- Include code examples when relevant
+- Reference specific Arlopass concepts (providers, models, vault, app connections)
+- If asked about implementation, show @arlopass/web-sdk TypeScript code`;
+
+function buildTools(
+  onNavigateRef: React.RefObject<((pageId: string) => void) | undefined>,
+): ToolDefinition[] {
+  const allPageIds = NAVIGATION.flatMap((cat) =>
+    cat.items.map((item) => item.id),
+  );
+  const allItems = NAVIGATION.flatMap((cat) =>
+    cat.items.map((item) => ({ ...item, category: cat.label })),
+  );
+  const pageList = allItems
+    .map((item) => `${item.id}: ${item.label} (${item.category})`)
+    .join(", ");
+
+  function resolvePageId(input: string): string | null {
+    if (allPageIds.includes(input)) return input;
+    const bySegment = allPageIds.find((id) => id.endsWith(`/${input}`));
+    if (bySegment) return bySegment;
+    const lower = input.toLowerCase();
+    const byLabel = allItems.find((item) => item.label.toLowerCase() === lower);
+    if (byLabel) return byLabel.id;
+    const byPartial = allItems.find((item) =>
+      item.label.toLowerCase().includes(lower),
+    );
+    if (byPartial) return byPartial.id;
+    return null;
+  }
+
+  return [
+    {
+      name: "search_docs",
+      description:
+        "Search Arlopass documentation for relevant pages about the SDK, extension, providers, apps, credentials, or integration patterns. Use this when the user asks about Arlopass features.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search query about Arlopass",
+          },
+        },
+        required: ["query"],
+      },
+      handler: async (args) => {
+        const query = typeof args.query === "string" ? args.query : "";
+        const results = searchDocs(query, 3);
+        if (results.length === 0)
+          return JSON.stringify({
+            found: false,
+            message: "No relevant docs found.",
+          });
+        return JSON.stringify(
+          results.map((r) => ({ title: r.title, content: r.content })),
+        );
+      },
+    },
+    {
+      name: "navigate_to_page",
+      description: `Navigate the user to a specific page in the examples app. Available pages: ${pageList}. Use this when the user asks to see a demo, example, or specific page.`,
+      parameters: {
+        type: "object",
+        properties: {
+          page_id: {
+            type: "string",
+            description: "The page ID to navigate to",
+            enum: allPageIds,
+          },
+        },
+        required: ["page_id"],
+      },
+      handler: async (args) => {
+        const raw = typeof args.page_id === "string" ? args.page_id : "";
+        const pageId = resolvePageId(raw);
+        if (!pageId) {
+          return JSON.stringify({
+            success: false,
+            error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}`,
+          });
+        }
+        onNavigateRef.current?.(pageId);
+        const label = allItems.find((i) => i.id === pageId)?.label ?? pageId;
+        return JSON.stringify({ success: true, navigated_to: pageId, label });
+      },
+    },
+  ];
+}
+
+// ─── Component ───────────────────────────────────────────────────────
 
 export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
-  const clientRef = useRef<ArlopassClient | null>(null);
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
-  const [chatState, setChatState] = useState<ChatState>("connecting");
-  const [autoConnectDone, setAutoConnectDone] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [providers, setProviders] = useState<readonly ProviderDescriptor[]>([]);
-  const [selProv, setSelProv] = useState<string | null>(null);
-  const [selModel, setSelModel] = useState<string | null>(null);
+
+  // React SDK hooks
+  const {
+    state: connState,
+    isConnected,
+    isConnecting,
+    error: connError,
+    connect,
+    retry: connRetry,
+  } = useConnection();
+  const { providers, selectedProvider, selectProvider } = useProviders();
+
+  // Stable tools ref (built once)
+  const toolsRef = useRef<ToolDefinition[] | null>(null);
+  if (toolsRef.current === null) {
+    toolsRef.current = buildTools(onNavigateRef);
+  }
+
+  const {
+    messages: trackedMessages,
+    streamingContent,
+    isStreaming,
+    toolActivity,
+    contextInfo,
+    stream: convStream,
+    clearMessages,
+  } = useConversation({
+    systemPrompt: CHAT_SYSTEM_PROMPT,
+    tools: toolsRef.current,
+    primeTools: true,
+    hideToolCalls: true,
+    maxToolRounds: 3,
+  });
+
+  // Local UI state
   const [chatIn, setChatIn] = useState("");
-  const [msgs, setMsgs] = useState<DisplayMessage[]>([]);
-  const [streaming, setStreaming] = useState(false);
-  const [toolState, setToolState] = useState<ToolActivityState>(TOOL_IDLE);
-  const usedToolsRef = useRef<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const convRef = useRef<ConversationManager | null>(null);
   const inputHistoryRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const draftRef = useRef("");
-  const [contextInfo, setContextInfo] = useState<ContextWindowInfo | null>(
-    null,
-  );
 
-  const refreshContextInfo = useCallback(() => {
-    const conv = convRef.current;
-    if (conv) setContextInfo(conv.getContextInfo());
-  }, []);
+  // Provider/model selection with localStorage persistence
+  const [selProv, setSelProv] = useState<string | null>(() =>
+    localStorage.getItem(CHAT_PROV_KEY),
+  );
+  const [selModel, setSelModel] = useState<string | null>(() =>
+    localStorage.getItem(CHAT_MODEL_KEY),
+  );
 
   const selProvider = useMemo(
     () => providers.find((p) => p.providerId === selProv) ?? null,
     [providers, selProv],
   );
+
+  // Auto-select last-used or first provider on connect
+  useEffect(() => {
+    if (!isConnected || providers.length === 0) return;
+    if (selectedProvider !== null) return;
+
+    const lastProv = localStorage.getItem(CHAT_PROV_KEY);
+    const lastModel = localStorage.getItem(CHAT_MODEL_KEY);
+    const matched =
+      providers.find((p) => p.providerId === lastProv) ?? providers[0];
+    if (matched) {
+      const model =
+        lastModel && matched.models.includes(lastModel)
+          ? lastModel
+          : matched.models[0];
+      if (model) {
+        setSelProv(matched.providerId);
+        setSelModel(model);
+        void selectProvider({ providerId: matched.providerId, modelId: model });
+      }
+    }
+  }, [isConnected, providers, selectedProvider, selectProvider]);
+
+  // Invalidate selection when the selected provider/model is removed
+  useEffect(() => {
+    if (!isConnected || providers.length === 0) return;
+    if (selProv === null) return;
+
+    const currentProvider = providers.find((p) => p.providerId === selProv);
+    if (!currentProvider) {
+      // Provider was removed — pick next available
+      const fallback = providers[0];
+      if (fallback) {
+        const model = fallback.models[0];
+        if (model) {
+          setSelProv(fallback.providerId);
+          setSelModel(model);
+          localStorage.setItem(CHAT_PROV_KEY, fallback.providerId);
+          localStorage.setItem(CHAT_MODEL_KEY, model);
+          void selectProvider({ providerId: fallback.providerId, modelId: model });
+        }
+      } else {
+        setSelProv(null);
+        setSelModel(null);
+      }
+      return;
+    }
+
+    // Provider exists but selected model was removed
+    if (selModel !== null && !currentProvider.models.includes(selModel)) {
+      const model = currentProvider.models[0] ?? null;
+      setSelModel(model);
+      if (model) {
+        localStorage.setItem(CHAT_MODEL_KEY, model);
+        void selectProvider({ providerId: selProv, modelId: model });
+      }
+    }
+  }, [isConnected, providers, selProv, selModel, selectProvider]);
+
   // Auto-scroll on new messages
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [msgs]);
-
-  // Auto-connect on mount
-  useEffect(() => {
-    void autoConnect();
-  }, []);
-
-  const autoConnect = async () => {
-    const transport = getInjected();
-    if (!transport) {
-      setChatState("disconnected");
-      setAutoConnectDone(true);
-      return;
-    }
-    setChatState("connecting");
-    try {
-      const client = new ArlopassClient({
-        transport,
-        origin: window.location.origin,
-        timeoutMs: 120_000,
-      });
-      await client.connect({
-        appSuffix: "chat",
-        appName: "Arlopass Chat",
-        appDescription: "Documentation assistant for the examples app",
-        origin: window.location.origin,
-      });
-      clientRef.current = client;
-      const { providers: provList } = await client.listProviders();
-      setProviders(provList);
-
-      const lastProv = localStorage.getItem(CHAT_PROV_KEY);
-      const lastModel = localStorage.getItem(CHAT_MODEL_KEY);
-      const matchedProv =
-        provList.find((p) => p.providerId === lastProv) ?? provList[0];
-      if (matchedProv) {
-        setSelProv(matchedProv.providerId);
-        const matchedModel =
-          lastModel && matchedProv.models.includes(lastModel)
-            ? lastModel
-            : matchedProv.models[0];
-        if (matchedModel) {
-          setSelModel(matchedModel);
-          await client.selectProvider({
-            providerId: matchedProv.providerId,
-            modelId: matchedModel,
-          });
-        }
-      }
-      setChatState("connected");
-
-      // Initialize ConversationManager with search_docs + navigate tools
-      convRef.current = createConversation(client, onNavigateRef);
-      setContextInfo(convRef.current.getContextInfo());
-    } catch (e) {
-      setChatState("error");
-      setErrorMsg(e instanceof Error ? e.message : String(e));
-    } finally {
-      setAutoConnectDone(true);
-    }
-  };
-
-  const handleConnect = () => void autoConnect();
+  }, [trackedMessages, streamingContent]);
 
   const handleProviderChange = useCallback(
     async (providerId: string) => {
@@ -181,180 +276,58 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
       const prov = providers.find((p) => p.providerId === providerId);
       const model = prov?.models[0] ?? null;
       setSelModel(model);
-      if (model && clientRef.current) {
+      if (model) {
         localStorage.setItem(CHAT_PROV_KEY, providerId);
         localStorage.setItem(CHAT_MODEL_KEY, model);
         try {
-          await clientRef.current.selectProvider({
-            providerId,
-            modelId: model,
-          });
-          convRef.current = createConversation(
-            clientRef.current,
-            onNavigateRef,
-          );
-          refreshContextInfo();
+          await selectProvider({ providerId, modelId: model });
         } catch {
           /* ignore */
         }
       }
     },
-    [providers, refreshContextInfo],
+    [providers, selectProvider],
   );
 
   const handleModelChange = useCallback(
     async (modelId: string) => {
       setSelModel(modelId);
-      if (selProv && clientRef.current) {
+      if (selProv) {
         localStorage.setItem(CHAT_MODEL_KEY, modelId);
         try {
-          await clientRef.current.selectProvider({
-            providerId: selProv,
-            modelId,
-          });
-          // Recreate conversation manager so it picks up new model's context window
-          convRef.current = createConversation(
-            clientRef.current,
-            onNavigateRef,
-          );
-          refreshContextInfo();
+          await selectProvider({ providerId: selProv, modelId });
         } catch {
           /* ignore */
         }
       }
     },
-    [selProv, refreshContextInfo],
+    [selProv, selectProvider],
   );
 
   const handleSend = useCallback(async () => {
     const txt = chatIn.trim();
-    if (!txt || streaming) return;
-    const conv = convRef.current;
-    if (!conv || chatState !== "connected") {
-      setMsgs((p) => [
-        ...p,
-        { role: "user", content: txt },
-        { role: "assistant", content: "⚠️ Not connected." },
-      ]);
-      setChatIn("");
-      return;
-    }
-    setMsgs((p) => [...p, { role: "user", content: txt }]);
+    if (!txt || isStreaming || !isConnected) return;
     setChatIn("");
     inputHistoryRef.current.push(txt);
     historyIndexRef.current = -1;
     draftRef.current = "";
-    setStreaming(true);
-    setToolState(TOOL_IDLE);
-    usedToolsRef.current = [];
-    let full = "";
-    let isNewRound = false;
     try {
-      for await (const event of conv.stream(txt)) {
-        if (event.type === "chunk") {
-          if (isNewRound) {
-            full = "";
-            isNewRound = false;
-          }
-          full += event.delta;
-          // Only create/update the bubble when we have visible content
-          if (full.trim().length > 0) {
-            setMsgs((p) => {
-              const last = p[p.length - 1];
-              if (last?.role === "assistant")
-                return [
-                  ...p.slice(0, -1),
-                  { role: "assistant", content: full },
-                ];
-              return [...p, { role: "assistant", content: full }];
-            });
-          }
-        }
-        if (event.type === "tool_priming_start") {
-          setToolState({ phase: "priming" });
-        }
-        if (event.type === "tool_priming_match") {
-          setToolState({ phase: "matched", tools: event.tools });
-        }
-        if (event.type === "tool_priming_end") {
-          setToolState(TOOL_IDLE);
-        }
-        if (event.type === "tool_call") {
-          // Remove the in-progress assistant bubble (it has raw tool call markup)
-          setMsgs((p) => {
-            const last = p[p.length - 1];
-            if (last?.role === "assistant") return p.slice(0, -1);
-            return p;
-          });
-          isNewRound = true;
-          // Track which tools were used for this response
-          if (!usedToolsRef.current.includes(event.name)) {
-            usedToolsRef.current.push(event.name);
-          }
-          const detail =
-            event.name === "navigate_to_page"
-              ? String(event.arguments.page_id ?? "")
-              : event.name === "search_docs"
-                ? String(event.arguments.query ?? "")
-                : undefined;
-          setToolState({ phase: "executing", name: event.name, detail });
-        }
-        if (event.type === "tool_result") {
-          setToolState({ phase: "result", name: event.name });
-        }
-      }
-      // Final cleanup: build the definitive message list
-      const tools = [...usedToolsRef.current];
-      setMsgs((prev) => {
-        // Remove any empty assistant bubbles from tool call stripping
-        let cleaned = prev.filter(
-          (m) => m.role !== "assistant" || m.content.trim().length > 0,
-        );
-
-        if (tools.length > 0) {
-          const lastAssistantIdx = cleaned.reduce(
-            (acc, m, idx) => (m.role === "assistant" ? idx : acc),
-            -1,
-          );
-          const lastAssistant =
-            lastAssistantIdx >= 0 ? cleaned[lastAssistantIdx] : undefined;
-          if (
-            lastAssistant !== undefined &&
-            lastAssistant.content.trim().length > 0
-          ) {
-            // Tag existing final assistant message with tools used
-            cleaned = cleaned.map((m) =>
-              m === lastAssistant ? { ...m, usedTools: tools } : m,
-            );
-          } else {
-            // No text response — add a friendly completion message
-            const toolNames = tools.map((t) => t.replace(/_/g, " ")).join(", ");
-            cleaned.push({
-              role: "assistant",
-              content: `Done — used ${toolNames}.`,
-              usedTools: tools,
-            });
-          }
-        } else if (!full) {
-          cleaned.push({ role: "assistant", content: "(empty response)" });
-        }
-
-        return cleaned;
-      });
-    } catch (e) {
-      setMsgs((p) => [
-        ...p,
-        {
-          role: "assistant",
-          content: `Error: ${e instanceof Error ? e.message : String(e)}`,
-        },
-      ]);
-    } finally {
-      setStreaming(false);
-      setToolState(TOOL_IDLE);
-      refreshContextInfo();
+      await convStream(txt);
+    } catch {
+      /* error exposed via hook */
     }
-  }, [chatIn, streaming, chatState]);
+  }, [chatIn, isStreaming, isConnected, convStream]);
+
+  // Derive tool activity detail for display
+  const toolDetail = useMemo(() => {
+    if (toolActivity.phase !== "executing") return undefined;
+    const args = toolActivity.arguments;
+    if (!args) return undefined;
+    if (toolActivity.name === "navigate_to_page")
+      return String(args.page_id ?? "");
+    if (toolActivity.name === "search_docs") return String(args.query ?? "");
+    return undefined;
+  }, [toolActivity]);
 
   // ─── Render ──────────────────────────────────────────────────────────
 
@@ -374,16 +347,10 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
           </Text>
           <Badge
             size="xs"
-            color={
-              chatState === "connected"
-                ? "teal"
-                : chatState === "connecting"
-                  ? "yellow"
-                  : "gray"
-            }
+            color={isConnected ? "teal" : isConnecting ? "yellow" : "gray"}
             variant="dot"
           >
-            {chatState}
+            {connState}
           </Badge>
         </Group>
         <ActionIcon variant="subtle" size="sm" onClick={onClose}>
@@ -391,19 +358,16 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
         </ActionIcon>
       </Group>
 
-      {/* Connection setup — only shown after auto-connect fails */}
-      {chatState !== "connected" && autoConnectDone && (
-        <Box
-          p="md"
-          style={{ borderBottom: "1px solid var(--ap-border)" }}
-        >
+      {/* Connection fallback */}
+      {!isConnected && !isConnecting && (
+        <Box p="md" style={{ borderBottom: "1px solid var(--ap-border)" }}>
           <Stack gap="sm">
-            {chatState === "error" && (
+            {connError !== null && (
               <Text fz="xs" c="red">
-                {errorMsg}
+                {connError.message}
               </Text>
             )}
-            {chatState === "disconnected" && !getInjected() && (
+            {connState === "disconnected" && (
               <Text fz="xs" c="dimmed">
                 Extension not detected. Load the Arlopass extension first.
               </Text>
@@ -411,14 +375,10 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
             <Button
               size="xs"
               leftSection={<IconPlugConnected size={14} />}
-              onClick={handleConnect}
-              loading={chatState === "connecting"}
-              disabled={chatState === "connecting"}
+              onClick={() => void (connRetry ?? connect)()}
               fullWidth
             >
-              {chatState === "error"
-                ? "Retry connection"
-                : "Connect to Arlopass"}
+              {connError ? "Retry connection" : "Connect to Arlopass"}
             </Button>
           </Stack>
         </Box>
@@ -432,15 +392,14 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
         viewportRef={scrollRef}
       >
         <Stack gap="xs">
-          {msgs.length === 0 && (
+          {trackedMessages.length === 0 && !streamingContent && (
             <Text fz="sm" c="dimmed" ta="center" py="xl">
-              {chatState === "connected"
+              {isConnected
                 ? "Ask anything about Arlopass."
                 : "Connect to start chatting."}
             </Text>
           )}
-          {msgs.map((m, i) => {
-            // Skip empty assistant bubbles
+          {trackedMessages.map((m) => {
             if (
               m.role === "assistant" &&
               m.content.trim().length === 0 &&
@@ -449,7 +408,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               return null;
             return (
               <Box
-                key={i}
+                key={m.id}
                 style={{
                   maxWidth: "90%",
                   alignSelf: m.role === "user" ? "flex-end" : "flex-start",
@@ -497,9 +456,30 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               </Box>
             );
           })}
-          {streaming && (
+
+          {/* Streaming content bubble */}
+          {isStreaming && streamingContent.trim().length > 0 && (
+            <Box style={{ maxWidth: "90%", alignSelf: "flex-start" }}>
+              <Box
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: "var(--ap-bg-surface)",
+                  opacity: 0.85,
+                }}
+              >
+                <Markdown
+                  content={streamingContent}
+                  className="chat-markdown"
+                />
+              </Box>
+            </Box>
+          )}
+
+          {/* Tool activity indicators */}
+          {isStreaming && (
             <Box ml="xs" py={4}>
-              {toolState.phase === "priming" && (
+              {toolActivity.phase === "priming" && (
                 <Group gap={6} align="center">
                   <IconSearch size={12} color="var(--ap-brand)" />
                   <Text fz={11} c="blue" fw={500}>
@@ -508,13 +488,13 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                   <Loader size={10} color="blue" />
                 </Group>
               )}
-              {toolState.phase === "matched" && (
+              {toolActivity.phase === "matched" && (
                 <Group gap={6} align="center" wrap="nowrap">
                   <IconTool size={12} color="var(--ap-success)" />
                   <Text fz={11} c="teal" fw={500}>
                     Found:
                   </Text>
-                  {toolState.tools.map((t) => (
+                  {toolActivity.tools.map((t) => (
                     <Pill
                       key={t}
                       size="xs"
@@ -530,7 +510,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                   ))}
                 </Group>
               )}
-              {toolState.phase === "executing" && (
+              {toolActivity.phase === "executing" && (
                 <Group gap={6} align="center" wrap="nowrap">
                   <Loader size={10} color="violet" />
                   <Pill
@@ -542,16 +522,16 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                       fontWeight: 600,
                     }}
                   >
-                    {toolState.name.replace(/_/g, " ")}
+                    {toolActivity.name.replace(/_/g, " ")}
                   </Pill>
-                  {toolState.detail && (
+                  {toolDetail && (
                     <Text fz={10} c="dimmed" truncate style={{ maxWidth: 150 }}>
-                      {toolState.detail}
+                      {toolDetail}
                     </Text>
                   )}
                 </Group>
               )}
-              {toolState.phase === "result" && (
+              {toolActivity.phase === "result" && (
                 <Group gap={6} align="center">
                   <Text fz={11} c="teal" fw={500}>
                     ✓
@@ -565,27 +545,25 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                       fontWeight: 600,
                     }}
                   >
-                    {toolState.name.replace(/_/g, " ")}
+                    {toolActivity.name.replace(/_/g, " ")}
                   </Pill>
                   <Text fz={10} c="teal">
                     done
                   </Text>
                 </Group>
               )}
-              {toolState.phase === "idle" && <Loader size="xs" />}
+              {toolActivity.phase === "idle" && !streamingContent && (
+                <Loader size="xs" />
+              )}
             </Box>
           )}
         </Stack>
       </ScrollArea>
 
       {/* Input area with provider/model dropdowns */}
-      <Box
-        p="xs"
-        style={{ borderTop: "1px solid var(--ap-border)" }}
-      >
-        {chatState === "connected" && providers.length > 0 && (
+      <Box p="xs" style={{ borderTop: "1px solid var(--ap-border)" }}>
+        {isConnected && providers.length > 0 && (
           <Group gap={4} mb={6}>
-            {/* Provider dropdown */}
             <Menu shadow="sm" position="top-start" withinPortal>
               <Menu.Target>
                 <Group
@@ -603,7 +581,12 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                   <IconChevronDown size={10} color="var(--ap-text-secondary)" />
                 </Group>
               </Menu.Target>
-              <Menu.Dropdown style={{ background: "var(--ap-bg-elevated)", border: "1px solid var(--ap-border)" }}>
+              <Menu.Dropdown
+                style={{
+                  background: "var(--ap-bg-elevated)",
+                  border: "1px solid var(--ap-border)",
+                }}
+              >
                 {providers.map((p) => (
                   <Menu.Item
                     key={p.providerId}
@@ -618,7 +601,6 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               </Menu.Dropdown>
             </Menu>
 
-            {/* Model dropdown */}
             <Menu shadow="sm" position="top-start" withinPortal>
               <Menu.Target>
                 <Group
@@ -636,7 +618,12 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                   <IconChevronDown size={10} color="var(--ap-text-tertiary)" />
                 </Group>
               </Menu.Target>
-              <Menu.Dropdown style={{ background: "var(--ap-bg-elevated)", border: "1px solid var(--ap-border)" }}>
+              <Menu.Dropdown
+                style={{
+                  background: "var(--ap-bg-elevated)",
+                  border: "1px solid var(--ap-border)",
+                }}
+              >
                 {(selProvider?.models ?? []).map((m) => (
                   <Menu.Item
                     key={m}
@@ -667,7 +654,6 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               const history = inputHistoryRef.current;
               if (history.length === 0) return;
               if (e.key === "ArrowUp") {
-                // Only navigate history when cursor is at the start
                 const el = e.currentTarget;
                 if (el.selectionStart !== 0 || el.selectionEnd !== 0) return;
                 e.preventDefault();
@@ -696,20 +682,20 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
             autosize
             style={{ flex: 1 }}
             size="sm"
-            disabled={chatState !== "connected"}
+            disabled={!isConnected}
           />
           <ActionIcon
             size="lg"
             variant="filled"
             onClick={() => void handleSend()}
-            disabled={streaming || !chatIn.trim() || chatState !== "connected"}
+            disabled={isStreaming || !chatIn.trim() || !isConnected}
           >
             <IconSend size={16} />
           </ActionIcon>
         </Group>
 
-        {/* Context window indicator (Cursor-style) */}
-        {chatState === "connected" && contextInfo !== null && (
+        {/* Context window indicator */}
+        {isConnected && contextInfo.maxTokens > 0 && (
           <ContextBar info={contextInfo} />
         )}
       </Box>
@@ -748,117 +734,4 @@ function ContextBar({ info }: { info: ContextWindowInfo }) {
       </Text>
     </Group>
   );
-}
-
-// ─── ConversationManager factory with search_docs tool ───────────────
-
-const CHAT_SYSTEM_PROMPT = `You are a helpful assistant for the Arlopass Wallet documentation website. You answer questions about the Arlopass extension, web SDK, providers, app connections, credentials, and how to integrate with Arlopass.
-
-When the user asks about Arlopass features, SDK usage, providers, or integration, use the search_docs tool to find relevant documentation before answering.
-When the user asks to see a specific page, demo, or example, use the navigate_to_page tool to take them there.
-
-Important:
-- Be concise and accurate
-- Include code examples when relevant
-- Reference specific Arlopass concepts (providers, models, vault, app connections)
-- If asked about implementation, show @arlopass/web-sdk TypeScript code`;
-
-function createConversation(
-  client: ArlopassClient,
-  onNavigateRef: React.RefObject<((pageId: string) => void) | undefined>,
-): ConversationManager {
-  const allPageIds = NAVIGATION.flatMap((cat) =>
-    cat.items.map((item) => item.id),
-  );
-  const allItems = NAVIGATION.flatMap((cat) =>
-    cat.items.map((item) => ({ ...item, category: cat.label })),
-  );
-  const pageList = allItems
-    .map((item) => `${item.id}: ${item.label} (${item.category})`)
-    .join(", ");
-
-  // Fuzzy match: accept both full path IDs and short names
-  function resolvePageId(input: string): string | null {
-    // Exact match
-    if (allPageIds.includes(input)) return input;
-    // Match by last segment (e.g., "welcome" → "getting-started/welcome")
-    const bySegment = allPageIds.find((id) => id.endsWith(`/${input}`));
-    if (bySegment) return bySegment;
-    // Match by label (case-insensitive)
-    const lower = input.toLowerCase();
-    const byLabel = allItems.find((item) => item.label.toLowerCase() === lower);
-    if (byLabel) return byLabel.id;
-    // Partial match on label
-    const byPartial = allItems.find((item) =>
-      item.label.toLowerCase().includes(lower),
-    );
-    if (byPartial) return byPartial.id;
-    return null;
-  }
-
-  return new ConversationManager({
-    client,
-    systemPrompt: CHAT_SYSTEM_PROMPT,
-    primeTools: true,
-    hideToolCalls: true,
-    tools: [
-      {
-        name: "search_docs",
-        description:
-          "Search Arlopass documentation for relevant pages about the SDK, extension, providers, apps, credentials, or integration patterns. Use this when the user asks about Arlopass features.",
-        parameters: {
-          type: "object",
-          properties: {
-            query: {
-              type: "string",
-              description: "Search query about Arlopass",
-            },
-          },
-          required: ["query"],
-        },
-        handler: async (args) => {
-          const query = typeof args.query === "string" ? args.query : "";
-          const results = searchDocs(query, 3);
-          if (results.length === 0)
-            return JSON.stringify({
-              found: false,
-              message: "No relevant docs found.",
-            });
-          return JSON.stringify(
-            results.map((r) => ({ title: r.title, content: r.content })),
-          );
-        },
-      },
-      {
-        name: "navigate_to_page",
-        description: `Navigate the user to a specific page in the examples app. Available pages: ${pageList}. Use this when the user asks to see a demo, example, or specific page.`,
-        parameters: {
-          type: "object",
-          properties: {
-            page_id: {
-              type: "string",
-              description: "The page ID to navigate to",
-              enum: allPageIds,
-            },
-          },
-          required: ["page_id"],
-        },
-        handler: async (args) => {
-          const raw = typeof args.page_id === "string" ? args.page_id : "";
-          const pageId = resolvePageId(raw);
-
-          if (!pageId) {
-            return JSON.stringify({
-              success: false,
-              error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}`,
-            });
-          }
-          onNavigateRef.current?.(pageId);
-          const label = allItems.find((i) => i.id === pageId)?.label ?? pageId;
-          return JSON.stringify({ success: true, navigated_to: pageId, label });
-        },
-      },
-    ],
-    maxToolRounds: 3,
-  });
 }
