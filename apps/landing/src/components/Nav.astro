@@ -15,12 +15,14 @@
       <img
         src="/ArlopassLogo-Light.svg"
         alt="Arlopass"
-        class="h-5 w-auto logo-light"
+        class="h-5 w-auto"
+        id="logo-light"
       />
       <img
         src="/ArlopassLogo-Dark.svg"
         alt="Arlopass"
-        class="h-5 w-auto hidden logo-dark"
+        class="h-5 w-auto hidden"
+        id="logo-dark"
       />
     </a>
 
@@ -66,6 +68,52 @@
           ></path></svg
         >
       </a>
+      <button
+        id="theme-toggle"
+        class="flex items-center justify-center w-8 h-8 rounded-md bg-transparent border border-[var(--ap-border)] text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-primary)] hover:border-[var(--ap-border-strong)] transition-all cursor-pointer"
+        aria-label="Toggle theme"
+      >
+        <svg
+          class="theme-icon-sun"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          ><circle cx="12" cy="12" r="5"></circle><line
+            x1="12"
+            y1="1"
+            x2="12"
+            y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line
+            x1="4.22"
+            y1="4.22"
+            x2="5.64"
+            y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"
+          ></line><line x1="1" y1="12" x2="3" y2="12"></line><line
+            x1="21"
+            y1="12"
+            x2="23"
+            y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"
+          ></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg
+        >
+        <svg
+          class="theme-icon-moon hidden"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          ><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg
+        >
+      </button>
       <a
         href="https://chrome.google.com/webstore"
         target="_blank"
@@ -148,6 +196,43 @@
 </nav>
 
 <script>
+  // Theme toggle
+  const themeBtn = document.getElementById("theme-toggle");
+  const logoLight = document.getElementById("logo-light");
+  const logoDark = document.getElementById("logo-dark");
+
+  function updateThemeUI() {
+    const isDark =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    themeBtn
+      ?.querySelector(".theme-icon-sun")
+      ?.classList.toggle("hidden", !isDark);
+    themeBtn
+      ?.querySelector(".theme-icon-moon")
+      ?.classList.toggle("hidden", isDark);
+    logoLight?.classList.toggle("hidden", isDark);
+    logoDark?.classList.toggle("hidden", !isDark);
+  }
+
+  // Restore saved theme
+  const saved = localStorage.getItem("arlopass-theme");
+  if (saved) {
+    document.documentElement.setAttribute("data-theme", saved);
+  }
+  updateThemeUI();
+
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      const html = document.documentElement;
+      const current = html.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      html.setAttribute("data-theme", next);
+      localStorage.setItem("arlopass-theme", next);
+      updateThemeUI();
+    });
+  }
+
+  // Mobile nav toggle
   const toggle = document.getElementById("nav-toggle");
   const mobile = document.getElementById("nav-mobile");
   if (toggle && mobile) {
@@ -173,12 +258,3 @@
     });
   }
 </script>
-
-<style>
-  [data-theme="dark"] .logo-light {
-    display: none;
-  }
-  [data-theme="dark"] .logo-dark {
-    display: block;
-  }
-</style>

@@ -73,7 +73,7 @@ const howToSchema = {
           class={`relative flex flex-col overflow-hidden${i < steps.length - 1 ? " border-b md:border-b-0 md:border-r border-[var(--ap-border)]" : ""}`}
         >
           {/* Text section */}
-          <div class="bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10">
+          <div class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10">
             <span class="text-xs font-semibold text-brand font-mono">
               {step.number}
             </span>
@@ -90,9 +90,9 @@ const howToSchema = {
               data-mosaic-src={`/img/bg${i + 5}.webp`}
               class="absolute inset-0 w-full h-full"
             />
-            <div class="absolute inset-0 bg-[#FFF7ED]/40" />
+            <div class="absolute inset-0 bg-[var(--ap-mosaic-overlay)]" />
             <div class="relative z-10 h-full pt-5 px-5 bento-glass">
-              <div class="h-full -mb-2 rounded-t-xl bg-white/40 pt-1 px-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg overflow-hidden">
+              <div class="h-full -mb-2 rounded-t-xl bg-[var(--ap-glass-bg)] pt-1 px-1 shadow-2xl ring shadow-black/80 ring-[var(--ap-glass-ring)] backdrop-blur-lg overflow-hidden">
                 <div class="h-full rounded-t-lg bg-[var(--ap-bg-base)] p-4 overflow-hidden">
                   <PreviewCarousel class="h-full w-full">
                     {i === 0 && <InstallExtension />}

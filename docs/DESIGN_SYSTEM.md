@@ -39,8 +39,6 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
   /* Brand signature */
   --ap-brand: #DB4D12;           /* Terracotta — primary accent */
   --ap-brand-hover: #9A3412;     /* Terracotta darkened — hover state */
-  --ap-brand-subtle: #FFF7ED;    /* Terracotta at 5% — light tint for highlights */
-  --ap-brand-subtle-dark: #2C1A0E; /* Terracotta at 8% on dark — dark tint for highlights */
 
   /* Secondary accent */
   --ap-amber: #D97706;           /* Warm amber — secondary accent, hover */
@@ -48,22 +46,20 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
 
   /* Semantic */
   --ap-success: #4D7C0F;         /* Sage green — connected, approved, pass granted */
-  --ap-success-subtle: #F7FEE7;  /* Sage at 5% — success background light */
   --ap-warning: #CA8A04;         /* Gold — permission prompts, caution */
-  --ap-warning-subtle: #FEFCE8;  /* Gold at 5% */
   --ap-danger: #B91C1C;          /* Crimson — denied, error, blocked */
-  --ap-danger-subtle: #FEF2F2;   /* Crimson at 5% */
 }
 ```
 
 #### Dark Theme (Primary)
 
 ```css
-[data-theme="dark"] {
+[data-theme="dark"], :root {
   --ap-bg-base: #1C1917;         /* Deep brown-black — page background */
-  --ap-bg-surface: #292524;      /* Stone dark — cards, sidebars, elevated surfaces */
+  --ap-bg-surface: #292524;      /* Stone dark — elevated surfaces */
   --ap-bg-elevated: #3D3835;     /* Stone mid — modals, popovers, dropdowns */
   --ap-bg-code: #1A1412;         /* Espresso — code block background */
+  --ap-bg-card: #292524;         /* Card backgrounds — same as surface in dark */
 
   --ap-border: #44403C;          /* Warm border — subtle dividers */
   --ap-border-strong: #57534E;   /* Stronger border — active states, inputs */
@@ -77,8 +73,18 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
   --ap-text-link-hover: #D97706; /* Amber — link hover */
 
   --ap-success-subtle: #1A2E05;  /* Sage on dark */
+  --ap-brand-subtle: #2C1A0E;    /* Terracotta tint on dark — theme-aware */
   --ap-warning-subtle: #2E2204;  /* Gold on dark */
   --ap-danger-subtle: #2E0505;   /* Crimson on dark */
+
+  /* Glassmorphism */
+  --ap-glass-bg: rgba(38, 35, 32, 0.6);     /* Dark translucent glass */
+  --ap-glass-ring: rgba(255, 255, 255, 0.08); /* Subtle light ring */
+  --ap-mosaic-overlay: rgba(28, 25, 23, 0.4); /* Dark warm overlay on mosaic images */
+
+  /* CTA button (inverted per theme) */
+  --ap-cta-bg: #FAFAF9;
+  --ap-cta-text: #1C1917;
 }
 ```
 
@@ -87,9 +93,10 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
 ```css
 [data-theme="light"] {
   --ap-bg-base: #FAFAF9;         /* Warm white — page background */
-  --ap-bg-surface: #FFFFFF;      /* Pure white — cards, content areas */
+  --ap-bg-surface: #FFFFFF;      /* Pure white — elevated surfaces */
   --ap-bg-elevated: #FFFFFF;     /* Same — modals, popovers */
   --ap-bg-code: #1C1917;         /* Code blocks stay dark in light mode */
+  --ap-bg-card: #FFFFFF;         /* Card backgrounds — white in light */
 
   --ap-border: #E7E5E4;          /* Warm light border */
   --ap-border-strong: #D6D3D1;   /* Stronger border — inputs, active states */
@@ -109,12 +116,17 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
 | Element | Dark | Light |
 |---------|------|-------|
 | Page background | `--ap-bg-base` (`#1C1917`) | `--ap-bg-base` (`#FAFAF9`) |
-| Card / panel | `--ap-bg-surface` (`#292524`) | `--ap-bg-surface` (`#FFFFFF`) |
+| Card / panel | `--ap-bg-card` (`#292524`) | `--ap-bg-card` (`#FFFFFF`) |
+| Elevated surface | `--ap-bg-surface` (`#292524`) | `--ap-bg-surface` (`#FFFFFF`) |
 | Headings | `--ap-text-primary` (`#FAFAF9`) | `--ap-text-primary` (`#1C1917`) |
 | Body text | `--ap-text-body` (`#D6D3D1`) | `--ap-text-body` (`#292524`) |
 | Secondary text | `--ap-text-secondary` (`#A8A29E`) | `--ap-text-secondary` (`#78716C`) |
 | Borders | `--ap-border` (`#44403C`) | `--ap-border` (`#E7E5E4`) |
-| Primary buttons | `--ap-brand` bg, `#FAFAF9` text | `--ap-brand` bg, `#FAFAF9` text |
+| Primary CTA | `--ap-cta-bg` / `--ap-cta-text` | `--ap-cta-bg` / `--ap-cta-text` |
+| Brand subtle bg | `--ap-brand-subtle` (`#2C1A0E`) | `--ap-brand-subtle` (`#FFF7ED`) |
+| Glassmorphism bg | `--ap-glass-bg` | `--ap-glass-bg` |
+| Glassmorphism ring | `--ap-glass-ring` | `--ap-glass-ring` |
+| Mosaic overlay | `--ap-mosaic-overlay` | `--ap-mosaic-overlay` |
 | Links | `--ap-brand` | `--ap-brand` |
 | Code blocks | `--ap-bg-code` (`#1A1412`) — **always dark, both themes** | `--ap-bg-code` (`#1C1917`) |
 | Inline code (light) | N/A | `#F5F5F4` bg, `#DB4D12` text |
@@ -123,6 +135,8 @@ All colors are defined as CSS custom properties on `:root` and toggled via `[dat
 **Hard rules:**
 - Never use pure black (`#000000`) or pure white (`#FFFFFF`) for text. Use `--ap-text-primary` and `--ap-text-body`.
 - Never use cool grays (blue-tinted: `#64748B`, `#94A3B8`, `#0F172A`). Stone tones only.
+- Never use `bg-white` or `bg-black` directly. Use `--ap-bg-card` for card backgrounds, `--ap-bg-surface` for elevated surfaces.
+- Never use `#FFF7ED` or `#2C1A0E` directly. Use `--ap-brand-subtle` (theme-aware).
 - Code blocks are **always** on a dark background, even in light mode. The code surface is sacred.
 - The brand terracotta (`#DB4D12`) is the only saturated color that appears in both themes unchanged.
 
@@ -151,11 +165,12 @@ Based on a 1.25 ratio, using `rem` units for accessibility.
 :root {
   --ap-font-body: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --ap-font-code: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ap-font-pixel: 'Geist Pixel', ui-monospace, SFMono-Regular, Menlo, monospace;
   --ap-font-display: var(--ap-font-body); /* Geist Sans serves as both body and display */
 }
 ```
 
-**One font family for sans-serif. One for monospace. No third display font.** Geist Sans and Geist Mono are designed as a matched pair — consistent baseline, x-height, and character proportions. This eliminates the subtle visual tension of cross-family pairing.
+**Three font families. Sans-serif for body/headings. Monospace for code. Pixel for section annotations and UI labels.** Geist Sans, Geist Mono, and Geist Pixel — all designed as a matched set.
 
 ### 3.3 Typography Rules
 
@@ -572,21 +587,172 @@ Reference: Tailwind CSS docs, Cursor docs, Supabase docs.
 - **Content area:** Centered within remaining space. Max width `768px`. Padding: `40px 32px` desktop, `24px 16px` mobile.
 - **Right sidebar (optional):** `160px` on screens ≥ 1280px. "On this page" heading anchors. `--ap-text-tertiary`, 12px. Sticky.
 
-### 13.2 Section Overline Labels
+### 13.2 Section Annotation Labels
 
-Small caps label above major headings — used by Tailwind ("INSTALLATION"), Supabase ("FEATURES"), etc.
+Used above every section heading across marketing, docs, and app surfaces. The primary typographic branding element.
 
 ```
-Font:           var(--ap-font-body)
-Size:           11px
-Weight:         600
+Font:           var(--ap-font-pixel) (Geist Pixel)
+Size:           14px (text-sm)
+Weight:         normal
 Color:          var(--ap-brand) (#DB4D12)
-Transform:      uppercase
 Letter-spacing: 0.08em
-Margin-bottom:  8px
 ```
 
-Usage: Place above `<h1>` on doc pages and above `<h2>` on marketing sections to provide category context.
+Usage: Place above `<h1>` on doc pages and above `<h2>` on marketing sections. Always left-aligned (never centered). Examples: "Why Arlopass", "How it works", "For developers", "Built for privacy".
+
+### 13.3 Section Header Pattern (Marketing)
+
+Every marketing section follows the same left-aligned header structure:
+
+```html
+<div class="px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+  <span class="block text-sm font-pixel tracking-[0.08em] text-brand">Section label</span>
+  <h2 class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]">
+    Section headline
+  </h2>
+  <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+    Section description.
+  </p>
+</div>
+```
+
+**Rules:**
+- Always left-aligned. Never centered.
+- Title max-width: `max-w-3xl` (48rem).
+- Description max-width: `max-w-3xl`.
+- Title uses `text-balance` for optimal line breaks.
+- Annotation → 2px gap → title → 3px gap → description.
+
+---
+
+## 14. Marketing Page Patterns
+
+### 14.1 Bordered Grid Cards
+
+The primary card pattern. No rounded corners, no gaps, no shadows. Cards are defined by borders.
+
+```html
+<div class="grid grid-cols-1 md:grid-cols-3 border border-[var(--ap-border)]">
+  <div class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 border-b md:border-b-0 md:border-r border-[var(--ap-border)]">
+    <span class="text-sm font-pixel tracking-[0.08em] text-brand">Label</span>
+    <h3 class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2">Title</h3>
+    <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">Description</p>
+  </div>
+  <!-- more cards... -->
+</div>
+```
+
+**Rules:**
+- Use `--ap-bg-card` for card backgrounds (theme-aware: dark surface or white).
+- Hover: transition to `--ap-bg-surface`, 300ms duration.
+- Borders between cards via `border-r` / `border-b`, not gaps.
+- Each card has a `font-pixel` annotation label above the title.
+- No rounded corners on grid cards. Sharp edges = modern, editorial feel.
+
+### 14.2 Mosaic Backgrounds
+
+Pixelated background images created via canvas. Used behind preview areas and visual sections.
+
+```html
+<canvas data-mosaic-src="/img/bgN.webp" class="absolute inset-0 w-full h-full"></canvas>
+<div class="absolute inset-0 bg-[var(--ap-mosaic-overlay)]"></div>
+```
+
+The mosaic script downsamples images to 16px tiles then nearest-neighbor upscales with cover-crop. The overlay tint is theme-aware: warm cream in light mode, dark warm brown in dark mode.
+
+### 14.3 Glassmorphism Frames
+
+Used to present preview content (animated app mockups) on top of mosaic backgrounds. Two variants:
+
+**Light glass** (bento cards, how-it-works):
+```html
+<div class="rounded-t-xl bg-[var(--ap-glass-bg)] pt-1 px-1 shadow-2xl ring shadow-black/80 ring-[var(--ap-glass-ring)] backdrop-blur-lg overflow-hidden">
+  <div class="rounded-t-lg bg-[var(--ap-bg-base)] p-4 overflow-hidden">
+    <!-- Preview content -->
+  </div>
+</div>
+```
+
+**Dark glass** (code editor, enterprise policy):
+```html
+<div class="rounded-tl-2xl bg-neutral-900/70 backdrop-blur-sm shadow-2xl shadow-black/20 border-t border-l border-neutral-800 pt-1 pl-1">
+  <!-- Dark code content -->
+</div>
+```
+
+**Rules:**
+- Glass backgrounds use `--ap-glass-bg` (theme-aware: dark translucent in dark mode, white translucent in light).
+- Ring color uses `--ap-glass-ring` (subtle light ring in dark, subtle dark ring in light).
+- Bottom edges removed where glass meets a card border (`rounded-t-*`, no bottom padding).
+- Use `-mb-2` to extend glass past bottom edge when needed.
+
+### 14.4 Preview Animations
+
+Animated in-app/in-extension mockups placed inside glass frames. Each preview:
+
+- Uses `data-preview` attribute for carousel integration.
+- Uses `data-loop="Nms"` for auto-looping.
+- Elements revealed with `opacity-0` → `opacity-1` transitions, staggered via `setTimeout`.
+- Resets state on `preview:loop` and `preview:done` custom events.
+- Uses `MutationObserver` on `preview-active` class for carousel awareness.
+
+### 14.5 CTA Buttons
+
+Primary CTA uses inverted theme colors:
+
+```html
+<a class="text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-3 px-6 rounded-lg hover:opacity-85 transition-opacity">
+  Install for Chrome
+</a>
+```
+
+Dark mode: light bg / dark text. Light mode: dark bg / light text. Never use `bg-[var(--ap-text-primary)]` with `text-stone-50` — it breaks in one theme.
+
+### 14.6 Comparison Tables
+
+```html
+<table class="border border-[var(--ap-border)] border-collapse">
+  <thead>
+    <tr>
+      <th class="font-pixel tracking-wider bg-[var(--ap-bg-surface)] border-b border-r">Column</th>
+      <th class="font-pixel tracking-wider bg-[var(--ap-brand-subtle)] text-brand border-b border-r">Arlopass</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="hover:bg-[var(--ap-bg-surface)] transition-colors">
+      <td class="bg-[var(--ap-bg-card)] border-b border-r">Capability</td>
+      <td class="bg-[var(--ap-brand-subtle)]/30 border-b border-r">Value</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+- Header cells use `font-pixel` labels, not uppercase sans.
+- Arlopass column highlighted with `--ap-brand-subtle` (theme-aware).
+- Column dividers via `border-r`. Row dividers via `border-b`.
+- Row hover: `bg-[var(--ap-bg-surface)]`.
+
+### 14.7 Theme Toggle
+
+JS-based toggle stored in `localStorage('arlopass-theme')`. Inline `<script>` in `<head>` prevents FOUC:
+
+```html
+<script>
+  (function(){var t=localStorage.getItem('arlopass-theme');if(t)document.documentElement.setAttribute('data-theme',t)})();
+</script>
+```
+
+Toggle button: bordered pill with sun icon (dark mode) / moon icon (light mode). Updates `data-theme` attribute, persists to localStorage, and toggles logo/icon visibility via JS `classList.toggle('hidden')`.
+
+### 14.8 Provider Marquee
+
+Infinite horizontal scroll of provider icons. No hover pause. Edge fade gradients mask the edges.
+
+```css
+.marquee { animation: scroll 30s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .marquee { animation: none; } }
+```
 
 ### 13.3 Numbered Steps
 

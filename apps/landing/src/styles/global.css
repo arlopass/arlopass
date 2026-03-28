@@ -69,6 +69,7 @@
   --ap-bg-surface: #292524;
   --ap-bg-elevated: #3d3835;
   --ap-bg-code: #1a1412;
+  --ap-bg-card: #292524;
   --ap-border: #44403c;
   --ap-border-strong: #57534e;
   --ap-text-primary: #fafaf9;
@@ -78,6 +79,12 @@
   --ap-text-link: #db4d12;
   --ap-text-link-hover: #d97706;
   --ap-success-subtle: #1a2e05;
+  --ap-brand-subtle: #2c1a0e;
+  --ap-glass-bg: rgba(38, 35, 32, 0.6);
+  --ap-glass-ring: rgba(255, 255, 255, 0.08);
+  --ap-mosaic-overlay: rgba(28, 25, 23, 0.4);
+  --ap-cta-bg: #fafaf9;
+  --ap-cta-text: #1c1917;
 }
 
 [data-theme="light"] {
@@ -85,6 +92,7 @@
   --ap-bg-surface: #ffffff;
   --ap-bg-elevated: #ffffff;
   --ap-bg-code: #1c1917;
+  --ap-bg-card: #ffffff;
   --ap-border: #e7e5e4;
   --ap-border-strong: #d6d3d1;
   --ap-text-primary: #1c1917;
@@ -94,6 +102,12 @@
   --ap-text-link: #db4d12;
   --ap-text-link-hover: #9a3412;
   --ap-success-subtle: #f7fee7;
+  --ap-brand-subtle: #fff7ed;
+  --ap-glass-bg: rgba(255, 255, 255, 0.4);
+  --ap-glass-ring: rgba(0, 0, 0, 0.05);
+  --ap-mosaic-overlay: rgba(255, 247, 237, 0.4);
+  --ap-cta-bg: #1c1917;
+  --ap-cta-text: #fafaf9;
 }
 
 /* ============================================

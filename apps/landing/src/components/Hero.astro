@@ -15,7 +15,7 @@ import StreamingChat from "./previews/StreamingChat.astro";
     aria-hidden="true"
   >
     <canvas id="hero-mosaic" class="absolute inset-0 w-full h-full"></canvas>
-    <div class="absolute inset-0 bg-[#FFF7ED]/30"></div>
+    <div class="absolute inset-0 bg-[var(--ap-mosaic-overlay)]"></div>
   </div>
 
   <script>
@@ -37,7 +37,10 @@ import StreamingChat from "./previews/StreamingChat.astro";
           // Cover-crop: scale image to fill, center, clip overflow
           const imgRatio = img.naturalWidth / img.naturalHeight;
           const canvasRatio = w / h;
-          let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+          let sx = 0,
+            sy = 0,
+            sw = img.naturalWidth,
+            sh = img.naturalHeight;
           if (imgRatio > canvasRatio) {
             sw = img.naturalHeight * canvasRatio;
             sx = (img.naturalWidth - sw) / 2;
@@ -97,7 +100,7 @@ import StreamingChat from "./previews/StreamingChat.astro";
           href="https://chrome.google.com/webstore"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 text-sm font-medium text-stone-50 bg-[var(--ap-text-primary)] py-3 px-6 rounded-lg no-underline hover:opacity-85 hover:text-stone-50 transition-opacity max-[480px]:justify-center"
+          class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-3 px-6 rounded-lg no-underline hover:opacity-85 transition-opacity max-[480px]:justify-center"
         >
           <svg
             width="18"
@@ -176,7 +179,7 @@ import StreamingChat from "./previews/StreamingChat.astro";
       class="flex justify-center items-center min-h-[400px] max-lg:min-h-[320px]"
     >
       <div
-        class="transition-all ease-in-out duration-200 rounded-2xl bg-white/40 p-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg"
+        class="transition-all ease-in-out duration-200 rounded-2xl bg-[var(--ap-glass-bg)] p-1 shadow-2xl ring shadow-black/80 ring-[var(--ap-glass-ring)] backdrop-blur-lg"
       >
         <PreviewCarousel
           interval={15000}

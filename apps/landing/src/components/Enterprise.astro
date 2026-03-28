@@ -50,7 +50,7 @@ const items = [
       <canvas
         data-mosaic-src="/img/bg4.webp"
         class="absolute inset-0 w-full h-full"></canvas>
-      <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+      <div class="absolute inset-0 bg-[var(--ap-mosaic-overlay)]"></div>
       <div class="relative z-10 py-10 px-6 md:px-10 flex justify-center">
         <div
           class="w-full max-w-[480px] flex flex-col overflow-hidden rounded-xl bg-neutral-900/70 backdrop-blur-sm shadow-2xl shadow-black/20 border border-neutral-800"
@@ -111,7 +111,7 @@ const items = [
     >
       {
         items.map((item) => (
-          <div class="bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10">
+          <div class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10">
             <span class="text-sm font-pixel tracking-[0.08em] text-brand">
               {item.label}
             </span>
