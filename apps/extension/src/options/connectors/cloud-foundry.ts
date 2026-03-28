@@ -11,7 +11,7 @@ export const CLOUD_FOUNDRY_CONNECTOR_ID = "cloud-foundry";
 const DEFAULT_NATIVE_HOST_NAME = "com.arlopass.bridge";
 const DEFAULT_PROVIDER_ID = "microsoft-foundry";
 const DEFAULT_METHOD_ID = "foundry.api_key";
-const DEFAULT_API_URL = "https://example-resource.openai.azure.com/openai/v1";
+const DEFAULT_API_URL = "https://your-resource.services.ai.azure.com/api/projects/your-project";
 const DEFAULT_API_VERSION = "v1";
 const NO_MODELS_DISCOVERED_MESSAGE =
   "No models were discovered for this Foundry endpoint. Ensure at least one model is available for your API key.";
@@ -63,20 +63,42 @@ function parseDiscoveredModels(value: unknown): readonly ProviderModel[] {
     if (!isRecord(entry)) {
       continue;
     }
-    const id = typeof entry["id"] === "string" ? entry["id"].trim() : "";
+    // Deployment name is the primary identifier used in API calls
+    const id = typeof entry["name"] === "string" ? entry["name"].trim()
+      : typeof entry["id"] === "string" ? entry["id"].trim()
+      : "";
     if (id.length === 0) {
       continue;
     }
+
+    // Filter: only include models with chat completion capability
+    const capabilities = entry["capabilities"];
+    if (isRecord(capabilities)) {
+      const hasChatCompletion =
+        capabilities["chat_completion"] === true ||
+        capabilities["completion"] === true ||
+        capabilities["inference"] === true;
+      if (!hasChatCompletion) {
+        continue;
+      }
+    }
+
+    const modelName = typeof entry["modelName"] === "string" ? entry["modelName"].trim() : "";
+    const modelPublisher = typeof entry["modelPublisher"] === "string" ? entry["modelPublisher"].trim() : "";
+    const modelVersion = typeof entry["modelVersion"] === "string" ? entry["modelVersion"].trim() : "";
     const displayName =
       typeof entry["displayName"] === "string"
         ? entry["displayName"].trim()
-        : typeof entry["name"] === "string"
-          ? entry["name"].trim()
-          : "";
-    models.push({
-      id,
-      name: displayName.length > 0 ? displayName : id,
-    });
+        : "";
+
+    // Build name: "gpt-4o-mini (OpenAI, 2024-07-18)" or just the deployment name
+    let name = displayName.length > 0 ? displayName : modelName.length > 0 ? modelName : id;
+    const parts = [modelPublisher, modelVersion].filter((p) => p.length > 0).join(", ");
+    if (parts.length > 0) {
+      name = `${name} (${parts})`;
+    }
+
+    models.push({ id, name });
   }
   return models.slice(0, 60);
 }
@@ -167,12 +189,13 @@ async function validateFoundryApiEndpoint(
   const apiUrl = normalizeUrl(config["apiUrl"] ?? DEFAULT_API_URL);
   const apiVersion = normalizeText(config["apiVersion"], DEFAULT_API_VERSION);
   const apiKey = normalizeText(config["apiKey"]);
-  const modelsUrl = new URL(`${apiUrl}/models`);
-  modelsUrl.searchParams.set("api-version", apiVersion);
+  // Use the Foundry REST API Deployments - list endpoint
+  const deploymentsUrl = new URL(`${apiUrl}/deployments`);
+  deploymentsUrl.searchParams.set("api-version", apiVersion);
 
   let response: Response;
   try {
-    response = await runFetchCheck(modelsUrl.toString(), {
+    response = await runFetchCheck(deploymentsUrl.toString(), {
       headers: {
         "api-key": apiKey,
       },
@@ -235,7 +258,9 @@ async function validateFoundryApiEndpoint(
   try {
     const payload = (await response.json()) as unknown;
     if (isRecord(payload)) {
-      models = parseDiscoveredModels(payload["data"]);
+      // Foundry REST API returns { value: [...] } for PagedDeployment
+      const items = Array.isArray(payload["value"]) ? payload["value"] : Array.isArray(payload["data"]) ? payload["data"] : [];
+      models = parseDiscoveredModels(items);
     }
   } catch (error) {
     return {
@@ -309,10 +334,6 @@ export function sanitizeFoundryConnectorMetadata(
     apiUrl: normalizeUrl(config["apiUrl"] ?? DEFAULT_API_URL),
     apiVersion: normalizeText(config["apiVersion"], DEFAULT_API_VERSION),
   };
-  const deployment = normalizeText(config["deployment"]);
-  if (deployment.length > 0) {
-    metadata["deployment"] = deployment;
-  }
   return metadata;
 }
 
@@ -340,7 +361,6 @@ async function completeViaBridge(
     input: {
       apiUrl: normalizeUrl(config["apiUrl"] ?? DEFAULT_API_URL),
       apiVersion: normalizeText(config["apiVersion"], DEFAULT_API_VERSION),
-      deployment: normalizeText(config["deployment"]),
       apiKey: normalizeText(config["apiKey"]),
     },
   });
@@ -442,12 +462,12 @@ export function createCloudFoundryConnector(
       },
       {
         key: "apiUrl",
-        label: "API URL",
+        label: "Project URL",
         type: "url",
         required: true,
         defaultValue: DEFAULT_API_URL,
-        maxLength: 240,
-        helpText: "Example: https://<resource>.openai.azure.com/openai/v1",
+        maxLength: 300,
+        helpText: "Example: https://<resource>.services.ai.azure.com/api/projects/<project-name>",
       },
       {
         key: "apiVersion",
@@ -456,13 +476,6 @@ export function createCloudFoundryConnector(
         required: true,
         defaultValue: DEFAULT_API_VERSION,
         maxLength: 60,
-      },
-      {
-        key: "deployment",
-        label: "Deployment (optional)",
-        type: "text",
-        required: false,
-        maxLength: 160,
       },
       {
         key: "apiKey",

@@ -34,9 +34,9 @@ export const FOUNDRY_CONNECTION_METHODS: readonly ConnectionMethodDescriptor[] =
   {
     id: FOUNDRY_CONNECTION_METHOD_IDS.API_KEY,
     authFlow: "api-key",
-    displayName: "Microsoft Foundry (API Key + API URL)",
+    displayName: "Microsoft Foundry (API Key + Project URL)",
     requiredFields: ["apiUrl", "apiKey"],
-    optionalFields: ["apiVersion", "deployment"],
+    optionalFields: [],
   },
 ] as const;
 
@@ -57,7 +57,6 @@ export const MICROSOFT_FOUNDRY_MANIFEST: AdapterManifest = {
   connectionMethods: FOUNDRY_CONNECTION_METHODS,
   requiredPermissions: ["network.egress"],
   egressRules: [
-    { host: "openai.azure.com", protocol: "https" },
     { host: "services.ai.azure.com", protocol: "https" },
   ],
   riskLevel: "medium",
@@ -73,7 +72,7 @@ type FoundrySession = Readonly<{
   apiUrl: string;
   apiVersion: string;
   apiKey: string;
-  deployment?: string;
+  deploymentName: string;
   messages: Array<Readonly<{ role: "user" | "assistant"; content: string }>>;
 }>;
 
@@ -188,11 +187,9 @@ function resolveEndpointProfile(
   const apiUrl = normalizeApiUrl(requireInputString(input, "apiUrl"));
   const apiVersion =
     normalizeNonEmptyString(input["apiVersion"]) ?? FOUNDRY_DEFAULT_API_VERSION;
-  const deployment = normalizeNonEmptyString(input["deployment"]);
   return Object.freeze({
     apiUrl,
     apiVersion,
-    ...(deployment !== undefined ? { deployment } : {}),
   });
 }
 
@@ -305,31 +302,50 @@ function extractChatResponseContent(payload: unknown): string {
   throw new ProviderUnavailableError("Foundry API returned empty assistant content.");
 }
 
-function extractModelDescriptors(
+/**
+ * Extracts model descriptors from the Foundry REST API `GET /deployments?api-version=v1` response.
+ *
+ * Response shape (PagedDeployment):
+ * ```json
+ * {
+ *   "value": [
+ *     {
+ *       "name": "gpt-4o-mini",
+ *       "type": "ModelDeployment",
+ *       "modelName": "gpt-4o-mini",
+ *       "modelPublisher": "OpenAI",
+ *       "modelVersion": "2024-07-18",
+ *       "capabilities": { "chat_completion": true, ... },
+ *       "sku": { ... }
+ *     }
+ *   ]
+ * }
+ * ```
+ */
+function extractDeploymentDescriptors(
   payload: unknown,
-  endpointContext: Readonly<{
-    apiUrl: string;
-    deployment?: string;
-  }>,
+  endpointContext: Readonly<{ apiUrl: string }>,
 ): readonly ModelDescriptor[] {
-  if (!isRecord(payload) || !Array.isArray(payload["data"])) {
+  // Support both { value: [...] } (PagedDeployment) and { data: [...] } legacy shapes
+  const items = isRecord(payload)
+    ? (Array.isArray(payload["value"]) ? payload["value"] : Array.isArray(payload["data"]) ? payload["data"] : undefined)
+    : undefined;
+  if (items === undefined) {
     return [];
   }
   const models: ModelDescriptor[] = [];
-  for (const candidate of payload["data"]) {
+  for (const candidate of items) {
     if (!isRecord(candidate)) {
       continue;
     }
-    const id =
-      normalizeNonEmptyString(candidate["id"]) ??
-      normalizeNonEmptyString(candidate["model"]) ??
-      undefined;
-    if (id === undefined) {
+
+    // The deployment name is the key identifier used in API calls
+    const deploymentName = normalizeNonEmptyString(candidate["name"]);
+    if (deploymentName === undefined) {
       continue;
     }
 
     // Filter: only include models with chat completion capability.
-    // Azure AI Foundry returns all catalog models; we only want chat-capable ones.
     const capabilities = candidate["capabilities"];
     if (isRecord(capabilities)) {
       const hasChatCompletion =
@@ -341,24 +357,28 @@ function extractModelDescriptors(
       }
     }
 
-    // Skip models with lifecycle_stage "retired" or "preview" that are unusable
-    const lifecycleStage = normalizeNonEmptyString(candidate["lifecycle_stage"]);
-    if (lifecycleStage === "retired") {
-      continue;
+    const modelName = normalizeNonEmptyString(candidate["modelName"]);
+    const modelPublisher = normalizeNonEmptyString(candidate["modelPublisher"]);
+    const modelVersion = normalizeNonEmptyString(candidate["modelVersion"]);
+
+    // Build a descriptive display name: "gpt-4o-mini (OpenAI, 2024-07-18)"
+    let displayName = modelName ?? deploymentName;
+    if (modelPublisher !== undefined || modelVersion !== undefined) {
+      const parts = [modelPublisher, modelVersion].filter(Boolean).join(", ");
+      if (parts.length > 0) {
+        displayName = `${displayName} (${parts})`;
+      }
     }
 
-    const displayName =
-      normalizeNonEmptyString(candidate["displayName"]) ??
-      normalizeNonEmptyString(candidate["name"]) ??
-      id;
     models.push(
       Object.freeze({
-        id,
+        id: deploymentName,
         displayName,
         apiUrl: endpointContext.apiUrl,
-        ...(endpointContext.deployment !== undefined
-          ? { deployment: endpointContext.deployment }
-          : {}),
+        deploymentName,
+        ...(modelName !== undefined ? { modelName } : {}),
+        ...(modelPublisher !== undefined ? { modelPublisher } : {}),
+        ...(modelVersion !== undefined ? { modelVersion } : {}),
       }),
     );
   }
@@ -397,7 +417,7 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
       providerId,
       methodId,
       requiredFields: ["apiUrl", "apiKey"],
-      optionalFields: ["apiVersion", "deployment"],
+      optionalFields: [],
     };
   }
 
@@ -527,10 +547,6 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
       normalizeNonEmptyString(statelessEndpointProfile?.["apiVersion"]) ??
       normalizeNonEmptyString(storedRef?.endpointProfile["apiVersion"]) ??
       FOUNDRY_DEFAULT_API_VERSION;
-    const deployment =
-      normalizeNonEmptyString(endpointProfile["deployment"]) ??
-      normalizeNonEmptyString(statelessEndpointProfile?.["deployment"]) ??
-      normalizeNonEmptyString(storedRef?.endpointProfile["deployment"]);
     const statelessCredential =
       statelessInput !== undefined ? resolveCredentialMaterial(statelessInput) : undefined;
     const apiKey =
@@ -541,7 +557,8 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
         "Cannot discover models: credential reference is unavailable.",
       );
     }
-    const endpoint = new URL(`${apiUrl}/models`);
+    // Use the Foundry REST API Deployments - list endpoint
+    const endpoint = new URL(`${apiUrl}/deployments`);
     endpoint.searchParams.set("api-version", apiVersion);
 
     let response: Response;
@@ -564,9 +581,9 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
     try {
       payload = await response.json();
     } catch {
-      throw new ProviderUnavailableError("Foundry API model discovery response was not valid JSON.");
+      throw new ProviderUnavailableError("Foundry API deployment discovery response was not valid JSON.");
     }
-    return extractModelDescriptors(payload, { apiUrl, ...(deployment !== undefined ? { deployment } : {}) });
+    return extractDeploymentDescriptors(payload, { apiUrl });
   }
 
   async discoverCapabilities(ctx: CloudConnectionContext): Promise<CapabilityDescriptor> {
@@ -632,10 +649,8 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
       normalizeNonEmptyString(endpointProfile["apiVersion"]) ??
       normalizeNonEmptyString(storedCredentialRef?.endpointProfile["apiVersion"]) ??
       FOUNDRY_DEFAULT_API_VERSION;
-    const deployment =
-      normalizeNonEmptyString(connectionInput?.["deployment"]) ??
-      normalizeNonEmptyString(endpointProfile["deployment"]) ??
-      normalizeNonEmptyString(storedCredentialRef?.endpointProfile["deployment"]);
+    // The deployment name (model ID) is the deployment the user selected
+    const deploymentName = model;
     const apiKey =
       normalizeNonEmptyString(connectionInput?.["apiKey"]) ??
       normalizeNonEmptyString(storedCredentialRef?.credentialMaterial.apiKey);
@@ -650,7 +665,7 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
       apiUrl,
       apiVersion,
       apiKey,
-      ...(deployment !== undefined ? { deployment } : {}),
+      deploymentName,
       messages: [],
     });
     return sessionId;
@@ -664,7 +679,11 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
 
     session.messages.push({ role: "user", content: message });
 
-    const endpoint = new URL(`${session.apiUrl}/chat/completions`);
+    // Use the Azure OpenAI-compatible endpoint under the Foundry project:
+    // POST {projectEndpoint}/openai/deployments/{deployment-name}/chat/completions?api-version=v1
+    const endpoint = new URL(
+      `${session.apiUrl}/openai/deployments/${encodeURIComponent(session.deploymentName)}/chat/completions`,
+    );
     endpoint.searchParams.set("api-version", session.apiVersion);
 
     let response: Response;
@@ -676,7 +695,6 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
           "api-key": session.apiKey,
         },
         body: JSON.stringify({
-          model: session.deployment ?? session.model,
           messages: session.messages,
         }),
         signal: AbortSignal.timeout(60_000),
