@@ -423,7 +423,10 @@ export default function SecurityModel() {
         number, version, key mode, salt, and IV, followed by the encrypted JSON
         payload and a GCM authentication tag.
       </Text>
-      <CodeBlock title="Key derivation &amp; vault format" code={keyHierarchy} />
+      <CodeBlock
+        title="Key derivation &amp; vault format"
+        code={keyHierarchy}
+      />
 
       <Divider my="xl" />
 

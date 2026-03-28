@@ -90,9 +90,7 @@ export default function HowArlopassWorks() {
       </Callout>
 
       <Title order={3}>Architecture layers</Title>
-      <Text>
-        The system has six layers, each with a clear responsibility:
-      </Text>
+      <Text>The system has six layers, each with a clear responsibility:</Text>
       <List type="ordered" spacing="sm">
         <List.Item>
           <Text fw={600} span>

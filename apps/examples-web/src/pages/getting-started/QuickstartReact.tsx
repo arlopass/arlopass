@@ -233,9 +233,9 @@ export default function QuickstartReact() {
 
       <Callout type="info" title="Your keys stay in the vault">
         When you add a provider through the extension, your API keys are
-        encrypted and stored on the bridge using AES-256-GCM. The SDK never
-        sees your credentials — the bridge attaches them to requests
-        server-side. See the{" "}
+        encrypted and stored on the bridge using AES-256-GCM. The SDK never sees
+        your credentials — the bridge attaches them to requests server-side. See
+        the{" "}
         <Text
           span
           c="blue"
