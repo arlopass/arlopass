@@ -90,7 +90,9 @@ export default function HowArlopassWorks() {
       </Callout>
 
       <Title order={3}>Architecture layers</Title>
-      <Text>The system has five layers, each with a clear responsibility:</Text>
+      <Text>
+        The system has six layers, each with a clear responsibility:
+      </Text>
       <List type="ordered" spacing="sm">
         <List.Item>
           <Text fw={600} span>
@@ -126,6 +128,17 @@ export default function HowArlopassWorks() {
         </List.Item>
         <List.Item>
           <Text fw={600} span>
+            Vault
+          </Text>{" "}
+          — an encrypted file owned by the bridge. It stores credentials (API
+          keys), provider configurations, app connections, and token usage. The
+          extension reads and writes vault data through native messages — it
+          never stores credentials in <code>chrome.storage</code>. Because the
+          vault lives on the filesystem, one setup works across Chrome, Edge,
+          and Firefox.
+        </List.Item>
+        <List.Item>
+          <Text fw={600} span>
             Providers
           </Text>{" "}
           — Ollama, Claude, OpenAI, Gemini, Amazon Bedrock, Azure, Perplexity,
@@ -147,11 +160,19 @@ export default function HowArlopassWorks() {
       <Text>
         Credentials never touch the web application. The SDK sends a request
         envelope through <code>window.arlopass</code>. The extension validates
-        the envelope, attaches credentials from its secure storage, and forwards
-        the request. The response comes back through the same channel — stripped
-        of any credential material. Even if your web app is compromised, the
-        attacker gets access to nothing beyond what the user has already
-        consented to in the current session.
+        the envelope, then asks the bridge to read the API key from the vault
+        and forward the request to the provider. The response comes back through
+        the same channel — stripped of any credential material. The web app and
+        extension popup never see the raw API key. Even if your web app is
+        compromised, the attacker gets access to nothing beyond what the user
+        has already consented to in the current session.
+      </Text>
+      <Text>
+        When a user adds a provider, the credential is encrypted and stored in
+        the vault on the bridge — not in <code>chrome.storage</code> or any
+        browser-accessible location. This means credentials are isolated from
+        the browser process entirely, surviving extension updates and working
+        across every browser the bridge is registered with.
       </Text>
 
       <Title order={3}>Session lifecycle</Title>
@@ -170,6 +191,16 @@ export default function HowArlopassWorks() {
         disconnect cleanly.
       </Text>
       <CodeBlock title="Session and state machine" code={sessionLifecycle} />
+
+      <Title order={3}>Vault setup</Title>
+      <Text>
+        On first use, the user sets up the vault with a master password or OS
+        keychain integration. The bridge creates the encrypted vault file and
+        all subsequent credential storage flows through it. On subsequent
+        browser opens, the vault is already unlocked for the duration of the
+        bridge process — or prompts once for the master password if the bridge
+        was restarted.
+      </Text>
 
       <Callout type="tip" title="Related">
         See{" "}
