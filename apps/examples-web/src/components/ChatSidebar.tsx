@@ -165,7 +165,11 @@ function ModelDropdown({
   const filtered = useMemo(() => {
     if (search.trim().length === 0) return models;
     const lower = search.toLowerCase();
-    return models.filter((m) => m.toLowerCase().includes(lower) || fmtModel(m).toLowerCase().includes(lower));
+    return models.filter(
+      (m) =>
+        m.toLowerCase().includes(lower) ||
+        fmtModel(m).toLowerCase().includes(lower),
+    );
   }, [models, search]);
 
   return (
@@ -179,7 +183,10 @@ function ModelDropdown({
     >
       <Popover.Target>
         <UnstyledButton
-          onClick={() => { setOpened((o) => !o); setSearch(""); }}
+          onClick={() => {
+            setOpened((o) => !o);
+            setSearch("");
+          }}
           style={{
             padding: "2px 8px",
             borderRadius: 4,
@@ -208,11 +215,22 @@ function ModelDropdown({
           leftSection={<IconSearch size={12} />}
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
-          styles={{ input: { fontSize: 11, background: "var(--ap-bg-surface)", border: "1px solid var(--ap-border)" } }}
+          styles={{
+            input: {
+              fontSize: 11,
+              background: "var(--ap-bg-surface)",
+              border: "1px solid var(--ap-border)",
+            },
+          }}
           mb={4}
           autoFocus
         />
-        <ScrollArea.Autosize mah={200} type="scroll" offsetScrollbars scrollbarSize={4}>
+        <ScrollArea.Autosize
+          mah={200}
+          type="scroll"
+          offsetScrollbars
+          scrollbarSize={4}
+        >
           {filtered.length === 0 && (
             <Text fz={11} c="var(--ap-text-tertiary)" ta="center" py={8}>
               No models match
@@ -221,7 +239,10 @@ function ModelDropdown({
           {filtered.map((m) => (
             <UnstyledButton
               key={m}
-              onClick={() => { onSelect(m); setOpened(false); }}
+              onClick={() => {
+                onSelect(m);
+                setOpened(false);
+              }}
               style={{
                 display: "block",
                 width: "100%",
@@ -230,7 +251,8 @@ function ModelDropdown({
                 fontSize: 11,
                 fontWeight: m === selected ? 600 : 400,
                 color: "var(--ap-text-body)",
-                background: m === selected ? "var(--ap-bg-surface)" : "transparent",
+                background:
+                  m === selected ? "var(--ap-bg-surface)" : "transparent",
               }}
             >
               {fmtModel(m)}
@@ -276,7 +298,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   } = useConversation({
     systemPrompt: CHAT_SYSTEM_PROMPT,
     tools: toolsRef.current,
-    primeTools: true,
+    primeTools: false,
     hideToolCalls: true,
     maxToolRounds: 3,
   });
@@ -339,7 +361,10 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
           setSelModel(model);
           localStorage.setItem(CHAT_PROV_KEY, fallback.providerId);
           localStorage.setItem(CHAT_MODEL_KEY, model);
-          void selectProvider({ providerId: fallback.providerId, modelId: model });
+          void selectProvider({
+            providerId: fallback.providerId,
+            modelId: model,
+          });
         }
       } else {
         setSelProv(null);
