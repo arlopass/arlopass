@@ -692,24 +692,21 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
 
     session.messages.push({ role: "user", content: message });
 
-    // OpenAI-compatible endpoints are at the resource level, not under /api/projects/{name}.
-    // POST https://{resource}.services.ai.azure.com/openai/deployments/{deployment}/chat/completions
+    // POST https://{resource}.openai.azure.com/openai/v1/chat/completions
+    // Model name goes in the request body, not the URL path.
     const resourceBase = extractResourceBaseUrl(session.apiUrl);
-    const endpoint = new URL(
-      `${resourceBase}/openai/deployments/${encodeURIComponent(session.deploymentName)}/chat/completions`,
-    );
-    endpoint.searchParams.set("api-version", FOUNDRY_OPENAI_API_VERSION);
+    const endpoint = `${resourceBase}/openai/v1/chat/completions`;
 
     let response: Response;
     try {
-      response = await fetch(endpoint.toString(), {
+      response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "api-key": session.apiKey,
           Authorization: `Bearer ${session.apiKey}`,
         },
         body: JSON.stringify({
+          model: session.deploymentName,
           messages: session.messages,
         }),
         signal: AbortSignal.timeout(60_000),
