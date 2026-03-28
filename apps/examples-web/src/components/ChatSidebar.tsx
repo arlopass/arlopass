@@ -8,13 +8,10 @@ import {
   Loader,
   Menu,
   Pill,
-  Popover,
   ScrollArea,
   Stack,
   Text,
   Textarea,
-  TextInput,
-  UnstyledButton,
 } from "@mantine/core";
 import {
   IconChevronDown,
@@ -148,122 +145,6 @@ function buildTools(
   ];
 }
 
-// ─── Model Dropdown ──────────────────────────────────────────────────
-
-function ModelDropdown({
-  models,
-  selected,
-  onSelect,
-}: {
-  models: readonly string[];
-  selected: string | null;
-  onSelect: (modelId: string) => void;
-}) {
-  const [opened, setOpened] = useState(false);
-  const [search, setSearch] = useState("");
-
-  const filtered = useMemo(() => {
-    if (search.trim().length === 0) return models;
-    const lower = search.toLowerCase();
-    return models.filter(
-      (m) =>
-        m.toLowerCase().includes(lower) ||
-        fmtModel(m).toLowerCase().includes(lower),
-    );
-  }, [models, search]);
-
-  return (
-    <Popover
-      opened={opened}
-      onChange={setOpened}
-      position="top-start"
-      shadow="sm"
-      withinPortal
-      width={240}
-    >
-      <Popover.Target>
-        <UnstyledButton
-          onClick={() => {
-            setOpened((o) => !o);
-            setSearch("");
-          }}
-          style={{
-            padding: "2px 8px",
-            borderRadius: 4,
-            background: "var(--ap-bg-elevated)",
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
-          <Text fz={10} fw={500} c="var(--ap-text-secondary)">
-            {selected ? fmtModel(selected) : "Model"}
-          </Text>
-          <IconChevronDown size={10} color="var(--ap-text-tertiary)" />
-        </UnstyledButton>
-      </Popover.Target>
-      <Popover.Dropdown
-        style={{
-          background: "var(--ap-bg-elevated)",
-          border: "1px solid var(--ap-border)",
-          padding: 4,
-        }}
-      >
-        <TextInput
-          size="xs"
-          placeholder="Search models..."
-          leftSection={<IconSearch size={12} />}
-          value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-          styles={{
-            input: {
-              fontSize: 11,
-              background: "var(--ap-bg-surface)",
-              border: "1px solid var(--ap-border)",
-            },
-          }}
-          mb={4}
-          autoFocus
-        />
-        <ScrollArea.Autosize
-          mah={200}
-          type="scroll"
-          offsetScrollbars
-          scrollbarSize={4}
-        >
-          {filtered.length === 0 && (
-            <Text fz={11} c="var(--ap-text-tertiary)" ta="center" py={8}>
-              No models match
-            </Text>
-          )}
-          {filtered.map((m) => (
-            <UnstyledButton
-              key={m}
-              onClick={() => {
-                onSelect(m);
-                setOpened(false);
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "4px 8px",
-                borderRadius: 3,
-                fontSize: 11,
-                fontWeight: m === selected ? 600 : 400,
-                color: "var(--ap-text-body)",
-                background:
-                  m === selected ? "var(--ap-bg-surface)" : "transparent",
-              }}
-            >
-              {fmtModel(m)}
-            </UnstyledButton>
-          ))}
-        </ScrollArea.Autosize>
-      </Popover.Dropdown>
-    </Popover>
-  );
-}
-
 // ─── Component ───────────────────────────────────────────────────────
 
 export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
@@ -298,7 +179,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   } = useConversation({
     systemPrompt: CHAT_SYSTEM_PROMPT,
     tools: toolsRef.current,
-    primeTools: false,
+    primeTools: true,
     hideToolCalls: true,
     maxToolRounds: 3,
   });
@@ -361,10 +242,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
           setSelModel(model);
           localStorage.setItem(CHAT_PROV_KEY, fallback.providerId);
           localStorage.setItem(CHAT_MODEL_KEY, model);
-          void selectProvider({
-            providerId: fallback.providerId,
-            modelId: model,
-          });
+          void selectProvider({ providerId: fallback.providerId, modelId: model });
         }
       } else {
         setSelProv(null);
@@ -723,11 +601,42 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               </Menu.Dropdown>
             </Menu>
 
-            <ModelDropdown
-              models={selProvider?.models ?? []}
-              selected={selModel}
-              onSelect={(m) => void handleModelChange(m)}
-            />
+            <Menu shadow="sm" position="top-start" withinPortal>
+              <Menu.Target>
+                <Group
+                  gap={2}
+                  style={{
+                    cursor: "pointer",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: "var(--ap-bg-elevated)",
+                  }}
+                >
+                  <Text fz={10} fw={500} c="var(--ap-text-secondary)">
+                    {selModel ? fmtModel(selModel) : "Model"}
+                  </Text>
+                  <IconChevronDown size={10} color="var(--ap-text-tertiary)" />
+                </Group>
+              </Menu.Target>
+              <Menu.Dropdown
+                style={{
+                  background: "var(--ap-bg-elevated)",
+                  border: "1px solid var(--ap-border)",
+                }}
+              >
+                {(selProvider?.models ?? []).map((m) => (
+                  <Menu.Item
+                    key={m}
+                    onClick={() => void handleModelChange(m)}
+                    fw={m === selModel ? 600 : 400}
+                    fz={11}
+                    style={{ color: "var(--ap-text-body)" }}
+                  >
+                    {fmtModel(m)}
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
           </Group>
         )}
 
