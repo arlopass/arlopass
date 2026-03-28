@@ -58,6 +58,7 @@ export const MICROSOFT_FOUNDRY_MANIFEST: AdapterManifest = {
   requiredPermissions: ["network.egress"],
   egressRules: [
     { host: "services.ai.azure.com", protocol: "https" },
+    { host: "openai.azure.com", protocol: "https" },
   ],
   riskLevel: "medium",
   signingKeyId: "arlopass-first-party-v1",
@@ -151,16 +152,24 @@ function normalizeApiUrl(value: string): string {
 }
 
 /**
- * Extracts the resource-level base URL from a Foundry project URL.
+ * Derives the OpenAI-compatible endpoint host from a Foundry project URL.
  *
- * Input:  "https://res.services.ai.azure.com/api/projects/proj"
- * Output: "https://res.services.ai.azure.com"
+ * The Foundry project REST API and OpenAI-compatible API use different domains:
+ *   Project API:  https://{name}.services.ai.azure.com/api/projects/{proj}
+ *   OpenAI chat:  https://{name}.openai.azure.com/openai/v1/chat/completions
  *
- * The OpenAI-compatible endpoints live at the resource level, not under the project path.
+ * This function swaps the domain accordingly.
  */
-function extractResourceBaseUrl(projectUrl: string): string {
+function deriveOpenAiBaseUrl(projectUrl: string): string {
   try {
     const parsed = new URL(projectUrl);
+    const host = parsed.hostname;
+    // Replace .services.ai.azure.com with .openai.azure.com
+    if (host.endsWith(".services.ai.azure.com")) {
+      const resourceName = host.slice(0, host.length - ".services.ai.azure.com".length);
+      return `${parsed.protocol}//${resourceName}.openai.azure.com`;
+    }
+    // Already an openai.azure.com host, use as-is
     return `${parsed.protocol}//${parsed.host}`;
   } catch {
     return projectUrl;
@@ -694,8 +703,8 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
 
     // POST https://{resource}.openai.azure.com/openai/v1/chat/completions
     // Model name goes in the request body, not the URL path.
-    const resourceBase = extractResourceBaseUrl(session.apiUrl);
-    const endpoint = `${resourceBase}/openai/v1/chat/completions`;
+    const openAiBase = deriveOpenAiBaseUrl(session.apiUrl);
+    const endpoint = `${openAiBase}/openai/v1/chat/completions`;
 
     let response: Response;
     try {
