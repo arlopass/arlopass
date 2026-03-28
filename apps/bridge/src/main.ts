@@ -937,6 +937,30 @@ function resolvePairingCodeRetrievalHintFromEnv(
   return undefined;
 }
 
+function resolveVaultFilePathFromEnv(
+  env: NodeJS.ProcessEnv,
+): string | undefined {
+  const value = normalizeNonEmptyString(env["ARLOPASS_BRIDGE_VAULT_FILE_PATH"]);
+  if (value !== undefined) return value;
+  const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
+  if (localAppData !== undefined) {
+    return join(localAppData, "Arlopass", "bridge", "state", "vault.encrypted");
+  }
+  return undefined;
+}
+
+function resolveVaultLockoutFilePathFromEnv(
+  env: NodeJS.ProcessEnv,
+): string | undefined {
+  const value = normalizeNonEmptyString(env["ARLOPASS_BRIDGE_VAULT_LOCKOUT_FILE_PATH"]);
+  if (value !== undefined) return value;
+  const localAppData = normalizeNonEmptyString(env["LOCALAPPDATA"]);
+  if (localAppData !== undefined) {
+    return join(localAppData, "Arlopass", "bridge", "state", "vault-lockout.json");
+  }
+  return undefined;
+}
+
 function resolvePairingStateFilePathFromEnv(
   env: NodeJS.ProcessEnv,
 ): string | undefined {
@@ -1024,26 +1048,6 @@ function resolveRequestIdempotencyStateFilePathFromEnv(
       "state",
       "request-idempotency-state.json",
     );
-  }
-  return undefined;
-}
-
-function resolveVaultFilePathFromEnv(
-  env: Readonly<Record<string, string | undefined>>,
-): string | undefined {
-  const value = env["ARLOPASS_BRIDGE_VAULT_FILE_PATH"];
-  if (typeof value === "string" && value.trim().length > 0) {
-    return value.trim();
-  }
-  return undefined;
-}
-
-function resolveVaultLockoutFilePathFromEnv(
-  env: Readonly<Record<string, string | undefined>>,
-): string | undefined {
-  const value = env["ARLOPASS_BRIDGE_VAULT_LOCKOUT_FILE_PATH"];
-  if (typeof value === "string" && value.trim().length > 0) {
-    return value.trim();
   }
   return undefined;
 }
@@ -1207,32 +1211,21 @@ async function main(): Promise<void> {
       );
     }
   }
-  const vaultFilePath = resolveVaultFilePathFromEnv(process.env);
-  const vaultLockoutFilePath = resolveVaultLockoutFilePathFromEnv(process.env);
-  const vaultAutoLockMs = parsePositiveIntegerEnv(
-    process.env["ARLOPASS_VAULT_AUTO_LOCK_MS"],
-  );
-  const signingKeyFilePath = resolveSigningKeyFilePathFromEnv(process.env);
-  const vaultStore = new VaultStore({
-    vaultFilePath:
-      vaultFilePath ??
-      (signingKeyFilePath !== undefined
-        ? join(dirname(signingKeyFilePath), "vault.encrypted")
-        : "vault.encrypted"),
-    lockoutFilePath:
-      vaultLockoutFilePath ??
-      (signingKeyFilePath !== undefined
-        ? join(dirname(signingKeyFilePath), "vault-lockout.json")
-        : "vault-lockout.json"),
-    ...(vaultAutoLockMs !== undefined ? { autoLockMs: vaultAutoLockMs } : {}),
-  });
-
   const pairingCodeRetrievalHint =
     resolvePairingCodeRetrievalHintFromEnv(process.env);
   const pairingStateFilePath = resolvePairingStateFilePathFromEnv(process.env);
   const handshakeStateFilePath = resolveHandshakeStateFilePathFromEnv(
     process.env,
   );
+
+  const vaultFilePath = resolveVaultFilePathFromEnv(process.env) ?? "vault.encrypted";
+  const vaultLockoutFilePath = resolveVaultLockoutFilePathFromEnv(process.env) ?? "vault-lockout.json";
+  const vaultAutoLockMs = parsePositiveIntegerEnv(process.env["ARLOPASS_VAULT_AUTO_LOCK_MS"]);
+  const vaultStore = new VaultStore({
+    vaultFilePath,
+    lockoutFilePath: vaultLockoutFilePath,
+    ...(vaultAutoLockMs !== undefined ? { autoLockMs: vaultAutoLockMs } : {}),
+  });
 
   const bridgeHandler = new BridgeHandler({
     vaultStore,
