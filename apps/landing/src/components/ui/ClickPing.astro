@@ -1,0 +1,113 @@
+---
+/**
+ * ClickPing — Reusable animated click indicator for preview animations.
+ *
+ * Place inside any `position: relative` container.
+ * Trigger via custom event:
+ *
+ *   el.dispatchEvent(new CustomEvent('ping', {
+ *     detail: { target: someElement, duration: 600 }
+ *   }));
+ */
+interface Props {
+  id: string;
+  class?: string;
+}
+
+const { id, class: className = "" } = Astro.props;
+---
+
+<div
+  id={id}
+  class={`pointer-events-none absolute z-50 ${className}`}
+  style="left:0;top:0;opacity:0;"
+  data-click-ping
+>
+  <div class="click-ping-dot"></div>
+</div>
+
+<style is:global>
+  [data-click-ping] {
+    transition: none;
+  }
+
+  .click-ping-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-brand, #db4d12);
+    opacity: 0.5;
+    transform: translate(-50%, -50%);
+  }
+
+  .click-ping-wave {
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    background: var(--color-brand, #db4d12);
+    opacity: 0;
+    animation: click-wave 500ms cubic-bezier(0, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes click-wave {
+    0% {
+      transform: scale(0.3);
+      opacity: 0.3;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .click-ping-wave {
+      animation: none;
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  document
+    .querySelectorAll<HTMLElement>("[data-click-ping]")
+    .forEach((ping) => {
+      let hideTimer: number | undefined;
+
+      ping.addEventListener("ping", ((
+        e: CustomEvent<{ target: HTMLElement; duration?: number }>,
+      ) => {
+        const { target, duration = 600 } = e.detail;
+        const parent = ping.offsetParent as HTMLElement;
+        if (!parent || !target) return;
+
+        // Clear any pending hide
+        if (hideTimer) clearTimeout(hideTimer);
+
+        // Position at target center
+        const pr = parent.getBoundingClientRect();
+        const tr = target.getBoundingClientRect();
+        ping.style.left = `${tr.left - pr.left + tr.width / 2}px`;
+        ping.style.top = `${tr.top - pr.top + tr.height / 2}px`;
+        ping.style.opacity = "1";
+
+        // Remove old waves
+        ping.querySelectorAll(".click-ping-wave").forEach((w) => w.remove());
+
+        // Create a fresh wave element (avoids animation restart glitches)
+        const wave = document.createElement("div");
+        wave.className = "click-ping-wave";
+        ping.appendChild(wave);
+
+        // Clean up wave after animation
+        wave.addEventListener("animationend", () => wave.remove(), {
+          once: true,
+        });
+
+        // Hide after duration
+        hideTimer = window.setTimeout(() => {
+          ping.style.opacity = "0";
+        }, duration);
+      }) as EventListener);
+    });
+</script>

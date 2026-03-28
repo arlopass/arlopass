@@ -65,7 +65,7 @@ const jsonLdWebPage = {
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -122,6 +122,10 @@ const jsonLdWebPage = {
     <link rel="dns-prefetch" href="https://unpkg.com" />
   </head>
   <body>
-    <slot />
+    <div
+      class="mx-auto max-w-7xl border-x border-[var(--ap-border)] min-h-screen"
+    >
+      <slot />
+    </div>
   </body>
 </html>

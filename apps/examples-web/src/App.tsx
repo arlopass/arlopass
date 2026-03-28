@@ -19,6 +19,7 @@ import { useRoute, navigate } from "./router";
 import { getPageComponent } from "./pages";
 import { InteractiveProvider, useInteractive } from "./interactive-context";
 import { ChatSidebar, Layout, Sidebar } from "./components";
+import { ArlopassProvider } from "@arlopass/react";
 
 /* ─── Inner shell (needs InteractiveContext for state badge) ──────── */
 
@@ -176,8 +177,21 @@ function Shell() {
 
 export default function App() {
   return (
-    <InteractiveProvider>
-      <Shell />
-    </InteractiveProvider>
+    <ArlopassProvider
+      appSuffix="chat"
+      supportedModels={[
+        "gpt-5.3-codex",
+        "claude-4.6-sonnet",
+        "opus-4.6-sonnet",
+      ]}
+      requiredModels={["opus-4.6-sonnet"]}
+      appName="Arlopass Docs"
+      appDescription="Documentation assistant for the examples app"
+      autoConnect
+    >
+      <InteractiveProvider>
+        <Shell />
+      </InteractiveProvider>
+    </ArlopassProvider>
   );
 }

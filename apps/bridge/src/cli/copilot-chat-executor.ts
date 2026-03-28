@@ -58,11 +58,16 @@ export type CliThinkingLevelsListResult = Readonly<{
 
 export type CliChatExecutor = Readonly<{
   execute(request: CliChatExecutionRequest): Promise<CliChatExecutionResult>;
+  executeStream(request: CliChatExecutionRequest): AsyncIterable<CliChatStreamEvent>;
   listModels(request?: CliModelListRequest): Promise<CliModelListResult>;
   listThinkingLevels(
     request: CliThinkingLevelsListRequest,
   ): Promise<CliThinkingLevelsListResult>;
 }>;
+
+export type CliChatStreamEvent =
+  | Readonly<{ type: "delta"; text: string }>
+  | Readonly<{ type: "done"; content: string; cliSessionId?: string }>;
 
 type CliErrorReasonCode =
   | "request.invalid"
@@ -120,6 +125,7 @@ type CliProfile = Readonly<{
     continueSession?: boolean;
     resumeSessionId?: string;
     disableBuiltinMcps?: boolean;
+    streaming?: boolean;
   }): readonly string[];
 }>;
 
@@ -176,7 +182,7 @@ const CLI_PROFILES: Readonly<Record<SupportedCliType, CliProfile>> = {
         options.prompt,
         "--silent",
         "--stream",
-        "off",
+        options.streaming === true ? "on" : "off",
         "--output-format",
         "json",
         "--available-tools",
@@ -199,7 +205,8 @@ const CLI_PROFILES: Readonly<Record<SupportedCliType, CliProfile>> = {
         "-p",
         options.prompt,
         "--output-format",
-        "json",
+        options.streaming === true ? "stream-json" : "json",
+        ...(options.streaming === true ? ["--include-partial-messages"] : []),
       ];
 
       if (options.modelId.toLowerCase() !== CLI_TYPE_CLAUDE) {
@@ -1028,6 +1035,319 @@ export class CopilotCliChatExecutor implements CliChatExecutor {
       };
     } finally {
       this.#activeExecutions -= 1;
+    }
+  }
+
+  async *executeStream(request: CliChatExecutionRequest): AsyncIterable<CliChatStreamEvent> {
+    const correlationId = normalizeNonEmpty(request.correlationId, "");
+    const providerId = normalizeNonEmpty(request.providerId, "");
+    const modelId = normalizeNonEmpty(request.modelId, "");
+    if (
+      correlationId.length === 0 ||
+      providerId.length === 0 ||
+      modelId.length === 0
+    ) {
+      throw new CliChatExecutionError(
+        "CLI chat request requires non-empty correlationId, providerId, and modelId.",
+        { reasonCode: "request.invalid" },
+      );
+    }
+
+    if (this.#activeExecutions >= this.#maxConcurrent) {
+      throw new CliChatExecutionError(
+        "CLI bridge is temporarily saturated. Retry the request shortly.",
+        {
+          reasonCode: "transport.transient_failure",
+          details: {
+            reason: "concurrency_limit_exceeded",
+            activeExecutions: this.#activeExecutions,
+            maxConcurrent: this.#maxConcurrent,
+          },
+        },
+      );
+    }
+
+    const profile = this.#resolveCliProfile(request.cliType, modelId);
+    const timeoutMs = this.#resolveTimeout(request.timeoutMs);
+    const thinkingLevel = normalizeThinkingLevel(request.thinkingLevel);
+    const sessionId = normalizeNonEmpty(request.sessionId ?? "", "");
+    const explicitResumeSessionId =
+      profile.id === CLI_TYPE_COPILOT
+        ? normalizeNonEmpty(request.resumeSessionId ?? "", "")
+        : "";
+    const continuationKey =
+      profile.id === CLI_TYPE_COPILOT && sessionId.length > 0
+        ? `${sessionId}::${providerId}::${modelId}`
+        : undefined;
+    const resumeSessionId =
+      explicitResumeSessionId.length > 0
+        ? explicitResumeSessionId
+        : continuationKey !== undefined
+          ? this.#copilotSessionIdsByContinuationKey.get(continuationKey)
+          : undefined;
+    const continueSession =
+      continuationKey !== undefined &&
+      resumeSessionId === undefined &&
+      this.#copilotContinuationKeys.has(continuationKey);
+
+    const isSessionContinuation = continueSession || resumeSessionId !== undefined;
+    const prompt = isSessionContinuation
+      ? this.#buildPromptLastUserMessage(request.messages)
+      : this.#buildPrompt(request.messages);
+
+    // Build streaming args — only the first candidate (no fallback chain for streaming)
+    const args = profile.buildCommandArgs({
+      modelId,
+      prompt,
+      streaming: true,
+      ...(continueSession ? { continueSession: true } : {}),
+      ...(resumeSessionId !== undefined ? { resumeSessionId } : {}),
+      ...(profile.id === CLI_TYPE_COPILOT && this.#disableCopilotBuiltinMcps
+        ? { disableBuiltinMcps: true }
+        : {}),
+    });
+
+    if (thinkingLevel !== undefined && profile.id === CLI_TYPE_COPILOT) {
+      const effortMap: Record<string, string> = {
+        [THINKING_LEVEL_LOW]: "low",
+        [THINKING_LEVEL_MED]: "medium",
+        [THINKING_LEVEL_HIGH]: "high",
+        [THINKING_LEVEL_XHIGH]: "high",
+      };
+      (args as string[]).push("--thinking-level", thinkingLevel);
+      void effortMap; // Used only in non-streaming fallback variants
+    }
+
+    const commandPath = this.#commands[profile.id];
+
+    this.#activeExecutions += 1;
+    let fullContent = "";
+    let cliSessionId: string | undefined;
+
+    try {
+      const streamEvents = this.#runCommandStreaming(commandPath, [...args], timeoutMs, profile.id);
+      for await (const event of streamEvents) {
+        if (event.type === "text") {
+          fullContent += event.text;
+          yield { type: "delta", text: event.text };
+        } else if (event.type === "session-id") {
+          cliSessionId = event.sessionId;
+        }
+      }
+
+      // If no streaming deltas were yielded, fall back to non-streaming extraction
+      if (fullContent.length === 0) {
+        const fallbackResult = await this.execute(request);
+        yield { type: "delta", text: fallbackResult.content };
+        fullContent = fallbackResult.content;
+        cliSessionId = fallbackResult.cliSessionId;
+      }
+
+      if (continuationKey !== undefined) {
+        this.#copilotContinuationKeys.add(continuationKey);
+        if (cliSessionId !== undefined) {
+          this.#copilotSessionIdsByContinuationKey.set(continuationKey, cliSessionId);
+        }
+        this.#evictOldContinuationEntries();
+      }
+
+      yield {
+        type: "done",
+        content: fullContent,
+        ...(cliSessionId !== undefined ? { cliSessionId } : {}),
+      };
+    } finally {
+      this.#activeExecutions -= 1;
+    }
+  }
+
+  /**
+   * Spawn a CLI process and yield incremental text deltas from JSONL stdout.
+   *
+   * Copilot CLI (--stream on --output-format json) outputs JSONL where
+   * streaming text appears in records like:
+   *   {"type":"assistant.message.delta","data":{"content":"token"}}
+   *   {"type":"assistant.message","data":{"content":"full text"}}
+   *   {"type":"result","sessionId":"..."}
+   *
+   * Claude Code (--output-format stream-json --include-partial-messages) outputs:
+   *   {"type":"assistant","message":{"content":[{"type":"text","text":"token"}]},"stop_reason":null}
+   *   {"type":"result","result":"full text","session_id":"..."}
+   */
+  async *#runCommandStreaming(
+    commandPath: string,
+    args: readonly string[],
+    timeoutMs: number,
+    cliType: SupportedCliType,
+  ): AsyncIterable<{ type: "text"; text: string } | { type: "session-id"; sessionId: string }> {
+    const spawnInvocation = this.#createSpawnInvocation(commandPath, args);
+    const child = this.#spawnFn(spawnInvocation.command, [...spawnInvocation.args], {
+      shell: false,
+      windowsHide: true,
+      ...(spawnInvocation.windowsVerbatimArguments === true
+        ? { windowsVerbatimArguments: true }
+        : {}),
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    // Queue-based async iteration: stdout data handler pushes events,
+    // the for-await loop pulls them.
+    type StreamItem =
+      | { type: "text"; text: string }
+      | { type: "session-id"; sessionId: string }
+      | { type: "end" }
+      | { type: "error"; error: Error };
+    const queue: StreamItem[] = [];
+    const waiters: Array<(item: StreamItem) => void> = [];
+    let done = false;
+
+    const push = (item: StreamItem): void => {
+      const waiter = waiters.shift();
+      if (waiter !== undefined) {
+        waiter(item);
+        return;
+      }
+      queue.push(item);
+    };
+
+    const pull = (): Promise<StreamItem> => {
+      const queued = queue.shift();
+      if (queued !== undefined) return Promise.resolve(queued);
+      return new Promise<StreamItem>((resolve) => { waiters.push(resolve); });
+    };
+
+    let lineBuffer = "";
+    let lastExtractedContent = "";
+
+    const processLine = (line: string): void => {
+      const trimmed = line.trim();
+      if (trimmed.length === 0) return;
+
+      let payload: unknown;
+      try {
+        payload = JSON.parse(trimmed);
+      } catch {
+        return;
+      }
+
+      if (!isRecord(payload)) return;
+
+      // Copilot: {"type":"assistant.message.delta","data":{"content":"token"}}
+      if (payload["type"] === "assistant.message.delta") {
+        const data = payload["data"];
+        if (isRecord(data) && typeof data["content"] === "string" && data["content"].length > 0) {
+          push({ type: "text", text: data["content"] });
+        }
+        return;
+      }
+
+      // Copilot: {"type":"assistant.message","data":{"content":"full text"}}
+      // This is the final complete message — extract any trailing content
+      // that wasn't sent as deltas.
+      if (payload["type"] === "assistant.message") {
+        const data = payload["data"];
+        if (isRecord(data) && typeof data["content"] === "string") {
+          lastExtractedContent = data["content"];
+        }
+        return;
+      }
+
+      // Claude Code stream-json: partial assistant messages with content array
+      if (payload["type"] === "assistant" && isRecord(payload["message"])) {
+        const message = payload["message"] as Record<string, unknown>;
+        const content = message["content"];
+        if (Array.isArray(content)) {
+          for (const block of content) {
+            if (isRecord(block) && block["type"] === "text" && typeof block["text"] === "string") {
+              const text = block["text"] as string;
+              // Claude sends the full accumulated text each time, extract the new delta
+              if (text.length > lastExtractedContent.length && text.startsWith(lastExtractedContent)) {
+                const delta = text.slice(lastExtractedContent.length);
+                if (delta.length > 0) {
+                  push({ type: "text", text: delta });
+                }
+              } else if (text.length > 0 && text !== lastExtractedContent) {
+                push({ type: "text", text });
+              }
+              lastExtractedContent = text;
+            }
+          }
+        }
+        return;
+      }
+
+      // Claude Code: {"type":"result","result":"full text","session_id":"..."}
+      if (payload["type"] === "result") {
+        if (typeof payload["result"] === "string" && payload["result"].trim().length > 0) {
+          const fullResult = payload["result"].trim();
+          // Emit any trailing content not yet yielded
+          if (fullResult.length > lastExtractedContent.length) {
+            const delta = fullResult.startsWith(lastExtractedContent)
+              ? fullResult.slice(lastExtractedContent.length)
+              : fullResult;
+            if (delta.length > 0) {
+              push({ type: "text", text: delta });
+            }
+          }
+          lastExtractedContent = fullResult;
+        }
+        // Both CLIs: session ID for continuations
+        const sid = typeof payload["sessionId"] === "string"
+          ? payload["sessionId"]
+          : typeof payload["session_id"] === "string"
+            ? payload["session_id"]
+            : undefined;
+        if (sid !== undefined && sid.trim().length > 0) {
+          push({ type: "session-id", sessionId: sid.trim() });
+        }
+        return;
+      }
+    };
+
+    child.stdout?.on("data", (chunk: Buffer | string) => {
+      const text = typeof chunk === "string" ? chunk : chunk.toString("utf8");
+      lineBuffer += text;
+      const lines = lineBuffer.split(/\r?\n/);
+      // Keep the last incomplete line in the buffer
+      lineBuffer = lines.pop() ?? "";
+      for (const line of lines) {
+        processLine(line);
+      }
+    });
+
+    const timeoutHandle = setTimeout(() => {
+      void this.#terminateChildProcess(child);
+      push({
+        type: "error", error: new CliChatExecutionError(
+          `CLI streaming execution timed out after ${String(timeoutMs)}ms.`,
+          { reasonCode: "transport.timeout", details: { timeoutMs, command: commandPath, cliType } },
+        )
+      });
+    }, timeoutMs);
+
+    child.on("close", () => {
+      clearTimeout(timeoutHandle);
+      // Process any remaining data in the line buffer
+      if (lineBuffer.trim().length > 0) {
+        processLine(lineBuffer);
+        lineBuffer = "";
+      }
+      done = true;
+      push({ type: "end" });
+    });
+
+    child.on("error", (err: Error) => {
+      clearTimeout(timeoutHandle);
+      done = true;
+      push({ type: "error", error: err });
+    });
+
+    // Yield events as they arrive
+    while (!done || queue.length > 0) {
+      const item = await pull();
+      if (item.type === "end") break;
+      if (item.type === "error") throw item.error;
+      yield item;
     }
   }
 

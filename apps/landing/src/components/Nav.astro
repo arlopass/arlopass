@@ -2,35 +2,57 @@
 
 ---
 
-<nav class="nav" aria-label="Main navigation">
-  <div class="nav-inner container">
-    <a href="/" class="logo" aria-label="Arlopass home">
-      <img
-        src="/ArlopassLogo-Dark.svg"
-        alt="Arlopass"
-        class="logo-img logo-dark"
-        width="130"
-        height="22"
-      />
+<nav
+  class="sticky top-0 z-50 bg-[var(--ap-bg-base)] border-b border-[var(--ap-border)]"
+  aria-label="Main navigation"
+>
+  <div class="px-4 md:px-6 lg:px-8 flex items-center h-[60px] gap-8">
+    <a
+      href="/"
+      class="flex items-center shrink-0 no-underline"
+      aria-label="Arlopass home"
+    >
       <img
         src="/ArlopassLogo-Light.svg"
         alt="Arlopass"
-        class="logo-img logo-light"
-        width="130"
-        height="22"
+        class="h-5 w-auto logo-light"
+      />
+      <img
+        src="/ArlopassLogo-Dark.svg"
+        alt="Arlopass"
+        class="h-5 w-auto hidden logo-dark"
       />
     </a>
 
-    <div class="nav-links" id="nav-links">
-      <a href="#how-it-works">How It Works</a>
-      <a href="#developers">Developers</a>
-      <a href="#privacy">Privacy</a>
-      <a href="#faq">FAQ</a>
+    <div class="hidden md:flex items-center gap-6 ml-4" id="nav-links">
+      <a
+        href="#how-it-works"
+        class="text-sm font-[450] text-[var(--ap-text-secondary)] no-underline hover:text-[var(--ap-text-primary)] transition-colors"
+        >How It Works</a
+      >
+      <a
+        href="#developers"
+        class="text-sm font-[450] text-[var(--ap-text-secondary)] no-underline hover:text-[var(--ap-text-primary)] transition-colors"
+        >Developers</a
+      >
+      <a
+        href="#privacy"
+        class="text-sm font-[450] text-[var(--ap-text-secondary)] no-underline hover:text-[var(--ap-text-primary)] transition-colors"
+        >Privacy</a
+      >
+      <a
+        href="#faq"
+        class="text-sm font-[450] text-[var(--ap-text-secondary)] no-underline hover:text-[var(--ap-text-primary)] transition-colors"
+        >FAQ</a
+      >
+    </div>
+
+    <div class="flex items-center gap-3 ml-auto">
       <a
         href="https://github.com/arlopass"
         target="_blank"
         rel="noopener noreferrer"
-        class="nav-github"
+        class="flex items-center text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-primary)] transition-colors"
         aria-label="GitHub"
       >
         <svg
@@ -39,25 +61,21 @@
           viewBox="0 0 24 24"
           fill="currentColor"
           aria-hidden="true"
-        >
-          <path
+          ><path
             d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"
-          ></path>
-        </svg>
+          ></path></svg
+        >
       </a>
-    </div>
-
-    <div class="nav-right">
       <a
         href="https://chrome.google.com/webstore"
         target="_blank"
         rel="noopener noreferrer"
-        class="nav-cta"
+        class="hidden md:inline-flex text-sm font-medium text-[var(--ap-text-primary)] bg-transparent py-[7px] px-4 border border-[var(--ap-border-strong)] rounded-lg no-underline whitespace-nowrap hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)] transition-all"
       >
-        Install Extension
+        Get started for free
       </a>
       <button
-        class="nav-toggle"
+        class="md:hidden flex items-center justify-center w-10 h-10 p-0 bg-transparent border-none text-[var(--ap-text-secondary)] cursor-pointer hover:text-[var(--ap-text-primary)]"
         id="nav-toggle"
         aria-label="Toggle menu"
         aria-expanded="false"
@@ -81,7 +99,7 @@
             y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg
         >
         <svg
-          class="nav-toggle-close"
+          class="nav-toggle-close hidden"
           width="22"
           height="22"
           viewBox="0 0 24 24"
@@ -100,192 +118,67 @@
       </button>
     </div>
   </div>
+
+  <!-- Mobile menu -->
+  <div
+    class="hidden md:hidden flex-col items-stretch px-4 py-3 pb-5 bg-[var(--ap-bg-base)] border-b border-[var(--ap-border)]"
+    id="nav-mobile"
+  >
+    <a
+      href="#how-it-works"
+      class="py-2.5 px-3 rounded text-base text-[var(--ap-text-secondary)] no-underline hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)]"
+      >How It Works</a
+    >
+    <a
+      href="#developers"
+      class="py-2.5 px-3 rounded text-base text-[var(--ap-text-secondary)] no-underline hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)]"
+      >Developers</a
+    >
+    <a
+      href="#privacy"
+      class="py-2.5 px-3 rounded text-base text-[var(--ap-text-secondary)] no-underline hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)]"
+      >Privacy</a
+    >
+    <a
+      href="#faq"
+      class="py-2.5 px-3 rounded text-base text-[var(--ap-text-secondary)] no-underline hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)]"
+      >FAQ</a
+    >
+  </div>
 </nav>
 
 <script>
   const toggle = document.getElementById("nav-toggle");
-  const links = document.getElementById("nav-links");
-  if (toggle && links) {
+  const mobile = document.getElementById("nav-mobile");
+  if (toggle && mobile) {
     toggle.addEventListener("click", () => {
-      const open = links.classList.toggle("nav-links--open");
+      const open = mobile.classList.toggle("!flex");
+      mobile.classList.toggle("hidden", !open);
       toggle.setAttribute("aria-expanded", String(open));
+      toggle
+        .querySelector(".nav-toggle-open")
+        ?.classList.toggle("hidden", open);
+      toggle
+        .querySelector(".nav-toggle-close")
+        ?.classList.toggle("hidden", !open);
     });
-    links.querySelectorAll("a").forEach((a) => {
+    mobile.querySelectorAll("a").forEach((a) => {
       a.addEventListener("click", () => {
-        links.classList.remove("nav-links--open");
+        mobile.classList.add("hidden");
+        mobile.classList.remove("!flex");
         toggle.setAttribute("aria-expanded", "false");
+        toggle.querySelector(".nav-toggle-open")?.classList.remove("hidden");
+        toggle.querySelector(".nav-toggle-close")?.classList.add("hidden");
       });
     });
   }
 </script>
 
 <style>
-  .nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    background: color-mix(in oklch, var(--ap-bg-base) 80%, transparent);
-    border-bottom: 1px solid var(--ap-border);
-  }
-
-  .nav-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
-    gap: var(--ap-space-6);
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    flex-shrink: 0;
-  }
-
-  .logo-img {
-    height: 22px;
-    width: auto;
-  }
-
-  .logo-light {
+  [data-theme="dark"] .logo-light {
     display: none;
   }
-
-  [data-theme="light"] .logo-dark {
-    display: none;
-  }
-  [data-theme="light"] .logo-light {
+  [data-theme="dark"] .logo-dark {
     display: block;
-  }
-
-  .nav-links {
-    display: none;
-    align-items: center;
-    gap: var(--ap-space-8);
-  }
-
-  .nav-links a {
-    font-size: var(--ap-text-sm);
-    color: var(--ap-text-secondary);
-    font-weight: 500;
-    transition: color var(--ap-ease-micro);
-  }
-  .nav-links a:hover {
-    color: var(--ap-text-primary);
-  }
-
-  .nav-github {
-    display: flex;
-    align-items: center;
-    color: var(--ap-text-secondary);
-  }
-  .nav-github:hover {
-    color: var(--ap-text-primary);
-  }
-
-  .nav-cta {
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    color: #fafaf9;
-    background: var(--ap-brand);
-    padding: 8px 16px;
-    border-radius: var(--ap-radius-sm);
-    text-decoration: none;
-    transition: background var(--ap-ease-micro);
-    white-space: nowrap;
-  }
-  .nav-cta:hover {
-    background: var(--ap-brand-hover);
-    color: #fafaf9;
-  }
-
-  .nav-right {
-    display: flex;
-    align-items: center;
-    gap: var(--ap-space-3);
-  }
-
-  .nav-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    background: none;
-    border: none;
-    color: var(--ap-text-secondary);
-    cursor: pointer;
-    border-radius: var(--ap-radius-sm);
-    transition:
-      color var(--ap-ease-micro),
-      background var(--ap-ease-micro);
-  }
-  .nav-toggle:hover {
-    color: var(--ap-text-primary);
-    background: var(--ap-bg-surface);
-  }
-  .nav-toggle .nav-toggle-close {
-    display: none;
-  }
-  .nav-toggle[aria-expanded="true"] .nav-toggle-open {
-    display: none;
-  }
-  .nav-toggle[aria-expanded="true"] .nav-toggle-close {
-    display: block;
-  }
-
-  @media (min-width: 768px) {
-    .nav-links {
-      display: flex;
-    }
-    .nav-toggle {
-      display: none;
-    }
-  }
-
-  /* Mobile dropdown menu */
-  @media (max-width: 767px) {
-    .nav-links {
-      display: none;
-      position: absolute;
-      top: 64px;
-      left: 0;
-      right: 0;
-      flex-direction: column;
-      align-items: stretch;
-      padding: var(--ap-space-4) var(--ap-space-4) var(--ap-space-6);
-      background: var(--ap-bg-base);
-      border-bottom: 1px solid var(--ap-border);
-      gap: 0;
-    }
-    .nav-links.nav-links--open {
-      display: flex;
-    }
-    .nav-links a {
-      padding: 12px var(--ap-space-4);
-      border-radius: var(--ap-radius-sm);
-      font-size: var(--ap-text-base);
-    }
-    .nav-links a:hover {
-      background: var(--ap-bg-surface);
-    }
-    .nav-github {
-      padding: 12px var(--ap-space-4);
-    }
-    .nav-cta {
-      display: none;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .nav-cta {
-      display: inline-flex;
-    }
   }
 </style>

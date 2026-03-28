@@ -2,19 +2,35 @@
 
 ---
 
-<section class="cta" aria-labelledby="cta-heading">
-  <div class="container cta-inner">
-    <h2 id="cta-heading" class="cta-title">Ready to take control?</h2>
-    <p class="cta-desc">
+<section
+  class="relative py-24 text-center overflow-hidden"
+  aria-labelledby="cta-heading"
+>
+  <div
+    class="absolute -top-[200px] left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-[radial-gradient(ellipse,color-mix(in_oklch,var(--color-brand)_12%,transparent),transparent_70%)] pointer-events-none"
+  >
+  </div>
+  <div class="relative z-10 px-4 md:px-6 lg:px-8">
+    <h2
+      id="cta-heading"
+      class="text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight mb-4"
+    >
+      Ready to take control?
+    </h2>
+    <p
+      class="text-lg text-[var(--ap-text-secondary)] max-w-[520px] mx-auto mb-10 leading-relaxed"
+    >
       Install Arlopass, connect your AI providers, and start using AI on your
       terms. Free, open source, and ready right now.
     </p>
-    <div class="cta-actions">
+    <div
+      class="flex flex-wrap justify-center gap-3 max-[480px]:flex-col max-[480px]:items-stretch max-[480px]:px-4"
+    >
       <a
         href="https://chrome.google.com/webstore"
         target="_blank"
         rel="noopener noreferrer"
-        class="cta-btn-primary"
+        class="inline-flex items-center justify-center gap-2 text-sm font-medium text-stone-50 bg-[var(--ap-text-primary)] py-3.5 px-7 rounded-lg no-underline hover:opacity-85 hover:text-stone-50 transition-opacity"
       >
         <svg
           width="18"
@@ -26,14 +42,19 @@
           stroke-linecap="round"
           stroke-linejoin="round"
           aria-hidden="true"
+          ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline
+            points="7 10 12 15 17 10"></polyline><line
+            x1="12"
+            y1="15"
+            x2="12"
+            y2="3"></line></svg
         >
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
         Install for Chrome
       </a>
-      <a href="https://docs.arlopass.com/quickstart" class="cta-btn-secondary">
+      <a
+        href="https://docs.arlopass.com/quickstart"
+        class="inline-flex items-center justify-center gap-2 text-sm font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border-strong)] py-3.5 px-7 rounded-lg no-underline hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)] transition-all"
+      >
         Read the quickstart
         <svg
           width="14"
@@ -45,120 +66,10 @@
           stroke-linecap="round"
           stroke-linejoin="round"
           aria-hidden="true"
+          ><line x1="5" y1="12" x2="19" y2="12"></line><polyline
+            points="12 5 19 12 12 19"></polyline></svg
         >
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
       </a>
     </div>
   </div>
 </section>
-
-<style>
-  .cta {
-    padding: var(--ap-space-24) 0 var(--ap-space-16);
-    border-top: none;
-    background: var(--ap-bg-base);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .cta::before {
-    content: "";
-    position: absolute;
-    top: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 700px;
-    height: 500px;
-    background: radial-gradient(
-      ellipse,
-      color-mix(in oklch, var(--ap-brand) 12%, transparent),
-      transparent 70%
-    );
-    pointer-events: none;
-  }
-
-  .cta-inner {
-    position: relative;
-    z-index: 1;
-  }
-
-  .cta-title {
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    margin-bottom: var(--ap-space-4);
-  }
-
-  .cta-desc {
-    font-size: var(--ap-text-lg);
-    color: var(--ap-text-secondary);
-    max-width: 520px;
-    margin-inline: auto;
-    margin-bottom: var(--ap-space-10);
-    line-height: 1.6;
-  }
-
-  .cta-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--ap-space-3);
-  }
-
-  .cta-btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ap-space-2);
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    color: #fafaf9;
-    background: var(--ap-brand);
-    padding: 14px 28px;
-    border-radius: var(--ap-radius-sm);
-    text-decoration: none;
-    transition:
-      background var(--ap-ease-micro),
-      transform var(--ap-ease-micro);
-  }
-  .cta-btn-primary:hover {
-    background: var(--ap-brand-hover);
-    color: #fafaf9;
-    transform: translateY(-1px);
-  }
-
-  .cta-btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ap-space-2);
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    color: var(--ap-text-body);
-    background: transparent;
-    border: 1px solid var(--ap-border);
-    padding: 14px 28px;
-    border-radius: var(--ap-radius-sm);
-    text-decoration: none;
-    transition:
-      border-color var(--ap-ease-micro),
-      background var(--ap-ease-micro);
-  }
-  .cta-btn-secondary:hover {
-    border-color: var(--ap-border-strong);
-    background: var(--ap-bg-elevated);
-    color: var(--ap-text-body);
-  }
-
-  @media (max-width: 480px) {
-    .cta-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .cta-btn-primary,
-    .cta-btn-secondary {
-      justify-content: center;
-    }
-  }
-</style>

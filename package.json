@@ -18,6 +18,8 @@
     "dev:register-native-host": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\register-native-host.ps1",
     "dev:examples": "npm run dev -w @arlopass/examples-web",
     "build:examples": "npm run build -w @arlopass/examples-web",
+    "dev:landing": "npm run dev -w @arlopass/landing",
+    "build:landing": "npm run build -w @arlopass/landing",
     "dev:bash:setup": "bash ./scripts/dev/run-dev.sh setup",
     "dev:bash:validate": "bash ./scripts/dev/run-dev.sh validate",
     "dev:bash:watch": "bash ./scripts/dev/run-dev.sh watch",
@@ -42,6 +44,12 @@
     "@typescript-eslint/parser": "^8.30.1",
     "eslint": "^8.57.1",
     "typescript": "^5.8.3",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.2"
+  },
+  "overrides": {
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "vite": "^7.3.1"
   }
 }

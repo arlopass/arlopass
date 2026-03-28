@@ -15,83 +15,71 @@ for await (const chunk of stream) {
 }`;
 ---
 
-<section class="developer" id="developers" aria-labelledby="dev-heading">
-  <div class="container developer-inner">
-    <div class="developer-content">
-      <span class="section-label">For developers</span>
-      <h2 id="dev-heading" class="section-title">
+<section class="py-24" id="developers" aria-labelledby="dev-heading">
+  <div
+    class="px-4 md:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16 items-center"
+  >
+    <div>
+      <span
+        class="inline-block text-xs font-medium uppercase tracking-[0.08em] text-brand mb-4"
+        >For developers</span
+      >
+      <h2
+        id="dev-heading"
+        class="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight mb-6"
+      >
         Add AI to your app in 10 lines.
       </h2>
-      <p class="developer-desc">
-        Install <code>@arlopass/web-sdk</code>, call <code>connect()</code>
-        and <code>chat.stream()</code>. The user’s Arlopass handles provider
-        selection, auth, and routing. You never see or store an API key.
+      <p
+        class="text-base text-[var(--ap-text-secondary)] leading-[1.7] mb-8 max-w-[520px]"
+      >
+        Install <code
+          class="text-amber bg-[var(--ap-bg-surface)] py-0.5 px-1.5 rounded text-[0.875em]"
+          >@arlopass/web-sdk</code
+        >, call <code
+          class="text-amber bg-[var(--ap-bg-surface)] py-0.5 px-1.5 rounded text-[0.875em]"
+          >connect()</code
+        >
+        and <code
+          class="text-amber bg-[var(--ap-bg-surface)] py-0.5 px-1.5 rounded text-[0.875em]"
+          >chat.stream()</code
+        >. The user's Arlopass handles provider selection, auth, and routing.
+        You never see or store an API key.
       </p>
 
-      <ul class="developer-features">
-        <li>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--ap-success)"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            ><polyline points="20 6 9 17 4 12"></polyline></svg
-          >
-          Zero key management — no server proxy, no <code>.env</code> files
-        </li>
-        <li>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--ap-success)"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            ><polyline points="20 6 9 17 4 12"></polyline></svg
-          >
-          TypeScript-first, Zod-validated, async iterator streaming
-        </li>
-        <li>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--ap-success)"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            ><polyline points="20 6 9 17 4 12"></polyline></svg
-          >
-          User switches providers — your code doesn't change
-        </li>
-        <li>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--ap-success)"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            ><polyline points="20 6 9 17 4 12"></polyline></svg
-          >
-          Free infrastructure — users bring their own AI subscriptions
-        </li>
+      <ul class="flex flex-col gap-3 mb-8 list-none">
+        {
+          [
+            "Zero key management — no server proxy, no .env files",
+            "TypeScript-first, Zod-validated, async iterator streaming",
+            "User switches providers — your code doesn't change",
+            "Free infrastructure — users bring their own AI subscriptions",
+          ].map((item) => (
+            <li class="flex items-start gap-2 text-sm text-[var(--ap-text-secondary)] leading-snug">
+              <svg
+                class="shrink-0 mt-0.5"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--color-success)"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {item}
+            </li>
+          ))
+        }
       </ul>
 
-      <a href="https://docs.arlopass.com/quickstart" class="btn-docs">
+      <a
+        href="https://docs.arlopass.com/quickstart"
+        class="inline-flex items-center gap-2 text-sm font-medium text-brand no-underline hover:gap-3 hover:text-amber transition-all"
+      >
         Read the docs
         <svg
           width="14"
@@ -109,16 +97,27 @@ for await (const chunk of stream) {
       </a>
     </div>
 
-    <div class="developer-code">
-      <div class="code-window">
-        <div class="code-titlebar">
-          <div class="code-dots">
-            <span class="dot dot-red"></span>
-            <span class="dot dot-yellow"></span>
-            <span class="dot dot-green"></span>
+    <div class="min-w-0">
+      <div
+        class="bg-[var(--ap-bg-code)] border border-[var(--ap-border)] rounded-lg overflow-hidden shadow-[0_24px_48px_-12px_rgba(0,0,0,0.4)]"
+      >
+        <div
+          class="flex items-center gap-3 py-3 px-4 bg-[color-mix(in_oklch,var(--ap-bg-code)_100%,#000_5%)] border-b border-[var(--ap-border)]"
+        >
+          <div class="flex gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
           </div>
-          <span class="code-filename">app.ts</span>
-          <button class="code-copy" aria-label="Copy code">
+          <span
+            class="flex-1 text-[11px] text-[var(--ap-text-tertiary)] font-mono"
+            >app.ts</span
+          >
+          <button
+            class="flex items-center p-1 bg-transparent border-none text-[var(--ap-text-tertiary)] cursor-pointer rounded hover:text-[var(--ap-text-secondary)] hover:bg-[var(--ap-bg-surface)] transition-colors"
+            aria-label="Copy code"
+            id="code-copy"
+          >
             <svg
               width="14"
               height="14"
@@ -135,244 +134,40 @@ for await (const chunk of stream) {
             >
           </button>
         </div>
-        <pre class="code-content"><code>{codeExample}</code></pre>
+        <pre
+          class="p-5 m-0 overflow-x-auto overflow-y-hidden scrollbar-thin font-mono text-[13px] leading-[1.7] text-stone-300 whitespace-pre break-normal max-sm:p-3 max-sm:text-[11px]"
+          style="tab-size: 2"><code class="text-inherit whitespace-inherit">{codeExample}</code></pre>
       </div>
     </div>
   </div>
 </section>
 
-<style>
-  .developer {
-    padding: var(--ap-space-24) 0;
-    border-top: none;
-  }
-
-  .developer-inner {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ap-space-12);
-    align-items: center;
-  }
-
-  .developer-code {
-    min-width: 0;
-  }
-
-  @media (min-width: 1024px) {
-    .developer-inner {
-      grid-template-columns: 1fr 1.2fr;
-      gap: var(--ap-space-16);
-    }
-  }
-
-  .section-label {
-    display: inline-block;
-    font-size: var(--ap-text-xs);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ap-brand);
-    margin-bottom: var(--ap-space-4);
-  }
-
-  .section-title {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: var(--ap-space-6);
-  }
-
-  .developer-desc {
-    font-size: var(--ap-text-base);
-    color: var(--ap-text-secondary);
-    line-height: 1.7;
-    margin-bottom: var(--ap-space-8);
-    max-width: 520px;
-  }
-
-  .developer-desc code {
-    color: var(--ap-amber);
-    background: var(--ap-bg-surface);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.875em;
-  }
-
-  .developer-features {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ap-space-3);
-    margin-bottom: var(--ap-space-8);
-  }
-
-  .developer-features li {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ap-space-2);
-    font-size: var(--ap-text-sm);
-    color: var(--ap-text-secondary);
-    line-height: 1.5;
-  }
-
-  .developer-features li svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  .developer-features li code {
-    color: var(--ap-amber);
-    background: var(--ap-bg-surface);
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-size: 0.9em;
-  }
-
-  .btn-docs {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ap-space-2);
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    color: var(--ap-brand);
-    text-decoration: none;
-    transition: gap var(--ap-ease-micro);
-  }
-  .btn-docs:hover {
-    gap: var(--ap-space-3);
-    color: var(--ap-amber);
-  }
-
-  /* Code block */
-  .code-window {
-    background: var(--ap-bg-code);
-    border: 1px solid var(--ap-border);
-    border-radius: var(--ap-radius-md);
-    overflow: hidden;
-    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.4);
-  }
-
-  .code-titlebar {
-    display: flex;
-    align-items: center;
-    gap: var(--ap-space-3);
-    padding: 12px 16px;
-    background: color-mix(in oklch, var(--ap-bg-code) 100%, #000 5%);
-    border-bottom: 1px solid var(--ap-border);
-  }
-
-  .code-dots {
-    display: flex;
-    gap: 6px;
-  }
-
-  .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-  .dot-red {
-    background: #ef4444;
-  }
-  .dot-yellow {
-    background: #eab308;
-  }
-  .dot-green {
-    background: #22c55e;
-  }
-
-  .code-filename {
-    flex: 1;
-    font-size: 11px;
-    color: var(--ap-text-tertiary);
-    font-family: var(--ap-font-code);
-  }
-
-  .code-copy {
-    display: flex;
-    align-items: center;
-    padding: 4px;
-    background: none;
-    border: none;
-    color: var(--ap-text-tertiary);
-    cursor: pointer;
-    border-radius: 3px;
-    transition:
-      color var(--ap-ease-micro),
-      background var(--ap-ease-micro);
-  }
-  .code-copy:hover {
-    color: var(--ap-text-secondary);
-    background: var(--ap-bg-surface);
-  }
-
-  .code-content {
-    padding: 20px;
-    margin: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-    font-family: var(--ap-font-code);
-    font-size: 13px;
-    line-height: 1.7;
-    color: #d6d3d1;
-    tab-size: 2;
-    white-space: pre;
-    word-break: normal;
-    overflow-wrap: normal;
-  }
-
-  .code-content code {
-    font-size: inherit;
-    white-space: inherit;
-  }
-
-  @media (max-width: 640px) {
-    .code-content {
-      padding: 16px 12px;
-      font-size: 11px;
-    }
-  }
-</style>
-
 <script>
-  // Simple code copy functionality
-  document.querySelector(".code-copy")?.addEventListener("click", async () => {
-    const code = document.querySelector(".code-content code")?.textContent;
-    if (code) {
-      await navigator.clipboard.writeText(code);
-    }
+  document.getElementById("code-copy")?.addEventListener("click", async () => {
+    const code = document.querySelector("#developers pre code")?.textContent;
+    if (code) await navigator.clipboard.writeText(code);
   });
 </script>
 
-<!-- Inline syntax highlighting function since this is a static Astro component -->
-{/* We use a simple client-side approach for highlighting */}
-
 <script is:inline>
-  // Minimal syntax highlighting for the code block
   document.addEventListener("DOMContentLoaded", () => {
-    const codeEl = document.querySelector(".developer .code-content code");
+    const codeEl = document.querySelector("#developers pre code");
     if (!codeEl) return;
     const text = codeEl.textContent || "";
     const highlighted = text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      // Comments
       .replace(/(\/\/.*)/g, '<span style="color:#78716C">$1</span>')
-      // Strings
       .replace(/('(?:[^'\\]|\\.)*')/g, '<span style="color:#D97706">$1</span>')
-      // Keywords
       .replace(
         /\b(import|from|const|await|for|of)\b/g,
         '<span style="color:#DB4D12">$1</span>',
       )
-      // Functions
       .replace(
         /\b(connect|createChat|stream|write)\b(?=\()/g,
         '<span style="color:#FAFAF9">$1</span>',
       )
-      // Properties/methods preceded by .
       .replace(/\.(stdout|text)\b/g, '.<span style="color:#D6D3D1">$1</span>');
     codeEl.innerHTML = highlighted;
   });

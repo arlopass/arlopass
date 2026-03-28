@@ -3,6 +3,10 @@
 export { ArlopassConnectionGate } from "./arlopass-connection-gate.js";
 export { ArlopassProviderGate } from "./arlopass-provider-gate.js";
 export { ArlopassChatReadyGate } from "./arlopass-chat-ready-gate.js";
+export { ArlopassModelGate } from "./arlopass-model-gate.js";
+export { ArlopassFeatureGate } from "./arlopass-feature-gate.js";
+export { ArlopassRequiredGate } from "./arlopass-required-gate.js";
+export { ArlopassExtensionGate } from "./arlopass-extension-gate.js";
 export { ArlopassNotInstalled } from "./arlopass-not-installed.js";
 export { ArlopassDisconnected } from "./arlopass-disconnected.js";
 export { ArlopassConnected } from "./arlopass-connected.js";

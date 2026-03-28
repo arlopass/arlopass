@@ -36,37 +36,43 @@ const faqs = [
       "Yes. Arlopass Enterprise provides zero-trust AI governance with signed policy bundles (Ed25519), org-wide provider allowlists, model restrictions, data-handling rules, and cryptographic audit trails (JSONL + OTLP export). It deploys via MDM (Intune, Jamf) with pre-mapped control alignment for SOC 2, ISO 27001, NIST 800-53, GDPR, and HIPAA compliance frameworks.",
   },
 ];
-
-// Generate FAQ Schema for SEO
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
   mainEntity: faqs.map((f) => ({
     "@type": "Question",
     name: f.question,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: f.answer,
-    },
+    acceptedAnswer: { "@type": "Answer", text: f.answer },
   })),
 };
 ---
 
-<section class="faq" id="faq" aria-labelledby="faq-heading">
-  <div class="container">
-    <div class="faq-header">
-      <span class="section-label">FAQ</span>
-      <h2 id="faq-heading" class="section-title">Frequently asked questions</h2>
+<section
+  class="py-24 bg-[var(--ap-bg-surface)]"
+  id="faq"
+  aria-labelledby="faq-heading"
+>
+  <div class="px-4 md:px-6 lg:px-8">
+    <div class="text-center max-w-[600px] mx-auto mb-12">
+      <span
+        class="inline-block text-xs font-medium uppercase tracking-[0.08em] text-brand mb-4"
+        >FAQ</span
+      >
+      <h2
+        id="faq-heading"
+        class="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight"
+      >
+        Frequently asked questions
+      </h2>
     </div>
-
-    <div class="faq-list">
+    <div class="max-w-[720px] mx-auto flex flex-col">
       {
         faqs.map((faq) => (
-          <details class="faq-item" name="faq">
-            <summary class="faq-question">
+          <details class="border-b border-[var(--ap-border)] group" name="faq">
+            <summary class="flex items-center justify-between gap-4 py-5 cursor-pointer text-base font-medium text-[var(--ap-text-primary)] select-none list-none [&::-webkit-details-marker]:hidden">
               <span>{faq.question}</span>
               <svg
-                class="faq-chevron"
+                class="shrink-0 text-[var(--ap-text-tertiary)] transition-transform group-open:rotate-180"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -80,96 +86,15 @@ const faqSchema = {
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </summary>
-            <div class="faq-answer">
-              <p>{faq.answer}</p>
+            <div class="pb-6">
+              <p class="text-sm text-[var(--ap-text-secondary)] leading-[1.7] max-w-[65ch]">
+                {faq.answer}
+              </p>
             </div>
           </details>
         ))
       }
     </div>
   </div>
-
-  <!-- FAQ Schema for AI & traditional SEO -->
   <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 </section>
-
-<style>
-  .faq {
-    padding: var(--ap-space-24) 0;
-    border-top: none;
-    background: var(--ap-bg-surface);
-  }
-
-  .faq-header {
-    text-align: center;
-    max-width: 600px;
-    margin-inline: auto;
-    margin-bottom: var(--ap-space-12);
-  }
-
-  .section-label {
-    display: inline-block;
-    font-size: var(--ap-text-xs);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ap-brand);
-    margin-bottom: var(--ap-space-4);
-  }
-
-  .section-title {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  .faq-list {
-    max-width: 720px;
-    margin-inline: auto;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .faq-item {
-    border-bottom: 1px solid var(--ap-border);
-  }
-
-  .faq-question {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ap-space-4);
-    padding: var(--ap-space-5) 0;
-    cursor: pointer;
-    font-size: var(--ap-text-base);
-    font-weight: 500;
-    color: var(--ap-text-primary);
-    list-style: none;
-    user-select: none;
-  }
-
-  .faq-question::-webkit-details-marker {
-    display: none;
-  }
-
-  .faq-chevron {
-    flex-shrink: 0;
-    color: var(--ap-text-tertiary);
-    transition: transform var(--ap-ease-small);
-  }
-
-  .faq-item[open] .faq-chevron {
-    transform: rotate(180deg);
-  }
-
-  .faq-answer {
-    padding-bottom: var(--ap-space-6);
-  }
-
-  .faq-answer p {
-    font-size: var(--ap-text-sm);
-    color: var(--ap-text-secondary);
-    line-height: 1.7;
-    max-width: 65ch;
-  }
-</style>

@@ -38,7 +38,15 @@ type PopupView =
   | { type: "main" }
   | { type: "onboarding" }
   | { type: "add-provider" }
-  | { type: "connect-app"; origin: string }
+  | {
+      type: "connect-app";
+      origin: string;
+      appName?: string;
+      appDescription?: string;
+      appIcon?: string;
+      supportedModels?: readonly string[];
+      requiredModels?: readonly string[];
+    }
   | { type: "wallet" };
 
 type PersistedViewState = {
@@ -122,7 +130,25 @@ function WalletContent() {
     void (async () => {
       const pending = await readPendingConnection();
       if (pending !== null) {
-        setView({ type: "connect-app", origin: pending.origin });
+        setView({
+          type: "connect-app",
+          origin: pending.origin,
+          ...(pending.appName !== undefined
+            ? { appName: pending.appName }
+            : {}),
+          ...(pending.appDescription !== undefined
+            ? { appDescription: pending.appDescription }
+            : {}),
+          ...(pending.appIcon !== undefined
+            ? { appIcon: pending.appIcon }
+            : {}),
+          ...(pending.supportedModels !== undefined
+            ? { supportedModels: pending.supportedModels }
+            : {}),
+          ...(pending.requiredModels !== undefined
+            ? { requiredModels: pending.requiredModels }
+            : {}),
+        });
         setRestored(true);
         return;
       }
@@ -169,9 +195,16 @@ function WalletContent() {
     if (!restored || loading) return;
     if (onboardingChecked) return;
     setOnboardingChecked(true);
-    void readSetupState().then((state) => {
+    void readSetupState().then(async (state) => {
       if (!state.completed && providers.length === 0) {
         setView({ type: "onboarding" });
+      } else if (!state.completed && providers.length > 0) {
+        // Providers exist in the vault (e.g. after extension reinstall) —
+        // the user already completed onboarding, just lost the local flag.
+        // Re-mark as complete so the wizard doesn't show again.
+        const { markSetupComplete } =
+          await import("./ui/components/onboarding/setup-state.js");
+        void markSetupComplete();
       }
     });
   }, [restored, loading, providers.length, onboardingChecked]);
@@ -227,6 +260,17 @@ function WalletContent() {
       {view.type === "connect-app" && (
         <AppConnectWizard
           origin={view.origin}
+          {...(view.appName !== undefined ? { appName: view.appName } : {})}
+          {...(view.appDescription !== undefined
+            ? { appDescription: view.appDescription }
+            : {})}
+          {...(view.appIcon !== undefined ? { appIcon: view.appIcon } : {})}
+          {...(view.supportedModels !== undefined
+            ? { supportedModels: view.supportedModels }
+            : {})}
+          {...(view.requiredModels !== undefined
+            ? { requiredModels: view.requiredModels }
+            : {})}
           providers={providers}
           rawProviders={rawProviders}
           onComplete={(approved) => {

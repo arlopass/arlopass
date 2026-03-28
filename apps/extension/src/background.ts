@@ -35,6 +35,7 @@ import type {
   GrantType,
 } from "./permissions/grant-types.js";
 import {
+  preWarmBridgeSession,
   registerVaultProxyListener,
   sendVaultMessageViaProxy,
 } from "./vault-proxy.js";
@@ -559,6 +560,9 @@ registerDefaultWalletMessageListener();
 registerVaultProxyListener();
 registerDefaultTransportMessageListener({ sendVaultMessage: sendVaultMessageViaProxy });
 registerDefaultTransportStreamPortListener({ sendVaultMessage: sendVaultMessageViaProxy });
+
+// Start the bridge handshake eagerly so it's ready before the first message.
+preWarmBridgeSession();
 
 // ---------------------------------------------------------------------------
 // ExtensionBackgroundService

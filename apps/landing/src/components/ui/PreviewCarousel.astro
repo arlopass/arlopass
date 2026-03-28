@@ -1,0 +1,211 @@
+---
+/**
+ * PreviewCarousel — Rotates through child preview panels on a timer.
+ *
+ * Usage:
+ *   <PreviewCarousel interval={6000}>
+ *     <div data-preview>...preview 1...</div>
+ *     <div data-preview>...preview 2...</div>
+ *   </PreviewCarousel>
+ *
+ * Each direct child with [data-preview] is treated as a slide.
+ * The active slide gets class "preview-active", others get "preview-hidden".
+ * Slides animate in/out with opacity + translateY.
+ */
+interface Props {
+  /** Milliseconds between rotations. Default: 6000 */
+  interval?: number;
+  class?: string;
+}
+
+const { interval = 6000, class: className = "" } = Astro.props;
+---
+
+<div
+  class={`preview-carousel relative ${className}`}
+  data-carousel
+  data-interval={interval}
+>
+  <slot />
+</div>
+
+<style is:global>
+  /* Slide states */
+  [data-preview] {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition:
+      opacity 500ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  [data-preview].preview-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    position: relative;
+  }
+
+  [data-preview].preview-exiting {
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+  }
+
+  /* Step animations within a preview */
+  [data-step] {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  [data-step].step-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Stagger delays based on data-step index */
+  [data-step="0"] {
+    transition-delay: 0ms;
+  }
+  [data-step="1"] {
+    transition-delay: 150ms;
+  }
+  [data-step="2"] {
+    transition-delay: 300ms;
+  }
+  [data-step="3"] {
+    transition-delay: 450ms;
+  }
+  [data-step="4"] {
+    transition-delay: 600ms;
+  }
+  [data-step="5"] {
+    transition-delay: 750ms;
+  }
+  [data-step="6"] {
+    transition-delay: 900ms;
+  }
+  [data-step="7"] {
+    transition-delay: 1050ms;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    [data-preview],
+    [data-step] {
+      transition-duration: 0ms !important;
+      transition-delay: 0ms !important;
+    }
+  }
+</style>
+
+<script>
+  class PreviewCarouselController {
+    private el: HTMLElement;
+    private slides: HTMLElement[];
+    private current = 0;
+    private interval: number;
+    private timer: number | undefined;
+    private loopTimers: Map<number, number> = new Map();
+
+    constructor(el: HTMLElement) {
+      this.el = el;
+      this.slides = Array.from(
+        el.querySelectorAll<HTMLElement>(":scope > [data-preview]"),
+      );
+      this.interval = parseInt(el.dataset.interval || "6000", 10);
+
+      if (this.slides.length === 0) return;
+
+      // Initialize: show first slide
+      this.activateSlide(0);
+
+      // Start rotation if more than one slide
+      if (this.slides.length > 1) {
+        this.startTimer();
+      }
+
+      // Pause on hover
+      el.addEventListener("mouseenter", () => this.stopTimer());
+      el.addEventListener("mouseleave", () => this.startTimer());
+    }
+
+    private activateSlide(index: number) {
+      this.slides.forEach((slide, i) => {
+        const steps = slide.querySelectorAll<HTMLElement>("[data-step]");
+
+        // Clear any loop timer for this slide
+        const existingLoop = this.loopTimers.get(i);
+        if (existingLoop) {
+          clearInterval(existingLoop);
+          this.loopTimers.delete(i);
+        }
+
+        if (i === index) {
+          slide.classList.remove("preview-exiting");
+          slide.classList.add("preview-active");
+          // Stagger-reveal steps
+          this.revealSteps(steps);
+
+          // Set up loop if data-loop is present
+          const loopDuration = parseInt(slide.dataset.loop || "0", 10);
+          if (loopDuration > 0) {
+            const loopTimer = window.setInterval(() => {
+              // Only dispatch event — let the preview script handle its own reset
+              slide.dispatchEvent(new CustomEvent("preview:loop"));
+            }, loopDuration);
+            this.loopTimers.set(i, loopTimer);
+          }
+        } else {
+          if (slide.classList.contains("preview-active")) {
+            slide.classList.remove("preview-active");
+            slide.classList.add("preview-exiting");
+            // Hide steps
+            steps.forEach((s) => s.classList.remove("step-visible"));
+            // After exit animation, remove exiting class
+            setTimeout(() => slide.classList.remove("preview-exiting"), 500);
+          }
+        }
+      });
+    }
+
+    private revealSteps(steps: NodeListOf<HTMLElement>) {
+      steps.forEach((step) => {
+        step.classList.remove("step-visible");
+        void step.offsetHeight;
+        requestAnimationFrame(() => step.classList.add("step-visible"));
+      });
+    }
+
+    private next() {
+      this.current = (this.current + 1) % this.slides.length;
+      this.activateSlide(this.current);
+    }
+
+    private startTimer() {
+      this.stopTimer();
+      this.timer = window.setInterval(() => this.next(), this.interval);
+    }
+
+    private stopTimer() {
+      if (this.timer !== undefined) {
+        clearInterval(this.timer);
+        this.timer = undefined;
+      }
+    }
+  }
+
+  // Initialize all carousels on the page
+  document.querySelectorAll<HTMLElement>("[data-carousel]").forEach((el) => {
+    new PreviewCarouselController(el);
+  });
+</script>

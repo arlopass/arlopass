@@ -1,4 +1,4 @@
-import { Center, Stack, Text } from "@mantine/core";
+import { Badge, Center, Group, Stack, Text } from "@mantine/core";
 import { IconPlugConnected } from "@tabler/icons-react";
 import { PrimaryButton } from "../PrimaryButton.js";
 import { tokens } from "../theme.js";
@@ -9,6 +9,8 @@ export type ApproveStepProps = {
   displayName: string;
   iconUrl?: string | undefined;
   description?: string | undefined;
+  supportedModels?: readonly string[] | undefined;
+  requiredModels?: readonly string[] | undefined;
   onApprove: () => void;
   onDecline: () => void;
 };
@@ -18,9 +20,15 @@ export function ApproveStep({
   displayName,
   iconUrl,
   description,
+  supportedModels,
+  requiredModels,
   onApprove,
   onDecline,
 }: ApproveStepProps) {
+  const hasModelRequirements =
+    (supportedModels !== undefined && supportedModels.length > 0) ||
+    (requiredModels !== undefined && requiredModels.length > 0);
+
   return (
     <>
       <Center style={{ flex: 1 }}>
@@ -55,6 +63,61 @@ export function ApproveStep({
             This app wants to connect to your Arlopass wallet to use AI
             providers and models.
           </Text>
+
+          {hasModelRequirements && (
+            <Stack gap={8} w="100%">
+              {requiredModels !== undefined && requiredModels.length > 0 && (
+                <Stack gap={4}>
+                  <Text
+                    fz={10}
+                    fw={600}
+                    c={tokens.color.textSecondary}
+                    tt="uppercase"
+                  >
+                    Required models
+                  </Text>
+                  <Group gap={4} wrap="wrap">
+                    {requiredModels.map((m) => (
+                      <Badge
+                        key={m}
+                        size="xs"
+                        variant="light"
+                        color="red"
+                        radius="sm"
+                      >
+                        {m}
+                      </Badge>
+                    ))}
+                  </Group>
+                </Stack>
+              )}
+              {supportedModels !== undefined && supportedModels.length > 0 && (
+                <Stack gap={4}>
+                  <Text
+                    fz={10}
+                    fw={600}
+                    c={tokens.color.textSecondary}
+                    tt="uppercase"
+                  >
+                    Supported models
+                  </Text>
+                  <Group gap={4} wrap="wrap">
+                    {supportedModels.map((m) => (
+                      <Badge
+                        key={m}
+                        size="xs"
+                        variant="light"
+                        color="blue"
+                        radius="sm"
+                      >
+                        {m}
+                      </Badge>
+                    ))}
+                  </Group>
+                </Stack>
+              )}
+            </Stack>
+          )}
         </Stack>
       </Center>
       <Stack gap={tokens.spacing.sectionGap}>

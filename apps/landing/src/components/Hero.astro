@@ -1,32 +1,94 @@
 ---
-
+import PreviewCarousel from "./ui/PreviewCarousel.astro";
+import ConnectionApproval from "./previews/ConnectionApproval.astro";
+import AppConnectionApproval from "./previews/AppConnectionApproval.astro";
+import ModelSwitch from "./previews/ModelSwitch.astro";
+import StreamingChat from "./previews/StreamingChat.astro";
 ---
 
-<section class="hero" aria-labelledby="hero-heading">
-  <div class="container hero-inner">
-    <div class="hero-content">
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
+<section
+  class="relative pt-16 pb-16 overflow-hidden flex items-center lg:pt-24 lg:pb-20"
+  aria-labelledby="hero-heading"
+>
+  <!-- Background panel — right half with mosaic hero image -->
+  <div
+    class="border-[var(--ap-border)] border-l absolute top-0 bottom-0 right-0 w-full lg:w-1/2 z-0 max-lg:top-auto max-lg:bottom-0 max-lg:h-1/2 overflow-hidden"
+    aria-hidden="true"
+  >
+    <canvas id="hero-mosaic" class="absolute inset-0 w-full h-full"></canvas>
+    <div class="absolute inset-0 bg-[#FFF7ED]/30"></div>
+  </div>
+
+  <script>
+    const TILE = 16;
+    const canvas = document.getElementById("hero-mosaic") as HTMLCanvasElement;
+    if (canvas) {
+      const ctx = canvas.getContext("2d")!;
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = "/hero_bg.webp";
+      img.onload = () => {
+        const draw = () => {
+          const w = canvas.clientWidth;
+          const h = canvas.clientHeight;
+          canvas.width = w;
+          canvas.height = h;
+          const cols = Math.ceil(w / TILE);
+          const rows = Math.ceil(h / TILE);
+          // Draw tiny then scale up for mosaic
+          const offscreen = document.createElement("canvas");
+          offscreen.width = cols;
+          offscreen.height = rows;
+          const octx = offscreen.getContext("2d")!;
+          octx.drawImage(img, 0, 0, cols, rows);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(offscreen, 0, 0, cols, rows, 0, 0, w, h);
+        };
+        draw();
+        const ro = new ResizeObserver(draw);
+        ro.observe(canvas);
+      };
+    }
+  </script>
+
+  <div
+    class="relative z-10 w-full px-4 md:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-10 items-center"
+  >
+    <!-- Left content -->
+    <div
+      class="max-w-[540px] max-lg:text-center max-lg:max-w-full max-lg:mx-auto"
+    >
+      <div
+        class="inline-flex items-center gap-2 text-xs font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-full py-1.5 px-3.5 mb-6"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-success shrink-0"></span>
         Free &middot; Open Source &middot; MIT Licensed
       </div>
 
-      <h1 id="hero-heading" class="hero-title">
+      <h1
+        id="hero-heading"
+        class="text-[clamp(2.5rem,5.5vw,3.25rem)] font-[750] leading-[1.08] tracking-[-0.03em] text-[var(--ap-text-primary)] mb-6"
+      >
         Your AI, your models,<br />your rules.
       </h1>
 
-      <p class="hero-subtitle">
+      <p
+        class="text-base leading-[1.7] text-[var(--ap-text-secondary)] mb-8 max-w-[460px] max-lg:max-w-full max-lg:mx-auto"
+      >
         Arlopass is an open-source browser extension that lets web apps use
-        <em>your</em> AI providers — Ollama, Claude, GPT, Gemini, or Bedrock — without
-        ever seeing your API keys. You choose which apps to trust, pick your model,
-        and stay in control.
+        <em class="not-italic text-brand">your</em> AI providers — Ollama, Claude,
+        GPT, Gemini, or Bedrock — without ever seeing your API keys. You choose which
+        apps to trust, pick your model, and stay in control.
       </p>
 
-      <div class="hero-actions">
+      <div
+        class="flex flex-wrap gap-3 mb-10 max-lg:justify-center max-[480px]:flex-col max-[480px]:items-stretch"
+      >
         <a
           href="https://chrome.google.com/webstore"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn-primary"
+          class="inline-flex items-center gap-2 text-sm font-medium text-stone-50 bg-[var(--ap-text-primary)] py-3 px-6 rounded-lg no-underline hover:opacity-85 hover:text-stone-50 transition-opacity max-[480px]:justify-center"
         >
           <svg
             width="18"
@@ -38,18 +100,20 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             aria-hidden="true"
+            ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline
+              points="7 10 12 15 17 10"></polyline><line
+              x1="12"
+              y1="15"
+              x2="12"
+              y2="3"></line></svg
           >
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
           Install for Chrome
         </a>
         <a
           href="https://github.com/arlopass"
           target="_blank"
           rel="noopener noreferrer"
-          class="btn-secondary"
+          class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border-strong)] py-3 px-6 rounded-lg no-underline hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)] transition-all max-[480px]:justify-center"
         >
           <svg
             width="18"
@@ -57,509 +121,63 @@
             viewBox="0 0 24 24"
             fill="currentColor"
             aria-hidden="true"
-          >
-            <path
+            ><path
               d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"
-            ></path>
-          </svg>
+            ></path></svg
+          >
           View on GitHub
         </a>
       </div>
 
-      <div class="hero-stats">
-        <div class="stat">
-          <span class="stat-value">10 lines</span>
-          <span class="stat-label">to integrate</span>
+      <div class="flex items-center gap-6 flex-wrap max-lg:justify-center">
+        <div class="flex flex-col gap-0.5">
+          <span
+            class="text-sm font-semibold text-[var(--ap-text-primary)] font-mono"
+            >10 lines</span
+          >
+          <span class="text-xs text-[var(--ap-text-tertiary)]"
+            >to integrate</span
+          >
         </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-value">0 keys</span>
-          <span class="stat-label">on your server</span>
+        <div class="w-px h-8 bg-[var(--ap-border)]"></div>
+        <div class="flex flex-col gap-0.5">
+          <span
+            class="text-sm font-semibold text-[var(--ap-text-primary)] font-mono"
+            >0 keys</span
+          >
+          <span class="text-xs text-[var(--ap-text-tertiary)]"
+            >on your server</span
+          >
         </div>
-        <div class="stat-divider"></div>
-        <div class="stat">
-          <span class="stat-value">Any model</span>
-          <span class="stat-label">user's choice</span>
+        <div class="w-px h-8 bg-[var(--ap-border)]"></div>
+        <div class="flex flex-col gap-0.5">
+          <span
+            class="text-sm font-semibold text-[var(--ap-text-primary)] font-mono"
+            >Any model</span
+          >
+          <span class="text-xs text-[var(--ap-text-tertiary)]"
+            >user's choice</span
+          >
         </div>
       </div>
     </div>
 
-    <div class="hero-visual">
-      <!-- Stylized extension approval prompt mockup -->
-      <div class="mockup-window">
-        <div class="mockup-titlebar">
-          <div class="mockup-dots">
-            <span class="dot dot-red"></span>
-            <span class="dot dot-yellow"></span>
-            <span class="dot dot-green"></span>
-          </div>
-          <span class="mockup-title">demo-app.com</span>
-        </div>
-        <div class="mockup-body">
-          <div class="mockup-prompt">
-            <div class="prompt-header">
-              <img
-                src="/ArlopassIcon.svg"
-                alt=""
-                width="20"
-                height="20"
-                aria-hidden="true"
-              />
-              <span class="prompt-brand">Arlopass</span>
-            </div>
-            <p class="prompt-title">AI access requested</p>
-            <p class="prompt-desc">demo-app.com wants to use AI chat.</p>
-
-            <div class="prompt-provider">
-              <span class="provider-label">Choose provider</span>
-              <div class="provider-options">
-                <button class="provider-option" aria-pressed="false">
-                  <img
-                    class="provider-icon"
-                    src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/ollama.svg"
-                    alt=""
-                    width="16"
-                    height="16"
-                  /> Ollama
-                </button>
-                <button class="provider-option selected" aria-pressed="true">
-                  <img
-                    class="provider-icon"
-                    src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/claude.svg"
-                    alt=""
-                    width="16"
-                    height="16"
-                  /> Claude
-                </button>
-                <button class="provider-option" aria-pressed="false">
-                  <img
-                    class="provider-icon"
-                    src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/openai.svg"
-                    alt=""
-                    width="16"
-                    height="16"
-                  /> GPT-4
-                </button>
-              </div>
-            </div>
-
-            <div class="prompt-actions">
-              <button class="prompt-deny">Deny</button>
-              <button class="prompt-approve">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                  ><polyline points="20 6 9 17 4 12"></polyline></svg
-                >
-                Approve
-              </button>
-            </div>
-          </div>
-        </div>
+    <!-- Right visual — Animated preview carousel -->
+    <div
+      class="flex justify-center items-center min-h-[400px] max-lg:min-h-[320px]"
+    >
+      <div
+        class="rounded-2xl bg-white/40 p-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg"
+      >
+        <PreviewCarousel
+          interval={30000}
+          class="w-[300px] max-[480px]:w-[270px]"
+        >
+          <AppConnectionApproval />
+          <ModelSwitch />
+          <StreamingChat />
+        </PreviewCarousel>
       </div>
-      <div class="hero-glow"></div>
     </div>
   </div>
 </section>
-
-<style>
-  .hero {
-    padding-top: calc(64px + var(--ap-space-20));
-    padding-bottom: var(--ap-space-24);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-inner {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ap-space-16);
-    align-items: center;
-  }
-
-  @media (min-width: 1024px) {
-    .hero-inner {
-      grid-template-columns: 1fr 1fr;
-      gap: var(--ap-space-16);
-    }
-  }
-
-  /* Content */
-  .hero-content {
-    animation: fade-in-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ap-space-2);
-    font-size: var(--ap-text-xs);
-    font-weight: 500;
-    color: var(--ap-text-secondary);
-    background: var(--ap-bg-surface);
-    border: 1px solid var(--ap-border);
-    border-radius: var(--ap-radius-full);
-    padding: 6px 14px;
-    margin-bottom: var(--ap-space-8);
-  }
-
-  .badge-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--ap-success);
-    flex-shrink: 0;
-  }
-
-  .hero-title {
-    font-size: clamp(2.5rem, 6vw, 4.25rem);
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    margin-bottom: var(--ap-space-6);
-    color: var(--ap-text-primary);
-  }
-
-  .hero-title em {
-    font-style: normal;
-    color: var(--ap-brand);
-  }
-
-  .hero-definition {
-    font-size: var(--ap-text-sm);
-    line-height: 1.6;
-    color: var(--ap-text-tertiary);
-    max-width: 520px;
-    margin-bottom: var(--ap-space-4);
-  }
-
-  .hero-subtitle {
-    font-size: clamp(1rem, 1.5vw, 1.175rem);
-    line-height: 1.7;
-    color: var(--ap-text-secondary);
-    max-width: 520px;
-    margin-bottom: var(--ap-space-10);
-  }
-
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--ap-space-3);
-    margin-bottom: var(--ap-space-12);
-  }
-
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ap-space-2);
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    color: #fafaf9;
-    background: var(--ap-brand);
-    padding: 12px 28px;
-    border-radius: var(--ap-radius-sm);
-    text-decoration: none;
-    transition:
-      background var(--ap-ease-micro),
-      transform var(--ap-ease-micro);
-  }
-  .btn-primary:hover {
-    background: var(--ap-brand-hover);
-    color: #fafaf9;
-    transform: translateY(-1px);
-  }
-
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ap-space-2);
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    color: var(--ap-text-body);
-    background: transparent;
-    border: 1px solid var(--ap-border);
-    padding: 12px 28px;
-    border-radius: var(--ap-radius-sm);
-    text-decoration: none;
-    transition:
-      border-color var(--ap-ease-micro),
-      background var(--ap-ease-micro);
-  }
-  .btn-secondary:hover {
-    border-color: var(--ap-border-strong);
-    background: var(--ap-bg-surface);
-    color: var(--ap-text-body);
-  }
-
-  .hero-stats {
-    display: flex;
-    align-items: center;
-    gap: var(--ap-space-6);
-    flex-wrap: wrap;
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .stat-value {
-    font-size: var(--ap-text-sm);
-    font-weight: 600;
-    color: var(--ap-text-primary);
-    font-family: var(--ap-font-code);
-  }
-
-  .stat-label {
-    font-size: var(--ap-text-xs);
-    color: var(--ap-text-tertiary);
-  }
-
-  .stat-divider {
-    width: 1px;
-    height: 32px;
-    background: var(--ap-border);
-  }
-
-  /* Visual — Extension Mockup */
-  .hero-visual {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    animation: fade-in-up 600ms cubic-bezier(0.16, 1, 0.3, 1) 150ms both;
-  }
-
-  .hero-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(
-      circle,
-      color-mix(in oklch, var(--ap-brand) 15%, transparent) 0%,
-      transparent 70%
-    );
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: -1;
-    animation: pulse-glow 4s ease-in-out infinite;
-  }
-
-  .mockup-window {
-    width: 100%;
-    max-width: 380px;
-    background: var(--ap-bg-surface);
-    border: 1px solid var(--ap-border);
-    border-radius: var(--ap-radius-lg);
-    overflow: hidden;
-    box-shadow:
-      0 24px 48px -12px rgba(0, 0, 0, 0.35),
-      0 0 0 1px color-mix(in oklch, var(--ap-brand) 8%, transparent);
-  }
-
-  .mockup-titlebar {
-    display: flex;
-    align-items: center;
-    gap: var(--ap-space-3);
-    padding: 12px 16px;
-    background: var(--ap-bg-elevated);
-    border-bottom: 1px solid var(--ap-border);
-  }
-
-  .mockup-dots {
-    display: flex;
-    gap: 6px;
-  }
-
-  .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-  .dot-red {
-    background: #ef4444;
-  }
-  .dot-yellow {
-    background: #eab308;
-  }
-  .dot-green {
-    background: #22c55e;
-  }
-
-  .mockup-title {
-    font-size: var(--ap-text-xs);
-    color: var(--ap-text-tertiary);
-    font-family: var(--ap-font-code);
-  }
-
-  .mockup-body {
-    padding: 20px;
-  }
-
-  .mockup-prompt {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ap-space-4);
-  }
-
-  .prompt-header {
-    display: flex;
-    align-items: center;
-    gap: var(--ap-space-2);
-  }
-
-  .prompt-brand {
-    font-size: var(--ap-text-sm);
-    font-weight: 600;
-    color: var(--ap-text-primary);
-  }
-
-  .prompt-title {
-    font-size: var(--ap-text-lg);
-    font-weight: 600;
-    color: var(--ap-text-primary);
-    line-height: 1.3;
-  }
-
-  .prompt-desc {
-    font-size: var(--ap-text-sm);
-    color: var(--ap-text-secondary);
-    line-height: 1.5;
-  }
-
-  .prompt-provider {
-    display: flex;
-    flex-direction: column;
-    gap: var(--ap-space-2);
-  }
-
-  .provider-label {
-    font-size: var(--ap-text-xs);
-    color: var(--ap-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 500;
-  }
-
-  .provider-options {
-    display: flex;
-    gap: var(--ap-space-2);
-  }
-
-  .provider-option {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    font-size: var(--ap-text-xs);
-    font-weight: 500;
-    font-family: var(--ap-font-body);
-    color: var(--ap-text-secondary);
-    background: var(--ap-bg-base);
-    border: 1px solid var(--ap-border);
-    border-radius: var(--ap-radius-sm);
-    cursor: pointer;
-    transition: all var(--ap-ease-micro);
-  }
-
-  .provider-option.selected {
-    color: var(--ap-brand);
-    border-color: var(--ap-brand);
-    background: var(--ap-brand-subtle-dark);
-  }
-
-  .provider-icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    filter: brightness(0) invert(0.7);
-  }
-
-  .provider-option.selected .provider-icon {
-    filter: brightness(0) invert(0.9);
-  }
-
-  .prompt-actions {
-    display: flex;
-    gap: var(--ap-space-2);
-    margin-top: var(--ap-space-2);
-  }
-
-  .prompt-deny {
-    flex: 1;
-    padding: 10px 16px;
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    font-family: var(--ap-font-body);
-    color: var(--ap-text-secondary);
-    background: transparent;
-    border: 1px solid var(--ap-border);
-    border-radius: var(--ap-radius-sm);
-    cursor: pointer;
-  }
-
-  .prompt-approve {
-    flex: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 16px;
-    font-size: var(--ap-text-sm);
-    font-weight: 500;
-    font-family: var(--ap-font-body);
-    color: #fafaf9;
-    background: var(--ap-brand);
-    border: none;
-    border-radius: var(--ap-radius-sm);
-    cursor: pointer;
-  }
-
-  @media (max-width: 1023px) {
-    .hero {
-      padding-top: calc(64px + var(--ap-space-12));
-      padding-bottom: var(--ap-space-16);
-      text-align: center;
-    }
-    .hero-subtitle {
-      margin-inline: auto;
-    }
-    .hero-actions {
-      justify-content: center;
-    }
-    .hero-stats {
-      justify-content: center;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .hero-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .btn-primary,
-    .btn-secondary {
-      justify-content: center;
-      padding: 14px 20px;
-    }
-    .hero-stats {
-      gap: var(--ap-space-4);
-    }
-    .mockup-window {
-      max-width: 100%;
-    }
-    .provider-options {
-      flex-wrap: wrap;
-    }
-  }
-</style>

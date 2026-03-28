@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ConversationManager } from "@arlopass/web-sdk";
 import type { ArlopassSDKError } from "@arlopass/web-sdk";
 import type {
@@ -8,11 +8,13 @@ import type {
     ChatSubscribe,
     ContextWindowInfo,
     MessageId,
+    ToolActivityState,
     ToolDefinition,
     TrackedChatMessage,
 } from "../types.js";
+import { TOOL_ACTIVITY_IDLE } from "../types.js";
 import { Subscriptions } from "../store/subscriptions.js";
-import { useArlopassContext } from "./use-store.js";
+import { useArlopassContext, useStoreSnapshot } from "./use-store.js";
 
 function generateMessageId(): MessageId {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -45,6 +47,8 @@ type UseConversationReturn = Readonly<{
     tokenCount: number;
     contextWindow: readonly ChatMessage[];
     contextInfo: ContextWindowInfo;
+    /** Current tool activity — priming, executing, result, or idle. */
+    toolActivity: ToolActivityState;
     send: (content: string, options?: { pinned?: boolean }) => Promise<MessageId>;
     stream: (content: string, options?: { pinned?: boolean }) => Promise<MessageId>;
     stop: () => void;
@@ -57,6 +61,7 @@ type UseConversationReturn = Readonly<{
 
 export function useConversation(options?: UseConversationOptions): UseConversationReturn {
     const { store } = useArlopassContext();
+    const snapshot = useStoreSnapshot();
     const [messages, setMessages] = useState<TrackedChatMessage[]>(
         () => options?.initialMessages ?? [],
     );
@@ -70,12 +75,14 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const [contextInfo, setContextInfo] = useState<ContextWindowInfo>({
         maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0,
     });
+    const [toolActivity, setToolActivity] = useState<ToolActivityState>(TOOL_ACTIVITY_IDLE);
 
     const messagesRef = useRef<TrackedChatMessage[]>(options?.initialMessages ?? []);
     const abortRef = useRef<AbortController | null>(null);
     const busyRef = useRef(false);
     const lastRequestRef = useRef<{ type: "send" | "stream"; content: string; pinned?: boolean } | null>(null);
     const subsRef = useRef(new Subscriptions());
+    const usedToolsRef = useRef<string[]>([]);
 
     const managerRef = useRef<ConversationManager | null>(null);
     if (managerRef.current === null) {
@@ -90,6 +97,32 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         if (options?.hideToolCalls !== undefined) managerOpts.hideToolCalls = options.hideToolCalls;
         managerRef.current = new ConversationManager(managerOpts);
     }
+
+    const optionsRef = useRef(options);
+    optionsRef.current = options;
+
+    // Recreate the ConversationManager when the selected provider/model changes
+    // so maxTokens reflects the new model's context window.
+    useEffect(() => {
+        if (snapshot.selectedProvider === null) return;
+        const opts = optionsRef.current;
+        const managerOpts: ConstructorParameters<typeof ConversationManager>[0] = {
+            client: store.client,
+        };
+        if (opts?.systemPrompt !== undefined) managerOpts.systemPrompt = opts.systemPrompt;
+        if (opts?.tools !== undefined) managerOpts.tools = opts.tools;
+        if (opts?.maxTokens !== undefined) managerOpts.maxTokens = opts.maxTokens;
+        if (opts?.maxToolRounds !== undefined) managerOpts.maxToolRounds = opts.maxToolRounds;
+        if (opts?.primeTools !== undefined) managerOpts.primeTools = opts.primeTools;
+        if (opts?.hideToolCalls !== undefined) managerOpts.hideToolCalls = opts.hideToolCalls;
+        managerRef.current = new ConversationManager(managerOpts);
+        const info = managerRef.current.getContextInfo();
+        setContextInfo(info);
+        setTokenCount(managerRef.current.getTokenCount());
+        setContextWindow(managerRef.current.getContextWindow());
+        // Only re-run when selectedProvider identity changes (providerId + modelId)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [snapshot.selectedProvider, store]);
 
     const appendMessage = useCallback((msg: TrackedChatMessage) => {
         messagesRef.current = [...messagesRef.current, msg];
@@ -168,6 +201,8 @@ export function useConversation(options?: UseConversationOptions): UseConversati
             : { type: "stream", content };
         setError(null);
         setIsStreaming(true);
+        setToolActivity(TOOL_ACTIVITY_IDLE);
+        usedToolsRef.current = [];
 
         const userMsgId = generateMessageId();
         const userMsg: TrackedChatMessage = {
@@ -207,20 +242,32 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                         }, 0);
                     }
                 } else if (event.type === "tool_call") {
+                    // New tool round — reset streaming content (old text was tool markup)
+                    accumulated = "";
+                    setStreamingContent("");
+                    if (!usedToolsRef.current.includes(event.name)) {
+                        usedToolsRef.current.push(event.name);
+                    }
+                    setToolActivity({ phase: "executing", name: event.name, arguments: event.arguments });
                     subsRef.current.notify();
                 } else if (event.type === "tool_result") {
+                    setToolActivity({ phase: "result", name: event.name });
                     subsRef.current.notify();
                 } else if (event.type === "tool_priming_start") {
+                    setToolActivity({ phase: "priming" });
                     subsRef.current.notify();
                 } else if (event.type === "tool_priming_match") {
+                    setToolActivity({ phase: "matched", tools: event.tools });
                     subsRef.current.notify();
                 } else if (event.type === "tool_priming_end") {
+                    setToolActivity(TOOL_ACTIVITY_IDLE);
                     subsRef.current.notify();
                 } else if (event.type === "done") {
                     // Stream finished
                 }
             }
 
+            const tools = [...usedToolsRef.current];
             const assistantMsg: TrackedChatMessage = {
                 id: assistantMsgId,
                 role: "assistant",
@@ -228,10 +275,12 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                 inResponseTo: userMsgId,
                 status: "complete",
                 pinned: false,
+                ...(tools.length > 0 ? { usedTools: tools } : {}),
             };
             appendMessage(assistantMsg);
             setStreamingContent("");
             setStreamingMessageId(null);
+            setToolActivity(TOOL_ACTIVITY_IDLE);
             refreshTokenState();
             subsRef.current.notify();
             return userMsgId;
@@ -260,6 +309,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         } finally {
             busyRef.current = false;
             setIsStreaming(false);
+            setToolActivity(TOOL_ACTIVITY_IDLE);
             abortRef.current = null;
         }
     }, [store, appendMessage, updateMessage, refreshTokenState]);
@@ -282,6 +332,8 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         setTokenCount(0);
         setContextWindow([]);
         setContextInfo({ maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0 });
+        setToolActivity(TOOL_ACTIVITY_IDLE);
+        usedToolsRef.current = [];
         busyRef.current = false;
         lastRequestRef.current = null;
     }, []);
@@ -338,6 +390,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         tokenCount,
         contextWindow,
         contextInfo,
+        toolActivity,
         send,
         stream,
         stop,

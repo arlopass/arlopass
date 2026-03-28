@@ -16,6 +16,11 @@ import { tokens } from "../theme.js";
 
 export type AppConnectWizardProps = {
   origin: string;
+  appName?: string;
+  appDescription?: string;
+  appIcon?: string;
+  supportedModels?: readonly string[];
+  requiredModels?: readonly string[];
   providers: ProviderCardData[];
   rawProviders: WalletProvider[];
   onComplete: (approved: boolean) => void;
@@ -23,6 +28,11 @@ export type AppConnectWizardProps = {
 
 export function AppConnectWizard({
   origin,
+  appName,
+  appDescription,
+  appIcon,
+  supportedModels,
+  requiredModels,
   providers,
   rawProviders,
   onComplete,
@@ -117,7 +127,11 @@ export function AppConnectWizard({
         {state.step === "approve" && (
           <ApproveStep
             origin={state.origin}
-            displayName={state.displayName}
+            displayName={appName ?? state.displayName}
+            description={appDescription}
+            iconUrl={appIcon}
+            supportedModels={supportedModels}
+            requiredModels={requiredModels}
             onApprove={() => dispatch({ type: "APPROVE" })}
             onDecline={() => onComplete(false)}
           />
@@ -139,6 +153,8 @@ export function AppConnectWizard({
             rawProviders={rawProviders}
             selectedProviderIds={state.enabledProviderIds}
             selectedModelIds={state.enabledModelIds}
+            supportedModels={supportedModels}
+            requiredModels={requiredModels}
             onToggle={(ids) => dispatch({ type: "SET_MODELS", modelIds: ids })}
             onNext={() => dispatch({ type: "GO_TO_SETTINGS" })}
           />

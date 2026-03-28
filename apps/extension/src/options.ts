@@ -11,11 +11,8 @@ import {
 } from "./transport/bridge-pairing.js";
 import {
   ensureBridgeHandshakeSession,
+  clearBridgeHandshakeSessionCache,
 } from "./transport/bridge-handshake.js";
-import { sendVaultMessageFromPage } from "./vault-proxy.js";
-
-// Use the background-owned persistent bridge port for vault calls
-const sendVaultMessage = sendVaultMessageFromPage;
 
 type ProviderModel = Readonly<{
   id: string;
@@ -92,6 +89,7 @@ type ProviderEditState = Readonly<{
   providerName: string;
 }>;
 
+const STORAGE_KEY_PROVIDERS = "arlopass.wallet.providers.v1";
 const STORAGE_KEY_ACTIVE = "arlopass.wallet.activeProvider.v1";
 const STORAGE_KEY_LAST_ERROR = "arlopass.wallet.ui.lastError.v1";
 const PROVIDER_ID_PREFIX = "provider";
@@ -722,31 +720,17 @@ function parseActiveProvider(value: unknown): ActiveProviderRef | null {
 }
 
 async function getStorageSnapshot(): Promise<ProviderStorageSnapshot> {
-  let providers: StoredProvider[] = [];
-  try {
-    const resp = await sendVaultMessage({ type: "vault.providers.list" });
-    const vaultProviders = (resp["providers"] ?? []) as Array<Record<string, unknown>>;
-    providers = vaultProviders
-      .map((vp) => parseStoredProvider({
-        id: vp["id"],
-        name: vp["name"],
-        type: vp["type"],
-        status: vp["status"] ?? "disconnected",
-        models: (vp["models"] as string[] ?? []).map(m => ({ id: m, name: m })),
-        metadata: vp["metadata"],
-      }))
-      .filter((p): p is StoredProvider => p !== null);
-  } catch (err) {
-    console.error("Failed to load providers from vault:", err);
-  }
+  return new Promise((resolve) => {
+    chrome.storage.local.get([STORAGE_KEY_PROVIDERS, STORAGE_KEY_ACTIVE], (rawState) => {
+      const rawProviders = rawState[STORAGE_KEY_PROVIDERS];
+      const providers = Array.isArray(rawProviders)
+        ? rawProviders.map(parseStoredProvider).filter((provider): provider is StoredProvider => provider !== null)
+        : [];
+      const activeProvider = parseActiveProvider(rawState[STORAGE_KEY_ACTIVE]);
 
-  // Active provider stays in chrome.storage (per-browser)
-  const activeRaw = await new Promise<Record<string, unknown>>((resolve) => {
-    chrome.storage.local.get([STORAGE_KEY_ACTIVE], (r) => resolve(r as Record<string, unknown>));
+      resolve({ providers, activeProvider });
+    });
   });
-  const activeProvider = parseActiveProvider(activeRaw[STORAGE_KEY_ACTIVE]);
-
-  return { providers, activeProvider };
 }
 
 async function writeStorageState(state: {
@@ -754,32 +738,22 @@ async function writeStorageState(state: {
   activeProvider: ActiveProviderRef | null;
   clearError?: boolean;
 }): Promise<void> {
-  // Write each provider to vault
-  for (const provider of state.providers) {
-    await sendVaultMessage({
-      type: "vault.providers.save",
-      id: provider.id,
-      name: provider.name,
-      providerType: provider.type,
-      connectorId: provider.metadata?.["connectorId"] ?? provider.type,
-      credentialId: provider.metadata?.["credentialId"] ?? "",
-      metadata: provider.metadata ?? {},
-      models: provider.models.map(m => m.id),
-      status: provider.status,
-    });
-  }
-
-  // Active provider stays in chrome.storage
   const update: Record<string, unknown> = {
+    [STORAGE_KEY_PROVIDERS]: state.providers,
     [STORAGE_KEY_ACTIVE]: state.activeProvider,
   };
   if (state.clearError === true) {
     update[STORAGE_KEY_LAST_ERROR] = null;
   }
-  await new Promise<void>((resolve, reject) => {
+
+  return new Promise((resolve, reject) => {
     chrome.storage.local.set(update, () => {
-      if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-      else resolve();
+      const runtimeError = chrome.runtime.lastError;
+      if (runtimeError !== undefined) {
+        reject(new Error(runtimeError.message ?? "Failed to write wallet state."));
+        return;
+      }
+      resolve();
     });
   });
 }

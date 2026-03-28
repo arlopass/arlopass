@@ -15,6 +15,12 @@ const PENDING_KEY = "arlopass.wallet.pendingConnection.v1";
 
 export type PendingConnectionRequest = {
     origin: string;
+    appId?: string;
+    appName?: string;
+    appDescription?: string;
+    appIcon?: string;
+    supportedModels?: readonly string[];
+    requiredModels?: readonly string[];
     requestedAt: number;
 };
 

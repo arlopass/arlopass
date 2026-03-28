@@ -38,6 +38,7 @@ vi.mock("../transport/bridge-pairing.js", () => ({
 
 vi.mock("../vault-proxy.js", () => ({
   registerVaultProxyListener: vi.fn(),
+  preWarmBridgeSession: vi.fn(),
   sendVaultMessageViaProxy: vi.fn().mockResolvedValue({ type: "vault.providers.list", providers: [] }),
   sendVaultMessageFromPage: vi.fn().mockResolvedValue({ type: "vault.providers.list", providers: [] }),
 }));

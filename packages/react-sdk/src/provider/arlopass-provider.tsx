@@ -19,6 +19,8 @@ export function ArlopassProvider({
   appIcon,
   defaultProvider,
   defaultModel,
+  supportedModels,
+  requiredModels,
   autoConnect = true,
   onError,
   children,
@@ -67,6 +69,8 @@ export function ArlopassProvider({
           ...(appName !== undefined ? { appName } : {}),
           ...(appDescription !== undefined ? { appDescription } : {}),
           ...(appIcon !== undefined ? { appIcon } : {}),
+          ...(supportedModels !== undefined ? { supportedModels } : {}),
+          ...(requiredModels !== undefined ? { requiredModels } : {}),
         });
         store!.refreshSnapshot();
 
@@ -108,6 +112,8 @@ export function ArlopassProvider({
     autoConnect,
     defaultModel,
     defaultProvider,
+    supportedModels,
+    requiredModels,
     onError,
     store,
     transportAvailable,
@@ -122,9 +128,18 @@ export function ArlopassProvider({
     };
   }, [store]);
 
+  const modelRequirements = useMemo(() => {
+    if (supportedModels === undefined && requiredModels === undefined)
+      return null;
+    return {
+      ...(supportedModels !== undefined ? { supported: supportedModels } : {}),
+      ...(requiredModels !== undefined ? { required: requiredModels } : {}),
+    };
+  }, [supportedModels, requiredModels]);
+
   const contextValue = useMemo<ArlopassContextValue>(
-    () => ({ store, transportAvailable }),
-    [store, transportAvailable],
+    () => ({ store, transportAvailable, modelRequirements }),
+    [store, transportAvailable, modelRequirements],
   );
 
   return (

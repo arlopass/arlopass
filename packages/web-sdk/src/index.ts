@@ -2,6 +2,7 @@ export { deriveAppIdPrefix, resolveAppId, isDevOrigin, validateAppIdForOrigin, v
 export * from "./client.js";
 export * from "./conversation.js";
 export * from "./errors.js";
+export * from "./model-availability.js";
 export * from "./model-context-windows.js";
 export * from "./state-machine.js";
 export * from "./token-estimation.js";

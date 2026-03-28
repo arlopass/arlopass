@@ -4,8 +4,9 @@ import { useContext, useSyncExternalStore } from "react";
 import { ArlopassContext } from "../provider/arlopass-context.js";
 import type { ClientSnapshot } from "../store/snapshot.js";
 import type { ClientStore } from "../store/client-store.js";
+import type { ModelRequirements } from "../types.js";
 
-export function useArlopassContext(): { store: ClientStore; transportAvailable: boolean } {
+export function useArlopassContext(): { store: ClientStore; transportAvailable: boolean; modelRequirements: ModelRequirements | null } {
     const ctx = useContext(ArlopassContext);
     if (ctx === null) {
         throw new Error(

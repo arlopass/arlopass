@@ -1,0 +1,348 @@
+---
+import PreviewPanel from "../ui/PreviewPanel.astro";
+import ClickPing from "../ui/ClickPing.astro";
+const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+---
+
+<PreviewPanel loop={10000}>
+  <!-- Main flow -->
+  <div
+    id="ca-flow"
+    class="flex flex-col gap-3 transition-opacity duration-400 relative"
+  >
+    <div data-step="0" class="flex items-center gap-2">
+      <img
+        src="/ArlopassIcon.svg"
+        alt=""
+        width="18"
+        height="18"
+        aria-hidden="true"
+      />
+      <span class="text-sm font-semibold text-[var(--ap-text-primary)] flex-1"
+        >Arlopass</span
+      >
+      <span
+        id="ca-badge"
+        class="ca-badge-pending text-[10px] font-semibold py-0.5 px-2 rounded-full uppercase tracking-wide transition-all duration-300"
+        >Pending</span
+      >
+    </div>
+
+    <p
+      data-step="1"
+      class="text-sm text-[var(--ap-text-secondary)] leading-snug"
+    >
+      demo-app.com wants to use AI
+    </p>
+
+    <!-- Model selector — z-20 so dropdown floats above buttons -->
+    <div data-step="2" class="relative z-20">
+      <span
+        class="text-[11px] font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wider block mb-1"
+        >Model</span
+      >
+      <button
+        id="ca-trigger"
+        class="w-full flex items-center gap-2 py-2 px-2.5 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md text-xs font-medium text-[var(--ap-text-tertiary)] cursor-default transition-all duration-200"
+      >
+        <span id="ca-ticon" class="hidden shrink-0"
+          ><img
+            src={`${IC}/claude.svg`}
+            alt=""
+            width="14"
+            height="14"
+            class="w-3.5 h-3.5 picon"
+          /></span
+        >
+        <span id="ca-ttext" class="flex-1 text-left">Select a model…</span>
+        <svg
+          id="ca-chev"
+          class="shrink-0 transition-transform duration-200 text-[var(--ap-text-tertiary)]"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><polyline points="6 9 12 15 18 9"></polyline></svg
+        >
+      </button>
+
+      <div
+        id="ca-dd"
+        class="absolute left-0 right-0 top-[calc(100%+4px)] z-30 bg-[var(--ap-bg-base)] border border-[var(--ap-border)] rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-250 origin-top"
+        style="opacity:0;transform:scaleY(0.92) translateY(-4px);pointer-events:none;"
+      >
+        <div class="p-1 flex flex-col gap-0.5">
+          <div
+            id="ca-o0"
+            class="flex items-center gap-2 py-2 px-2.5 rounded-md text-xs text-[var(--ap-text-secondary)] transition-colors duration-150"
+          >
+            <img
+              src={`${IC}/ollama.svg`}
+              alt=""
+              width="14"
+              height="14"
+              class="w-3.5 h-3.5 picon"
+            /><span class="flex-1">Ollama · Llama 3</span>
+          </div>
+          <div
+            id="ca-o1"
+            class="flex items-center gap-2 py-2 px-2.5 rounded-md text-xs text-[var(--ap-text-secondary)] transition-colors duration-150"
+          >
+            <img
+              src={`${IC}/claude.svg`}
+              alt=""
+              width="14"
+              height="14"
+              class="w-3.5 h-3.5 picon"
+            /><span class="flex-1">Claude 3.5 Sonnet</span>
+          </div>
+          <div
+            id="ca-o2"
+            class="flex items-center gap-2 py-2 px-2.5 rounded-md text-xs text-[var(--ap-text-secondary)] transition-colors duration-150"
+          >
+            <img
+              src={`${IC}/openai.svg`}
+              alt=""
+              width="14"
+              height="14"
+              class="w-3.5 h-3.5 picon"
+            /><span class="flex-1">GPT-4o</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons — z-10, below dropdown -->
+    <div data-step="3" class="flex gap-2 mt-1 relative z-10">
+      <button
+        class="flex-1 py-2 px-3 text-xs font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md cursor-default font-sans"
+        >Deny</button
+      >
+      <button
+        id="ca-btn"
+        class="flex-1 py-2 px-3 text-xs font-medium text-stone-50 bg-brand border-none rounded-md cursor-default font-sans transition-all duration-200"
+        >Allow connection</button
+      >
+    </div>
+  </div>
+
+  <!-- Connecting spinner overlay -->
+  <div
+    id="ca-connecting"
+    class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 opacity-0 transition-opacity duration-300 pointer-events-none"
+  >
+    <div
+      class="w-10 h-10 border-2 border-[var(--ap-border)] border-t-brand rounded-full animate-spin"
+    >
+    </div>
+    <p class="text-sm font-medium text-[var(--ap-text-primary)]">Connecting…</p>
+    <p class="text-xs text-[var(--ap-text-tertiary)]">
+      Establishing secure session
+    </p>
+  </div>
+
+  <!-- Success overlay -->
+  <div
+    id="ca-ok"
+    class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 opacity-0 transition-opacity duration-400 pointer-events-none"
+  >
+    <div
+      class="w-12 h-12 rounded-full bg-[var(--ap-success-subtle)] flex items-center justify-center"
+    >
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--color-success)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><polyline points="20 6 9 17 4 12"></polyline></svg
+      >
+    </div>
+    <p class="text-sm font-semibold text-[var(--ap-text-primary)]">Connected</p>
+    <p
+      class="text-xs text-[var(--ap-text-tertiary)] text-center leading-relaxed"
+    >
+      demo-app.com can now use<br />Claude 3.5 Sonnet via Arlopass
+    </p>
+  </div>
+
+  <!-- Click indicator -->
+  <ClickPing id="ca-cursor" />
+</PreviewPanel>
+
+<style>
+  .picon {
+    filter: brightness(0) invert(0.3);
+  }
+  .ca-badge-pending {
+    color: var(--ap-text-tertiary);
+    background: var(--ap-bg-surface);
+    border: 1px solid var(--ap-border);
+  }
+  .ca-badge-ok {
+    color: var(--color-success);
+    background: var(--ap-success-subtle);
+    border: none;
+  }
+</style>
+
+<script>
+  function caRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const flow = q("#ca-flow")!;
+    const dd = q("#ca-dd")!;
+    const chev = q("#ca-chev")!;
+    const trigger = q("#ca-trigger")!;
+    const ttext = q("#ca-ttext")!;
+    const ticon = q("#ca-ticon")!;
+    const o1 = q("#ca-o1")!;
+    const btn = q("#ca-btn")!;
+    const badge = q("#ca-badge")!;
+    const connecting = q("#ca-connecting")!;
+    const ok = q("#ca-ok")!;
+    const cursor = q("#ca-cursor")!;
+    if (!flow || !dd) return;
+
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+
+    // Ping helper — dispatches event to ClickPing component
+    const click = (el: HTMLElement, dur = 600) => {
+      cursor.dispatchEvent(
+        new CustomEvent("ping", { detail: { target: el, duration: dur } }),
+      );
+    };
+
+    // 2.2s — Click on trigger to open dropdown
+    t(() => {
+      click(trigger, 600);
+    }, 2200);
+
+    // 2.6s — Dropdown opens (after ping is fully visible)
+    t(() => {
+      dd.style.opacity = "1";
+      dd.style.transform = "scaleY(1) translateY(0)";
+      dd.style.pointerEvents = "auto";
+      chev.style.transform = "rotate(180deg)";
+      trigger.classList.add("ring-1", "ring-brand/30", "border-brand/40");
+    }, 2600);
+
+    // 3.5s — Click on Claude option
+    t(() => {
+      click(o1);
+      o1.classList.add("bg-brand-subtle", "text-brand");
+    }, 3500);
+
+    // 4.4s — Close dropdown, update trigger
+    t(() => {
+      dd.style.opacity = "0";
+      dd.style.transform = "scaleY(0.92) translateY(-4px)";
+      dd.style.pointerEvents = "none";
+      chev.style.transform = "rotate(0)";
+      trigger.classList.remove(
+        "ring-1",
+        "ring-brand/30",
+        "border-brand/40",
+        "text-[var(--ap-text-tertiary)]",
+      );
+      trigger.classList.add("text-[var(--ap-text-primary)]");
+      ticon.classList.remove("hidden");
+      ttext.textContent = "Claude 3.5 Sonnet";
+      o1.classList.remove("bg-brand-subtle", "text-brand");
+    }, 4400);
+
+    // 5.4s — Click Allow button (ping first)
+    t(() => {
+      click(btn, 700);
+      btn.style.transform = "scale(0.96)";
+    }, 5400);
+
+    t(() => {
+      btn.style.transform = "scale(1)";
+    }, 5700);
+
+    // 6.2s — Show connecting spinner (after ping fades)
+    t(() => {
+      flow.style.opacity = "0";
+      connecting.style.opacity = "1";
+    }, 6200);
+
+    // 7.5s — Show success
+    t(() => {
+      connecting.style.opacity = "0";
+      ok.style.opacity = "1";
+    }, 7500);
+
+    // 9.2s — Fade back to initial
+    t(() => {
+      ok.style.opacity = "0";
+      // Reset all state
+      trigger.classList.remove("text-[var(--ap-text-primary)]");
+      trigger.classList.add("text-[var(--ap-text-tertiary)]");
+      ttext.textContent = "Select a model…";
+      ticon.classList.add("hidden");
+      dd.style.opacity = "0";
+      dd.style.transform = "scaleY(0.92) translateY(-4px)";
+      dd.style.pointerEvents = "none";
+      chev.style.transform = "rotate(0)";
+      badge.className =
+        "ca-badge-pending text-[10px] font-semibold py-0.5 px-2 rounded-full uppercase tracking-wide transition-all duration-300";
+      badge.textContent = "Pending";
+      btn.style.transform = "scale(1)";
+    }, 9200);
+
+    t(() => {
+      flow.style.opacity = "1";
+    }, 9500);
+
+    return tt;
+  }
+
+  const caP = document.querySelector(
+    "[data-preview]:has(#ca-flow)",
+  ) as HTMLElement;
+  if (caP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const f = caP.querySelector("#ca-flow") as HTMLElement;
+      const c = caP.querySelector("#ca-connecting") as HTMLElement;
+      const o = caP.querySelector("#ca-ok") as HTMLElement;
+      const cu = caP.querySelector("#ca-cursor") as HTMLElement;
+      if (f) f.style.opacity = "1";
+      if (c) c.style.opacity = "0";
+      if (o) o.style.opacity = "0";
+      if (cu) cu.style.opacity = "0";
+    };
+
+    // Run on activation
+    const obs = new MutationObserver(() => {
+      if (caP.classList.contains("preview-active")) {
+        reset();
+        at = caRun(caP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(caP, { attributes: true, attributeFilter: ["class"] });
+
+    // Re-run on loop event from carousel
+    caP.addEventListener("preview:loop", () => {
+      reset();
+      at = caRun(caP) || [];
+    });
+
+    if (caP.classList.contains("preview-active")) {
+      at = caRun(caP) || [];
+    }
+  }
+</script>

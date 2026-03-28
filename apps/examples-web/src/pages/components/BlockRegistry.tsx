@@ -80,6 +80,67 @@ function App() {
   );
 }`;
 
+const installButtonUsage = `import { ArlopassInstallButton, ArlopassNotInstalled } from "@arlopass/react";
+
+function Header() {
+  return (
+    <header>
+      <h1>My App</h1>
+      <ArlopassNotInstalled>
+        <ArlopassInstallButton installUrl="https://chromewebstore.google.com" />
+      </ArlopassNotInstalled>
+    </header>
+  );
+}`;
+
+const extensionRequiredUsage = `import { ArlopassExtensionGate, ArlopassInstallButton } from "@arlopass/react";
+
+function App() {
+  return (
+    <div>
+      <h1>My App</h1>
+
+      {/* This feature only shows when the extension is installed */}
+      <ArlopassExtensionGate
+        fallback={({ installUrl }) => (
+          <div>
+            <p>AI search requires the Arlopass extension.</p>
+            <ArlopassInstallButton installUrl={installUrl} />
+          </div>
+        )}
+      >
+        <AIPoweredSearch />
+      </ArlopassExtensionGate>
+
+      {/* This feature hides silently when no extension */}
+      <ArlopassExtensionGate>
+        <AIChatWidget />
+      </ArlopassExtensionGate>
+    </div>
+  );
+}`;
+
+const appRequiredUsage = `import { ArlopassProvider, ArlopassRequiredGate, ArlopassInstallButton } from "@arlopass/react";
+
+function App() {
+  return (
+    <ArlopassProvider appId="my-app">
+      <ArlopassRequiredGate
+        fallback={({ installUrl }) => (
+          <div style={{ textAlign: "center", padding: 40 }}>
+            <h2>Arlopass Required</h2>
+            <p>This app needs the Arlopass extension to work.</p>
+            <p>Install the extension to connect your AI providers.</p>
+            <ArlopassInstallButton installUrl={installUrl} />
+          </div>
+        )}
+      >
+        <MainApp />
+      </ArlopassRequiredGate>
+    </ArlopassProvider>
+  );
+}`;
+
 const blocks = [
   {
     id: "chat",
@@ -102,6 +163,23 @@ const blocks = [
     id: "connection-banner",
     name: "Connection Banner",
     description: "Connection status banner with install prompt",
+  },
+  {
+    id: "install-button",
+    name: "Install Button",
+    description: "Styled button/link to install the Arlopass extension",
+  },
+  {
+    id: "extension-required",
+    name: "Extension Required Gate",
+    description:
+      "Feature-level gate that shows an install prompt when the extension is missing",
+  },
+  {
+    id: "app-required",
+    name: "App Required Gate",
+    description:
+      "Full-app gate that blocks the entire UI with an install page when extension is missing",
   },
 ];
 
@@ -651,6 +729,155 @@ export default function BlockRegistry() {
         }
         code={connectionBannerUsage}
         title="Connection banner"
+      />
+
+      <Title order={3}>Install button</Title>
+      <Text>
+        A styled button/link that directs users to install the Arlopass
+        extension. Use inside{" "}
+        <InlineCode>{"<ArlopassNotInstalled>"}</InlineCode> or any "not
+        installed" fallback.
+      </Text>
+      <PreviewCode
+        preview={
+          <div
+            style={{
+              padding: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 20px",
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "none",
+                cursor: "pointer",
+                background: "#2563eb",
+                color: "#fff",
+              }}
+            >
+              Install Arlopass
+            </a>
+          </div>
+        }
+        code={installButtonUsage}
+        title="Install button"
+      />
+
+      <Title order={3}>Extension required gate (feature-level)</Title>
+      <Text>
+        Wraps a feature that needs the Arlopass extension. When the extension is
+        missing, shows a fallback prompt. When installed, renders the feature
+        normally. Use for individual AI-powered features in apps that also work
+        without Arlopass.
+      </Text>
+      <PreviewCode
+        preview={
+          <div style={{ padding: 16 }}>
+            <div
+              style={{
+                background: "#fff7ed",
+                border: "1px solid #fed7aa",
+                borderRadius: 8,
+                padding: 16,
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#9a3412",
+                  marginBottom: 8,
+                }}
+              >
+                AI search requires Arlopass
+              </div>
+              <div style={{ fontSize: 12, color: "#c2410c", marginBottom: 12 }}>
+                Install the Arlopass extension to use AI-powered search.
+              </div>
+              <a
+                href="#"
+                onClick={(e) => e.preventDefault()}
+                style={{
+                  display: "inline-flex",
+                  padding: "8px 16px",
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  textDecoration: "none",
+                  background: "#2563eb",
+                  color: "#fff",
+                }}
+              >
+                Install Arlopass
+              </a>
+            </div>
+          </div>
+        }
+        code={extensionRequiredUsage}
+        title="Extension required gate"
+      />
+
+      <Title order={3}>App required gate (full-app)</Title>
+      <Text>
+        Blocks the entire app when Arlopass is not installed. Use this when your
+        app cannot function at all without the extension.
+      </Text>
+      <PreviewCode
+        preview={
+          <div
+            style={{
+              padding: 32,
+              textAlign: "center",
+              background: "#1c1917",
+              borderRadius: 8,
+              color: "#d6d3d1",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: "#fafaf9",
+                marginBottom: 8,
+              }}
+            >
+              Arlopass Required
+            </div>
+            <div style={{ fontSize: 13, marginBottom: 16, color: "#a8a29e" }}>
+              This app needs the Arlopass extension to connect your AI
+              providers.
+            </div>
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              style={{
+                display: "inline-flex",
+                padding: "10px 20px",
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "none",
+                background: "#DB4D12",
+                color: "#fff",
+              }}
+            >
+              Install Arlopass
+            </a>
+          </div>
+        }
+        code={appRequiredUsage}
+        title="App required gate"
       />
 
       <Callout type="info" title="You own the source">

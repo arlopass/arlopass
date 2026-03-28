@@ -19,6 +19,7 @@ describe("BridgeHandler CLI execution dispatch", () => {
         source: "discovered" as const,
         models: [{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" }],
       })),
+      executeStream: vi.fn(async function* () {}),
       listThinkingLevels: vi.fn(async () => ({
         cliType: "copilot-cli",
         modelId: "gpt-5.3-codex",
@@ -78,6 +79,7 @@ describe("BridgeHandler CLI execution dispatch", () => {
         source: "discovered" as const,
         models: [{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" }],
       })),
+      executeStream: vi.fn(async function* () {}),
       listThinkingLevels: vi.fn(async () => ({
         cliType: "copilot-cli",
         modelId: "gpt-5.3-codex",
@@ -120,6 +122,7 @@ describe("BridgeHandler CLI execution dispatch", () => {
         source: "discovered" as const,
         models: [{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" }],
       })),
+      executeStream: vi.fn(async function* () {}),
       listThinkingLevels: vi.fn(async () => ({
         cliType: "copilot-cli",
         modelId: "gpt-5.3-codex",
@@ -157,6 +160,7 @@ describe("BridgeHandler CLI execution dispatch", () => {
         source: "discovered" as const,
         models: [{ id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" }],
       })),
+      executeStream: vi.fn(async function* () {}),
       listThinkingLevels: vi.fn(async () => ({
         cliType: "claude-code",
         modelId: "claude-sonnet-4-5",
@@ -194,6 +198,7 @@ describe("BridgeHandler CLI execution dispatch", () => {
         source: "discovered" as const,
         models: [{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" }],
       })),
+      executeStream: vi.fn(async function* () {}),
       listThinkingLevels: vi.fn(async () => ({
         cliType: "copilot-cli",
         modelId: "gpt-5.3-codex",

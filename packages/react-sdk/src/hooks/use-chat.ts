@@ -9,7 +9,7 @@ import type {
     TrackedChatMessage,
 } from "../types.js";
 import { Subscriptions } from "../store/subscriptions.js";
-import { useArlopassContext } from "./use-store.js";
+import { useArlopassContext, useStoreSnapshot } from "./use-store.js";
 
 function generateMessageId(): MessageId {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -46,6 +46,7 @@ type UseChatReturn = Readonly<{
 
 export function useChat(options?: UseChatOptions): UseChatReturn {
     const { store } = useArlopassContext();
+    const snapshot = useStoreSnapshot();
     const [messages, setMessages] = useState<TrackedChatMessage[]>(
         () => options?.initialMessages ?? [],
     );
@@ -275,7 +276,7 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
     const contextInfo = useMemo<ContextWindowInfo>(() => {
         const chatMessages = messagesRef.current.map((m) => ({ role: m.role, content: m.content }));
         return store.client.getContextInfo(chatMessages);
-    }, [store, messages]);
+    }, [store, messages, snapshot.selectedProvider]);
 
     return {
         messages,

@@ -1317,6 +1317,50 @@ export class BridgeHandler {
     }
 
     try {
+      // When streaming is requested and a writer is available, use the
+      // real incremental streaming path. The CLI process outputs JSONL
+      // and we forward text deltas as they arrive — no buffering.
+      if (streamRequested && writer !== undefined) {
+        let cliSessionIdFromStream: string | undefined;
+        let fullContent = "";
+        for await (const event of this.#cliChatExecutor.executeStream({
+          correlationId,
+          providerId,
+          modelId,
+          ...(sessionId !== undefined ? { sessionId } : {}),
+          ...(resumeSessionId !== undefined ? { resumeSessionId } : {}),
+          ...(cliType !== undefined ? { cliType } : {}),
+          ...(thinkingLevel !== undefined ? { thinkingLevel } : {}),
+          messages,
+          ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+        })) {
+          if (event.type === "delta") {
+            fullContent += event.text;
+            void writer({
+              type: "cli.chat.stream.chunk",
+              correlationId,
+              delta: event.text,
+            });
+          } else if (event.type === "done") {
+            cliSessionIdFromStream = event.cliSessionId;
+            if (fullContent.length === 0) {
+              fullContent = event.content;
+            }
+          }
+        }
+        return {
+          type: "cli.chat.result",
+          correlationId,
+          providerId,
+          modelId,
+          content: fullContent,
+          ...(cliSessionIdFromStream !== undefined
+            ? { cliSessionId: cliSessionIdFromStream }
+            : {}),
+        };
+      }
+
+      // Non-streaming path: execute and return the complete result.
       const executionResult = await this.#cliChatExecutor.execute({
         correlationId,
         providerId,
@@ -1328,22 +1372,6 @@ export class BridgeHandler {
         messages,
         ...(timeoutMs !== undefined ? { timeoutMs } : {}),
       });
-      // When streaming is requested and the writer is available, send the
-      // content back as word-boundary chunks before the terminal response.
-      // The CLI executor does not support real-time chunking; this provides
-      // progressive display after the full execution completes.
-      if (streamRequested && writer !== undefined && executionResult.content.length > 0) {
-        const words = executionResult.content.split(/(?<=\s)/);
-        for (const word of words) {
-          if (word.length > 0) {
-            void writer({
-              type: "cli.chat.stream.chunk",
-              correlationId: executionResult.correlationId,
-              delta: word,
-            });
-          }
-        }
-      }
       return {
         type: "cli.chat.result",
         correlationId: executionResult.correlationId,

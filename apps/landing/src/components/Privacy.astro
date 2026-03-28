@@ -21,37 +21,56 @@ const features = [
 ];
 ---
 
-<section class="privacy" id="privacy" aria-labelledby="privacy-heading">
-  <div class="container">
-    <div class="privacy-header">
-      <span class="section-label">Built for privacy</span>
-      <h2 id="privacy-heading" class="section-title">
+<section
+  class="py-24 bg-[var(--ap-bg-surface)]"
+  id="privacy"
+  aria-labelledby="privacy-heading"
+>
+  <div class="px-4 md:px-6 lg:px-8">
+    <div class="text-center max-w-[600px] mx-auto mb-16">
+      <span
+        class="inline-block text-xs font-medium uppercase tracking-[0.08em] text-brand mb-4"
+        >Built for privacy</span
+      >
+      <h2
+        id="privacy-heading"
+        class="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight mb-4"
+      >
         Your keys stay home. Always.
       </h2>
-      <p class="section-desc">
-        No more pasting API keys into apps you don’t fully trust. Arlopass keeps
+      <p class="text-lg text-[var(--ap-text-secondary)] leading-relaxed">
+        No more pasting API keys into apps you don't fully trust. Arlopass keeps
         your credentials in your OS keychain — the app gets AI, you keep
         control.
       </p>
     </div>
 
-    <div class="privacy-grid">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-16">
       {
         features.map((f) => (
-          <div class="privacy-card">
-            <div class="privacy-icon" set:html={f.icon} />
-            <h3 class="privacy-title">{f.title}</h3>
-            <p class="privacy-desc">{f.description}</p>
+          <div class="p-6 rounded-xl bg-[var(--ap-bg-base)] border border-[var(--ap-border)]">
+            <div
+              class="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-subtle-dark text-brand mb-4"
+              set:html={f.icon}
+            />
+            <h3 class="text-lg font-semibold mb-2">{f.title}</h3>
+            <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+              {f.description}
+            </p>
           </div>
         ))
       }
     </div>
 
-    <div class="privacy-visual">
-      <div class="data-flow">
-        <div class="flow-node flow-app">
+    <div
+      class="max-w-[700px] mx-auto p-8 bg-[var(--ap-bg-base)] border border-[var(--ap-border)] rounded-lg"
+    >
+      <div
+        class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6"
+      >
+        <div class="flex flex-col items-center gap-1 p-4 shrink-0">
           <svg
-            class="flow-icon"
+            class="text-[var(--ap-text-tertiary)]"
             width="24"
             height="24"
             viewBox="0 0 24 24"
@@ -69,32 +88,38 @@ const features = [
               d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
             ></path></svg
           >
-          <span class="flow-label">Web App</span>
+          <span class="text-sm font-semibold text-[var(--ap-text-primary)]"
+            >Web App</span
+          >
         </div>
-        <div class="flow-arrow">
-          <span class="flow-arrow-label">request</span>
+        <div class="flex flex-col items-center gap-1 shrink-0">
+          <span
+            class="text-[10px] text-[var(--ap-text-tertiary)] font-mono uppercase tracking-wider"
+            >request</span
+          >
           <svg
+            class="max-md:rotate-90"
             width="40"
             height="12"
             viewBox="0 0 40 12"
             fill="none"
             aria-hidden="true"
-          >
-            <line
+            ><line
               x1="0"
               y1="6"
               x2="32"
               y2="6"
               stroke="var(--ap-border-strong)"
-              stroke-width="1.5"></line>
-            <polyline
+              stroke-width="1.5"></line><polyline
               points="30,2 36,6 30,10"
               fill="none"
               stroke="var(--ap-border-strong)"
-              stroke-width="1.5"></polyline>
-          </svg>
+              stroke-width="1.5"></polyline></svg
+          >
         </div>
-        <div class="flow-node flow-arlopass">
+        <div
+          class="flex flex-col items-center gap-1 p-4 px-6 bg-brand-subtle-dark border border-brand/30 rounded-lg shrink-0"
+        >
           <img
             src="/ArlopassIcon.svg"
             alt=""
@@ -102,35 +127,39 @@ const features = [
             height="20"
             aria-hidden="true"
           />
-          <span class="flow-label">Arlopass</span>
-          <span class="flow-sub">You decide</span>
+          <span class="text-sm font-semibold text-[var(--ap-text-primary)]"
+            >Arlopass</span
+          >
+          <span class="text-xs text-[var(--ap-text-tertiary)]">You decide</span>
         </div>
-        <div class="flow-arrow">
-          <span class="flow-arrow-label">routed locally</span>
+        <div class="flex flex-col items-center gap-1 shrink-0">
+          <span
+            class="text-[10px] text-[var(--ap-text-tertiary)] font-mono uppercase tracking-wider"
+            >routed locally</span
+          >
           <svg
+            class="max-md:rotate-90"
             width="40"
             height="12"
             viewBox="0 0 40 12"
             fill="none"
             aria-hidden="true"
-          >
-            <line
+            ><line
               x1="0"
               y1="6"
               x2="32"
               y2="6"
-              stroke="var(--ap-success)"
-              stroke-width="1.5"></line>
-            <polyline
+              stroke="var(--color-success)"
+              stroke-width="1.5"></line><polyline
               points="30,2 36,6 30,10"
               fill="none"
-              stroke="var(--ap-success)"
-              stroke-width="1.5"></polyline>
-          </svg>
+              stroke="var(--color-success)"
+              stroke-width="1.5"></polyline></svg
+          >
         </div>
-        <div class="flow-node flow-provider">
+        <div class="flex flex-col items-center gap-1 p-4 shrink-0">
           <svg
-            class="flow-icon"
+            class="text-[var(--ap-text-tertiary)]"
             width="24"
             height="24"
             viewBox="0 0 24 24"
@@ -148,179 +177,12 @@ const features = [
               d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"
             ></path></svg
           >
-          <span class="flow-label">Your Provider</span>
-          <span class="flow-sub">Your keys</span>
+          <span class="text-sm font-semibold text-[var(--ap-text-primary)]"
+            >Your Provider</span
+          >
+          <span class="text-xs text-[var(--ap-text-tertiary)]">Your keys</span>
         </div>
       </div>
     </div>
   </div>
 </section>
-
-<style>
-  .privacy {
-    padding: var(--ap-space-24) 0;
-    border-top: none;
-    background: var(--ap-bg-surface);
-  }
-
-  .privacy-header {
-    text-align: center;
-    max-width: 600px;
-    margin-inline: auto;
-    margin-bottom: var(--ap-space-16);
-  }
-
-  .section-label {
-    display: inline-block;
-    font-size: var(--ap-text-xs);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ap-brand);
-    margin-bottom: var(--ap-space-4);
-  }
-
-  .section-title {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: var(--ap-space-4);
-  }
-
-  .section-desc {
-    font-size: var(--ap-text-lg);
-    color: var(--ap-text-secondary);
-    line-height: 1.6;
-  }
-
-  .privacy-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--ap-space-6);
-    margin-bottom: var(--ap-space-16);
-  }
-
-  @media (min-width: 768px) {
-    .privacy-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--ap-space-8);
-    }
-  }
-
-  .privacy-card {
-    padding: var(--ap-space-6);
-    border-radius: var(--ap-radius-lg);
-    background: var(--ap-bg-base);
-    border: 1px solid var(--ap-border);
-  }
-
-  .privacy-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--ap-radius-md);
-    background: var(--ap-brand-subtle-dark);
-    color: var(--ap-brand);
-    margin-bottom: var(--ap-space-4);
-  }
-
-  .privacy-title {
-    font-size: var(--ap-text-lg);
-    font-weight: 600;
-    margin-bottom: var(--ap-space-2);
-  }
-
-  .privacy-desc {
-    font-size: var(--ap-text-sm);
-    color: var(--ap-text-secondary);
-    line-height: 1.6;
-  }
-
-  /* Data flow diagram */
-  .privacy-visual {
-    max-width: 700px;
-    margin-inline: auto;
-    padding: var(--ap-space-8);
-    background: var(--ap-bg-base);
-    border: 1px solid var(--ap-border);
-    border-radius: var(--ap-radius-md);
-  }
-
-  .data-flow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--ap-space-4);
-    flex-direction: column;
-  }
-
-  @media (min-width: 768px) {
-    .data-flow {
-      flex-direction: row;
-      gap: var(--ap-space-6);
-    }
-  }
-
-  .flow-arrow {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
-  @media (max-width: 767px) {
-    .flow-arrow svg {
-      transform: rotate(90deg);
-    }
-  }
-
-  .flow-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: var(--ap-space-4);
-    flex-shrink: 0;
-  }
-
-  .flow-icon {
-    color: var(--ap-text-tertiary);
-  }
-
-  .flow-label {
-    font-size: var(--ap-text-sm);
-    font-weight: 600;
-    color: var(--ap-text-primary);
-  }
-
-  .flow-sub {
-    font-size: var(--ap-text-xs);
-    color: var(--ap-text-tertiary);
-  }
-
-  .flow-arlopass {
-    background: var(--ap-brand-subtle-dark);
-    border: 1px solid color-mix(in oklch, var(--ap-brand) 30%, transparent);
-    border-radius: var(--ap-radius-md);
-    padding: var(--ap-space-4) var(--ap-space-6);
-  }
-
-  .flow-arrow {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
-  .flow-arrow-label {
-    font-size: 10px;
-    color: var(--ap-text-tertiary);
-    font-family: var(--ap-font-code);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-</style>

@@ -5,6 +5,8 @@ import type {
     ChatRole as WebSDKChatRole,
     ClientState as WebSDKClientState,
     ContextWindowInfo as WebSDKContextWindowInfo,
+    ModelAvailabilityStatus as WebSDKModelAvailabilityStatus,
+    ModelRequirements as WebSDKModelRequirements,
     ProviderDescriptor as WebSDKProviderDescriptor,
     SelectProviderInput as WebSDKSelectProviderInput,
     ChatOperationOptions as WebSDKChatOperationOptions,
@@ -42,6 +44,8 @@ export type SelectProviderInput = WebSDKSelectProviderInput;
 export type ChatOperationOptions = WebSDKChatOperationOptions;
 export type ChatStreamEvent = WebSDKChatStreamEvent;
 export type ContextWindowInfo = WebSDKContextWindowInfo;
+export type ModelAvailabilityStatus = WebSDKModelAvailabilityStatus;
+export type ModelRequirements = WebSDKModelRequirements;
 export type { WebSDKArlopassSDKError as ArlopassSDKError };
 export type { WebSDKArlopassStateError as ArlopassStateError };
 export type { WebSDKArlopassTransport as ArlopassTransport };
@@ -75,7 +79,18 @@ export type TrackedChatMessage = Readonly<{
     status: "pending" | "streaming" | "complete" | "error";
     pinned: boolean;
     toolCalls?: readonly ToolCallInfo[];
+    /** Names of tools that were used to produce this response. */
+    usedTools?: readonly string[];
 }>;
+
+export type ToolActivityState =
+    | Readonly<{ phase: "idle" }>
+    | Readonly<{ phase: "priming" }>
+    | Readonly<{ phase: "matched"; tools: readonly string[] }>
+    | Readonly<{ phase: "executing"; name: string; arguments?: Record<string, unknown> }>
+    | Readonly<{ phase: "result"; name: string }>;
+
+export const TOOL_ACTIVITY_IDLE: ToolActivityState = { phase: "idle" } as const;
 
 export type SubscriptionEvent =
     | "response"
@@ -173,6 +188,10 @@ export type ArlopassProviderProps = Readonly<{
     appIcon?: string;
     defaultProvider?: string;
     defaultModel?: string;
+    /** Models the app supports — at least one must be available. */
+    supportedModels?: readonly string[];
+    /** Models the app always requires — all must be available. */
+    requiredModels?: readonly string[];
     autoConnect?: boolean;
     onError?: (error: WebSDKArlopassSDKError) => void;
     children: React.ReactNode;
