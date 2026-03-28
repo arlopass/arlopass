@@ -293,6 +293,14 @@ export default function ProviderSelection() {
         is selected.
       </Text>
 
+      <Callout type="info" title="Providers come from the vault">
+        When you call <code>listProviders()</code>, the extension reads from
+        the encrypted vault on the bridge. Adding and removing providers
+        happens through the extension popup, which writes to the vault. The
+        SDK never has direct access to credentials — it only sees provider
+        names and available models.
+      </Callout>
+
       <Callout type="info" title="Prerequisites">
         This tutorial builds on the{" "}
         <Text
