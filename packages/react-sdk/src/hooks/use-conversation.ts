@@ -275,6 +275,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         abortRef.current = controller;
 
         let accumulated = "";
+        let preservedContent = "";
 
         try {
             const iterable = managerRef.current!.stream(content, opts?.pinned !== undefined ? { pinned: opts.pinned } : undefined);
@@ -295,7 +296,14 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                         }, 0);
                     }
                 } else if (event.type === "tool_call") {
-                    // New tool round — reset streaming content (old text was tool markup)
+                    // Preserve text before tool call markup so it isn't lost
+                    if (accumulated.length > 0) {
+                        const cutPoint = event.matchRange.start;
+                        const beforeTool = accumulated.substring(0, cutPoint).trim();
+                        if (beforeTool.length > 0 && preservedContent.length === 0) {
+                            preservedContent = beforeTool;
+                        }
+                    }
                     accumulated = "";
                     setStreamingContent("");
                     if (!usedToolsRef.current.includes(event.name)) {
@@ -321,10 +329,17 @@ export function useConversation(options?: UseConversationOptions): UseConversati
             }
 
             const tools = [...usedToolsRef.current];
+            // Combine any text preserved from before tool calls with the
+            // final round's content so the user sees the complete response.
+            const finalContent = preservedContent.length > 0 && accumulated.trim().length > 0
+                ? `${preservedContent}\n\n${accumulated}`
+                : preservedContent.length > 0
+                    ? preservedContent
+                    : accumulated;
             const assistantMsg: TrackedChatMessage = {
                 id: assistantMsgId,
                 role: "assistant",
-                content: accumulated,
+                content: finalContent,
                 inResponseTo: userMsgId,
                 status: "complete",
                 pinned: false,
@@ -339,11 +354,16 @@ export function useConversation(options?: UseConversationOptions): UseConversati
             return userMsgId;
         } catch (err) {
             if (controller.signal.aborted) {
-                if (accumulated.length > 0) {
+                const abortContent = preservedContent.length > 0 && accumulated.trim().length > 0
+                    ? `${preservedContent}\n\n${accumulated}`
+                    : preservedContent.length > 0
+                        ? preservedContent
+                        : accumulated;
+                if (abortContent.length > 0) {
                     const partialMsg: TrackedChatMessage = {
                         id: assistantMsgId,
                         role: "assistant",
-                        content: accumulated,
+                        content: abortContent,
                         inResponseTo: userMsgId,
                         status: "complete",
                         pinned: false,
