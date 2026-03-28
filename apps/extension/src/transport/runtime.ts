@@ -2096,6 +2096,99 @@ async function resolveCompletionStream(options: {
   }
 }
 
+/**
+ * Fast-path handler for session.create (connect).
+ * Skips the expensive wallet provider list read — only needs the apps list
+ * to check if the origin is already approved.
+ */
+async function handleSessionCreate(
+  options: {
+    envelope: CanonicalEnvelope<unknown>;
+    storage: WalletStorageAdapter;
+    dependencies: ResolvedRuntimeDependencies;
+  },
+  connectedApp: Record<string, unknown> | null,
+): Promise<ConnectResponsePayload | undefined> {
+  if (!isRecord(options.envelope.payload) || typeof options.envelope.payload["appId"] !== "string") {
+    // No appId — this is a provider selection payload; needs full wallet snapshot.
+    return undefined;
+  }
+
+  const appId = options.envelope.payload["appId"] as string;
+
+  const validation = validateAppIdForOrigin(appId, options.envelope.origin);
+  if (!validation.valid) {
+    throw new EnvelopeValidationError(
+      validation.reason ?? "AppId does not match origin.",
+      {
+        reasonCode: "policy.denied",
+        details: { appId, origin: options.envelope.origin },
+      },
+    );
+  }
+
+  const payload = options.envelope.payload;
+  const appName = typeof payload["appName"] === "string" ? payload["appName"].trim().slice(0, 200) : undefined;
+  const appDescription = typeof payload["appDescription"] === "string" ? payload["appDescription"].trim().slice(0, 500) : undefined;
+  const appIcon = typeof payload["appIcon"] === "string" && validateAppIconUrl(payload["appIcon"], options.envelope.origin)
+    ? payload["appIcon"]
+    : undefined;
+
+  if (connectedApp === null) {
+    const PENDING_KEY = "arlopass.wallet.pendingConnection.v1";
+    const RESULT_KEY = "arlopass.wallet.connectionResult.v1";
+
+    await options.storage.set({
+      [PENDING_KEY]: {
+        origin: options.envelope.origin,
+        appId,
+        ...(appName !== undefined ? { appName } : {}),
+        ...(appDescription !== undefined ? { appDescription } : {}),
+        ...(appIcon !== undefined ? { appIcon } : {}),
+        requestedAt: Date.now(),
+      },
+    });
+
+    try {
+      if (typeof chrome !== "undefined" && typeof chrome.action?.openPopup === "function") {
+        await chrome.action.openPopup();
+      }
+    } catch { /* openPopup may not be available */ }
+
+    const POLL_TIMEOUT = 120_000;
+    const POLL_INTERVAL = 500;
+    const pollStart = Date.now();
+    let approved = false;
+    let answered = false;
+
+    while (Date.now() - pollStart < POLL_TIMEOUT) {
+      const data = await options.storage.get([RESULT_KEY]);
+      const result = data[RESULT_KEY];
+      if (result != null && isRecord(result) && result["origin"] === options.envelope.origin) {
+        approved = result["approved"] === true;
+        answered = true;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
+    }
+
+    await options.storage.set({ [PENDING_KEY]: null });
+    await options.storage.set({ [RESULT_KEY]: null });
+
+    if (!answered || !approved) {
+      throw new EnvelopeValidationError(
+        "Connection was declined by the user.",
+        {
+          reasonCode: "policy.denied",
+          details: { appId, origin: options.envelope.origin },
+        },
+      );
+    }
+  }
+
+  return { capabilities: DEFAULT_CAPABILITIES };
+}
+
 async function dispatchTransportRequest(options: {
   envelope: CanonicalEnvelope<unknown>;
   requestTimeoutMs?: number;
@@ -2107,14 +2200,45 @@ async function dispatchTransportRequest(options: {
   | ProviderListResponsePayload
   | ChatSendResponsePayload
 > {
-  const snapshot = await readWalletSnapshot(options.storage, options.dependencies.sendVaultMessage);
-
-  // Load the connected app for this origin to enforce access controls
-  let apps: Array<Record<string, unknown>> = [];
-  if (options.dependencies.sendVaultMessage) {
-    const appsResp = await options.dependencies.sendVaultMessage({ type: "vault.apps.list" });
-    apps = Array.isArray(appsResp["appConnections"]) ? appsResp["appConnections"] as Array<Record<string, unknown>> : [];
+  // Fast path for session.create — skip expensive vault provider reads.
+  // Connect only needs the apps list to check if the origin is approved.
+  if (options.envelope.capability === "session.create") {
+    let apps: Array<Record<string, unknown>> = [];
+    if (options.dependencies.sendVaultMessage) {
+      const appsResp = await options.dependencies.sendVaultMessage({ type: "vault.apps.list" });
+      // If vault is locked, throw so the user gets prompted to unlock first
+      if (appsResp["type"] === "error" && (appsResp["reasonCode"] === "vault.locked" || appsResp["reasonCode"] === "vault.uninitialized")) {
+        throw new VaultLockedError();
+      }
+      apps = Array.isArray(appsResp["appConnections"])
+        ? appsResp["appConnections"] as Array<Record<string, unknown>>
+        : [];
+    }
+    const connectedApp = apps.find((a): a is Record<string, unknown> =>
+      isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && (a["permissions"] as Record<string, unknown> | undefined)?.["__status"] !== "disabled"
+    ) ?? null;
+    const fastResult = await handleSessionCreate(options, connectedApp);
+    if (fastResult !== undefined) {
+      return fastResult;
+    }
+    // Fall through — no appId, needs full wallet snapshot for provider selection
   }
+
+  // For all other capabilities, read wallet snapshot + apps in parallel.
+  const snapshotPromise = readWalletSnapshot(options.storage, options.dependencies.sendVaultMessage);
+  const appsPromise = options.dependencies.sendVaultMessage
+    ? options.dependencies.sendVaultMessage({ type: "vault.apps.list" })
+    : Promise.resolve({} as Record<string, unknown>);
+  const [snapshot, appsResp] = await Promise.all([snapshotPromise, appsPromise]);
+
+  // Check for vault.locked on apps read too
+  if (appsResp["type"] === "error" && (appsResp["reasonCode"] === "vault.locked" || appsResp["reasonCode"] === "vault.uninitialized")) {
+    throw new VaultLockedError();
+  }
+
+  const apps: Array<Record<string, unknown>> = Array.isArray(appsResp["appConnections"])
+    ? appsResp["appConnections"] as Array<Record<string, unknown>>
+    : [];
   const connectedApp = apps.find((a): a is Record<string, unknown> =>
     isRecord(a) && typeof a["origin"] === "string" && a["origin"] === options.envelope.origin && (a["permissions"] as Record<string, unknown> | undefined)?.["__status"] !== "disabled"
   ) ?? null;
@@ -2127,100 +2251,8 @@ async function dispatchTransportRequest(options: {
 
   switch (options.envelope.capability) {
     case "session.create": {
-      if (isRecord(options.envelope.payload) && typeof options.envelope.payload["appId"] === "string") {
-        const appId = options.envelope.payload["appId"] as string;
-
-        // Validate appId matches origin
-        const validation = validateAppIdForOrigin(appId, options.envelope.origin);
-        if (!validation.valid) {
-          throw new EnvelopeValidationError(
-            validation.reason ?? "AppId does not match origin.",
-            {
-              reasonCode: "policy.denied",
-              details: {
-                appId,
-                origin: options.envelope.origin,
-              },
-            },
-          );
-        }
-
-        // Extract app metadata
-        const payload = options.envelope.payload;
-        const appName = typeof payload["appName"] === "string" ? payload["appName"].trim().slice(0, 200) : undefined;
-        const appDescription = typeof payload["appDescription"] === "string" ? payload["appDescription"].trim().slice(0, 500) : undefined;
-        const appIcon = typeof payload["appIcon"] === "string" && validateAppIconUrl(payload["appIcon"], options.envelope.origin)
-          ? payload["appIcon"]
-          : undefined;
-
-        // If the origin is not already an approved connected app, trigger the
-        // popup onboarding wizard and wait for the user's decision.
-        if (connectedApp === null) {
-          const PENDING_KEY = "arlopass.wallet.pendingConnection.v1";
-          const RESULT_KEY = "arlopass.wallet.connectionResult.v1";
-
-          await options.storage.set({
-            [PENDING_KEY]: {
-              origin: options.envelope.origin,
-              appId,
-              ...(appName !== undefined ? { appName } : {}),
-              ...(appDescription !== undefined ? { appDescription } : {}),
-              ...(appIcon !== undefined ? { appIcon } : {}),
-              requestedAt: Date.now(),
-            },
-          });
-
-          // Open the popup so the user sees the connection wizard
-          try {
-            if (typeof chrome !== "undefined" && typeof chrome.action?.openPopup === "function") {
-              await chrome.action.openPopup();
-            }
-          } catch {
-            // openPopup may not be available in all contexts
-          }
-
-          // Poll storage for user decision (max 120 s)
-          const POLL_TIMEOUT = 120_000;
-          const POLL_INTERVAL = 500;
-          const pollStart = Date.now();
-          let approved = false;
-          let answered = false;
-
-          while (Date.now() - pollStart < POLL_TIMEOUT) {
-            const data = await options.storage.get([RESULT_KEY]);
-            const result = data[RESULT_KEY];
-            if (result != null && isRecord(result) && result["origin"] === options.envelope.origin) {
-              approved = result["approved"] === true;
-              answered = true;
-              break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
-          }
-
-          // Clean up pending state
-          await options.storage.set({ [PENDING_KEY]: null });
-          await options.storage.set({ [RESULT_KEY]: null });
-
-          if (!answered || !approved) {
-            throw new EnvelopeValidationError(
-              "Connection was declined by the user.",
-              {
-                reasonCode: "policy.denied",
-                details: {
-                  appId,
-                  origin: options.envelope.origin,
-                },
-              },
-            );
-          }
-        }
-
-        const response: ConnectResponsePayload = {
-          capabilities: DEFAULT_CAPABILITIES,
-        };
-        return response;
-      }
-
+      // The appId-based connect is handled by the fast path above.
+      // This branch handles provider selection (session.create without appId).
       const selection = parseSelectionPayload(options.envelope.payload);
       // Enforce app-level access control on provider selection
       if (appProviderIds !== null && !appProviderIds.has(selection.providerId)) {
