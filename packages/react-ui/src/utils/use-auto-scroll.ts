@@ -2,23 +2,48 @@
 
 import { useRef, useEffect, useCallback } from "react";
 
-export function useAutoScroll<E extends HTMLElement>(deps: readonly unknown[]) {
+/**
+ * Auto-scrolls an element to the bottom.
+ * When `isStreaming` is true, maintains a rAF loop that pins to bottom every
+ * frame — ensures streaming content stays visible even during fast updates.
+ * When not streaming, scrolls on dependency changes only.
+ */
+export function useAutoScroll<E extends HTMLElement>(
+  deps: readonly unknown[],
+  isStreaming = false,
+) {
   const ref = useRef<E>(null);
   const rafRef = useRef<number | null>(null);
+  const isStreamingRef = useRef(isStreaming);
+  isStreamingRef.current = isStreaming;
 
   const scrollToBottom = useCallback(() => {
-    if (rafRef.current !== null) return;
-    rafRef.current = requestAnimationFrame(() => {
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+  }, []);
+
+  // Scroll on dep changes (non-streaming)
+  useEffect(() => {
+    if (!isStreamingRef.current) {
+      scrollToBottom();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  // rAF loop during streaming — keeps scroll pinned every frame
+  useEffect(() => {
+    if (!isStreaming) return;
+    let id: number;
+    const tick = () => {
       if (ref.current) {
         ref.current.scrollTop = ref.current.scrollHeight;
       }
-      rafRef.current = null;
-    });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, deps);
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [isStreaming]);
 
   useEffect(() => {
     return () => {

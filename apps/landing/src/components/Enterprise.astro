@@ -1,125 +1,129 @@
 ---
-
+const items = [
+  {
+    label: "Zero-trust",
+    title: "Zero-trust architecture",
+    desc: "HMAC handshake, ephemeral session keys, anti-replay nonces at every trust boundary.",
+  },
+  {
+    label: "Policies",
+    title: "Signed policy bundles",
+    desc: "Ed25519-signed org policies: provider allowlists, model restrictions, data-handling rules.",
+  },
+  {
+    label: "Audit",
+    title: "Audit trails",
+    desc: "JSONL and OTLP export to Splunk, Elastic, Datadog. Every grant, revoke, and request logged.",
+  },
+  {
+    label: "Compliance",
+    title: "Compliance-ready",
+    desc: "Pre-mapped controls for SOC 2, ISO 27001, NIST 800-53, GDPR, and HIPAA.",
+  },
+];
 ---
 
-<section class="py-24" aria-labelledby="enterprise-heading">
-  <div
-    class="px-4 md:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center"
-  >
-    <div class="flex justify-center max-lg:order-first">
-      <div
-        class="w-full max-w-[420px] bg-[var(--ap-bg-code)] border border-[var(--ap-border)] rounded-lg overflow-hidden"
-      >
+<section class="" aria-labelledby="enterprise-heading">
+  <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+    <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+      >For teams</span
+    >
+    <h2
+      id="enterprise-heading"
+      class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+    >
+      AI governance without the headaches
+    </h2>
+    <p
+      class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+    >
+      Deploy org-wide AI policies at the browser level — approved providers,
+      model restrictions, audit trails — without changing a single line of
+      application code.
+    </p>
+  </div>
+
+  <!-- Policy preview + feature grid -->
+  <div class="border border-[var(--ap-border)]">
+    <!-- Top: Policy code block on mosaic -->
+    <div class="relative overflow-hidden">
+      <canvas
+        data-mosaic-src="/img/bg4.webp"
+        class="absolute inset-0 w-full h-full"></canvas>
+      <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+      <div class="relative z-10 py-10 px-6 md:px-10 flex justify-center">
         <div
-          class="flex items-center gap-2 py-3 px-4 border-b border-[var(--ap-border)] bg-[color-mix(in_oklch,var(--ap-bg-code)_100%,#000_5%)]"
+          class="w-full max-w-[480px] flex flex-col overflow-hidden rounded-xl bg-neutral-900/70 backdrop-blur-sm shadow-2xl shadow-black/20 border border-neutral-800"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--color-brand)"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            ><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg
+          <div
+            class="flex items-center gap-2 py-3 px-4 border-b border-neutral-700/50"
           >
-          <span class="text-sm font-medium text-[var(--ap-text-primary)] flex-1"
-            >Organization Policy</span
-          >
-          <span
-            class="text-[10px] font-semibold text-success bg-[var(--ap-success-subtle)] py-0.5 px-2 rounded-full uppercase tracking-wide"
-            >Signed</span
-          >
-        </div>
-        <div class="p-4 flex flex-col gap-2.5">
-          {
-            [
-              ["providers", "[claude, bedrock, vertex-ai]"],
-              ["models", "claude-3.5-sonnet, claude-3-opus"],
-              ["audit", "jsonl + otlp → splunk"],
-              ["data_handling", "no-pii, redact-emails"],
-              ["signature", "ed25519:a7c3...f9e1"],
-            ].map(([key, val]) => (
-              <div
-                class={`flex gap-3 font-mono text-xs leading-snug max-[480px]:flex-col max-[480px]:gap-0.5`}
-              >
-                <span class="text-brand shrink-0 min-w-[120px] max-[480px]:min-w-0">
-                  {key}
-                </span>
-                <span
-                  class={`${key === "signature" ? "text-[var(--ap-text-tertiary)] text-[11px]" : "text-amber"}`}
-                >
-                  {val}
-                </span>
-              </div>
-            ))
-          }
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--color-brand)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+              ></path></svg
+            >
+            <span class="text-sm font-medium text-neutral-200 flex-1"
+              >Organization Policy</span
+            >
+            <span
+              class="text-[10px] font-semibold text-success bg-success/10 py-0.5 px-2 rounded-full uppercase tracking-wide"
+              >Signed</span
+            >
+          </div>
+          <div class="p-4 flex flex-col gap-2">
+            {
+              [
+                ["providers", "[claude, bedrock, vertex-ai]"],
+                ["models", "claude-3.5-sonnet, claude-3-opus"],
+                ["audit", "jsonl + otlp → splunk"],
+                ["data_handling", "no-pii, redact-emails"],
+                ["signature", "ed25519:a7c3...f9e1"],
+              ].map(([key, val]) => (
+                <div class="flex gap-3 font-mono text-xs leading-snug max-[480px]:flex-col max-[480px]:gap-0.5">
+                  <span class="text-brand shrink-0 min-w-[110px] max-[480px]:min-w-0">
+                    {key}
+                  </span>
+                  <span
+                    class={`${key === "signature" ? "text-neutral-500 text-[11px]" : "text-amber"}`}
+                  >
+                    {val}
+                  </span>
+                </div>
+              ))
+            }
+          </div>
         </div>
       </div>
     </div>
 
-    <div>
-      <span
-        class="inline-block text-xs font-medium uppercase tracking-[0.08em] text-brand mb-4"
-        >For teams</span
-      >
-      <h2
-        id="enterprise-heading"
-        class="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight mb-6"
-      >
-        AI governance without the headaches.
-      </h2>
-      <p
-        class="text-base text-[var(--ap-text-secondary)] leading-[1.7] mb-8 max-w-[520px]"
-      >
-        Deploy org-wide AI policies at the browser level — approved providers,
-        model restrictions, audit trails — without changing a single line of
-        application code.
-      </p>
-
-      <ul class="flex flex-col gap-5 list-none">
-        {
-          [
-            {
-              icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="16" r="1"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>`,
-              title: "Zero-trust architecture",
-              desc: "HMAC handshake, ephemeral session keys, anti-replay nonces at every trust boundary.",
-            },
-            {
-              icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>`,
-              title: "Signed policy bundles",
-              desc: "Ed25519-signed org policies: provider allowlists, model restrictions, data-handling rules.",
-            },
-            {
-              icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
-              title: "Audit trails",
-              desc: "JSONL and OTLP export to Splunk, Elastic, Datadog. Every grant, revoke, and request logged.",
-            },
-            {
-              icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>`,
-              title: "Compliance-ready",
-              desc: "Pre-mapped controls for SOC 2, ISO 27001, NIST 800-53, GDPR, and HIPAA.",
-            },
-          ].map((item) => (
-            <li class="flex gap-3 items-start">
-              <span
-                class="flex shrink-0 text-[var(--ap-text-tertiary)] mt-0.5"
-                set:html={item.icon}
-              />
-              <div>
-                <strong class="block text-sm font-semibold text-[var(--ap-text-primary)] mb-0.5">
-                  {item.title}
-                </strong>
-                <span class="text-sm text-[var(--ap-text-secondary)] leading-snug">
-                  {item.desc}
-                </span>
-              </div>
-            </li>
-          ))
-        }
-      </ul>
+    <!-- Bottom: Feature cards grid -->
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 border-t border-[var(--ap-border)] [&>*]:border-b [&>*]:border-[var(--ap-border)] [&>*:nth-child(odd)]:sm:border-r [&>*:nth-last-child(-n+2)]:sm:border-b-0 [&>*:last-child]:border-b-0"
+    >
+      {
+        items.map((item) => (
+          <div class="bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10">
+            <span class="text-sm font-pixel tracking-[0.08em] text-brand">
+              {item.label}
+            </span>
+            <h3 class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2">
+              {item.title}
+            </h3>
+            <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+              {item.desc}
+            </p>
+          </div>
+        ))
+      }
     </div>
   </div>
 </section>

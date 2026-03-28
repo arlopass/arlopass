@@ -74,84 +74,76 @@ function cell(v: boolean | string) {
 }
 ---
 
-<section
-  class="py-24 bg-[var(--ap-bg-surface)]"
-  aria-labelledby="comparison-heading"
->
-  <div class="px-4 md:px-6 lg:px-8">
-    <div class="text-center max-w-[700px] mx-auto mb-12">
-      <span
-        class="inline-block text-xs font-medium uppercase tracking-[0.08em] text-brand mb-4"
-        >Why Arlopass</span
-      >
-      <h2
-        id="comparison-heading"
-        class="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-tight leading-snug"
-      >
-        Other tools ask you to trust them with your keys.<br />Arlopass lets you
-        keep them.
-      </h2>
-    </div>
-
-    <div
-      class="overflow-x-auto -webkit-overflow-scrolling-touch border border-[var(--ap-border)] rounded-lg"
+<section class="bg-[var(--ap-bg-surface)]" aria-labelledby="comparison-heading">
+  <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+    <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+      >Why Arlopass</span
     >
-      <table
-        class="w-full min-w-[600px] border-collapse text-sm max-sm:text-xs"
-        role="table"
-      >
-        <thead class="bg-[var(--ap-bg-elevated)]">
-          <tr>
-            <th
-              class="py-3 px-4 text-left text-xs font-medium text-[var(--ap-text-secondary)] uppercase tracking-wide border-b border-[var(--ap-border)] whitespace-nowrap max-sm:py-2.5 max-sm:px-2.5"
-              >Capability</th
-            >
-            <th
-              class="py-3 px-4 text-left text-xs font-semibold text-brand uppercase tracking-wide border-b border-[var(--ap-border)] whitespace-nowrap bg-brand-subtle-dark max-sm:py-2.5 max-sm:px-2.5"
-              >Arlopass</th
-            >
-            <th
-              class="py-3 px-4 text-left text-xs font-medium text-[var(--ap-text-secondary)] uppercase tracking-wide border-b border-[var(--ap-border)] whitespace-nowrap max-sm:py-2.5 max-sm:px-2.5"
-              >Paste API Key</th
-            >
-            <th
-              class="py-3 px-4 text-left text-xs font-medium text-[var(--ap-text-secondary)] uppercase tracking-wide border-b border-[var(--ap-border)] whitespace-nowrap max-sm:py-2.5 max-sm:px-2.5"
-              >AI Gateways</th
-            >
-            <th
-              class="py-3 px-4 text-left text-xs font-medium text-[var(--ap-text-secondary)] uppercase tracking-wide border-b border-[var(--ap-border)] whitespace-nowrap max-sm:py-2.5 max-sm:px-2.5"
-              >Vendor SDKs</th
-            >
-          </tr>
-        </thead>
-        <tbody>
-          {
-            rows.map((r) => (
-              <tr class="last:*:border-b-0">
-                <td class="py-3 px-4 border-b border-[var(--ap-border)] text-[var(--ap-text-body)] font-medium max-sm:py-2.5 max-sm:px-2.5">
-                  {r.cap}
-                </td>
-                <td
-                  class={`py-3 px-4 border-b border-[var(--ap-border)] bg-brand-subtle-dark ${cell(r.ap).c} max-sm:py-2.5 max-sm:px-2.5`}
-                  set:html={cell(r.ap).h}
-                />
-                <td
-                  class={`py-3 px-4 border-b border-[var(--ap-border)] ${cell(r.paste).c} max-sm:py-2.5 max-sm:px-2.5`}
-                  set:html={cell(r.paste).h}
-                />
-                <td
-                  class={`py-3 px-4 border-b border-[var(--ap-border)] ${cell(r.gw).c} max-sm:py-2.5 max-sm:px-2.5`}
-                  set:html={cell(r.gw).h}
-                />
-                <td
-                  class={`py-3 px-4 border-b border-[var(--ap-border)] ${cell(r.sdk).c} max-sm:py-2.5 max-sm:px-2.5`}
-                  set:html={cell(r.sdk).h}
-                />
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
-    </div>
+    <h2
+      id="comparison-heading"
+      class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+    >
+      Other tools ask you to trust them with your keys. Arlopass lets you keep
+      them.
+    </h2>
+  </div>
+
+  <div class="overflow-x-auto -webkit-overflow-scrolling-touch">
+    <table
+      class="w-full min-w-[600px] border-collapse text-sm max-sm:text-xs border border-[var(--ap-border)]"
+      role="table"
+    >
+      <thead>
+        <tr>
+          <th
+            class="py-3.5 px-5 text-left text-xs font-medium text-[var(--ap-text-tertiary)] font-pixel tracking-wider border-b border-r border-[var(--ap-border)] bg-[var(--ap-bg-surface)] whitespace-nowrap max-sm:py-2.5 max-sm:px-3"
+            >Capability</th
+          >
+          <th
+            class="py-3.5 px-5 text-left text-xs font-semibold text-brand font-pixel tracking-wider border-b border-r border-[var(--ap-border)] bg-brand-subtle whitespace-nowrap max-sm:py-2.5 max-sm:px-3"
+            >Arlopass</th
+          >
+          <th
+            class="py-3.5 px-5 text-left text-xs font-medium text-[var(--ap-text-tertiary)] font-pixel tracking-wider border-b border-r border-[var(--ap-border)] bg-[var(--ap-bg-surface)] whitespace-nowrap max-sm:py-2.5 max-sm:px-3"
+            >Paste API Key</th
+          >
+          <th
+            class="py-3.5 px-5 text-left text-xs font-medium text-[var(--ap-text-tertiary)] font-pixel tracking-wider border-b border-r border-[var(--ap-border)] bg-[var(--ap-bg-surface)] whitespace-nowrap max-sm:py-2.5 max-sm:px-3"
+            >AI Gateways</th
+          >
+          <th
+            class="py-3.5 px-5 text-left text-xs font-medium text-[var(--ap-text-tertiary)] font-pixel tracking-wider border-b border-[var(--ap-border)] bg-[var(--ap-bg-surface)] whitespace-nowrap max-sm:py-2.5 max-sm:px-3"
+            >Vendor SDKs</th
+          >
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((r) => (
+            <tr class="hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 last:*:border-b-0">
+              <td class="py-3.5 px-5 border-b border-r border-[var(--ap-border)] text-[var(--ap-text-primary)] font-medium bg-white max-sm:py-2.5 max-sm:px-3">
+                {r.cap}
+              </td>
+              <td
+                class={`py-3.5 px-5 border-b border-r border-[var(--ap-border)] bg-brand-subtle/30 ${cell(r.ap).c} max-sm:py-2.5 max-sm:px-3`}
+                set:html={cell(r.ap).h}
+              />
+              <td
+                class={`py-3.5 px-5 border-b border-r border-[var(--ap-border)] bg-white ${cell(r.paste).c} max-sm:py-2.5 max-sm:px-3`}
+                set:html={cell(r.paste).h}
+              />
+              <td
+                class={`py-3.5 px-5 border-b border-r border-[var(--ap-border)] bg-white ${cell(r.gw).c} max-sm:py-2.5 max-sm:px-3`}
+                set:html={cell(r.gw).h}
+              />
+              <td
+                class={`py-3.5 px-5 border-b border-[var(--ap-border)] bg-white ${cell(r.sdk).c} max-sm:py-2.5 max-sm:px-3`}
+                set:html={cell(r.sdk).h}
+              />
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
   </div>
 </section>

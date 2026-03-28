@@ -1,0 +1,240 @@
+---
+/**
+ * Preview: Model Picker — animated provider/model selection
+ * Shows switching between AI providers and models.
+ * Uses manual opacity + selection cycling with loop.
+ */
+const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+---
+
+<div data-preview data-loop="8500" class="w-full h-full">
+  <div class="flex flex-col h-full w-full gap-1.5">
+    <!-- Header -->
+    <div
+      id="mp-header"
+      class="flex items-center gap-2 pb-2 border-b border-[var(--ap-border)] shrink-0 opacity-0 transition-all duration-400"
+    >
+      <img
+        src="/ArlopassIcon.svg"
+        alt=""
+        width="14"
+        height="14"
+        aria-hidden="true"
+      />
+      <span
+        class="text-[10px] font-semibold text-[var(--ap-text-primary)] flex-1"
+        >Select Model</span
+      >
+    </div>
+
+    <!-- Model options -->
+    <div
+      id="mp-m0"
+      class="flex items-center gap-2 py-2 px-2.5 rounded-lg transition-all duration-250 border border-[var(--ap-border)] opacity-0"
+    >
+      <img
+        src={`${IC}/claude-color.svg`}
+        alt=""
+        width="16"
+        height="16"
+        class="shrink-0"
+      />
+      <div class="flex-1 min-w-0">
+        <p class="text-[9px] font-medium text-[var(--ap-text-primary)]">
+          Claude 3.5 Sonnet
+        </p>
+        <p class="text-[7px] text-[var(--ap-text-tertiary)]">Anthropic</p>
+      </div>
+      <div
+        id="mp-c0"
+        class="w-3 h-3 rounded-full border-2 border-[var(--ap-border)] transition-all duration-250 flex items-center justify-center"
+      >
+      </div>
+    </div>
+
+    <div
+      id="mp-m1"
+      class="flex items-center gap-2 py-2 px-2.5 rounded-lg transition-all duration-250 border border-[var(--ap-border)] opacity-0"
+    >
+      <img
+        src={`${IC}/openai.svg`}
+        alt=""
+        width="16"
+        height="16"
+        class="shrink-0"
+      />
+      <div class="flex-1 min-w-0">
+        <p class="text-[9px] font-medium text-[var(--ap-text-primary)]">
+          GPT-4o
+        </p>
+        <p class="text-[7px] text-[var(--ap-text-tertiary)]">OpenAI</p>
+      </div>
+      <div
+        id="mp-c1"
+        class="w-3 h-3 rounded-full border-2 border-[var(--ap-border)] transition-all duration-250 flex items-center justify-center"
+      >
+      </div>
+    </div>
+
+    <div
+      id="mp-m2"
+      class="flex items-center gap-2 py-2 px-2.5 rounded-lg transition-all duration-250 border border-[var(--ap-border)] opacity-0"
+    >
+      <img
+        src={`${IC}/gemini-color.svg`}
+        alt=""
+        width="16"
+        height="16"
+        class="shrink-0"
+      />
+      <div class="flex-1 min-w-0">
+        <p class="text-[9px] font-medium text-[var(--ap-text-primary)]">
+          Gemini 2.0 Pro
+        </p>
+        <p class="text-[7px] text-[var(--ap-text-tertiary)]">Google</p>
+      </div>
+      <div
+        id="mp-c2"
+        class="w-3 h-3 rounded-full border-2 border-[var(--ap-border)] transition-all duration-250 flex items-center justify-center"
+      >
+      </div>
+    </div>
+
+    <div
+      id="mp-m3"
+      class="flex items-center gap-2 py-2 px-2.5 rounded-lg transition-all duration-250 border border-[var(--ap-border)] opacity-0"
+    >
+      <img
+        src={`${IC}/ollama.svg`}
+        alt=""
+        width="16"
+        height="16"
+        class="shrink-0"
+      />
+      <div class="flex-1 min-w-0">
+        <p class="text-[9px] font-medium text-[var(--ap-text-primary)]">
+          Llama 3.1 70B
+        </p>
+        <p class="text-[7px] text-[var(--ap-text-tertiary)]">Ollama · Local</p>
+      </div>
+      <div
+        id="mp-c3"
+        class="w-3 h-3 rounded-full border-2 border-[var(--ap-border)] transition-all duration-250 flex items-center justify-center"
+      >
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function mpSelect(p: HTMLElement, idx: number) {
+    for (let i = 0; i < 4; i++) {
+      const m = p.querySelector(`#mp-m${i}`) as HTMLElement;
+      const c = p.querySelector(`#mp-c${i}`) as HTMLElement;
+      if (!m || !c) continue;
+      if (i === idx) {
+        m.style.borderColor = "var(--color-brand)";
+        m.style.background = "var(--color-brand-subtle)";
+        c.style.borderColor = "var(--color-brand)";
+        c.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-brand"></div>';
+      } else {
+        m.style.borderColor = "";
+        m.style.background = "";
+        c.style.borderColor = "";
+        c.innerHTML = "";
+      }
+    }
+  }
+
+  function mpRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+    const show = (el: HTMLElement | null) => {
+      if (el) el.style.opacity = "1";
+    };
+
+    // Stagger reveal
+    t(() => show(q("#mp-header")), 300);
+    t(() => {
+      show(q("#mp-m0"));
+      mpSelect(p, 0);
+    }, 600);
+    t(() => show(q("#mp-m1")), 800);
+    t(() => show(q("#mp-m2")), 1000);
+    t(() => show(q("#mp-m3")), 1200);
+
+    // Selection switches
+    t(() => mpSelect(p, 1), 2800);
+    t(() => mpSelect(p, 3), 4800);
+    t(() => mpSelect(p, 0), 6800);
+
+    // Reset
+    t(() => {
+      ["#mp-header", "#mp-m0", "#mp-m1", "#mp-m2", "#mp-m3"].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+      for (let i = 0; i < 4; i++) {
+        const m = q(`#mp-m${i}`);
+        const c = q(`#mp-c${i}`);
+        if (m) {
+          m.style.borderColor = "";
+          m.style.background = "";
+        }
+        if (c) {
+          c.style.borderColor = "";
+          c.innerHTML = "";
+        }
+      }
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 8000);
+
+    return tt;
+  }
+
+  const mpP = document.querySelector(
+    "[data-preview]:has(#mp-header)",
+  ) as HTMLElement;
+  if (mpP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const q = (s: string) => mpP.querySelector(s) as HTMLElement | null;
+      ["#mp-header", "#mp-m0", "#mp-m1", "#mp-m2", "#mp-m3"].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+      for (let i = 0; i < 4; i++) {
+        const m = q(`#mp-m${i}`);
+        const c = q(`#mp-c${i}`);
+        if (m) {
+          m.style.borderColor = "";
+          m.style.background = "";
+        }
+        if (c) {
+          c.style.borderColor = "";
+          c.innerHTML = "";
+        }
+      }
+    };
+    const obs = new MutationObserver(() => {
+      if (mpP.classList.contains("preview-active")) {
+        reset();
+        at = mpRun(mpP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(mpP, { attributes: true, attributeFilter: ["class"] });
+    mpP.addEventListener("preview:loop", () => {
+      reset();
+      at = mpRun(mpP) || [];
+    });
+    if (mpP.classList.contains("preview-active")) {
+      at = mpRun(mpP) || [];
+    }
+  }
+</script>

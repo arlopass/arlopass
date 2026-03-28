@@ -15,19 +15,56 @@ const providers = [
 ];
 ---
 
-<section class="py-12" aria-label="Supported AI providers">
-  <div class="px-4 md:px-6 lg:px-8">
-    <p
-      class="text-center text-sm text-[var(--ap-text-tertiary)] mb-6 uppercase tracking-widest font-medium"
+<section
+  class="py-12 overflow-hidden border-b border-[var(--ap-border)]"
+  aria-label="Supported AI providers"
+>
+  <p
+    class="text-center text-sm text-[var(--ap-text-tertiary)] mb-6 uppercase tracking-widest font-medium px-4"
+  >
+    Works with your favorite AI providers
+  </p>
+
+  <!-- Marquee wrapper -->
+  <div class="relative">
+    <!-- Left fade -->
+    <div
+      class="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[var(--ap-bg-base)] to-transparent"
     >
-      Works with your favorite AI providers
-    </p>
-    <div class="flex flex-wrap justify-center gap-3 max-[480px]:gap-2">
+    </div>
+    <!-- Right fade -->
+    <div
+      class="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[var(--ap-bg-base)] to-transparent"
+    >
+    </div>
+
+    <!-- Scrolling track — duplicated for seamless loop -->
+    <div class="flex gap-6 provider-marquee">
+      {/* First set */}
       {
         providers.map((p) => (
-          <div class="flex items-center gap-2 py-2.5 px-[18px] text-sm font-medium text-[var(--ap-text-secondary)] hover:text-[var(--ap-text-body)] hover:scale-102 transition-all max-[480px]:py-2 max-[480px]:px-3 max-[480px]:text-xs">
+          <div class="flex items-center gap-2 py-2 px-1 text-sm font-medium text-[var(--ap-text-tertiary)] shrink-0 whitespace-nowrap hover:text-[var(--ap-text-primary)] transition-colors duration-200 cursor-default">
             <img
-              class="w-5 h-5 max-[480px]:w-4 max-[480px]:h-4 shrink-0 provider-icon"
+              class="w-5 h-5 shrink-0 provider-icon"
+              src={`${ICON_BASE}/${p.slug}.svg`}
+              alt=""
+              width="20"
+              height="20"
+              loading="lazy"
+            />
+            <span>{p.name}</span>
+          </div>
+        ))
+      }
+      {/* Duplicate for seamless loop */}
+      {
+        providers.map((p) => (
+          <div
+            class="flex items-center gap-2 py-2 px-1 text-sm font-medium text-[var(--ap-text-tertiary)] shrink-0 whitespace-nowrap hover:text-[var(--ap-text-primary)] transition-colors duration-200 cursor-default"
+            aria-hidden="true"
+          >
+            <img
+              class="w-5 h-5 shrink-0 provider-icon"
               src={`${ICON_BASE}/${p.slug}.svg`}
               alt=""
               width="20"
@@ -43,17 +80,40 @@ const providers = [
 </section>
 
 <style>
+  @keyframes provider-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .provider-marquee {
+    animation: provider-scroll 30s linear infinite;
+    width: max-content;
+    transition: animation-duration 0.8s ease;
+  }
+
+  .provider-marquee:hover {
+    animation-duration: 90s;
+  }
+
   .provider-icon {
     filter: brightness(0) invert(0.7);
-    transition: filter 150ms ease;
-  }
-  .provider-icon:hover {
-    filter: brightness(0) invert(0.9);
   }
   :global([data-theme="light"]) .provider-icon {
     filter: brightness(0) invert(0.3);
   }
-  :global([data-theme="light"]) .provider-icon:hover {
-    filter: brightness(0) invert(0.1);
+
+  @media (prefers-reduced-motion: reduce) {
+    .provider-marquee {
+      animation: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: auto;
+      gap: 0.5rem;
+      padding: 0 1rem;
+    }
   }
 </style>

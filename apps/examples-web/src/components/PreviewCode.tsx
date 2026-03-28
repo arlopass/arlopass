@@ -1,6 +1,14 @@
 import { useState, type ReactNode } from "react";
-import { Box, Group, SegmentedControl, Stack } from "@mantine/core";
-import { IconCode, IconEye } from "@tabler/icons-react";
+import {
+  ActionIcon,
+  Box,
+  Group,
+  SegmentedControl,
+  Stack,
+  Tooltip,
+} from "@mantine/core";
+import { useMantineColorScheme } from "@mantine/core";
+import { IconCode, IconEye, IconMoon, IconSun } from "@tabler/icons-react";
 import { CodeBlock, type CodeVariant } from "./CodeBlock";
 
 export type PreviewCodeProps = {
@@ -27,30 +35,90 @@ export function PreviewCode({
   defaultTab = "preview",
 }: PreviewCodeProps) {
   const [tab, setTab] = useState<string>(defaultTab);
+  const { colorScheme } = useMantineColorScheme();
+  const appTheme = colorScheme === "light" ? "light" : "dark";
+  const [previewTheme, setPreviewTheme] = useState<"dark" | "light" | null>(
+    null,
+  );
+  const activeTheme = previewTheme ?? appTheme;
 
   return (
-    <Stack gap={0} style={{ border: "1px solid var(--mantine-color-gray-3)", borderRadius: 8, overflow: "hidden" }}>
+    <Stack
+      gap={0}
+      style={{
+        border: "1px solid var(--ap-border)",
+        borderRadius: 8,
+        overflow: "hidden",
+      }}
+    >
       {/* Tab header */}
       <Group
         px="md"
         py={8}
         justify="space-between"
-        style={{ borderBottom: "1px solid var(--mantine-color-gray-3)", background: "var(--mantine-color-gray-0)" }}
+        style={{
+          borderBottom: "1px solid var(--ap-border)",
+          background: "var(--ap-bg-surface)",
+        }}
       >
         <SegmentedControl
           size="xs"
           value={tab}
           onChange={setTab}
           data={[
-            { value: "preview", label: <Group gap={4} wrap="nowrap"><IconEye size={14} /> Preview</Group> },
-            { value: "code", label: <Group gap={4} wrap="nowrap"><IconCode size={14} /> Code</Group> },
+            {
+              value: "preview",
+              label: (
+                <Group gap={4} wrap="nowrap">
+                  <IconEye size={14} /> Preview
+                </Group>
+              ),
+            },
+            {
+              value: "code",
+              label: (
+                <Group gap={4} wrap="nowrap">
+                  <IconCode size={14} /> Code
+                </Group>
+              ),
+            },
           ]}
         />
+        {tab === "preview" && (
+          <Tooltip
+            label={
+              activeTheme === "dark" ? "Switch to light" : "Switch to dark"
+            }
+            position="left"
+          >
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              onClick={() =>
+                setPreviewTheme(activeTheme === "dark" ? "light" : "dark")
+              }
+              style={{ color: "var(--ap-text-secondary)" }}
+            >
+              {activeTheme === "dark" ? (
+                <IconSun size={14} />
+              ) : (
+                <IconMoon size={14} />
+              )}
+            </ActionIcon>
+          </Tooltip>
+        )}
       </Group>
 
       {/* Content */}
       {tab === "preview" && (
-        <Box p="md" style={{ background: "white" }}>
+        <Box
+          p="md"
+          data-preview-theme={activeTheme}
+          style={{
+            background: activeTheme === "dark" ? "#1c1917" : "#fafaf9",
+            transition: "background 200ms",
+          }}
+        >
           {preview}
         </Box>
       )}

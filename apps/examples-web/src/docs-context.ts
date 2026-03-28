@@ -461,7 +461,7 @@ waitForChat() / waitForStream() / waitForState(state) — async test helpers:
 Install: npm install @arlopass/react-ui
 
 Components:
-- Chat — compound chat interface: Chat.Root, Chat.Messages, Chat.Message, Chat.MessageContent, Chat.Input, Chat.SendButton, Chat.StopButton, Chat.StreamingIndicator, Chat.EmptyState
+- Chat — compound chat interface: Chat.Root, Chat.Header, Chat.Messages, Chat.Message, Chat.Avatar, Chat.Bubble, Chat.MessageContent, Chat.MessageMeta, Chat.ToolPills, Chat.Input, Chat.SendButton, Chat.StopButton, Chat.StreamingIndicator, Chat.TypingIndicator, Chat.StreamCursor, Chat.ToolActivity, Chat.EmptyState, Chat.ScrollFade, Chat.Footer, Chat.ContextBar
 - Message — standalone message display: Message.Root, Message.Content, Message.Role, Message.Timestamp, Message.Status, Message.ToolCalls
 - StreamingText — streaming text renderer with typing cursor
 - ProviderPicker — provider/model selection: ProviderPicker.Root, ProviderPicker.ProviderSelect, ProviderPicker.ModelSelect, ProviderPicker.SubmitButton
@@ -473,21 +473,29 @@ import { Chat } from "@arlopass/react-ui";
 
 <ArlopassProvider appId="my-app">
   <Chat.Root systemPrompt="You are helpful.">
+    <Chat.Header>Assistant</Chat.Header>
     <Chat.Messages>
       {(messages) => messages.map(m => (
         <Chat.Message key={m.id} message={m}>
-          <Chat.MessageContent />
+          <Chat.Avatar role={m.role} />
+          <Chat.Bubble>
+            <Chat.MessageContent />
+          </Chat.Bubble>
+          <Chat.MessageMeta>Model info</Chat.MessageMeta>
+          <Chat.ToolPills />
         </Chat.Message>
       ))}
     </Chat.Messages>
+    <Chat.TypingIndicator />
     <Chat.Input />
     <Chat.SendButton>Send</Chat.SendButton>
+    <Chat.Footer><Chat.ContextBar /></Chat.Footer>
   </Chat.Root>
 </ArlopassProvider>
 
-Styling: Components render semantic HTML with data-* attributes (data-state, data-role, data-status) for CSS targeting. No CSS shipped.
-CSS example: [data-role="user"] { background: #e3f2fd; } [data-state="streaming"] { opacity: 0.7; }`,
-    keywords: ["react-ui", "components", "Chat", "Message", "StreamingText", "ProviderPicker", "ToolActivity", "ConnectionStatus", "headless", "compound", "unstyled", "primitive", "data-state", "data-role"],
+Styling: Components render semantic HTML with data-part and data-* attributes (data-state, data-role, data-status, data-phase, data-usage) for CSS targeting. No CSS shipped.
+CSS example: [data-part="bubble"][data-role="user"] { background: #f5f5f5; } [data-part="typing-dot"] { animation: bounce 0.8s infinite; }`,
+    keywords: ["react-ui", "components", "Chat", "Message", "StreamingText", "ProviderPicker", "ToolActivity", "ConnectionStatus", "headless", "compound", "unstyled", "primitive", "data-state", "data-role", "data-part", "avatar", "bubble", "typing", "footer", "context-bar", "scroll-fade"],
   },
   {
     id: "ui-registry",

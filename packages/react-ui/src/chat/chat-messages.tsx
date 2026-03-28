@@ -14,11 +14,12 @@ export const Messages = createForwardRef<HTMLDivElement, ChatMessagesProps>(
   "Chat.Messages",
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- ref is managed internally by useAutoScroll
   ({ children, ...rest }, _forwardedRef) => {
-    const { messages, streamingContent } = useChatContext("Chat.Messages");
-    const { ref } = useAutoScroll<HTMLDivElement>([
-      messages.length,
-      streamingContent,
-    ]);
+    const { messages, streamingContent, isStreaming } =
+      useChatContext("Chat.Messages");
+    const { ref } = useAutoScroll<HTMLDivElement>(
+      [messages.length, streamingContent],
+      isStreaming,
+    );
 
     return (
       <div

@@ -15,13 +15,17 @@ for await (const chunk of stream) {
 }`;
 ---
 
-<section class="py-24" id="developers" aria-labelledby="dev-heading">
+<section
+  id="developers"
+  class="bg-[var(--ap-bg-surface)]"
+  aria-labelledby="dev-heading"
+>
   <div
-    class="px-4 md:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16 items-center"
+    class="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-0 items-stretch"
   >
-    <div>
+    <div class="pl-4 md:pl-6 lg:pl-8 py-8 lg:py-24 lg:pr-12 pr-4 md:pr-6">
       <span
-        class="inline-block text-xs font-medium uppercase tracking-[0.08em] text-brand mb-4"
+        class="inline-block text-sm font-pixel tracking-[0.08em] text-brand mb-4"
         >For developers</span
       >
       <h2
@@ -97,46 +101,91 @@ for await (const chunk of stream) {
       </a>
     </div>
 
-    <div class="min-w-0">
+    <!-- Right side: mosaic bg + glassmorphism frame -->
+    <div
+      class="relative min-w-0 overflow-hidden lg:border-l border-[var(--ap-border)]"
+    >
+      <!-- Mosaic background (full height) -->
+      <canvas
+        data-mosaic-src="/img/bg6.webp"
+        class="absolute inset-0 w-full h-full"></canvas>
+      <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+
       <div
-        class="bg-[var(--ap-bg-code)] border border-[var(--ap-border)] rounded-lg overflow-hidden shadow-[0_24px_48px_-12px_rgba(0,0,0,0.4)]"
+        class="relative z-10 flex items-end pt-6 pl-6 lg:pt-16 lg:pl-16 h-full min-h-[480px]"
       >
-        <div
-          class="flex items-center gap-3 py-3 px-4 bg-[color-mix(in_oklch,var(--ap-bg-code)_100%,#000_5%)] border-b border-[var(--ap-border)]"
-        >
-          <div class="flex gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
-            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-          </div>
-          <span
-            class="flex-1 text-[11px] text-[var(--ap-text-tertiary)] font-mono"
-            >app.ts</span
+        <!-- Glassmorphism browser frame -->
+        <div class="w-full h-full">
+          <div
+            class="flex flex-col h-full overflow-hidden rounded-tl-2xl shadow-2xl pt-1 pl-1 bg-neutral-900/70 backdrop-blur-sm shadow-black/20 border-t border-l border-neutral-800"
           >
-          <button
-            class="flex items-center p-1 bg-transparent border-none text-[var(--ap-text-tertiary)] cursor-pointer rounded hover:text-[var(--ap-text-secondary)] hover:bg-[var(--ap-bg-surface)] transition-colors"
-            aria-label="Copy code"
-            id="code-copy"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              ><rect x="9" y="9" width="13" height="13" rx="2" ry="2"
-              ></rect><path
-                d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
-              ></path></svg
+            <!-- Browser chrome -->
+            <div
+              class="hidden md:flex h-10 shrink-0 items-center gap-6 px-4 py-2"
             >
-          </button>
+              <div class="flex gap-1.5">
+                <div class="h-3 w-3 rounded-full bg-red-500"></div>
+                <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
+                <div class="h-3 w-3 rounded-full bg-green-500"></div>
+              </div>
+              <div
+                class="absolute inset-y-0 inset-x-24 hidden md:flex items-center"
+              >
+                <div
+                  class="flex flex-1 items-center justify-center gap-1.5 truncate rounded-full px-3 py-1 text-xs font-medium text-neutral-400"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="shrink-0 text-neutral-500"
+                    ><rect x="3" y="11" width="18" height="11" rx="2" ry="2"
+                    ></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg
+                  >
+                  <span class="truncate">yourapp.com/chat</span>
+                </div>
+              </div>
+              <button
+                class="ml-auto hidden md:flex items-center p-1 bg-transparent border-none text-neutral-500 cursor-pointer rounded hover:text-neutral-300 transition-colors"
+                aria-label="Copy code"
+                id="code-copy"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><rect x="9" y="9" width="13" height="13" rx="2" ry="2"
+                  ></rect><path
+                    d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
+                  ></path></svg
+                >
+              </button>
+            </div>
+            <!-- Code content -->
+            <div
+              class="relative h-full overflow-hidden rounded-tl-xl border-x border-t border-neutral-700/50"
+            >
+              <div
+                class="flex items-center gap-3 py-2.5 px-4 bg-[color-mix(in_oklch,var(--ap-bg-code)_100%,#000_5%)] border-b border-white/5"
+              >
+                <span class="text-[11px] text-stone-500 font-mono">app.ts</span>
+              </div>
+              <pre
+                class="p-5 h-full m-0 overflow-x-auto overflow-y-hidden scrollbar-thin font-mono lg:text-base leading-[1.7] text-stone-300 whitespace-pre break-normal max-sm:p-3 max-sm:text-[11px] bg-[var(--ap-bg-code)]"
+                style="tab-size: 2"><code class="text-inherit whitespace-inherit">{codeExample}</code></pre>
+            </div>
+          </div>
         </div>
-        <pre
-          class="p-5 m-0 overflow-x-auto overflow-y-hidden scrollbar-thin font-mono text-[13px] leading-[1.7] text-stone-300 whitespace-pre break-normal max-sm:p-3 max-sm:text-[11px]"
-          style="tab-size: 2"><code class="text-inherit whitespace-inherit">{codeExample}</code></pre>
       </div>
     </div>
   </div>

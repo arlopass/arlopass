@@ -1,177 +1,363 @@
 ---
-/**
- * BentoGrid — Feature showcase in a bento-style grid layout.
- */
-import SecurityArchitecture from "./previews/SecurityArchitecture.astro";
-import ProviderConstellation from "./previews/ProviderConstellation.astro";
+import SecureVault from "./previews/SecureVault.astro";
+import ModelPicker from "./previews/ModelPicker.astro";
+import PermissionsIllustration from "./previews/PermissionsIllustration.astro";
+import EnterpriseGovernance from "./previews/EnterpriseGovernance.astro";
 import PreviewCarousel from "./ui/PreviewCarousel.astro";
 ---
 
 <section
-  class="py-24 bg-[var(--ap-bg-surface)]"
+  class="bg-[var(--ap-bg-surface)]"
   id="bento"
   aria-labelledby="bento-heading"
 >
-  <div class="px-4 md:px-6 lg:px-8">
-    <span
-      class="block text-center text-xs font-medium uppercase tracking-[0.08em] text-brand"
+  <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+    <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
       >Why Arlopass</span
     >
     <p
       id="bento-heading"
-      class="mx-auto mt-2 max-w-lg text-center text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+      class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
     >
       Everything you need for safe AI access
     </p>
+    <p
+      class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+    >
+      Arlopass gives users and developers a single layer for model selection,
+      credential security, and per-app permissions — no server changes required.
+    </p>
+  </div>
 
-    <div class="mt-10 grid gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2">
-      <!-- Left tall card (spans 2 rows) -->
-      <div class="relative lg:row-span-2">
-        <div
-          class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)] lg:rounded-l-[2rem]"
-        >
-        </div>
-        <div
-          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)] lg:rounded-l-[calc(2rem+1px)]"
-        >
-          <div class="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
-            <p
-              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
-            >
-              Your keys, your device
-            </p>
-            <p
-              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
-            >
-              API credentials are stored in your OS keychain — never in the
-              browser, never on a server.
-            </p>
-          </div>
-          <div class="relative w-full grow flex items-end justify-start">
-            <PreviewCarousel class="w-full h-full pt-8">
-              <SecurityArchitecture />
-            </PreviewCarousel>
-          </div>
-        </div>
-        <div
-          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)] lg:rounded-l-[2rem]"
-        >
-        </div>
-      </div>
-
-      <!-- Top middle card -->
-      <div class="relative max-lg:row-start-1">
-        <div
-          class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)] max-lg:rounded-t-[2rem]"
-        >
-        </div>
-        <div
-          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)] max-lg:rounded-t-[calc(2rem+1px)]"
-        >
-          <div class="px-8 pt-8 sm:px-10 sm:pt-10">
-            <p
-              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
-            >
-              10-line integration
-            </p>
-            <p
-              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
-            >
-              Add AI to any web app with just a few lines of code. No backend
-              proxy needed.
-            </p>
-          </div>
-          <div
-            class="flex flex-1 items-center justify-center px-8 max-lg:pt-10 max-lg:pb-12 sm:px-10 lg:pb-2"
-          >
-            <!-- Placeholder for visual -->
+  <!-- Row 1 -->
+  <div class="grid lg:grid-cols-5 border border-[var(--ap-border)]">
+    <!-- Card 1: Security -->
+    <div class="relative lg:col-span-3 border-r border-[var(--ap-border)]">
+      <div class="flex h-full flex-col overflow-hidden">
+        <div class="relative h-[320px] overflow-hidden">
+          <canvas
+            data-mosaic-src="/img/bg1.webp"
+            class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+          <div class="relative z-10 h-full pt-5 px-5 bento-glass">
             <div
-              class="w-full h-32 rounded-lg border border-dashed border-[var(--ap-border)] flex items-center justify-center text-sm text-[var(--ap-text-tertiary)]"
+              class="h-full -mb-2 rounded-t-2xl bg-white/40 pt-1 px-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg overflow-hidden"
             >
-              Visual placeholder
+              <div
+                class="h-full rounded-t-xl bg-[var(--ap-bg-base)] p-4 overflow-hidden"
+              >
+                <PreviewCarousel class="h-full w-full">
+                  <SecureVault />
+                </PreviewCarousel>
+              </div>
             </div>
           </div>
         </div>
         <div
-          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)] max-lg:rounded-t-[2rem]"
+          class="border-t border-[var(--ap-border)] bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 px-8 py-6 sm:px-10"
         >
-        </div>
-      </div>
-
-      <!-- Bottom middle card -->
-      <div class="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
-        <div class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)]"></div>
-        <div
-          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)]"
-        >
-          <!-- Constellation — absolute, behind text -->
-          <div class="absolute inset-0 flex items-end justify-center">
-            <PreviewCarousel class="w-full">
-              <ProviderConstellation />
-            </PreviewCarousel>
-          </div>
-
-          <!-- Text with gradient mask over constellation -->
-          <div class="relative z-10 px-8 pt-8 sm:px-10 sm:pt-10">
-            <p
-              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
-            >
-              Any provider, any model
-            </p>
-            <p
-              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
-            >
-              Switch between Claude, GPT, Gemini, Ollama, and more — with one
-              click.
-            </p>
-            <!-- Gradient fade from card bg to transparent -->
-            <div class="h-8 mt-2 bg-gradient-to-b from-[var(--ap-bg-base)] to-transparent"></div>
-          </div>
-        </div>
-        <div
-          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)]"
-        >
-        </div>
-      </div>
-
-      <!-- Right tall card (spans 2 rows) -->
-      <div class="relative lg:row-span-2">
-        <div
-          class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)] max-lg:rounded-b-[2rem] lg:rounded-r-[2rem]"
-        >
-        </div>
-        <div
-          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)] max-lg:rounded-b-[calc(2rem+1px)] lg:rounded-r-[calc(2rem+1px)]"
-        >
-          <div class="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
-            <p
-              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
-            >
-              Enterprise governance
-            </p>
-            <p
-              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
-            >
-              Signed policy bundles, audit trails, and compliance-ready controls
-              for your organization.
-            </p>
-          </div>
-          <div
-            class="relative min-h-[300px] w-full grow flex items-center justify-center p-8"
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Security</span
           >
-            <!-- Placeholder for visual -->
+          <p
+            class="mt-1.5 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)]"
+          >
+            Your keys, your device
+          </p>
+          <p
+            class="mt-1.5 text-sm leading-relaxed text-[var(--ap-text-secondary)]"
+          >
+            API credentials are stored in your OS keychain — never in the
+            browser, never on a server. AES-256-GCM encryption at rest.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Developer experience -->
+    <div class="relative lg:col-span-2">
+      <div class="flex h-full flex-col overflow-hidden">
+        <div class="relative h-[320px] overflow-hidden">
+          <canvas
+            data-mosaic-src="/img/bg2.webp"
+            class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+          <div class="relative z-10 h-full pt-5 px-5 bento-glass">
             <div
-              class="w-full h-full rounded-lg border border-dashed border-[var(--ap-border)] flex items-center justify-center text-sm text-[var(--ap-text-tertiary)]"
+              class="h-full -mb-2 rounded-t-2xl bg-white/40 pt-1 px-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg overflow-hidden"
             >
-              Visual placeholder
+              <div
+                class="h-full rounded-t-xl bg-[var(--ap-bg-code)] overflow-hidden"
+              >
+                <PreviewCarousel class="h-full w-full">
+                  <div data-preview class="w-full h-full">
+                    <div class="flex flex-col h-full w-full">
+                      <div
+                        data-step="0"
+                        class="flex items-center gap-2 px-4 py-2.5 border-b border-white/10 shrink-0"
+                      >
+                        <div class="flex gap-1.5">
+                          <span class="w-2.5 h-2.5 rounded-full bg-red-400/80"
+                          ></span>
+                          <span
+                            class="w-2.5 h-2.5 rounded-full bg-yellow-400/80"
+                          ></span>
+                          <span class="w-2.5 h-2.5 rounded-full bg-green-400/80"
+                          ></span>
+                        </div>
+                        <span class="text-[10px] text-white/40 font-mono"
+                          >app.ts</span
+                        >
+                      </div>
+                      <div
+                        class="px-5 py-4 font-mono text-[11px] leading-loose text-stone-400 flex-1"
+                      >
+                        <div data-step="1">
+                          <span class="text-brand">import</span>
+                          {"{"} connect {"}"}
+                          <span class="text-brand">from</span>
+                          <span class="text-amber">'@arlopass/web-sdk'</span>
+                        </div>
+                        <div data-step="2" class="mt-3">
+                          <span class="text-brand">const</span> session = <span
+                            class="text-brand">await</span
+                          >
+                          <span class="text-stone-200">connect</span>()
+                        </div>
+                        <div data-step="3">
+                          <span class="text-brand">const</span> chat = session.<span
+                            class="text-stone-200">createChat</span
+                          >()
+                        </div>
+                        <div data-step="4" class="mt-3">
+                          <span class="text-brand">for await</span> (<span
+                            class="text-brand">const</span
+                          > chunk <span class="text-brand">of</span> chat.<span
+                            class="text-stone-200">stream</span
+                          >(<span class="text-amber">'Hello!'</span>)) {"{"}
+                        </div>
+                        <div data-step="5">
+                          &nbsp;&nbsp;process.stdout.<span
+                            class="text-stone-200">write</span
+                          >(chunk)
+                        </div>
+                        <div data-step="6">{`}`}</div>
+                      </div>
+                    </div>
+                  </div>
+                </PreviewCarousel>
+              </div>
             </div>
           </div>
         </div>
         <div
-          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)] max-lg:rounded-b-[2rem] lg:rounded-r-[2rem]"
+          class="border-t border-[var(--ap-border)] bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 px-8 py-6 sm:px-10"
         >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Developer experience</span
+          >
+          <p
+            class="mt-1.5 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)]"
+          >
+            10-line integration
+          </p>
+          <p
+            class="mt-1.5 text-sm leading-relaxed text-[var(--ap-text-secondary)]"
+          >
+            Add AI to any web app with a few lines of code. No backend proxy, no
+            key management.
+          </p>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Row 2 -->
+  <div class="grid lg:grid-cols-3 border-x border-b border-[var(--ap-border)]">
+    <!-- Card 3: Providers -->
+    <div class="relative border-r border-[var(--ap-border)]">
+      <div class="flex h-full flex-col overflow-hidden">
+        <div class="relative h-[280px] overflow-hidden">
+          <canvas
+            data-mosaic-src="/img/bg3.webp"
+            class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+          <div class="relative z-10 h-full pt-5 px-5 bento-glass">
+            <div
+              class="h-full -mb-2 rounded-t-xl bg-white/40 pt-1 px-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg overflow-hidden"
+            >
+              <div
+                class="h-full rounded-t-lg bg-[var(--ap-bg-base)] p-4 overflow-hidden"
+              >
+                <PreviewCarousel class="h-full w-full">
+                  <ModelPicker />
+                </PreviewCarousel>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t border-[var(--ap-border)] bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 px-8 py-6 sm:px-10"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Providers</span
+          >
+          <p
+            class="mt-1.5 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)]"
+          >
+            Any provider, any model
+          </p>
+          <p
+            class="mt-1.5 text-sm leading-relaxed text-[var(--ap-text-secondary)]"
+          >
+            Switch between Claude, GPT, Gemini, Ollama, and more — with one
+            click.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Permissions -->
+    <div class="relative border-r border-[var(--ap-border)]">
+      <div class="flex h-full flex-col overflow-hidden">
+        <div class="relative h-[280px] overflow-hidden">
+          <canvas
+            data-mosaic-src="/img/bg4.webp"
+            class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+          <div class="relative z-10 h-full pt-5 px-5 bento-glass">
+            <div
+              class="h-full -mb-2 rounded-t-xl bg-white/40 pt-1 px-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg overflow-hidden"
+            >
+              <div
+                class="h-full rounded-t-lg bg-[var(--ap-bg-base)] p-4 overflow-hidden"
+              >
+                <PreviewCarousel class="h-full w-full">
+                  <PermissionsIllustration />
+                </PreviewCarousel>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t border-[var(--ap-border)] bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 px-8 py-6 sm:px-10"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Permissions</span
+          >
+          <p
+            class="mt-1.5 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)]"
+          >
+            You decide who gets access
+          </p>
+          <p
+            class="mt-1.5 text-sm leading-relaxed text-[var(--ap-text-secondary)]"
+          >
+            Approve connections once, set rate limits, toggle providers — all
+            from one place.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Enterprise -->
+    <div class="relative">
+      <div class="flex h-full flex-col overflow-hidden">
+        <div class="relative h-[280px] overflow-hidden">
+          <canvas
+            data-mosaic-src="/img/bg5.webp"
+            class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 bg-[#FFF7ED]/40"></div>
+          <div class="relative z-10 h-full pt-5 px-5 bento-glass">
+            <div
+              class="h-full -mb-2 rounded-t-xl bg-white/40 pt-1 px-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg overflow-hidden"
+            >
+              <div
+                class="h-full rounded-t-lg bg-[var(--ap-bg-base)] p-4 overflow-hidden"
+              >
+                <PreviewCarousel class="h-full w-full">
+                  <EnterpriseGovernance />
+                </PreviewCarousel>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t border-[var(--ap-border)] bg-white hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 px-8 py-6 sm:px-10"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Enterprise</span
+          >
+          <p
+            class="mt-1.5 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)]"
+          >
+            Governance without the headaches
+          </p>
+          <p
+            class="mt-1.5 text-sm leading-relaxed text-[var(--ap-text-secondary)]"
+          >
+            Signed policy bundles, audit trails, and compliance-ready controls
+            for your organization.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style is:global>
+    .bento-glass [data-preview] {
+      align-items: stretch !important;
+    }
+    .bento-glass [data-preview].preview-active {
+      height: 100%;
+    }
+  </style>
+
+  <script>
+    const TILE = 16;
+    document
+      .querySelectorAll<HTMLCanvasElement>("[data-mosaic-src]")
+      .forEach((canvas) => {
+        const src = canvas.dataset.mosaicSrc!;
+        const ctx = canvas.getContext("2d")!;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+        img.onload = () => {
+          const draw = () => {
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            if (!w || !h) return;
+            canvas.width = w;
+            canvas.height = h;
+            const cols = Math.ceil(w / TILE);
+            const rows = Math.ceil(h / TILE);
+            // Cover-crop: scale image to fill, center, clip overflow
+            const imgRatio = img.naturalWidth / img.naturalHeight;
+            const canvasRatio = w / h;
+            let sx = 0,
+              sy = 0,
+              sw = img.naturalWidth,
+              sh = img.naturalHeight;
+            if (imgRatio > canvasRatio) {
+              sw = img.naturalHeight * canvasRatio;
+              sx = (img.naturalWidth - sw) / 2;
+            } else {
+              sh = img.naturalWidth / canvasRatio;
+              sy = (img.naturalHeight - sh) / 2;
+            }
+            const off = document.createElement("canvas");
+            off.width = cols;
+            off.height = rows;
+            off
+              .getContext("2d")!
+              .drawImage(img, sx, sy, sw, sh, 0, 0, cols, rows);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(off, 0, 0, cols, rows, 0, 0, w, h);
+          };
+          draw();
+          new ResizeObserver(draw).observe(canvas);
+        };
+      });
+  </script>
 </section>

@@ -1,0 +1,273 @@
+---
+/**
+ * Preview: Permissions Controls — animated toggle illustration
+ * Shows app permission toggles being configured.
+ */
+---
+
+<div data-preview data-loop="7500" class="w-full h-full">
+  <div class="flex flex-col gap-2 w-full max-w-[240px] mx-auto">
+    <!-- App header -->
+    <div
+      id="perm-header"
+      class="flex items-center gap-2 pb-2 border-b border-[var(--ap-border)] opacity-0 transition-all duration-400"
+    >
+      <div
+        class="w-6 h-6 rounded bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center overflow-hidden"
+      >
+        <img
+          src="https://excalimate.com/favicon.svg"
+          alt=""
+          width="14"
+          height="14"
+          class="w-3.5 h-3.5"
+        />
+      </div>
+      <span
+        class="text-[10px] font-semibold text-[var(--ap-text-primary)] flex-1"
+        >excalimate.com</span
+      >
+      <span
+        class="text-[8px] font-semibold text-success bg-[var(--ap-success-subtle)] py-0.5 px-1.5 rounded-full uppercase tracking-wide"
+        >Active</span
+      >
+    </div>
+
+    <!-- Toggle rows -->
+    <div
+      id="perm-r0"
+      class="flex items-center gap-2 py-1 opacity-0 transition-all duration-300"
+    >
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-medium text-[var(--ap-text-primary)]">
+          Always ask permission
+        </p>
+      </div>
+      <div
+        id="perm-t0"
+        class="w-6 h-3.5 rounded-full bg-success flex items-center transition-all duration-250 cursor-default justify-end"
+      >
+        <div
+          class="w-2.5 h-2.5 rounded-full bg-white shadow-sm mr-0.5 transition-all duration-250"
+        >
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="perm-r1"
+      class="flex items-center gap-2 py-1 opacity-0 transition-all duration-300"
+    >
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-medium text-[var(--ap-text-primary)]">
+          Autopilot mode
+        </p>
+      </div>
+      <div
+        id="perm-t1"
+        class="w-6 h-3.5 rounded-full flex items-center transition-all duration-250 cursor-default justify-start"
+        style="background: var(--ap-border);"
+      >
+        <div
+          class="w-2.5 h-2.5 rounded-full bg-white shadow-sm ml-0.5 transition-all duration-250"
+        >
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="perm-r2"
+      class="flex items-center gap-2 py-1 opacity-0 transition-all duration-300"
+    >
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-medium text-[var(--ap-text-primary)]">
+          Auto-select model
+        </p>
+      </div>
+      <div
+        id="perm-t2"
+        class="w-6 h-3.5 rounded-full bg-success flex items-center transition-all duration-250 cursor-default justify-end"
+      >
+        <div
+          class="w-2.5 h-2.5 rounded-full bg-white shadow-sm mr-0.5 transition-all duration-250"
+        >
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="perm-r3"
+      class="flex items-center gap-2 py-1 opacity-0 transition-all duration-300"
+    >
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-medium text-[var(--ap-text-primary)]">
+          Daily token limit
+        </p>
+      </div>
+      <span
+        id="perm-limit"
+        class="text-[9px] font-mono font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded py-0.5 px-1.5 transition-all duration-200"
+        >100k</span
+      >
+    </div>
+
+    <div
+      id="perm-r4"
+      class="flex items-center gap-2 py-1 opacity-0 transition-all duration-300"
+    >
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-medium text-[var(--ap-text-primary)]">
+          Consecutive calls
+        </p>
+      </div>
+      <span
+        class="text-[9px] font-mono font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded py-0.5 px-1.5"
+        >25</span
+      >
+    </div>
+  </div>
+</div>
+
+<script>
+  function permRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+    const show = (el: HTMLElement | null) => {
+      if (el) el.style.opacity = "1";
+    };
+
+    // Stagger reveal
+    t(() => show(q("#perm-header")), 400);
+    t(() => show(q("#perm-r0")), 800);
+    t(() => show(q("#perm-r1")), 1000);
+    t(() => show(q("#perm-r2")), 1200);
+    t(() => show(q("#perm-r3")), 1400);
+    t(() => show(q("#perm-r4")), 1600);
+
+    // 2.5s — Toggle autopilot ON
+    t(() => {
+      const t1 = q("#perm-t1");
+      if (t1) {
+        t1.style.background = "";
+        t1.classList.add("bg-success", "justify-end");
+        t1.classList.remove("justify-start");
+        const knob = t1.querySelector("div");
+        if (knob) {
+          knob.classList.remove("ml-0.5");
+          knob.classList.add("mr-0.5");
+        }
+      }
+    }, 2500);
+
+    // 3.2s — Change token limit
+    t(() => {
+      const lim = q("#perm-limit");
+      if (lim) {
+        lim.textContent = "50k";
+        lim.classList.add("text-brand", "border-brand/50");
+      }
+    }, 3200);
+
+    // 4s — Toggle "always ask" OFF
+    t(() => {
+      const t0 = q("#perm-t0");
+      if (t0) {
+        t0.classList.remove("bg-success", "justify-end");
+        t0.classList.add("justify-start");
+        t0.style.background = "var(--ap-border)";
+        const knob = t0.querySelector("div");
+        if (knob) {
+          knob.classList.remove("mr-0.5");
+          knob.classList.add("ml-0.5");
+        }
+      }
+    }, 4000);
+
+    // 6s — Reset
+    t(() => {
+      [
+        "#perm-header",
+        "#perm-r0",
+        "#perm-r1",
+        "#perm-r2",
+        "#perm-r3",
+        "#perm-r4",
+      ].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+      // Reset toggles
+      const t0 = q("#perm-t0");
+      if (t0) {
+        t0.classList.add("bg-success", "justify-end");
+        t0.classList.remove("justify-start");
+        t0.style.background = "";
+        const k = t0.querySelector("div");
+        if (k) {
+          k.classList.add("mr-0.5");
+          k.classList.remove("ml-0.5");
+        }
+      }
+      const t1 = q("#perm-t1");
+      if (t1) {
+        t1.classList.remove("bg-success", "justify-end");
+        t1.classList.add("justify-start");
+        t1.style.background = "var(--ap-border)";
+        const k = t1.querySelector("div");
+        if (k) {
+          k.classList.add("ml-0.5");
+          k.classList.remove("mr-0.5");
+        }
+      }
+      const lim = q("#perm-limit");
+      if (lim) {
+        lim.textContent = "100k";
+        lim.classList.remove("text-brand", "border-brand/50");
+      }
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 6000);
+
+    return tt;
+  }
+
+  const permP = document.querySelector(
+    "[data-preview]:has(#perm-header)",
+  ) as HTMLElement;
+  if (permP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const q = (s: string) => permP.querySelector(s) as HTMLElement | null;
+      [
+        "#perm-header",
+        "#perm-r0",
+        "#perm-r1",
+        "#perm-r2",
+        "#perm-r3",
+        "#perm-r4",
+      ].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+    };
+    const obs = new MutationObserver(() => {
+      if (permP.classList.contains("preview-active")) {
+        reset();
+        at = permRun(permP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(permP, { attributes: true, attributeFilter: ["class"] });
+    permP.addEventListener("preview:loop", () => {
+      reset();
+      at = permRun(permP) || [];
+    });
+    if (permP.classList.contains("preview-active")) {
+      at = permRun(permP) || [];
+    }
+  }
+</script>

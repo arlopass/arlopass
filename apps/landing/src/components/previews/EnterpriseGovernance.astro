@@ -1,0 +1,249 @@
+---
+/**
+ * Preview: Enterprise Governance — animated policy illustration
+ * Shows signed policy bundles, audit trail entries, and compliance badges.
+ */
+---
+
+<div data-preview data-loop="8500" class="w-full h-full">
+  <div class="flex flex-col gap-2 w-full max-w-[240px] mx-auto">
+    <!-- Policy card -->
+    <div
+      id="ent-policy"
+      class="bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg p-2.5 flex flex-col gap-1.5 opacity-0 transition-all duration-400"
+    >
+      <div class="flex items-center gap-1.5">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--color-brand)"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg
+        >
+        <span
+          class="text-[9px] font-semibold text-[var(--ap-text-primary)] flex-1"
+          >Organization Policy</span
+        >
+        <span
+          id="ent-badge"
+          class="text-[7px] font-semibold py-0.5 px-1.5 rounded-full uppercase tracking-wide text-[var(--ap-text-tertiary)] bg-[var(--ap-bg-base)] border border-[var(--ap-border)] transition-all duration-300"
+          >Verifying</span
+        >
+      </div>
+      <div class="font-mono text-[8px] leading-snug flex flex-col gap-0.5">
+        <div class="flex gap-1.5">
+          <span class="text-brand min-w-[60px]">providers</span><span
+            class="text-amber">[claude, bedrock]</span
+          >
+        </div>
+        <div class="flex gap-1.5">
+          <span class="text-brand min-w-[60px]">audit</span><span
+            class="text-amber">otlp → splunk</span
+          >
+        </div>
+        <div class="flex gap-1.5">
+          <span class="text-brand min-w-[60px]">signature</span><span
+            class="text-[var(--ap-text-tertiary)]">ed25519:a7c3…</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit log entries -->
+    <div
+      id="ent-log"
+      class="flex flex-col gap-1 opacity-0 transition-all duration-400"
+    >
+      <span
+        class="text-[8px] font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wider"
+        >Recent audit log</span
+      >
+      <div
+        id="ent-e0"
+        class="flex items-center gap-1.5 py-1 px-2 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded text-[8px] opacity-0 transition-all duration-300"
+      >
+        <div class="w-1.5 h-1.5 rounded-full bg-success shrink-0"></div>
+        <span class="text-[var(--ap-text-secondary)] flex-1"
+          >Connection approved</span
+        >
+        <span class="text-[var(--ap-text-tertiary)]">2s ago</span>
+      </div>
+      <div
+        id="ent-e1"
+        class="flex items-center gap-1.5 py-1 px-2 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded text-[8px] opacity-0 transition-all duration-300"
+      >
+        <div class="w-1.5 h-1.5 rounded-full bg-success shrink-0"></div>
+        <span class="text-[var(--ap-text-secondary)] flex-1"
+          >Chat streamed (Claude)</span
+        >
+        <span class="text-[var(--ap-text-tertiary)]">5m ago</span>
+      </div>
+      <div
+        id="ent-e2"
+        class="flex items-center gap-1.5 py-1 px-2 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded text-[8px] opacity-0 transition-all duration-300"
+      >
+        <div class="w-1.5 h-1.5 rounded-full bg-warning shrink-0"></div>
+        <span class="text-[var(--ap-text-secondary)] flex-1"
+          >Rate limit reached</span
+        >
+        <span class="text-[var(--ap-text-tertiary)]">1h ago</span>
+      </div>
+    </div>
+
+    <!-- Compliance badges -->
+    <div
+      id="ent-badges"
+      class="flex flex-wrap gap-1 mt-0.5 opacity-0 transition-all duration-400"
+    >
+      <span
+        class="text-[7px] font-medium text-success bg-[var(--ap-success-subtle)] py-0.5 px-1.5 rounded-full"
+        >SOC 2</span
+      >
+      <span
+        class="text-[7px] font-medium text-success bg-[var(--ap-success-subtle)] py-0.5 px-1.5 rounded-full"
+        >ISO 27001</span
+      >
+      <span
+        class="text-[7px] font-medium text-success bg-[var(--ap-success-subtle)] py-0.5 px-1.5 rounded-full"
+        >GDPR</span
+      >
+      <span
+        class="text-[7px] font-medium text-success bg-[var(--ap-success-subtle)] py-0.5 px-1.5 rounded-full"
+        >HIPAA</span
+      >
+    </div>
+  </div>
+</div>
+
+<script>
+  function entRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+    const show = (el: HTMLElement | null) => {
+      if (el) el.style.opacity = "1";
+    };
+
+    // 0.4s — Policy card
+    t(() => show(q("#ent-policy")), 400);
+
+    // 1.2s — Badge changes to "Signed"
+    t(() => {
+      const b = q("#ent-badge");
+      if (b) {
+        b.textContent = "Signed ✓";
+        b.classList.remove(
+          "text-[var(--ap-text-tertiary)]",
+          "bg-[var(--ap-bg-base)]",
+          "border-[var(--ap-border)]",
+        );
+        b.classList.add(
+          "text-success",
+          "bg-[var(--ap-success-subtle)]",
+          "border-success/20",
+        );
+      }
+    }, 1200);
+
+    // 1.8s — Audit log header
+    t(() => show(q("#ent-log")), 1800);
+
+    // 2.2–3.0s — Log entries stagger
+    t(() => show(q("#ent-e0")), 2200);
+    t(() => show(q("#ent-e1")), 2600);
+    t(() => show(q("#ent-e2")), 3000);
+
+    // 3.6s — Compliance badges
+    t(() => show(q("#ent-badges")), 3600);
+
+    // 7s — Reset
+    t(() => {
+      [
+        "#ent-policy",
+        "#ent-log",
+        "#ent-e0",
+        "#ent-e1",
+        "#ent-e2",
+        "#ent-badges",
+      ].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+      const b = q("#ent-badge");
+      if (b) {
+        b.textContent = "Verifying";
+        b.classList.add(
+          "text-[var(--ap-text-tertiary)]",
+          "bg-[var(--ap-bg-base)]",
+          "border-[var(--ap-border)]",
+        );
+        b.classList.remove(
+          "text-success",
+          "bg-[var(--ap-success-subtle)]",
+          "border-success/20",
+        );
+      }
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 7000);
+
+    return tt;
+  }
+
+  const entP = document.querySelector(
+    "[data-preview]:has(#ent-policy)",
+  ) as HTMLElement;
+  if (entP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const q = (s: string) => entP.querySelector(s) as HTMLElement | null;
+      [
+        "#ent-policy",
+        "#ent-log",
+        "#ent-e0",
+        "#ent-e1",
+        "#ent-e2",
+        "#ent-badges",
+      ].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+      const b = q("#ent-badge");
+      if (b) {
+        b.textContent = "Verifying";
+        b.classList.add(
+          "text-[var(--ap-text-tertiary)]",
+          "bg-[var(--ap-bg-base)]",
+          "border-[var(--ap-border)]",
+        );
+        b.classList.remove(
+          "text-success",
+          "bg-[var(--ap-success-subtle)]",
+          "border-success/20",
+        );
+      }
+    };
+    const obs = new MutationObserver(() => {
+      if (entP.classList.contains("preview-active")) {
+        reset();
+        at = entRun(entP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(entP, { attributes: true, attributeFilter: ["class"] });
+    entP.addEventListener("preview:loop", () => {
+      reset();
+      at = entRun(entP) || [];
+    });
+    if (entP.classList.contains("preview-active")) {
+      at = entRun(entP) || [];
+    }
+  }
+</script>

@@ -25,7 +25,7 @@ import StreamingChat from "./previews/StreamingChat.astro";
       const ctx = canvas.getContext("2d")!;
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.src = "/hero_bg.webp";
+      img.src = "/img/hero_bg.webp";
       img.onload = () => {
         const draw = () => {
           const w = canvas.clientWidth;
@@ -34,12 +34,22 @@ import StreamingChat from "./previews/StreamingChat.astro";
           canvas.height = h;
           const cols = Math.ceil(w / TILE);
           const rows = Math.ceil(h / TILE);
-          // Draw tiny then scale up for mosaic
+          // Cover-crop: scale image to fill, center, clip overflow
+          const imgRatio = img.naturalWidth / img.naturalHeight;
+          const canvasRatio = w / h;
+          let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+          if (imgRatio > canvasRatio) {
+            sw = img.naturalHeight * canvasRatio;
+            sx = (img.naturalWidth - sw) / 2;
+          } else {
+            sh = img.naturalWidth / canvasRatio;
+            sy = (img.naturalHeight - sh) / 2;
+          }
           const offscreen = document.createElement("canvas");
           offscreen.width = cols;
           offscreen.height = rows;
           const octx = offscreen.getContext("2d")!;
-          octx.drawImage(img, 0, 0, cols, rows);
+          octx.drawImage(img, sx, sy, sw, sh, 0, 0, cols, rows);
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(offscreen, 0, 0, cols, rows, 0, 0, w, h);
         };

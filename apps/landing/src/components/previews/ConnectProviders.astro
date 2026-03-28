@@ -1,0 +1,314 @@
+---
+/**
+ * Preview: Connect Providers — adding AI provider credentials
+ * Shows adding Claude, then OpenAI, then seeing "All connected" status.
+ */
+const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+---
+
+<div data-preview data-loop="10000" class="w-full h-full">
+  <div class="flex flex-col h-full w-full gap-2.5">
+    <!-- Header -->
+    <div
+      id="cp-header"
+      class="flex items-center gap-2 pb-2 border-b border-[var(--ap-border)] shrink-0 opacity-0 transition-all duration-400"
+    >
+      <img
+        src="/ArlopassIcon.svg"
+        alt=""
+        width="14"
+        height="14"
+        aria-hidden="true"
+      />
+      <span
+        class="text-[10px] font-semibold text-[var(--ap-text-primary)] flex-1"
+        >Add Provider</span
+      >
+      <span
+        id="cp-count"
+        class="text-[8px] font-mono text-[var(--ap-text-tertiary)] transition-all duration-300"
+        >0 connected</span
+      >
+    </div>
+
+    <!-- Provider: Claude -->
+    <div
+      id="cp-p0"
+      class="flex items-center gap-2.5 py-1.5 px-2.5 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md opacity-0 transition-all duration-400"
+    >
+      <img
+        src={`${IC}/claude-color.svg`}
+        alt=""
+        width="18"
+        height="18"
+        class="shrink-0"
+      />
+      <div class="flex-1 min-w-0">
+        <p class="text-[9px] font-medium text-[var(--ap-text-primary)]">
+          Anthropic Claude
+        </p>
+        <p
+          id="cp-p0-status"
+          class="text-[7px] text-[var(--ap-text-tertiary)] transition-all duration-300"
+        >
+          Not connected
+        </p>
+      </div>
+      <div
+        id="cp-p0-icon"
+        class="w-4 h-4 rounded-full border border-[var(--ap-border)] transition-all duration-300 flex items-center justify-center"
+      >
+      </div>
+    </div>
+
+    <!-- Provider: OpenAI -->
+    <div
+      id="cp-p1"
+      class="flex items-center gap-2.5 py-1.5 px-2.5 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md opacity-0 transition-all duration-400"
+    >
+      <img
+        src={`${IC}/openai.svg`}
+        alt=""
+        width="18"
+        height="18"
+        class="shrink-0"
+      />
+      <div class="flex-1 min-w-0">
+        <p class="text-[9px] font-medium text-[var(--ap-text-primary)]">
+          OpenAI
+        </p>
+        <p
+          id="cp-p1-status"
+          class="text-[7px] text-[var(--ap-text-tertiary)] transition-all duration-300"
+        >
+          Not connected
+        </p>
+      </div>
+      <div
+        id="cp-p1-icon"
+        class="w-4 h-4 rounded-full border border-[var(--ap-border)] transition-all duration-300 flex items-center justify-center"
+      >
+      </div>
+    </div>
+
+    <!-- Provider: Ollama -->
+    <div
+      id="cp-p2"
+      class="flex items-center gap-2.5 py-1.5 px-2.5 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md opacity-0 transition-all duration-400"
+    >
+      <img
+        src={`${IC}/ollama.svg`}
+        alt=""
+        width="18"
+        height="18"
+        class="shrink-0"
+      />
+      <div class="flex-1 min-w-0">
+        <p class="text-[9px] font-medium text-[var(--ap-text-primary)]">
+          Ollama
+        </p>
+        <p
+          id="cp-p2-status"
+          class="text-[7px] text-[var(--ap-text-tertiary)] transition-all duration-300"
+        >
+          Not connected
+        </p>
+      </div>
+      <div
+        id="cp-p2-icon"
+        class="w-4 h-4 rounded-full border border-[var(--ap-border)] transition-all duration-300 flex items-center justify-center"
+      >
+      </div>
+    </div>
+
+    <!-- Keychain footer -->
+    <div
+      id="cp-footer"
+      class="flex items-center gap-1.5 pt-2 border-t border-[var(--ap-border)] mt-auto shrink-0 opacity-0 transition-all duration-400"
+    >
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--color-brand)"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path
+          d="M7 11V7a5 5 0 0110 0v4"></path></svg
+      >
+      <span
+        id="cp-footer-text"
+        class="text-[8px] text-[var(--ap-text-tertiary)] transition-all duration-300"
+        >Keys stored in OS Keychain</span
+      >
+    </div>
+  </div>
+</div>
+
+<script>
+  const CHECK_SVG =
+    '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  function cpConnect(p: HTMLElement, idx: number, count: number) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const row = q(`#cp-p${idx}`);
+    const status = q(`#cp-p${idx}-status`);
+    const icon = q(`#cp-p${idx}-icon`);
+    const counter = q("#cp-count");
+
+    if (row) {
+      row.style.borderColor = "";
+    }
+    if (status) {
+      status.textContent = "Connected · Keychain";
+      status.style.color = "var(--color-success)";
+    }
+    if (icon) {
+      icon.style.borderColor = "";
+      icon.style.background = "";
+      icon.innerHTML = CHECK_SVG;
+    }
+    if (counter) {
+      counter.textContent = `${count} connected`;
+      if (count > 0) counter.style.color = "var(--color-success)";
+    }
+  }
+
+  function cpRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+    const show = (el: HTMLElement | null) => {
+      if (el) el.style.opacity = "1";
+    };
+
+    // Stagger reveal
+    t(() => show(q("#cp-header")), 300);
+    t(() => show(q("#cp-p0")), 600);
+    t(() => show(q("#cp-p1")), 800);
+    t(() => show(q("#cp-p2")), 1000);
+    t(() => show(q("#cp-footer")), 1200);
+
+    // Connect Claude
+    t(() => cpConnect(p, 0, 1), 2200);
+    // Connect OpenAI
+    t(() => cpConnect(p, 1, 2), 3800);
+    // Connect Ollama
+    t(() => cpConnect(p, 2, 3), 5400);
+
+    // Footer update
+    t(() => {
+      const ft = q("#cp-footer-text");
+      if (ft) {
+        ft.textContent = "All keys secured in OS Keychain ✓";
+        ft.style.color = "var(--color-success)";
+      }
+    }, 6400);
+
+    // Reset
+    t(() => {
+      ["#cp-header", "#cp-p0", "#cp-p1", "#cp-p2", "#cp-footer"].forEach(
+        (id) => {
+          const el = q(id);
+          if (el) el.style.opacity = "0";
+        },
+      );
+      for (let i = 0; i < 3; i++) {
+        const row = q(`#cp-p${i}`);
+        const status = q(`#cp-p${i}-status`);
+        const icon = q(`#cp-p${i}-icon`);
+        if (row) {
+          row.style.borderColor = "";
+          row.style.background = "";
+        }
+        if (status) {
+          status.textContent = "Not connected";
+          status.style.color = "";
+        }
+        if (icon) {
+          icon.style.borderColor = "";
+          icon.style.background = "";
+          icon.innerHTML = "";
+        }
+      }
+      const counter = q("#cp-count");
+      if (counter) {
+        counter.textContent = "0 connected";
+        counter.style.color = "";
+      }
+      const ft = q("#cp-footer-text");
+      if (ft) {
+        ft.textContent = "Keys stored in OS Keychain";
+        ft.style.color = "";
+      }
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 9000);
+
+    return tt;
+  }
+
+  const cpP = document.querySelector(
+    "[data-preview]:has(#cp-header)",
+  ) as HTMLElement;
+  if (cpP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const q = (s: string) => cpP.querySelector(s) as HTMLElement | null;
+      ["#cp-header", "#cp-p0", "#cp-p1", "#cp-p2", "#cp-footer"].forEach(
+        (id) => {
+          const el = q(id);
+          if (el) el.style.opacity = "0";
+        },
+      );
+      for (let i = 0; i < 3; i++) {
+        const row = q(`#cp-p${i}`);
+        const status = q(`#cp-p${i}-status`);
+        const icon = q(`#cp-p${i}-icon`);
+        if (row) {
+          row.style.borderColor = "";
+          row.style.background = "";
+        }
+        if (status) {
+          status.textContent = "Not connected";
+          status.style.color = "";
+        }
+        if (icon) {
+          icon.style.borderColor = "";
+          icon.style.background = "";
+          icon.innerHTML = "";
+        }
+      }
+      const counter = q("#cp-count");
+      if (counter) {
+        counter.textContent = "0 connected";
+        counter.style.color = "";
+      }
+      const ft = q("#cp-footer-text");
+      if (ft) {
+        ft.textContent = "Keys stored in OS Keychain";
+        ft.style.color = "";
+      }
+    };
+    const obs = new MutationObserver(() => {
+      if (cpP.classList.contains("preview-active")) {
+        reset();
+        at = cpRun(cpP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(cpP, { attributes: true, attributeFilter: ["class"] });
+    cpP.addEventListener("preview:loop", () => {
+      reset();
+      at = cpRun(cpP) || [];
+    });
+    if (cpP.classList.contains("preview-active")) {
+      at = cpRun(cpP) || [];
+    }
+  }
+</script>

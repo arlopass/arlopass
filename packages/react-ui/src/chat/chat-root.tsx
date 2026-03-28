@@ -13,6 +13,8 @@ import type {
   MessageId,
   ArlopassSDKError,
   ToolDefinition,
+  ToolActivityState,
+  ContextWindowInfo,
 } from "../types.js";
 import { createForwardRef } from "../utils/forward-ref.js";
 import { ChatProvider, type ChatContextValue } from "./chat-context.js";
@@ -36,6 +38,8 @@ type ControlledProps = {
   onSend?: (content: string) => Promise<MessageId>;
   onStop?: () => void;
   error?: ArlopassSDKError | null;
+  toolActivity?: ToolActivityState;
+  contextInfo?: ContextWindowInfo;
 };
 
 type ChatRootProps = Omit<HTMLAttributes<HTMLDivElement>, "children"> &
@@ -76,6 +80,8 @@ export const Root = createForwardRef<HTMLDivElement, ChatRootProps>(
       onSend,
       onStop,
       error: errorProp,
+      toolActivity: toolActivityProp,
+      contextInfo: contextInfoProp,
       // Children & rest
       children,
       ...rest
@@ -119,6 +125,19 @@ export const Root = createForwardRef<HTMLDivElement, ChatRootProps>(
     const isSending = isControlled ? (isSendingProp ?? false) : hook.isSending;
     const error = isControlled ? (errorProp ?? null) : hook.error;
 
+    const toolActivity = isControlled
+      ? (toolActivityProp ?? { phase: "idle" as const })
+      : hook.toolActivity;
+    const contextInfo = isControlled
+      ? (contextInfoProp ?? {
+          maxTokens: 0,
+          usedTokens: 0,
+          reservedOutputTokens: 0,
+          remainingTokens: 0,
+          usageRatio: 0,
+        })
+      : hook.contextInfo;
+
     const send = isControlled
       ? (onSend ?? (async () => "" as MessageId))
       : hook.send;
@@ -144,6 +163,8 @@ export const Root = createForwardRef<HTMLDivElement, ChatRootProps>(
         clearMessages,
         inputValue,
         setInputValue,
+        toolActivity,
+        contextInfo,
       }),
       [
         messages,
@@ -157,6 +178,8 @@ export const Root = createForwardRef<HTMLDivElement, ChatRootProps>(
         stop,
         clearMessages,
         inputValue,
+        toolActivity,
+        contextInfo,
       ],
     );
 

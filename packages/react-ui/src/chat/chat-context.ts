@@ -1,7 +1,7 @@
 "use client";
 
 import { createComponentContext } from "../utils/create-context.js";
-import type { TrackedChatMessage, MessageId, ArlopassSDKError } from "../types.js";
+import type { TrackedChatMessage, MessageId, ArlopassSDKError, ToolActivityState, ContextWindowInfo } from "../types.js";
 
 export type ChatContextValue = {
   messages: readonly TrackedChatMessage[];
@@ -16,6 +16,8 @@ export type ChatContextValue = {
   clearMessages: () => void;
   inputValue: string;
   setInputValue: (value: string) => void;
+  toolActivity: ToolActivityState;
+  contextInfo: ContextWindowInfo;
 };
 
 export const [ChatProvider, useChatContext] =

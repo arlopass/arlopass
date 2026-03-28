@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConversationManager } from "@arlopass/web-sdk";
 import type { ArlopassSDKError } from "@arlopass/web-sdk";
 import type {
@@ -72,7 +72,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const [error, setError] = useState<ArlopassSDKError | null>(null);
     const [tokenCount, setTokenCount] = useState(0);
     const [contextWindow, setContextWindow] = useState<readonly ChatMessage[]>([]);
-    const [contextInfo, setContextInfo] = useState<ContextWindowInfo>({
+    const [stateContextInfo, setStateContextInfo] = useState<ContextWindowInfo>({
         maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0,
     });
     const [toolActivity, setToolActivity] = useState<ToolActivityState>(TOOL_ACTIVITY_IDLE);
@@ -106,7 +106,24 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const selectedProviderKey = snapshot.selectedProvider !== null
         ? `${snapshot.selectedProvider.providerId}::${snapshot.selectedProvider.modelId}`
         : null;
+    const isConnected = snapshot.state === "connected" || snapshot.state === "degraded";
     const prevProviderKeyRef = useRef<string | null>(null);
+
+    // Derive context info reactively: prefer the state-tracked value (which
+    // includes token usage from messages), but fall back to the manager's
+    // live value when the model changes. This ensures the context window
+    // size is correct as soon as a provider is selected, without waiting
+    // for an effect cycle.
+    const contextInfo = useMemo<ContextWindowInfo>(() => {
+        if (managerRef.current === null) return stateContextInfo;
+        const live = managerRef.current.getContextInfo();
+        // If the state version has a valid maxTokens, use it (it includes
+        // up-to-date token usage). Otherwise fall back to the live value
+        // which resolves maxTokens dynamically from the current model.
+        if (stateContextInfo.maxTokens > 0) return stateContextInfo;
+        return live;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stateContextInfo, selectedProviderKey]);
 
     // Recreate the ConversationManager when the selected provider/model changes
     // so maxTokens reflects the new model's context window.
@@ -118,6 +135,8 @@ export function useConversation(options?: UseConversationOptions): UseConversati
 
         // Only recreate on subsequent changes, not the initial selection.
         // The inline creation above already handles the initial state.
+        // Context info updates on every change because ConversationManager
+        // resolves maxTokens dynamically from the client's selected model.
         if (prevProviderKeyRef.current !== null) {
             const opts = optionsRef.current;
             const managerOpts: ConstructorParameters<typeof ConversationManager>[0] = {
@@ -136,11 +155,27 @@ export function useConversation(options?: UseConversationOptions): UseConversati
 
         // Always refresh context info when provider changes
         if (managerRef.current !== null) {
-            setContextInfo(managerRef.current.getContextInfo());
+            setStateContextInfo(managerRef.current.getContextInfo());
             setTokenCount(managerRef.current.getTokenCount());
             setContextWindow(managerRef.current.getContextWindow());
         }
     }, [selectedProviderKey, store]);
+
+    // Refresh context info when connection is established and a provider is
+    // selected. This handles the initial load case where the manager was
+    // created before the extension connected and resolved the model's
+    // context window size.
+    useEffect(() => {
+        if (!isConnected || selectedProviderKey === null) return;
+        if (managerRef.current === null) return;
+        const info = managerRef.current.getContextInfo();
+        // Only update if the value actually changed (avoids render loops)
+        if (info.maxTokens > 0) {
+            setStateContextInfo(info);
+            setTokenCount(managerRef.current.getTokenCount());
+            setContextWindow(managerRef.current.getContextWindow());
+        }
+    }, [isConnected, selectedProviderKey]);
 
     const appendMessage = useCallback((msg: TrackedChatMessage) => {
         messagesRef.current = [...messagesRef.current, msg];
@@ -159,7 +194,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         const manager = managerRef.current!;
         setTokenCount(manager.getTokenCount());
         setContextWindow(manager.getContextWindow());
-        setContextInfo(manager.getContextInfo());
+        setStateContextInfo(manager.getContextInfo());
     }, []);
 
     const send = useCallback(async (content: string, opts?: { pinned?: boolean }): Promise<MessageId> => {
@@ -349,7 +384,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         setError(null);
         setTokenCount(0);
         setContextWindow([]);
-        setContextInfo({ maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0 });
+        setStateContextInfo({ maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0 });
         setToolActivity(TOOL_ACTIVITY_IDLE);
         usedToolsRef.current = [];
         busyRef.current = false;

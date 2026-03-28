@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionIcon,
-  Badge,
   Box,
   Button,
-  Group,
-  Loader,
   Menu,
   Pill,
   Popover,
   ScrollArea,
-  Stack,
   Text,
   Textarea,
   TextInput,
@@ -18,11 +14,11 @@ import {
 } from "@mantine/core";
 import {
   IconChevronDown,
-  IconMessage,
   IconPlugConnected,
   IconSearch,
   IconSend,
   IconTool,
+  IconUser,
   IconX,
 } from "@tabler/icons-react";
 import { useConnection, useProviders, useConversation } from "@arlopass/react";
@@ -310,6 +306,11 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   const historyIndexRef = useRef(-1);
   const draftRef = useRef("");
 
+  // Track which provider/model was active for each assistant message
+  const msgMetaRef = useRef<Map<string, { provider: string; model: string }>>(
+    new Map(),
+  );
+
   // Provider/model selection with localStorage persistence
   const [selProv, setSelProv] = useState<string | null>(() =>
     localStorage.getItem(CHAT_PROV_KEY),
@@ -384,13 +385,43 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
     }
   }, [isConnected, providers, selProv, selModel, selectProvider]);
 
-  // Auto-scroll on new messages
+  // Capture provider/model metadata for new assistant messages
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [trackedMessages, streamingContent]);
+    for (const m of trackedMessages) {
+      if (m.role === "assistant" && !msgMetaRef.current.has(m.id)) {
+        const prov = selProvider?.providerName ?? selProv ?? "";
+        const model = selModel ?? "";
+        if (prov || model) {
+          msgMetaRef.current.set(m.id, { provider: prov, model });
+        }
+      }
+    }
+  }, [trackedMessages, selProvider, selProv, selModel]);
+
+  // Auto-scroll: pin to bottom during streaming via rAF loop
+  const isStreamingRef = useRef(isStreaming);
+  isStreamingRef.current = isStreaming;
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const tick = () => {
+      const el = scrollRef.current;
+      if (el && isStreamingRef.current) {
+        el.scrollTop = el.scrollHeight;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  // Smooth scroll for non-streaming changes (new completed messages)
+  useEffect(() => {
+    if (isStreaming) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [trackedMessages, isStreaming]);
 
   const handleProviderChange = useCallback(
     async (providerId: string) => {
@@ -451,76 +482,96 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
     return undefined;
   }, [toolActivity]);
 
+  // Scroll fade gradient visibility
+  const chatAreaRef = useRef<HTMLDivElement>(null);
+  const [showFade, setShowFade] = useState(false);
+
+  useEffect(() => {
+    const el = chatAreaRef.current;
+    if (!el) return;
+    const onScroll = () => setShowFade(el.scrollTop > 4);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
   // ─── Render ──────────────────────────────────────────────────────────
 
-  return (
-    <Stack h="100%" gap={0}>
-      {/* Header */}
-      <Group
-        h={52}
-        px="md"
-        justify="space-between"
-        style={{ borderBottom: "1px solid var(--ap-border)" }}
-      >
-        <Group gap="xs">
-          <IconMessage size={16} />
-          <Text fw={600} fz="sm">
-            AI Chat
-          </Text>
-          <Badge
-            size="xs"
-            color={isConnected ? "teal" : isConnecting ? "yellow" : "gray"}
-            variant="dot"
-          >
-            {connState}
-          </Badge>
-        </Group>
-        <ActionIcon variant="subtle" size="sm" onClick={onClose}>
-          <IconX size={14} />
-        </ActionIcon>
-      </Group>
+  const modelLabel = selModel ? fmtModel(selModel) : null;
+  const providerLabel = selProvider?.providerName ?? null;
 
-      {/* Connection fallback */}
+  return (
+    <div className="chat-sidebar">
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="chat-header">
+        <span className="chat-header-title">Documentation Assistant</span>
+        <div style={{ flex: 1 }} />
+        <ActionIcon
+          variant="subtle"
+          size="xs"
+          onClick={onClose}
+          style={{ color: "var(--ap-text-tertiary)" }}
+        >
+          <IconX size={12} />
+        </ActionIcon>
+      </div>
+
+      {/* ── Connection fallback ─────────────────────────────────── */}
       {!isConnected && !isConnecting && (
-        <Box p="md" style={{ borderBottom: "1px solid var(--ap-border)" }}>
-          <Stack gap="sm">
-            {connError !== null && (
-              <Text fz="xs" c="red">
-                {connError.message}
-              </Text>
-            )}
-            {connState === "disconnected" && (
-              <Text fz="xs" c="dimmed">
-                Extension not detected. Load the Arlopass extension first.
-              </Text>
-            )}
-            <Button
-              size="xs"
-              leftSection={<IconPlugConnected size={14} />}
-              onClick={() => void (connRetry ?? connect)()}
-              fullWidth
-            >
-              {connError ? "Retry connection" : "Connect to Arlopass"}
-            </Button>
-          </Stack>
-        </Box>
+        <div className="chat-connect-banner">
+          {connError !== null && (
+            <Text fz={11} c="var(--ap-danger)" mb={4}>
+              {connError.message}
+            </Text>
+          )}
+          {connState === "disconnected" && (
+            <Text fz={11} c="var(--ap-text-tertiary)" mb={6}>
+              Extension not detected. Load the Arlopass extension first.
+            </Text>
+          )}
+          <Button
+            size="xs"
+            leftSection={<IconPlugConnected size={14} />}
+            onClick={() => void (connRetry ?? connect)()}
+            fullWidth
+            styles={{
+              root: {
+                background: "var(--ap-brand)",
+                border: "none",
+                "&:hover": { background: "var(--ap-brand-hover)" },
+              },
+            }}
+          >
+            {connError ? "Retry connection" : "Connect to Arlopass"}
+          </Button>
+        </div>
       )}
 
-      {/* Messages */}
-      <ScrollArea
-        style={{ flex: 1 }}
-        p="xs"
-        type="scroll"
-        viewportRef={scrollRef}
-      >
-        <Stack gap="xs">
+      {/* ── Chat messages area ──────────────────────────────────── */}
+      <div className="chat-messages-wrapper">
+        {/* Scroll fade gradient */}
+        <div className="chat-fade-top" style={{ opacity: showFade ? 1 : 0 }} />
+
+        <div
+          className="chat-messages"
+          ref={(node) => {
+            (
+              chatAreaRef as React.MutableRefObject<HTMLDivElement | null>
+            ).current = node;
+            (
+              scrollRef as React.MutableRefObject<HTMLDivElement | null>
+            ).current = node;
+          }}
+        >
+          {/* Empty state */}
           {trackedMessages.length === 0 && !streamingContent && (
-            <Text fz="sm" c="dimmed" ta="center" py="xl">
+            <div className="chat-empty">
               {isConnected
                 ? "Ask anything about Arlopass."
                 : "Connect to start chatting."}
-            </Text>
+            </div>
           )}
+
+          {/* Messages */}
           {trackedMessages.map((m) => {
             if (
               m.role === "assistant" &&
@@ -528,180 +579,283 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               (m.usedTools === undefined || m.usedTools.length === 0)
             )
               return null;
+
             return (
-              <Box
-                key={m.id}
-                style={{
-                  maxWidth: "90%",
-                  alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                }}
-              >
-                <Box
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    background:
-                      m.role === "user"
-                        ? "var(--ap-brand-subtle-dark)"
-                        : "var(--ap-bg-surface)",
-                  }}
+              <div key={m.id} className="chat-msg chat-msg-enter">
+                {/* Avatar */}
+                <div
+                  className={
+                    m.role === "user" ? "chat-avatar-user" : "chat-avatar-ai"
+                  }
                 >
-                  {m.role === "assistant" ? (
-                    <Markdown content={m.content} className="chat-markdown" />
+                  {m.role === "user" ? (
+                    <IconUser size={10} color="var(--ap-text-tertiary)" />
                   ) : (
-                    <Text fz="sm" style={{ whiteSpace: "pre-wrap" }}>
-                      {m.content}
-                    </Text>
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="var(--ap-text-tertiary)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                      <path d="M2 17l10 5 10-5" />
+                      <path d="M2 12l10 5 10-5" />
+                    </svg>
                   )}
-                </Box>
-                {m.role === "assistant" &&
-                  m.usedTools !== undefined &&
-                  m.usedTools.length > 0 && (
-                    <Group gap={4} mt={3} ml={4}>
-                      <IconTool size={10} color="var(--ap-text-tertiary)" />
-                      {m.usedTools.map((t) => (
-                        <Pill
-                          key={t}
-                          size="xs"
-                          style={{
-                            background: "var(--ap-bg-elevated)",
-                            color: "var(--ap-text-tertiary)",
-                            fontSize: 9,
-                            fontWeight: 500,
-                          }}
-                        >
-                          {t.replace(/_/g, " ")}
-                        </Pill>
-                      ))}
-                    </Group>
-                  )}
-              </Box>
+                </div>
+
+                {/* Bubble */}
+                <div>
+                  <div
+                    className={
+                      m.role === "user" ? "chat-bubble-user" : "chat-bubble-ai"
+                    }
+                  >
+                    {m.role === "assistant" ? (
+                      <Markdown content={m.content} className="chat-markdown" />
+                    ) : (
+                      <span>{m.content}</span>
+                    )}
+                  </div>
+                  {/* Provider & model attribution */}
+                  {m.role === "assistant" &&
+                    (() => {
+                      const meta = msgMetaRef.current.get(m.id);
+                      if (!meta) return null;
+                      const label = [
+                        meta.model ? fmtModel(meta.model) : null,
+                        meta.provider,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ");
+                      if (!label) return null;
+                      return <div className="chat-msg-meta">{label}</div>;
+                    })()}
+                  {/* Tool pills */}
+                  {m.role === "assistant" &&
+                    m.usedTools !== undefined &&
+                    m.usedTools.length > 0 && (
+                      <div className="chat-tool-pills">
+                        <IconTool size={9} color="var(--ap-text-tertiary)" />
+                        {m.usedTools.map((t) => (
+                          <span key={t} className="chat-tool-pill">
+                            {t.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              </div>
             );
           })}
 
+          {/* Typing indicator */}
+          {isStreaming &&
+            streamingContent.trim().length === 0 &&
+            toolActivity.phase === "idle" && (
+              <div className="chat-msg chat-msg-enter">
+                <div className="chat-avatar-ai">
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--ap-text-tertiary)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                  </svg>
+                </div>
+                <div className="chat-bubble-ai chat-typing-dots">
+                  <span
+                    className="chat-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="chat-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="chat-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
+              </div>
+            )}
+
+          {/* Tool activity indicators */}
+          {isStreaming && toolActivity.phase !== "idle" && (
+            <div className="chat-msg chat-msg-enter">
+              <div className="chat-avatar-ai">
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--ap-text-tertiary)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div className="chat-bubble-ai">
+                {toolActivity.phase === "priming" && (
+                  <div className="chat-tool-activity">
+                    <IconSearch size={11} color="var(--ap-brand)" />
+                    <span
+                      style={{
+                        color: "var(--ap-text-secondary)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Looking for tools…
+                    </span>
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
+                  </div>
+                )}
+                {toolActivity.phase === "matched" && (
+                  <div className="chat-tool-activity">
+                    <IconTool size={11} color="var(--ap-text-tertiary)" />
+                    <span
+                      style={{
+                        color: "var(--ap-text-secondary)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Found:
+                    </span>
+                    {toolActivity.tools.map((t) => (
+                      <span key={t} className="chat-tool-pill">
+                        {t.replace(/_/g, " ")}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {toolActivity.phase === "executing" && (
+                  <div className="chat-tool-activity">
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
+                    <span className="chat-tool-pill chat-tool-pill-brand">
+                      {toolActivity.name.replace(/_/g, " ")}
+                    </span>
+                    {toolDetail && (
+                      <span
+                        style={{
+                          color: "var(--ap-text-tertiary)",
+                          maxWidth: 120,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {toolDetail}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {toolActivity.phase === "result" && (
+                  <div className="chat-tool-activity">
+                    <span style={{ color: "var(--ap-text-tertiary)" }}>
+                      \u2713
+                    </span>
+                    <span className="chat-tool-pill">
+                      {toolActivity.name.replace(/_/g, " ")}
+                    </span>
+                    <span style={{ color: "var(--ap-text-tertiary)" }}>
+                      done
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Streaming content bubble */}
           {isStreaming && streamingContent.trim().length > 0 && (
-            <Box style={{ maxWidth: "90%", alignSelf: "flex-start" }}>
-              <Box
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  background: "var(--ap-bg-surface)",
-                  opacity: 0.85,
-                }}
-              >
+            <div className="chat-msg chat-msg-enter">
+              <div className="chat-avatar-ai">
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--ap-text-tertiary)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div className="chat-bubble-ai">
                 <Markdown
                   content={streamingContent}
                   className="chat-markdown"
                 />
-              </Box>
-            </Box>
+                <span className="chat-stream-cursor" />
+              </div>
+            </div>
           )}
+        </div>
+      </div>
 
-          {/* Tool activity indicators */}
-          {isStreaming && (
-            <Box ml="xs" py={4}>
-              {toolActivity.phase === "priming" && (
-                <Group gap={6} align="center">
-                  <IconSearch size={12} color="var(--ap-brand)" />
-                  <Text fz={11} c="blue" fw={500}>
-                    Looking for tools...
-                  </Text>
-                  <Loader size={10} color="blue" />
-                </Group>
-              )}
-              {toolActivity.phase === "matched" && (
-                <Group gap={6} align="center" wrap="nowrap">
-                  <IconTool size={12} color="var(--ap-success)" />
-                  <Text fz={11} c="teal" fw={500}>
-                    Found:
-                  </Text>
-                  {toolActivity.tools.map((t) => (
-                    <Pill
-                      key={t}
-                      size="xs"
-                      style={{
-                        background: "var(--ap-success-subtle)",
-                        color: "var(--ap-success)",
-                        fontSize: 10,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {t.replace(/_/g, " ")}
-                    </Pill>
-                  ))}
-                </Group>
-              )}
-              {toolActivity.phase === "executing" && (
-                <Group gap={6} align="center" wrap="nowrap">
-                  <Loader size={10} color="violet" />
-                  <Pill
-                    size="xs"
-                    style={{
-                      background: "var(--ap-brand-subtle-dark)",
-                      color: "var(--ap-brand)",
-                      fontSize: 10,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {toolActivity.name.replace(/_/g, " ")}
-                  </Pill>
-                  {toolDetail && (
-                    <Text fz={10} c="dimmed" truncate style={{ maxWidth: 150 }}>
-                      {toolDetail}
-                    </Text>
-                  )}
-                </Group>
-              )}
-              {toolActivity.phase === "result" && (
-                <Group gap={6} align="center">
-                  <Text fz={11} c="teal" fw={500}>
-                    ✓
-                  </Text>
-                  <Pill
-                    size="xs"
-                    style={{
-                      background: "var(--ap-success-subtle)",
-                      color: "var(--ap-success)",
-                      fontSize: 10,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {toolActivity.name.replace(/_/g, " ")}
-                  </Pill>
-                  <Text fz={10} c="teal">
-                    done
-                  </Text>
-                </Group>
-              )}
-              {toolActivity.phase === "idle" && !streamingContent && (
-                <Loader size="xs" />
-              )}
-            </Box>
-          )}
-        </Stack>
-      </ScrollArea>
-
-      {/* Input area with provider/model dropdowns */}
-      <Box p="xs" style={{ borderTop: "1px solid var(--ap-border)" }}>
+      {/* ── Input area ──────────────────────────────────────────── */}
+      <div className="chat-input-area">
+        {/* Provider/model selectors */}
         {isConnected && providers.length > 0 && (
-          <Group gap={4} mb={6}>
+          <div className="chat-selectors">
             <Menu shadow="sm" position="top-start" withinPortal>
               <Menu.Target>
-                <Group
-                  gap={2}
+                <UnstyledButton
                   style={{
-                    cursor: "pointer",
                     padding: "2px 8px",
                     borderRadius: 4,
                     background: "var(--ap-bg-elevated)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
                   }}
                 >
-                  <Text fz={10} fw={600} c="var(--ap-text-body)">
+                  <Text fz={10} fw={500} c="var(--ap-text-secondary)">
                     {selProvider?.providerName ?? "Provider"}
                   </Text>
-                  <IconChevronDown size={10} color="var(--ap-text-secondary)" />
-                </Group>
+                  <IconChevronDown size={10} color="var(--ap-text-tertiary)" />
+                </UnstyledButton>
               </Menu.Target>
               <Menu.Dropdown
                 style={{
@@ -728,10 +882,12 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               selected={selModel}
               onSelect={(m) => void handleModelChange(m)}
             />
-          </Group>
+
+            {contextInfo.maxTokens > 0 && <ContextBar info={contextInfo} />}
+          </div>
         )}
 
-        <Group gap="xs" align="flex-end">
+        <div className="chat-input-row">
           <Textarea
             placeholder="Ask about Arlopass..."
             value={chatIn}
@@ -771,30 +927,96 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
             minRows={1}
             maxRows={4}
             autosize
-            style={{ flex: 1 }}
             size="sm"
             disabled={!isConnected}
+            styles={{
+              root: { flex: 1 },
+              input: {
+                fontSize: 12,
+                background: "var(--ap-bg-base)",
+                border: "1px solid var(--ap-border)",
+                color: "var(--ap-text-body)",
+                borderRadius: 8,
+                padding: "7px 10px",
+                lineHeight: 1.4,
+                "&:focus": { borderColor: "var(--ap-brand)" },
+              },
+            }}
           />
           <ActionIcon
-            size="lg"
+            size={32}
             variant="filled"
             onClick={() => void handleSend()}
             disabled={isStreaming || !chatIn.trim() || !isConnected}
+            styles={{
+              root: {
+                background: "var(--ap-brand)",
+                border: "none",
+                borderRadius: 8,
+                color: "var(--mantine-color-brand-filled)",
+                "&:hover": { background: "var(--ap-brand-hover)" },
+                "&[data-disabled]": {
+                  background: "var(--ap-bg-elevated)",
+                  color: "var(--ap-text-tertiary)",
+                  opacity: 1,
+                },
+              },
+            }}
           >
-            <IconSend size={16} />
+            <IconSend size={14} />
           </ActionIcon>
-        </Group>
+        </div>
+      </div>
 
-        {/* Context window indicator */}
-        {isConnected && contextInfo.maxTokens > 0 && (
-          <ContextBar info={contextInfo} />
+      {/* ── Footer status bar ───────────────────────────────────── */}
+      <div className="chat-footer">
+        {isStreaming ? (
+          /* Streaming state */
+          <div className="chat-footer-row">
+            <div className="chat-footer-dots">
+              <span className="chat-bounce" style={{ animationDelay: "0ms" }} />
+              <span
+                className="chat-bounce"
+                style={{ animationDelay: "150ms" }}
+              />
+              <span
+                className="chat-bounce"
+                style={{ animationDelay: "300ms" }}
+              />
+            </div>
+            <span className="chat-footer-label">Streaming via Arlopass</span>
+            {contextInfo.maxTokens > 0 && (
+              <span className="chat-footer-ctx">
+                {formatTokenCount(contextInfo.usedTokens)}/
+                {formatTokenCount(contextInfo.maxTokens)} context
+              </span>
+            )}
+          </div>
+        ) : (
+          /* Idle state */
+          <div className="chat-footer-row">
+            <span
+              className="chat-footer-dot-status"
+              style={{
+                background: isConnected
+                  ? "var(--ap-success)"
+                  : "var(--ap-text-tertiary)",
+              }}
+            />
+            <span className="chat-footer-label">
+              {isConnected ? "Connected via Arlopass" : "Disconnected"}
+            </span>
+            {modelLabel && (
+              <span className="chat-footer-model">{modelLabel}</span>
+            )}
+          </div>
         )}
-      </Box>
-    </Stack>
+      </div>
+    </div>
   );
 }
 
-// ─── Context window bar (Cursor-style) ───────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────
 
 function formatTokenCount(n: number): string {
   if (n >= 1_000_000)
@@ -813,16 +1035,11 @@ function ContextBar({ info }: { info: ContextWindowInfo }) {
         : "var(--ap-text-tertiary)";
 
   return (
-    <Group gap={6} mt={6} justify="center">
-      <Text
-        fz={10}
-        c={color}
-        fw={500}
-        style={{ fontVariantNumeric: "tabular-nums" }}
-      >
-        Context: {formatTokenCount(info.usedTokens)}/
-        {formatTokenCount(info.maxTokens)} ({pct}%)
-      </Text>
-    </Group>
+    <div className="chat-context-bar">
+      <span style={{ color, fontVariantNumeric: "tabular-nums" }}>
+        {formatTokenCount(info.usedTokens)}/{formatTokenCount(info.maxTokens)} (
+        {pct}%)
+      </span>
+    </div>
   );
 }

@@ -41,7 +41,7 @@ const DEFAULT_RESERVE_OUTPUT_TOKENS = 1024;
 
 export class ConversationManager {
     readonly #client: ArlopassClient;
-    readonly #maxTokens: number;
+    readonly #explicitMaxTokens: number | undefined;
     readonly #reserveOutputTokens: number;
     readonly #systemPrompt: string | undefined;
     readonly #summarize: boolean;
@@ -68,12 +68,13 @@ export class ConversationManager {
         this.#primeToolsGlobal = options.primeTools ?? false;
         this.#hideToolCallsGlobal = options.hideToolCalls ?? false;
 
-        if (options.maxTokens !== undefined) {
-            this.#maxTokens = options.maxTokens;
-        } else {
-            const modelId = options.client.selectedProvider?.modelId ?? "";
-            this.#maxTokens = resolveModelContextWindow(modelId);
-        }
+        this.#explicitMaxTokens = options.maxTokens;
+    }
+
+    get #maxTokens(): number {
+        if (this.#explicitMaxTokens !== undefined) return this.#explicitMaxTokens;
+        const modelId = this.#client.selectedProvider?.modelId ?? "";
+        return resolveModelContextWindow(modelId);
     }
 
     get maxTokens(): number {
