@@ -17,9 +17,10 @@ interface Props {
   class?: string;
   /** If set, re-triggers the slide animation every N ms while it's the active slide */
   loop?: number;
+  containerClassName?: string;
 }
 
-const { class: className = "", loop } = Astro.props;
+const { class: className = "", containerClassName = "", loop } = Astro.props;
 ---
 
 <div
@@ -28,47 +29,9 @@ const { class: className = "", loop } = Astro.props;
   {...loop ? { "data-loop": String(loop) } : {}}
 >
   <div
-    class="w-[300px] max-[480px]:w-[270px] bg-[var(--ap-bg-base)] border border-[var(--ap-border)] rounded-xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.1),0_2px_8px_rgba(0,0,0,0.04)] relative overflow-hidden transition-[height] duration-300 ease-out"
+    class={`w-[300px] max-[480px]:w-[270px] bg-[var(--ap-bg-base)] border border-[var(--ap-border)] rounded-xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.1),0_2px_8px_rgba(0,0,0,0.04)] relative [interpolate-size:allow-keywords] h-auto transition-[height] duration-250 ease-out ${containerClassName}`}
     data-preview-card
   >
     <slot />
   </div>
 </div>
-
-<script>
-  // Auto-resize preview cards to fit their visible content
-  document
-    .querySelectorAll<HTMLElement>("[data-preview-card]")
-    .forEach((card) => {
-      const padding = 40; // p-5 = 20px top + 20px bottom
-
-      const resize = () => {
-        // Find the visible content child (not click-ping, opacity > 0, not hidden)
-        const children = Array.from(card.children) as HTMLElement[];
-        const visible = children.find(
-          (c) =>
-            c.dataset.clickPing === undefined &&
-            c.style.opacity !== "0" &&
-            c.style.pointerEvents !== "none" &&
-            !c.classList.contains("pointer-events-none"),
-        );
-        if (visible) {
-          // Use the visible child's scrollHeight + card padding
-          const h = visible.scrollHeight + padding;
-          card.style.height = h + "px";
-        }
-      };
-
-      // Observe style changes on children to detect screen transitions
-      const observer = new MutationObserver(resize);
-      for (const child of card.children) {
-        observer.observe(child, {
-          attributes: true,
-          attributeFilter: ["style", "class"],
-        });
-      }
-
-      // Initial size
-      resize();
-    });
-</script>

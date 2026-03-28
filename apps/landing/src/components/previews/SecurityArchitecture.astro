@@ -1,0 +1,402 @@
+---
+/**
+ * Preview: Security Architecture — animated illustration
+ * Shows how Arlopass protects credentials with vault encryption,
+ * OS keychain, and secure routing.
+ */
+import PreviewPanel from "../ui/PreviewPanel.astro";
+---
+
+<PreviewPanel
+  loop={12000}
+  class="h-full"
+  containerClassName="h-full rounded-l-none rounded-b-none w-full border-l-0 border-b-0 mr-8 sm:mr-10"
+>
+  <!-- Header -->
+  <div
+    data-step="0"
+    class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+  >
+    <img
+      src="/ArlopassIcon.svg"
+      alt=""
+      width="16"
+      height="16"
+      aria-hidden="true"
+    />
+    <span class="text-xs font-semibold text-[var(--ap-text-primary)] flex-1"
+      >Security</span
+    >
+    <span
+      class="text-[9px] font-semibold text-success bg-[var(--ap-success-subtle)] py-0.5 px-2 rounded-full uppercase tracking-wide"
+      >Protected</span
+    >
+  </div>
+
+  <!-- Architecture diagram -->
+  <div data-step="1" class="relative flex flex-col items-center gap-0 mt-2">
+    <!-- Top row: Web App → Arlopass → Provider -->
+    <div class="flex items-center gap-4 w-full justify-center">
+      <!-- Web App node -->
+      <div
+        id="sec-webapp"
+        class="flex flex-col items-center gap-1 opacity-0 transition-all duration-400"
+      >
+        <div
+          class="w-9 h-9 rounded-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--ap-text-tertiary)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><circle cx="12" cy="12" r="10"></circle><line
+              x1="2"
+              y1="12"
+              x2="22"
+              y2="12"></line><path
+              d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
+            ></path></svg
+          >
+        </div>
+        <span class="text-[9px] text-[var(--ap-text-tertiary)]">Web App</span>
+      </div>
+
+      <!-- Arrow 1 -->
+      <div id="sec-arrow1" class="opacity-0 transition-all duration-300">
+        <svg width="36" height="10" viewBox="0 0 36 10" fill="none"
+          ><line
+            x1="0"
+            y1="5"
+            x2="28"
+            y2="5"
+            stroke="var(--ap-border-strong)"
+            stroke-width="1"
+            stroke-dasharray="3 2"></line><polyline
+            points="26,2 32,5 26,8"
+            fill="none"
+            stroke="var(--ap-border-strong)"
+            stroke-width="1"></polyline></svg
+        >
+      </div>
+
+      <!-- Arlopass Shield (center, larger) -->
+      <div
+        id="sec-shield"
+        class="flex flex-col items-center gap-1 opacity-0 transition-all duration-400"
+      >
+        <div
+          class="w-14 h-14 rounded-full border-2 border-brand/30 bg-brand-subtle flex items-center justify-center relative"
+        >
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--color-brand)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg
+          >
+          <div
+            id="sec-check"
+            class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-success flex items-center justify-center opacity-0 transition-all duration-300 scale-50"
+          >
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              ><polyline points="20 6 9 17 4 12"></polyline></svg
+            >
+          </div>
+        </div>
+        <span class="text-[9px] font-semibold text-brand">Arlopass</span>
+      </div>
+
+      <!-- Arrow 2 -->
+      <div id="sec-arrow2" class="opacity-0 transition-all duration-300">
+        <svg width="36" height="10" viewBox="0 0 36 10" fill="none"
+          ><line
+            x1="0"
+            y1="5"
+            x2="28"
+            y2="5"
+            stroke="var(--color-success)"
+            stroke-width="1"
+            stroke-dasharray="3 2"></line><polyline
+            points="26,2 32,5 26,8"
+            fill="none"
+            stroke="var(--color-success)"
+            stroke-width="1"></polyline></svg
+        >
+      </div>
+
+      <!-- Provider node -->
+      <div
+        id="sec-provider"
+        class="flex flex-col items-center gap-1 opacity-0 transition-all duration-400"
+      >
+        <div
+          class="w-11 h-11 rounded-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--ap-text-tertiary)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect
+              x="9"
+              y="9"
+              width="6"
+              height="6"></rect><path
+              d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"
+            ></path></svg
+          >
+        </div>
+        <span class="text-[9px] text-[var(--ap-text-tertiary)]"
+          >AI Provider</span
+        >
+      </div>
+    </div>
+
+    <!-- Vertical connector from shield to vault -->
+    <div
+      id="sec-vline"
+      class="w-px h-6 bg-brand/20 opacity-0 transition-all duration-300 my-1"
+    >
+    </div>
+
+    <!-- Bottom: Encrypted Vault -->
+    <div
+      id="sec-vault"
+      class="flex items-center gap-3 py-2.5 px-4 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg opacity-0 transition-all duration-400 w-full max-w-[240px]"
+    >
+      <div
+        class="w-8 h-8 rounded-md bg-brand-subtle flex items-center justify-center shrink-0"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--color-brand)"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><rect x="5" y="11" width="14" height="10" rx="2"></rect><circle
+            cx="12"
+            cy="16"
+            r="1"></circle><path d="M8 11V7a4 4 0 018 0v4"></path></svg
+        >
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-semibold text-[var(--ap-text-primary)]">
+          Encrypted Vault
+        </p>
+        <p class="text-[9px] text-[var(--ap-text-tertiary)]">AES-256-GCM</p>
+      </div>
+    </div>
+
+    <!-- Keychain badge -->
+    <div
+      id="sec-keychain"
+      class="flex items-center gap-2 mt-2.5 py-1.5 px-3 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-full opacity-0 transition-all duration-400"
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--ap-text-tertiary)"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><path
+          d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
+        ></path></svg
+      >
+      <span class="text-[9px] text-[var(--ap-text-tertiary)]"
+        >OS Keychain · PBKDF2 210K</span
+      >
+    </div>
+  </div>
+
+  <!-- Status details (animated) -->
+  <div
+    data-step="2"
+    class="flex flex-col gap-2 mt-4 pt-3 border-t border-[var(--ap-border)]"
+  >
+    <div
+      id="sec-stat1"
+      class="flex justify-between text-[9px] opacity-0 transition-all duration-300"
+    >
+      <span class="text-[var(--ap-text-tertiary)]">Keys stored</span>
+      <span id="sec-stat1-val" class="font-mono text-[var(--ap-text-secondary)]"
+        >0 credentials</span
+      >
+    </div>
+    <div
+      id="sec-stat2"
+      class="flex justify-between text-[9px] opacity-0 transition-all duration-300"
+    >
+      <span class="text-[var(--ap-text-tertiary)]">Protection</span>
+      <span class="font-medium text-success">AES-256-GCM + HMAC</span>
+    </div>
+    <div
+      id="sec-stat3"
+      class="flex justify-between text-[9px] opacity-0 transition-all duration-300"
+    >
+      <span class="text-[var(--ap-text-tertiary)]">Key exposure</span>
+      <span class="font-medium text-success"
+        >Zero — keys never leave device</span
+      >
+    </div>
+  </div>
+</PreviewPanel>
+
+<script>
+  function secRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const show = (el: HTMLElement | null) => {
+      if (el) el.style.opacity = "1";
+    };
+    const scale = (el: HTMLElement | null) => {
+      if (el) {
+        el.style.opacity = "1";
+        el.style.transform = "scale(1)";
+      }
+    };
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+
+    // 0.8s — Shield appears first
+    t(() => show(q("#sec-shield")), 800);
+
+    // 1.3s — Web app appears
+    t(() => show(q("#sec-webapp")), 1300);
+
+    // 1.6s — Arrow 1 (request flow)
+    t(() => show(q("#sec-arrow1")), 1600);
+
+    // 2.0s — Arrow 2 + Provider (secure route)
+    t(() => show(q("#sec-arrow2")), 2000);
+    t(() => show(q("#sec-provider")), 2200);
+
+    // 2.6s — Check badge on shield
+    t(() => scale(q("#sec-check")), 2600);
+
+    // 3.0s — Vertical line to vault
+    t(() => show(q("#sec-vline")), 3000);
+
+    // 3.4s — Vault card
+    t(() => show(q("#sec-vault")), 3400);
+
+    // 3.9s — Keychain badge
+    t(() => show(q("#sec-keychain")), 3900);
+
+    // 4.5s — Stats fade in one by one
+    t(() => show(q("#sec-stat1")), 4500);
+    t(() => {
+      const v = q("#sec-stat1-val");
+      if (v) v.textContent = "3 credentials";
+    }, 4700);
+    t(() => show(q("#sec-stat2")), 5000);
+    t(() => show(q("#sec-stat3")), 5500);
+
+    // 9.5s — Reset
+    t(() => {
+      [
+        "#sec-webapp",
+        "#sec-arrow1",
+        "#sec-shield",
+        "#sec-arrow2",
+        "#sec-provider",
+        "#sec-vline",
+        "#sec-vault",
+        "#sec-keychain",
+        "#sec-stat1",
+        "#sec-stat2",
+        "#sec-stat3",
+      ].forEach((s) => {
+        const el = q(s);
+        if (el) el.style.opacity = "0";
+      });
+      const check = q("#sec-check");
+      if (check) {
+        check.style.opacity = "0";
+        check.style.transform = "scale(0.5)";
+      }
+      const v = q("#sec-stat1-val");
+      if (v) v.textContent = "0 credentials";
+
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 9500);
+
+    return tt;
+  }
+
+  const secP = document.querySelector(
+    "[data-preview]:has(#sec-shield)",
+  ) as HTMLElement;
+  if (secP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const q = (s: string) => secP.querySelector(s) as HTMLElement | null;
+      [
+        "#sec-webapp",
+        "#sec-arrow1",
+        "#sec-shield",
+        "#sec-arrow2",
+        "#sec-provider",
+        "#sec-vline",
+        "#sec-vault",
+        "#sec-keychain",
+        "#sec-stat1",
+        "#sec-stat2",
+        "#sec-stat3",
+      ].forEach((s) => {
+        const el = q(s);
+        if (el) el.style.opacity = "0";
+      });
+      const check = q("#sec-check");
+      if (check) {
+        check.style.opacity = "0";
+        check.style.transform = "scale(0.5)";
+      }
+    };
+
+    const obs = new MutationObserver(() => {
+      if (secP.classList.contains("preview-active")) {
+        reset();
+        at = secRun(secP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(secP, { attributes: true, attributeFilter: ["class"] });
+    secP.addEventListener("preview:loop", () => {
+      reset();
+      at = secRun(secP) || [];
+    });
+    if (secP.classList.contains("preview-active")) {
+      at = secRun(secP) || [];
+    }
+  }
+</script>

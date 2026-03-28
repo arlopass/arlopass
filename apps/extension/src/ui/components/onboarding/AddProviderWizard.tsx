@@ -105,59 +105,31 @@ async function resolvePairingHandle(): Promise<string | undefined> {
 }
 
 /**
- * Persistent native messaging port for the wizard.
- * Using connectNative (not sendNativeMessage) ensures all messages go to the
- * SAME bridge process — critical for cloud.connection.complete → cloud.models.discover
- * flow where the connection handle must persist across calls.
+ * Send a native message via the vault proxy's bridge port (shared across
+ * all extension contexts).  This ensures cloud.connection.complete handles
+ * are created in the SAME bridge process that will later serve chat
+ * requests, eliminating "unknown handle" errors.
  */
-let persistentPort: chrome.runtime.Port | null = null;
-let portRequestId = 0;
-const pendingRequests = new Map<
-  string,
-  { resolve: (v: unknown) => void; reject: (e: Error) => void }
->();
-
-function getPersistentPort(hostName: string): chrome.runtime.Port {
-  if (persistentPort !== null) return persistentPort;
-
-  const port = chrome.runtime.connectNative(hostName);
-  port.onMessage.addListener((response: unknown) => {
-    if (typeof response === "object" && response !== null) {
-      const id = (response as Record<string, unknown>)["_bridgeRequestId"];
-      if (typeof id === "string") {
-        const pending = pendingRequests.get(id);
-        if (pending !== undefined) {
-          pendingRequests.delete(id);
-          pending.resolve(response);
-        }
-      }
-    }
-  });
-  port.onDisconnect.addListener(() => {
-    persistentPort = null;
-    for (const [, pending] of pendingRequests) {
-      pending.reject(new Error("Bridge port disconnected."));
-    }
-    pendingRequests.clear();
-  });
-  persistentPort = port;
-  return port;
-}
-
-/** Send a native message via the persistent port. Tags with _bridgeRequestId for routing. */
 function rawSendNativeMessage(
-  hostName: string,
+  _hostName: string,
   message: Record<string, unknown>,
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    try {
-      const id = `wizard.${String(++portRequestId)}.${Date.now().toString(36)}`;
-      const port = getPersistentPort(hostName);
-      pendingRequests.set(id, { resolve, reject });
-      port.postMessage({ ...message, _bridgeRequestId: id });
-    } catch (error) {
-      reject(error instanceof Error ? error : new Error(String(error)));
-    }
+    chrome.runtime.sendMessage(
+      {
+        channel: "arlopass.vault.proxy",
+        message: { ...message, __rawBridgeForward: true },
+      },
+      (response: unknown) => {
+        if (chrome.runtime.lastError) {
+          reject(
+            new Error(chrome.runtime.lastError.message ?? "Vault proxy error"),
+          );
+          return;
+        }
+        resolve(response);
+      },
+    );
   });
 }
 
@@ -655,8 +627,14 @@ export function AddProviderWizard({
                 type: "vault.credentials.get",
                 credentialId: cred.id,
               });
-              const credential = (resp["credential"] ?? {}) as Record<string, unknown>;
-              const fields = (credential["fields"] ?? {}) as Record<string, string>;
+              const credential = (resp["credential"] ?? {}) as Record<
+                string,
+                unknown
+              >;
+              const fields = (credential["fields"] ?? {}) as Record<
+                string,
+                string
+              >;
               dispatch({
                 type: "SELECT_CREDENTIAL",
                 credentialId: cred.id,

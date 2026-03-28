@@ -25,7 +25,7 @@ const providers = [
     <div class="flex flex-wrap justify-center gap-3 max-[480px]:gap-2">
       {
         providers.map((p) => (
-          <div class="flex items-center gap-2 py-2.5 px-[18px] text-sm font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-full hover:border-[var(--ap-border-strong)] hover:text-[var(--ap-text-body)] hover:-translate-y-px transition-all max-[480px]:py-2 max-[480px]:px-3 max-[480px]:text-xs">
+          <div class="flex items-center gap-2 py-2.5 px-[18px] text-sm font-medium text-[var(--ap-text-secondary)] hover:text-[var(--ap-text-body)] hover:scale-102 transition-all max-[480px]:py-2 max-[480px]:px-3 max-[480px]:text-xs">
             <img
               class="w-5 h-5 max-[480px]:w-4 max-[480px]:h-4 shrink-0 provider-icon"
               src={`${ICON_BASE}/${p.slug}.svg`}

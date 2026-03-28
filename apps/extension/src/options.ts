@@ -9,10 +9,6 @@ import {
   type BridgePairingState,
   type PairingBeginPayload,
 } from "./transport/bridge-pairing.js";
-import {
-  ensureBridgeHandshakeSession,
-  clearBridgeHandshakeSessionCache,
-} from "./transport/bridge-handshake.js";
 
 type ProviderModel = Readonly<{
   id: string;
@@ -861,143 +857,57 @@ async function sendNativeMessage(
   | Readonly<{ ok: true; response: unknown }>
   | Readonly<{ ok: false; errorMessage: string }>
 > {
-  return sendAuthenticatedNativeMessage(hostName, message, options);
-}
-
-/** Resolve the pairing secret from stored pairing state for HMAC handshake. */
-async function resolveOptionsPairingSecret(): Promise<string | undefined> {
-  const state = await new Promise<Record<string, unknown>>((resolve) => {
-    chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY], (result) => resolve(result));
-  });
-  const pairingState = parseBridgePairingState(state[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-  if (pairingState === undefined) return undefined;
-  const extensionId = typeof chrome.runtime.id === "string" ? chrome.runtime.id.trim() : "";
-  const unwrapped = await unwrapPairingKeyMaterial({
-    pairingState,
-    runtimeId: extensionId,
-  });
-  return unwrapped?.pairingKeyHex;
-}
-
-/** Resolve the pairing handle from stored pairing state. */
-async function resolveOptionsPairingHandle(): Promise<string | undefined> {
-  const state = await new Promise<Record<string, unknown>>((resolve) => {
-    chrome.storage.local.get([BRIDGE_PAIRING_STATE_STORAGE_KEY], (result) => resolve(result));
-  });
-  const pairingState = parseBridgePairingState(state[BRIDGE_PAIRING_STATE_STORAGE_KEY]);
-  return pairingState?.pairingHandle;
-}
-
-/** Cached session token for the options page lifetime. */
-let optionsSessionToken: string | undefined;
-
-/**
- * Authenticated wrapper — performs HMAC handshake if needed and attaches
- * the session token to every message so the bridge session gate accepts it.
- * Falls back to unauthenticated send if pairing/handshake is unavailable.
- */
-async function sendAuthenticatedNativeMessage(
-  hostName: string,
-  message: Readonly<Record<string, unknown>>,
-  options: Readonly<{ timeoutMs?: number }> = {},
-): Promise<
-  | Readonly<{ ok: true; response: unknown }>
-  | Readonly<{ ok: false; errorMessage: string }>
-> {
-  // Try to establish or reuse a session token for the bridge gate.
-  if (optionsSessionToken === undefined) {
-    try {
-      const extensionId = typeof chrome.runtime.id === "string" ? chrome.runtime.id.trim() : "";
-      const session = await ensureBridgeHandshakeSession({
-        hostName,
-        extensionId,
-        sendNativeMessage: async (h, m) => {
-          const result = await rawSendNativeMessage(h, m);
-          if (!result.ok) throw new Error(result.errorMessage);
-          return result.response;
-        },
-        resolveBridgeSharedSecret: async () => resolveOptionsPairingSecret(),
-        resolveBridgePairingHandle: async () => resolveOptionsPairingHandle(),
-      });
-      optionsSessionToken = session.sessionToken;
-    } catch {
-      // Handshake failed (no pairing, bridge unavailable, etc.) —
-      // send without token. The bridge will reject if session gate is active.
-    }
-  }
-
-  const enrichedMessage = optionsSessionToken !== undefined
-    ? { ...message, sessionToken: optionsSessionToken }
-    : message;
-
-  return rawSendNativeMessage(hostName, enrichedMessage, options);
+  // All messages now route through the vault proxy in the background,
+  // which handles session tokens and uses the shared bridge port.
+  return rawSendNativeMessage(hostName, message, options);
 }
 
 function rawSendNativeMessage(
-  hostName: string,
+  _hostName: string,
   message: Readonly<Record<string, unknown>>,
   options: Readonly<{ timeoutMs?: number }> = {},
 ): Promise<
   | Readonly<{ ok: true; response: unknown }>
   | Readonly<{ ok: false; errorMessage: string }>
 > {
+  const bridgedMessage = withCloudConnectionBinding(message);
+  const timeoutMs = options.timeoutMs ?? NATIVE_MESSAGE_TIMEOUT_MS;
+
   return new Promise((resolve) => {
-    let bridgedMessage: Readonly<Record<string, unknown>>;
-    try {
-      bridgedMessage = withCloudConnectionBinding(message);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      resolve({
-        ok: false,
-        errorMessage: err.message,
-      });
-      return;
-    }
     let settled = false;
-    const timeoutMs = options.timeoutMs ?? NATIVE_MESSAGE_TIMEOUT_MS;
     const timeoutHandle = setTimeout(() => {
-      if (settled) {
-        return;
-      }
+      if (settled) return;
       settled = true;
-      resolve({
-        ok: false,
-        errorMessage: `Native host response timed out after ${String(timeoutMs)}ms.`,
-      });
+      resolve({ ok: false, errorMessage: `Native host response timed out after ${String(timeoutMs)}ms.` });
     }, timeoutMs);
 
     try {
-      chrome.runtime.sendNativeMessage(hostName, bridgedMessage, (response) => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        clearTimeout(timeoutHandle);
-        const runtimeError = chrome.runtime.lastError;
-        if (runtimeError !== undefined) {
+      chrome.runtime.sendMessage(
+        { channel: "arlopass.vault.proxy", message: bridgedMessage },
+        (response: unknown) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeoutHandle);
+          const runtimeError = chrome.runtime.lastError;
+          if (runtimeError !== undefined) {
+            resolve({ ok: false, errorMessage: runtimeError.message ?? "unknown error" });
+            return;
+          }
           resolve({
-            ok: false,
-            errorMessage: runtimeError.message ?? "unknown error",
+            ok: true,
+            response: withCloudCompletionBindingFromRequest(
+              bridgedMessage,
+              response,
+            ),
           });
-          return;
-        }
-
-        resolve({
-          ok: true,
-          response: withCloudCompletionBindingFromRequest(bridgedMessage, response),
-        });
-      });
+        },
+      );
     } catch (error) {
-      if (settled) {
-        return;
-      }
+      if (settled) return;
       settled = true;
       clearTimeout(timeoutHandle);
       const err = error instanceof Error ? error : new Error(String(error));
-      resolve({
-        ok: false,
-        errorMessage: err.message,
-      });
+      resolve({ ok: false, errorMessage: err.message });
     }
   });
 }

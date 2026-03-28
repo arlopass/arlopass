@@ -1,0 +1,585 @@
+---
+/**
+ * Preview: App Permissions Management — manage a connected app's access
+ *
+ * Screens:
+ * 1. Connected app overview with current permissions
+ * 2. Edit providers — toggle one off
+ * 3. Edit rate limit — change request limit
+ * 4. Saving changes spinner
+ * 5. Updated confirmation
+ */
+import PreviewPanel from "../ui/PreviewPanel.astro";
+import ClickPing from "../ui/ClickPing.astro";
+const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+---
+
+<PreviewPanel loop={14000}>
+  <!-- Screen 1: Connected app overview -->
+  <div id="pm-s1" class="flex flex-col gap-3 transition-opacity duration-350">
+    <div
+      data-step="0"
+      class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+    >
+      <img
+        src="/ArlopassIcon.svg"
+        alt=""
+        width="16"
+        height="16"
+        aria-hidden="true"
+      />
+      <span class="text-xs font-semibold text-[var(--ap-text-primary)] flex-1"
+        >Manage app</span
+      >
+      <span
+        class="text-[9px] font-semibold text-success bg-[var(--ap-success-subtle)] py-0.5 px-2 rounded-full uppercase tracking-wide"
+        >Active</span
+      >
+    </div>
+
+    <div
+      data-step="1"
+      class="flex items-center gap-3 py-2 px-3 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg"
+    >
+      <div
+        class="w-8 h-8 rounded-md bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center shrink-0 overflow-hidden"
+      >
+        <img
+          src="https://excalimate.com/favicon.svg"
+          alt=""
+          width="20"
+          height="20"
+          class="w-5 h-5"
+        />
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-semibold text-[var(--ap-text-primary)] truncate">
+          excalimate.com
+        </p>
+        <p class="text-[10px] text-[var(--ap-text-tertiary)] truncate">
+          Connected 2 days ago
+        </p>
+      </div>
+    </div>
+
+    <div data-step="2" class="flex flex-col gap-1.5">
+      <div class="flex justify-between text-[10px] py-1">
+        <span class="text-[var(--ap-text-tertiary)]">Providers</span>
+        <span class="text-[var(--ap-text-secondary)] font-medium"
+          >Claude, OpenAI</span
+        >
+      </div>
+      <div class="flex justify-between text-[10px] py-1">
+        <span class="text-[var(--ap-text-tertiary)]">Models</span>
+        <span class="text-[var(--ap-text-secondary)] font-medium"
+          >Sonnet, GPT-4o</span
+        >
+      </div>
+      <div class="flex justify-between text-[10px] py-1">
+        <span class="text-[var(--ap-text-tertiary)]">Rate limit</span>
+        <span class="text-[var(--ap-text-secondary)] font-medium"
+          >Unlimited</span
+        >
+      </div>
+    </div>
+
+    <div data-step="3" class="flex gap-2 mt-1">
+      <button
+        id="pm-edit"
+        class="flex-1 py-2 px-3 text-xs font-medium text-[var(--ap-text-primary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-md cursor-default font-sans transition-all duration-200"
+        >Edit permissions</button
+      >
+      <button
+        class="py-2 px-3 text-xs font-medium text-[var(--ap-text-tertiary)] bg-transparent border border-[var(--ap-border)] rounded-md cursor-default font-sans"
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><polyline points="3 6 5 6 21 6"></polyline><path
+            d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+          ></path></svg
+        >
+      </button>
+    </div>
+  </div>
+
+  <!-- Screen 2: Edit providers -->
+  <div id="pm-s2" class="hidden flex-col gap-3">
+    <div
+      class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+    >
+      <svg
+        class="text-[var(--ap-text-tertiary)]"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><polyline points="15 18 9 12 15 6"></polyline></svg
+      >
+      <span class="text-xs font-semibold text-[var(--ap-text-primary)] flex-1"
+        >Edit providers</span
+      >
+    </div>
+    <p class="text-[10px] text-[var(--ap-text-tertiary)] leading-relaxed">
+      Toggle providers for excalimate.com:
+    </p>
+    <div class="flex flex-col gap-1.5">
+      <div
+        id="pm-tp0"
+        class="flex items-center gap-2 py-1.5 px-2.5 rounded-md text-xs bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] transition-all duration-200"
+      >
+        <img
+          src={`${IC}/claude.svg`}
+          alt=""
+          width="14"
+          height="14"
+          class="w-3.5 h-3.5 picon"
+        />
+        <span class="flex-1 text-[var(--ap-text-secondary)]">Claude</span>
+        <div
+          id="pm-tog0"
+          class="w-7 h-4 rounded-full bg-success flex items-center transition-all duration-250 cursor-default pm-toggle-on"
+        >
+          <div
+            class="w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-250 pm-toggle-knob ml-auto mr-0.5"
+          >
+          </div>
+        </div>
+      </div>
+      <div
+        id="pm-tp1"
+        class="flex items-center gap-2 py-1.5 px-2.5 rounded-md text-xs bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] transition-all duration-200"
+      >
+        <img
+          src={`${IC}/openai.svg`}
+          alt=""
+          width="14"
+          height="14"
+          class="w-3.5 h-3.5 picon"
+        />
+        <span class="flex-1 text-[var(--ap-text-secondary)]">OpenAI</span>
+        <div
+          id="pm-tog1"
+          class="w-7 h-4 rounded-full bg-success flex items-center transition-all duration-250 cursor-default pm-toggle-on"
+        >
+          <div
+            class="w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-250 pm-toggle-knob ml-auto mr-0.5"
+          >
+          </div>
+        </div>
+      </div>
+    </div>
+    <button
+      id="pm-next2"
+      class="w-full py-2 px-3 text-xs font-medium text-stone-50 bg-brand border-none rounded-md cursor-default font-sans transition-all duration-200 mt-1"
+      >Next</button
+    >
+  </div>
+
+  <!-- Screen 3: Rules & settings -->
+  <div id="pm-s3" class="hidden flex-col gap-2.5">
+    <div
+      class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+    >
+      <svg
+        class="text-[var(--ap-text-tertiary)]"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><polyline points="15 18 9 12 15 6"></polyline></svg
+      >
+      <span class="text-xs font-semibold text-[var(--ap-text-primary)] flex-1"
+        >Rules & limits</span
+      >
+    </div>
+
+    <div class="flex items-center gap-2 py-1">
+      <div class="flex-1 min-w-0">
+        <p class="text-[11px] font-medium text-[var(--ap-text-primary)]">
+          Always ask permission
+        </p>
+        <p class="text-[9px] text-[var(--ap-text-tertiary)] leading-snug">
+          Ask before every AI request
+        </p>
+      </div>
+      <div
+        id="pm-rule0"
+        class="w-7 h-4 rounded-full bg-success flex items-center transition-all duration-250 cursor-default pm-toggle-on"
+      >
+        <div
+          class="w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-250 pm-toggle-knob ml-auto mr-0.5"
+        >
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 py-1">
+      <div class="flex-1 min-w-0">
+        <p class="text-[11px] font-medium text-[var(--ap-text-primary)]">
+          Autopilot mode
+        </p>
+        <p class="text-[9px] text-[var(--ap-text-tertiary)] leading-snug">
+          Run consecutive AI calls without asking
+        </p>
+      </div>
+      <div
+        id="pm-perm0"
+        class="w-7 h-4 rounded-full flex items-center transition-all duration-250 cursor-default pm-toggle-off"
+        style="background:var(--ap-border)"
+      >
+        <div
+          class="w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-250 pm-toggle-knob ml-0.5"
+        >
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 py-1">
+      <div class="flex-1 min-w-0">
+        <p class="text-[11px] font-medium text-[var(--ap-text-primary)]">
+          Daily token limit
+        </p>
+        <p class="text-[9px] text-[var(--ap-text-tertiary)] leading-snug">
+          Max tokens consumed per day
+        </p>
+      </div>
+      <div
+        id="pm-limit-val"
+        class="text-[10px] font-mono font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded py-0.5 px-1.5 transition-all duration-200"
+      >
+        100k
+      </div>
+    </div>
+
+    <button
+      id="pm-save"
+      class="w-full py-2 px-3 text-xs font-medium text-stone-50 bg-brand border-none rounded-md cursor-default font-sans transition-all duration-200 mt-1"
+      >Save changes</button
+    >
+  </div>
+
+  <!-- Screen 4: Saving spinner -->
+  <div
+    id="pm-spin"
+    class="hidden flex-col items-center justify-center gap-3 py-8"
+  >
+    <div
+      class="w-10 h-10 border-2 border-[var(--ap-border)] border-t-brand rounded-full animate-spin"
+    >
+    </div>
+    <p class="text-sm font-medium text-[var(--ap-text-primary)]">Saving…</p>
+  </div>
+
+  <!-- Screen 5: Updated confirmation -->
+  <div
+    id="pm-ok"
+    class="hidden flex-col items-center justify-center gap-2.5 py-6"
+  >
+    <div
+      class="w-11 h-11 rounded-full bg-[var(--ap-success-subtle)] flex items-center justify-center"
+    >
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--color-success)"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><polyline points="20 6 9 17 4 12"></polyline></svg
+      >
+    </div>
+    <p class="text-sm font-semibold text-[var(--ap-text-primary)]">Updated</p>
+    <div
+      class="bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg p-2.5 w-full"
+    >
+      <div class="flex flex-col gap-1 text-center">
+        <p class="text-[10px] text-[var(--ap-text-tertiary)]">
+          excalimate.com permissions
+        </p>
+        <p class="text-[10px] font-medium text-[var(--ap-text-secondary)]">
+          Claude only · Autopilot on · 50k tokens/day
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <ClickPing id="pm-cursor" />
+</PreviewPanel>
+
+<style>
+  .picon {
+    filter: brightness(0) invert(0.3);
+  }
+  .pm-toggle-on {
+    justify-content: flex-end;
+  }
+  .pm-toggle-off {
+    background: var(--ap-border) !important;
+    justify-content: flex-start !important;
+  }
+  .pm-toggle-off .pm-toggle-knob {
+    margin-left: 2px !important;
+    margin-right: auto !important;
+  }
+  .pm-radio-selected {
+    border-color: var(--color-brand) !important;
+  }
+  .pm-radio-selected::after {
+    content: "";
+    display: block;
+    width: 7px;
+    height: 7px;
+    background: var(--color-brand);
+    border-radius: 50%;
+  }
+  .pm-row-selected {
+    border-color: var(--color-brand) !important;
+    background: var(--color-brand-subtle) !important;
+  }
+</style>
+
+<script>
+  function pmRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const s1 = q("#pm-s1")!,
+      s2 = q("#pm-s2")!,
+      s3 = q("#pm-s3")!;
+    const spin = q("#pm-spin")!,
+      ok = q("#pm-ok")!;
+    const cursor = q("#pm-cursor")!;
+    const edit = q("#pm-edit")!;
+    const tog1 = q("#pm-tog1")!,
+      tp1 = q("#pm-tp1")!;
+    const next2 = q("#pm-next2")!;
+    const rule0 = q("#pm-rule0")!;
+    const perm0 = q("#pm-perm0")!;
+    const limitVal = q("#pm-limit-val")!;
+    const save = q("#pm-save")!;
+    if (!s1) return;
+
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+    const ping = (el: HTMLElement, dur = 500) =>
+      cursor.dispatchEvent(
+        new CustomEvent("ping", { detail: { target: el, duration: dur } }),
+      );
+    const show = (el: HTMLElement) => {
+      el.classList.remove("hidden");
+      el.classList.add("flex");
+    };
+    const hide = (el: HTMLElement) => {
+      el.classList.add("hidden");
+      el.classList.remove("flex");
+    };
+
+    // 2.2s — Click "Edit permissions"
+    t(() => {
+      ping(edit);
+      edit.style.transform = "scale(0.96)";
+    }, 2200);
+    t(() => {
+      edit.style.transform = "scale(1)";
+    }, 2400);
+    t(() => {
+      hide(s1);
+      show(s2);
+    }, 2700);
+
+    // 3.8s — Toggle off OpenAI
+    t(() => {
+      ping(tog1);
+    }, 3800);
+    t(() => {
+      tog1.classList.remove("pm-toggle-on");
+      tog1.classList.add("pm-toggle-off");
+      tp1.style.opacity = "0.5";
+    }, 4000);
+
+    // 4.8s — Click Next
+    t(() => {
+      ping(next2);
+      next2.style.transform = "scale(0.96)";
+    }, 4800);
+    t(() => {
+      next2.style.transform = "scale(1)";
+    }, 5000);
+    t(() => {
+      hide(s2);
+      show(s3);
+    }, 5300);
+
+    // 6.0s — Toggle off "Always ask permission"
+    t(() => {
+      ping(rule0);
+    }, 6000);
+    t(() => {
+      rule0.classList.remove("pm-toggle-on");
+      rule0.classList.add("pm-toggle-off");
+    }, 6200);
+
+    // 6.8s — Toggle on "Autopilot mode"
+    t(() => {
+      ping(perm0);
+    }, 6800);
+    t(() => {
+      perm0.classList.remove("pm-toggle-off");
+      perm0.classList.add("pm-toggle-on");
+      perm0.style.background = "";
+      perm0.classList.add("bg-success");
+      const knob = perm0.querySelector(".pm-toggle-knob") as HTMLElement;
+      if (knob) {
+        knob.style.marginLeft = "auto";
+        knob.style.marginRight = "2px";
+      }
+    }, 7000);
+
+    // 7.6s — Change daily token limit to 50k
+    t(() => {
+      ping(limitVal);
+    }, 7600);
+    t(() => {
+      limitVal.textContent = "50k";
+      limitVal.classList.add("text-brand", "border-brand");
+    }, 7800);
+
+    // 8.6s — Click Save changes
+    t(() => {
+      ping(save);
+      save.style.transform = "scale(0.96)";
+    }, 8600);
+    t(() => {
+      save.style.transform = "scale(1)";
+    }, 8800);
+    t(() => {
+      hide(s3);
+      show(spin);
+    }, 9100);
+
+    // 10.4s — Show success
+    t(() => {
+      hide(spin);
+      show(ok);
+    }, 10400);
+
+    // 12.5s — Reset to initial
+    t(() => {
+      hide(ok);
+      // Reset toggles
+      tog1.classList.add("pm-toggle-on");
+      tog1.classList.remove("pm-toggle-off");
+      tp1.style.opacity = "1";
+      // Reset rules/permissions toggles
+      rule0.classList.add("pm-toggle-on");
+      rule0.classList.remove("pm-toggle-off");
+      perm0.classList.add("pm-toggle-off");
+      perm0.classList.remove("pm-toggle-on", "bg-success");
+      perm0.style.background = "var(--ap-border)";
+      const knob = perm0.querySelector(".pm-toggle-knob") as HTMLElement;
+      if (knob) {
+        knob.style.marginLeft = "2px";
+        knob.style.marginRight = "auto";
+      }
+      // Reset limit
+      limitVal.textContent = "100k";
+      limitVal.classList.remove("text-brand", "border-brand");
+      // Reset buttons
+      [edit, next2, save].forEach((b) => {
+        b.style.transform = "scale(1)";
+      });
+      // Show screen 1
+      [s2, s3, spin].forEach(hide);
+      show(s1);
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 12500);
+
+    return tt;
+  }
+
+  const pmP = document.querySelector(
+    "[data-preview]:has(#pm-s1)",
+  ) as HTMLElement;
+  if (pmP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const q = (s: string) => pmP.querySelector(s) as HTMLElement | null;
+      ["#pm-s2", "#pm-s3", "#pm-spin", "#pm-ok"].forEach((s) => {
+        const el = q(s);
+        if (el) {
+          el.classList.add("hidden");
+          el.classList.remove("flex");
+        }
+      });
+      const s1 = q("#pm-s1");
+      if (s1) {
+        s1.classList.remove("hidden");
+        s1.classList.add("flex");
+        s1.style.opacity = "1";
+      }
+      const tog1 = q("#pm-tog1"),
+        tp1 = q("#pm-tp1"),
+        rule0 = q("#pm-rule0"),
+        perm0 = q("#pm-perm0"),
+        limitVal = q("#pm-limit-val");
+      if (tog1) {
+        tog1.classList.add("pm-toggle-on");
+        tog1.classList.remove("pm-toggle-off");
+      }
+      if (tp1) tp1.style.opacity = "1";
+      if (rule0) {
+        rule0.classList.add("pm-toggle-on");
+        rule0.classList.remove("pm-toggle-off");
+      }
+      if (perm0) {
+        perm0.classList.add("pm-toggle-off");
+        perm0.classList.remove("pm-toggle-on", "bg-success");
+        perm0.style.background = "var(--ap-border)";
+        const knob = perm0.querySelector(".pm-toggle-knob") as HTMLElement;
+        if (knob) {
+          knob.style.marginLeft = "2px";
+          knob.style.marginRight = "auto";
+        }
+      }
+      if (limitVal) {
+        limitVal.textContent = "100k";
+        limitVal.classList.remove("text-brand", "border-brand");
+      }
+    };
+
+    const obs = new MutationObserver(() => {
+      if (pmP.classList.contains("preview-active")) {
+        reset();
+        at = pmRun(pmP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(pmP, { attributes: true, attributeFilter: ["class"] });
+    pmP.addEventListener("preview:loop", () => {
+      reset();
+      at = pmRun(pmP) || [];
+    });
+    if (pmP.classList.contains("preview-active")) {
+      at = pmRun(pmP) || [];
+    }
+  }
+</script>

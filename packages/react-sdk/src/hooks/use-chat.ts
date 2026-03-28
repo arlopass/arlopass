@@ -273,10 +273,14 @@ export function useChat(options?: UseChatOptions): UseChatReturn {
         });
     }, []) as unknown as ChatSubscribeNoTools;
 
+    const selectedProviderKey = snapshot.selectedProvider !== null
+        ? `${snapshot.selectedProvider.providerId}::${snapshot.selectedProvider.modelId}`
+        : null;
+
     const contextInfo = useMemo<ContextWindowInfo>(() => {
         const chatMessages = messagesRef.current.map((m) => ({ role: m.role, content: m.content }));
         return store.client.getContextInfo(chatMessages);
-    }, [store, messages, snapshot.selectedProvider]);
+    }, [store, messages, selectedProviderKey]);
 
     return {
         messages,

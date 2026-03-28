@@ -488,6 +488,9 @@ export class BridgeHandler {
       case "vault.rekey.keychain":
         return this.#handleVaultRekeyKeychain();
 
+      case "vault.destroy":
+        return this.#handleVaultDestroy();
+
       default:
         return errorResponse(
           "request.invalid",
@@ -2190,7 +2193,7 @@ export class BridgeHandler {
       const key = await keychain.getKey();
       if (key === null) {
         return errorResponse("vault.keychain_unavailable",
-          "OS credential store returned no key. The keychain entry may have been deleted.");
+          "No keychain key found. The key file may have been deleted. You'll need to reset the vault and set up your providers again.");
       }
       store.unlock({ keychainKey: key });
       return { type: "vault.unlock", ...store.status() };
@@ -2199,7 +2202,7 @@ export class BridgeHandler {
         return errorResponse(error.reasonCode, error.message);
       }
       return errorResponse("vault.keychain_unavailable",
-        error instanceof Error ? error.message : "OS credential store is unavailable. Switch to password mode.");
+        error instanceof Error ? error.message : "OS credential store is unavailable.");
     }
   }
 
@@ -2209,6 +2212,25 @@ export class BridgeHandler {
       store.lock();
       return { type: "vault.lock", ...store.status() };
     });
+  }
+
+  async #handleVaultDestroy(): Promise<NativeMessage> {
+    try {
+      const store = this.#requireVaultStore();
+      // Also clean up the keychain key if it exists
+      try {
+        const keychain = createKeychainAdapter();
+        await keychain.deleteKey();
+      } catch { /* Best effort — keychain may already be gone */ }
+      store.destroy();
+      return { type: "vault.destroy", ...store.status() };
+    } catch (error) {
+      if (error instanceof VaultError) {
+        return errorResponse(error.reasonCode, error.message);
+      }
+      return errorResponse("vault.inaccessible",
+        error instanceof Error ? error.message : "Failed to destroy vault.");
+    }
   }
 
   #handleVaultCredentialsList(): NativeMessage {

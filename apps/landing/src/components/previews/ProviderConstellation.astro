@@ -1,0 +1,261 @@
+---
+/**
+ * Preview: Provider Constellation — tilted spinning orbit
+ * Icons at hand-placed positions, 45deg X tilt, slow spin,
+ * connector lines appear as each icon pops in.
+ */
+const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
+
+const icons = [
+  { top: 4, left: 8, size: 44, slug: "ollama", name: "Ollama" },
+  { top: 2, left: 48, size: 38, slug: "claude-color", name: "Claude" },
+  { top: 8, left: 82, size: 42, slug: "openai", name: "OpenAI" },
+  { top: 48, left: 92, size: 36, slug: "gemini-color", name: "Gemini" },
+  { top: 72, left: 70, size: 40, slug: "bedrock-color", name: "Bedrock" },
+  { top: 65, left: 10, size: 38, slug: "mistral-color", name: "Mistral" },
+  { top: 40, left: -4, size: 36, slug: "perplexity-color", name: "Perplexity" },
+];
+---
+
+<div data-preview class="w-full h-full">
+  <div
+    class="relative w-full aspect-square max-w-[300px] mx-auto flex items-center justify-center"
+    style="perspective: 800px;"
+  >
+    <!-- Tilted + spinning layer (rings, lines, icons) -->
+    <div
+      id="pc-tilt"
+      class="absolute inset-0"
+      style="transform: rotateX(45deg); transform-style: preserve-3d;"
+    >
+      <div
+        id="pc-spin-wrap"
+        class="absolute inset-0 pc-spin"
+        style="transform-style: preserve-3d;"
+      >
+        <!-- Rings -->
+        <div
+          id="pc-ring1"
+          class="absolute rounded-full border border-[var(--ap-border)] opacity-0 transition-opacity duration-600"
+          style="inset: 22% 20% 20% 18%;"
+        >
+        </div>
+        <div
+          id="pc-ring2"
+          class="absolute rounded-full border border-[var(--ap-border)] opacity-0 transition-opacity duration-600"
+          style="inset: 8% 5% 6% 7%;"
+        >
+        </div>
+
+        <!-- Connector lines (one per icon, each hidden initially) -->
+        <svg
+          class="absolute inset-0 w-full h-full"
+          viewBox="0 0 300 300"
+          fill="none"
+          style="overflow: visible;"
+        >
+          {
+            icons.map((ic, i) => {
+              const cx = (ic.left / 100) * 300 + ic.size / 2;
+              const cy = (ic.top / 100) * 300 + ic.size / 2;
+              return (
+                <line
+                  id={`pc-l${i}`}
+                  x1="154"
+                  y1="143"
+                  x2={cx}
+                  y2={cy}
+                  stroke="var(--ap-border-strong)"
+                  stroke-width="1"
+                  stroke-dasharray="4 3"
+                  opacity="0"
+                  style="transition: opacity 400ms ease;"
+                />
+              );
+            })
+          }
+        </svg>
+
+        <!-- Provider icons -->
+        {
+          icons.map((ic, i) => (
+            <div
+              id={`pc-p${i}`}
+              class="absolute opacity-0 transition-all duration-500"
+              style={`top: ${ic.top}%; left: ${ic.left}%;`}
+            >
+              <div
+                class="rounded-full bg-[var(--ap-bg-base)] border border-[var(--ap-border)] shadow-sm flex items-center justify-center pc-counter-spin"
+                style={`width: ${ic.size}px; height: ${ic.size}px;`}
+              >
+                <img
+                  src={`${IC}/${ic.slug}.svg`}
+                  alt={ic.name}
+                  width={Math.round(ic.size * 0.52)}
+                  height={Math.round(ic.size * 0.52)}
+                  class="pc-icon"
+                  style={`width: ${Math.round(ic.size * 0.52)}px; height: ${Math.round(ic.size * 0.52)}px;`}
+                />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Center: Arlopass (stays upright, not tilted) -->
+    <div
+      id="pc-center"
+      class="relative z-10 w-16 h-16 rounded-full bg-brand-subtle border-2 border-brand/30 flex items-center justify-center opacity-0 transition-all duration-500 scale-75 shadow-lg"
+    >
+      <img src="/ArlopassIcon.svg" alt="" width="32" height="32" />
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Light mode: show colored icons as-is */
+  :global([data-theme="dark"]) .pc-icon {
+    filter: brightness(0) invert(0.85);
+  }
+
+  @keyframes pc-orbit-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .pc-spin {
+    animation: pc-orbit-spin 40s linear infinite;
+  }
+
+  /* Counter-rotate so icons stay upright */
+  @keyframes pc-counter {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+  .pc-counter-spin {
+    animation: pc-counter 40s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pc-spin,
+    .pc-counter-spin {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  function pcRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const qs = (s: string) => p.querySelector(s) as SVGElement | null;
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+
+    // 0.5s — Center
+    t(() => {
+      const c = q("#pc-center");
+      if (c) {
+        c.style.opacity = "1";
+        c.style.transform = "scale(1)";
+      }
+    }, 500);
+
+    // 0.8s — Rings
+    t(() => {
+      const r = q("#pc-ring1");
+      if (r) r.style.opacity = "0.5";
+    }, 800);
+    t(() => {
+      const r = q("#pc-ring2");
+      if (r) r.style.opacity = "0.35";
+    }, 1000);
+
+    // 1.3–3.5s — Icons + their connector lines pop in together
+    for (let i = 0; i < 7; i++) {
+      t(
+        () => {
+          const icon = q(`#pc-p${i}`);
+          const line = qs(`#pc-l${i}`);
+          if (icon) icon.style.opacity = "1";
+          if (line) line.setAttribute("opacity", "0.5");
+        },
+        1300 + i * 320,
+      );
+    }
+
+    // 9s — Reset
+    t(() => {
+      const c = q("#pc-center");
+      if (c) {
+        c.style.opacity = "0";
+        c.style.transform = "scale(0.75)";
+      }
+      ["#pc-ring1", "#pc-ring2"].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+      for (let i = 0; i < 7; i++) {
+        const icon = q(`#pc-p${i}`);
+        const line = qs(`#pc-l${i}`);
+        if (icon) icon.style.opacity = "0";
+        if (line) line.setAttribute("opacity", "0");
+      }
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 9000);
+
+    return tt;
+  }
+
+  const pcP = document.querySelector(
+    "[data-preview]:has(#pc-center)",
+  ) as HTMLElement;
+  if (pcP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach(clearTimeout);
+      at = [];
+      const q = (s: string) => pcP.querySelector(s) as HTMLElement | null;
+      const qs = (s: string) => pcP.querySelector(s) as SVGElement | null;
+      const c = q("#pc-center");
+      if (c) {
+        c.style.opacity = "0";
+        c.style.transform = "scale(0.75)";
+      }
+      ["#pc-ring1", "#pc-ring2"].forEach((id) => {
+        const el = q(id);
+        if (el) el.style.opacity = "0";
+      });
+      for (let i = 0; i < 7; i++) {
+        const icon = q(`#pc-p${i}`);
+        if (icon) icon.style.opacity = "0";
+        const line = qs(`#pc-l${i}`);
+        if (line) line.setAttribute("opacity", "0");
+      }
+    };
+    const obs = new MutationObserver(() => {
+      if (pcP.classList.contains("preview-active")) {
+        reset();
+        at = pcRun(pcP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(pcP, { attributes: true, attributeFilter: ["class"] });
+    pcP.addEventListener("preview:loop", () => {
+      reset();
+      at = pcRun(pcP) || [];
+    });
+    if (pcP.classList.contains("preview-active")) {
+      at = pcRun(pcP) || [];
+    }
+  }
+</script>

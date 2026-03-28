@@ -166,6 +166,7 @@ if (route !== null) {
           onSetupKeychain={vault.setupKeychain}
           onUnlock={vault.unlock}
           onUnlockKeychain={vault.unlockKeychain}
+          onDestroyVault={vault.destroyVault}
           onRetry={vault.refresh}
           needsReauth={vault.needsReauth}
         >

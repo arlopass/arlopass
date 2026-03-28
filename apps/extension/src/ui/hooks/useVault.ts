@@ -15,7 +15,7 @@ export type VaultStatus =
     | { state: "connecting" }
     | { state: "bridge-unavailable"; error: string }
     | { state: "uninitialized"; minPasswordLength?: number }
-    | { state: "locked"; keyMode?: "password" | "keychain"; minPasswordLength?: number }
+    | { state: "locked"; keyMode?: "password" | "keychain"; keychainError?: string; minPasswordLength?: number }
     | { state: "unlocked"; minPasswordLength?: number }
     | { state: "locked_out"; secondsRemaining: number; minPasswordLength?: number };
 
@@ -27,6 +27,7 @@ export type UseVaultResult = {
     unlock: (password: string) => Promise<void>;
     unlockKeychain: () => Promise<void>;
     lock: () => Promise<void>;
+    destroyVault: () => Promise<void>;
     refresh: () => void;
     needsReauth: boolean;
 };
@@ -69,16 +70,29 @@ export function useVault(): UseVaultResult {
                 if (keyMode === "keychain") {
                     setStatus({ state: "locked", keyMode: "keychain", ...mpOpt });
                     try {
-                        const unlockResp = await sendVaultMessageFromPage({ type: "vault.unlock.keychain" });
+                        const unlockResp = await Promise.race([
+                            sendVaultMessageFromPage({ type: "vault.unlock.keychain" }),
+                            new Promise<{ type: "error"; message: string }>((resolve) =>
+                                setTimeout(() => resolve({ type: "error", message: "Keychain unlock timed out. The OS credential store may be unavailable." }), 15_000),
+                            ),
+                        ]);
                         if (!mountedRef.current) return;
                         if (isRecord(unlockResp) && unlockResp["type"] !== "error") {
                             setStatus({ state: "unlocked", ...mpOpt });
                         } else {
-                            setStatus({ state: "locked", keyMode: "keychain", ...mpOpt });
+                            const msg = (isRecord(unlockResp) && typeof unlockResp["message"] === "string")
+                                ? unlockResp["message"]
+                                : "Keychain unlock failed.";
+                            setStatus({ state: "locked", keyMode: "keychain", keychainError: msg, ...mpOpt });
                         }
-                    } catch {
+                    } catch (err) {
                         if (!mountedRef.current) return;
-                        setStatus({ state: "locked", keyMode: "keychain", ...mpOpt });
+                        setStatus({
+                            state: "locked",
+                            keyMode: "keychain",
+                            keychainError: err instanceof Error ? err.message : "Keychain unlock failed.",
+                            ...mpOpt,
+                        });
                     }
                 } else {
                     setStatus({ state: "locked", keyMode: "password", ...mpOpt });
@@ -143,11 +157,20 @@ export function useVault(): UseVaultResult {
         setStatus({ state: "locked" });
     }, [sendVaultMessage]);
 
+    const destroyVault = useCallback(async () => {
+        const resp = await sendVaultMessageFromPage({ type: "vault.destroy" });
+        if (isRecord(resp) && resp["type"] === "error") {
+            throw new Error(resp["message"] as string ?? "Failed to reset vault.");
+        }
+        setNeedsReauth(false);
+        setStatus({ state: "uninitialized" });
+    }, []);
+
     useEffect(() => {
         mountedRef.current = true;
         void checkStatus();
         return () => { mountedRef.current = false; };
     }, [checkStatus]);
 
-    return { status, sendVaultMessage, setup, setupKeychain, unlock, unlockKeychain, lock, refresh: checkStatus, needsReauth };
+    return { status, sendVaultMessage, setup, setupKeychain, unlock, unlockKeychain, lock, destroyVault, refresh: checkStatus, needsReauth };
 }

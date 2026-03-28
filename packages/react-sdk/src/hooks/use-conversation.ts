@@ -101,28 +101,46 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const optionsRef = useRef(options);
     optionsRef.current = options;
 
+    // Track provider/model by value (not object reference) to avoid
+    // recreating the ConversationManager on every heartbeat snapshot.
+    const selectedProviderKey = snapshot.selectedProvider !== null
+        ? `${snapshot.selectedProvider.providerId}::${snapshot.selectedProvider.modelId}`
+        : null;
+    const prevProviderKeyRef = useRef<string | null>(null);
+
     // Recreate the ConversationManager when the selected provider/model changes
     // so maxTokens reflects the new model's context window.
+    // NEVER recreate while a stream is in progress — it would orphan the stream.
     useEffect(() => {
-        if (snapshot.selectedProvider === null) return;
-        const opts = optionsRef.current;
-        const managerOpts: ConstructorParameters<typeof ConversationManager>[0] = {
-            client: store.client,
-        };
-        if (opts?.systemPrompt !== undefined) managerOpts.systemPrompt = opts.systemPrompt;
-        if (opts?.tools !== undefined) managerOpts.tools = opts.tools;
-        if (opts?.maxTokens !== undefined) managerOpts.maxTokens = opts.maxTokens;
-        if (opts?.maxToolRounds !== undefined) managerOpts.maxToolRounds = opts.maxToolRounds;
-        if (opts?.primeTools !== undefined) managerOpts.primeTools = opts.primeTools;
-        if (opts?.hideToolCalls !== undefined) managerOpts.hideToolCalls = opts.hideToolCalls;
-        managerRef.current = new ConversationManager(managerOpts);
-        const info = managerRef.current.getContextInfo();
-        setContextInfo(info);
-        setTokenCount(managerRef.current.getTokenCount());
-        setContextWindow(managerRef.current.getContextWindow());
-        // Only re-run when selectedProvider identity changes (providerId + modelId)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [snapshot.selectedProvider, store]);
+        if (selectedProviderKey === null) return;
+        if (selectedProviderKey === prevProviderKeyRef.current) return;
+        if (busyRef.current) return; // don't replace manager mid-stream
+
+        // Only recreate on subsequent changes, not the initial selection.
+        // The inline creation above already handles the initial state.
+        if (prevProviderKeyRef.current !== null) {
+            const opts = optionsRef.current;
+            const managerOpts: ConstructorParameters<typeof ConversationManager>[0] = {
+                client: store.client,
+            };
+            if (opts?.systemPrompt !== undefined) managerOpts.systemPrompt = opts.systemPrompt;
+            if (opts?.tools !== undefined) managerOpts.tools = opts.tools;
+            if (opts?.maxTokens !== undefined) managerOpts.maxTokens = opts.maxTokens;
+            if (opts?.maxToolRounds !== undefined) managerOpts.maxToolRounds = opts.maxToolRounds;
+            if (opts?.primeTools !== undefined) managerOpts.primeTools = opts.primeTools;
+            if (opts?.hideToolCalls !== undefined) managerOpts.hideToolCalls = opts.hideToolCalls;
+            managerRef.current = new ConversationManager(managerOpts);
+        }
+
+        prevProviderKeyRef.current = selectedProviderKey;
+
+        // Always refresh context info when provider changes
+        if (managerRef.current !== null) {
+            setContextInfo(managerRef.current.getContextInfo());
+            setTokenCount(managerRef.current.getTokenCount());
+            setContextWindow(managerRef.current.getContextWindow());
+        }
+    }, [selectedProviderKey, store]);
 
     const appendMessage = useCallback((msg: TrackedChatMessage) => {
         messagesRef.current = [...messagesRef.current, msg];

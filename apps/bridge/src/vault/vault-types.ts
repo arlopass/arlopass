@@ -75,6 +75,7 @@ export type VaultErrorCode =
     | "vault.write_failed"
     | "vault.inaccessible"
     | "vault.keychain_unavailable"
+    | "vault.keychain_mismatch"
     | "vault.not_found"
     | "auth.invalid"
     | "request.invalid";

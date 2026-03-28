@@ -6,8 +6,8 @@ import type {
 
 export const SDK_PROTOCOL_VERSION = "1.0.0";
 export const SDK_ENVELOPE_NONCE = "AQIDBAUGBwgJCgsMDQ4PEA";
-export const DEFAULT_REQUEST_TIMEOUT_MS = 5_000;
-export const DEFAULT_ENVELOPE_TTL_MS = 60_000;
+export const DEFAULT_REQUEST_TIMEOUT_MS = 90_000;
+export const DEFAULT_ENVELOPE_TTL_MS = 120_000;
 
 export type ClientState =
   | "disconnected"

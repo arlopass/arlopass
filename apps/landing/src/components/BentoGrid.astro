@@ -1,0 +1,177 @@
+---
+/**
+ * BentoGrid — Feature showcase in a bento-style grid layout.
+ */
+import SecurityArchitecture from "./previews/SecurityArchitecture.astro";
+import ProviderConstellation from "./previews/ProviderConstellation.astro";
+import PreviewCarousel from "./ui/PreviewCarousel.astro";
+---
+
+<section
+  class="py-24 bg-[var(--ap-bg-surface)]"
+  id="bento"
+  aria-labelledby="bento-heading"
+>
+  <div class="px-4 md:px-6 lg:px-8">
+    <span
+      class="block text-center text-xs font-medium uppercase tracking-[0.08em] text-brand"
+      >Why Arlopass</span
+    >
+    <p
+      id="bento-heading"
+      class="mx-auto mt-2 max-w-lg text-center text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+    >
+      Everything you need for safe AI access
+    </p>
+
+    <div class="mt-10 grid gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2">
+      <!-- Left tall card (spans 2 rows) -->
+      <div class="relative lg:row-span-2">
+        <div
+          class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)] lg:rounded-l-[2rem]"
+        >
+        </div>
+        <div
+          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)] lg:rounded-l-[calc(2rem+1px)]"
+        >
+          <div class="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
+            <p
+              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
+            >
+              Your keys, your device
+            </p>
+            <p
+              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
+            >
+              API credentials are stored in your OS keychain — never in the
+              browser, never on a server.
+            </p>
+          </div>
+          <div class="relative w-full grow flex items-end justify-start">
+            <PreviewCarousel class="w-full h-full pt-8">
+              <SecurityArchitecture />
+            </PreviewCarousel>
+          </div>
+        </div>
+        <div
+          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)] lg:rounded-l-[2rem]"
+        >
+        </div>
+      </div>
+
+      <!-- Top middle card -->
+      <div class="relative max-lg:row-start-1">
+        <div
+          class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)] max-lg:rounded-t-[2rem]"
+        >
+        </div>
+        <div
+          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)] max-lg:rounded-t-[calc(2rem+1px)]"
+        >
+          <div class="px-8 pt-8 sm:px-10 sm:pt-10">
+            <p
+              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
+            >
+              10-line integration
+            </p>
+            <p
+              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
+            >
+              Add AI to any web app with just a few lines of code. No backend
+              proxy needed.
+            </p>
+          </div>
+          <div
+            class="flex flex-1 items-center justify-center px-8 max-lg:pt-10 max-lg:pb-12 sm:px-10 lg:pb-2"
+          >
+            <!-- Placeholder for visual -->
+            <div
+              class="w-full h-32 rounded-lg border border-dashed border-[var(--ap-border)] flex items-center justify-center text-sm text-[var(--ap-text-tertiary)]"
+            >
+              Visual placeholder
+            </div>
+          </div>
+        </div>
+        <div
+          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)] max-lg:rounded-t-[2rem]"
+        >
+        </div>
+      </div>
+
+      <!-- Bottom middle card -->
+      <div class="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
+        <div class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)]"></div>
+        <div
+          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)]"
+        >
+          <!-- Constellation — absolute, behind text -->
+          <div class="absolute inset-0 flex items-end justify-center">
+            <PreviewCarousel class="w-full">
+              <ProviderConstellation />
+            </PreviewCarousel>
+          </div>
+
+          <!-- Text with gradient mask over constellation -->
+          <div class="relative z-10 px-8 pt-8 sm:px-10 sm:pt-10">
+            <p
+              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
+            >
+              Any provider, any model
+            </p>
+            <p
+              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
+            >
+              Switch between Claude, GPT, Gemini, Ollama, and more — with one
+              click.
+            </p>
+            <!-- Gradient fade from card bg to transparent -->
+            <div class="h-8 mt-2 bg-gradient-to-b from-[var(--ap-bg-base)] to-transparent"></div>
+          </div>
+        </div>
+        <div
+          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)]"
+        >
+        </div>
+      </div>
+
+      <!-- Right tall card (spans 2 rows) -->
+      <div class="relative lg:row-span-2">
+        <div
+          class="absolute inset-px rounded-lg bg-[var(--ap-bg-base)] max-lg:rounded-b-[2rem] lg:rounded-r-[2rem]"
+        >
+        </div>
+        <div
+          class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg,12px)+1px)] max-lg:rounded-b-[calc(2rem+1px)] lg:rounded-r-[calc(2rem+1px)]"
+        >
+          <div class="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
+            <p
+              class="mt-2 text-lg font-medium tracking-tight text-[var(--ap-text-primary)] max-lg:text-center"
+            >
+              Enterprise governance
+            </p>
+            <p
+              class="mt-2 max-w-lg text-sm leading-relaxed text-[var(--ap-text-secondary)] max-lg:text-center"
+            >
+              Signed policy bundles, audit trails, and compliance-ready controls
+              for your organization.
+            </p>
+          </div>
+          <div
+            class="relative min-h-[300px] w-full grow flex items-center justify-center p-8"
+          >
+            <!-- Placeholder for visual -->
+            <div
+              class="w-full h-full rounded-lg border border-dashed border-[var(--ap-border)] flex items-center justify-center text-sm text-[var(--ap-text-tertiary)]"
+            >
+              Visual placeholder
+            </div>
+          </div>
+        </div>
+        <div
+          class="pointer-events-none absolute inset-px rounded-lg shadow-sm outline outline-1 outline-[var(--ap-border)] max-lg:rounded-b-[2rem] lg:rounded-r-[2rem]"
+        >
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

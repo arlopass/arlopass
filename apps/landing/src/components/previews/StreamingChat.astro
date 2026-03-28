@@ -1,98 +1,397 @@
 ---
-/**
- * Preview: Streaming AI chat
- * Shows a conversation streaming through Arlopass
- */
 import PreviewPanel from "../ui/PreviewPanel.astro";
+import ClickPing from "../ui/ClickPing.astro";
+const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
 ---
 
-<PreviewPanel>
+<PreviewPanel loop={13000}>
+  <!-- Header -->
   <div
     data-step="0"
-    class="flex items-center gap-2 pb-1 border-b border-[var(--ap-border)]"
+    class="flex items-center gap-2 pb-2.5 mb-1 border-b border-[var(--ap-border)]"
   >
-    <img
-      src="/ArlopassIcon.svg"
-      alt=""
-      width="16"
-      height="16"
-      aria-hidden="true"
-    />
-    <span class="text-xs font-semibold text-[var(--ap-text-primary)]"
-      >code-editor.dev</span
-    >
-    <span class="text-[10px] text-[var(--ap-text-tertiary)] ml-auto"
-      >via Claude</span
-    >
-  </div>
-
-  <div data-step="1" class="flex gap-2 items-start">
     <div
-      class="w-5 h-5 rounded-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center shrink-0 mt-0.5"
-    >
-      <svg
-        width="10"
-        height="10"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--ap-text-tertiary)"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        ><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle
-          cx="12"
-          cy="7"
-          r="4"></circle></svg
-      >
-    </div>
-    <div
-      class="bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg px-3 py-2 text-xs text-[var(--ap-text-body)] leading-relaxed"
-    >
-      Explain how async iterators work in TypeScript.
-    </div>
-  </div>
-
-  <div data-step="2" class="flex gap-2 items-start">
-    <div
-      class="w-5 h-5 rounded-full bg-brand-subtle flex items-center justify-center shrink-0 mt-0.5"
+      class="w-5 h-5 rounded bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center shrink-0 overflow-hidden"
     >
       <img
-        src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/claude.svg"
+        src="https://excalimate.com/favicon.svg"
         alt=""
-        width="11"
-        height="11"
-        class="provider-icon-sm"
+        width="12"
+        height="12"
+        class="w-3 h-3"
       />
     </div>
-    <div
-      class="bg-brand-subtle border border-brand/10 rounded-lg px-3 py-2 text-xs text-[var(--ap-text-body)] leading-relaxed"
+    <span class="text-xs font-semibold text-[var(--ap-text-primary)] flex-1"
+      >excalimate.com</span
     >
-      An async iterator implements the <code class="text-brand text-[11px]"
-        >Symbol.asyncIterator</code
-      > protocol, letting you use <code class="text-brand text-[11px]"
-        >for await...of</code
-      > loops to…
+    <span class="text-[9px] text-[var(--ap-text-tertiary)]">via Claude</span>
+  </div>
+
+  <!-- Chat area — fixed height to prevent footer overflow -->
+  <!-- Chat area with scroll and top fade gradient -->
+  <div class="relative">
+    <div
+      id="sc-fade"
+      class="pointer-events-none absolute top-0 left-0 right-0 h-6 z-10 opacity-0 transition-opacity duration-200"
+      style="background: linear-gradient(to bottom, var(--ap-bg-base), transparent);"
+    >
+    </div>
+    <div
+      id="sc-chat"
+      class="flex flex-col gap-2.5 min-h-[140px] max-h-[140px] overflow-y-auto scroll-smooth"
+      style="scrollbar-width: none;"
+    >
+      <!-- Existing user message -->
+      <div data-step="1" class="flex gap-2 items-start">
+        <div
+          class="w-5 h-5 rounded-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center shrink-0 mt-0.5"
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--ap-text-tertiary)"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle
+              cx="12"
+              cy="7"
+              r="4"></circle></svg
+          >
+        </div>
+        <div
+          class="bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--ap-text-body)] leading-relaxed"
+        >
+          Create a flowchart for user authentication.
+        </div>
+      </div>
+
+      <!-- Existing AI response -->
+      <div data-step="2" class="flex gap-2 items-start">
+        <div
+          class="w-5 h-5 rounded-full bg-brand-subtle flex items-center justify-center shrink-0 mt-0.5"
+        >
+          <img
+            src={`${IC}/claude.svg`}
+            alt=""
+            width="11"
+            height="11"
+            class="sc-icon"
+          />
+        </div>
+        <div
+          class="bg-brand-subtle border border-brand/10 rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--ap-text-body)] leading-relaxed"
+        >
+          Here's an auth flowchart with login, OAuth, and session nodes…
+        </div>
+      </div>
+
+      <!-- New user message (animated) -->
+      <div
+        id="sc-new-msg"
+        class="flex gap-2 items-start opacity-0 transition-all duration-300 translate-y-2"
+      >
+        <div
+          class="w-5 h-5 rounded-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center shrink-0 mt-0.5"
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--ap-text-tertiary)"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle
+              cx="12"
+              cy="7"
+              r="4"></circle></svg
+          >
+        </div>
+        <div
+          class="bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--ap-text-body)] leading-relaxed"
+        >
+          Now add error handling and retry logic.
+        </div>
+      </div>
+
+      <!-- AI typing indicator -->
+      <div id="sc-typing" class="hidden gap-2 items-start">
+        <div
+          class="w-5 h-5 rounded-full bg-brand-subtle flex items-center justify-center shrink-0 mt-0.5"
+        >
+          <img
+            src={`${IC}/claude.svg`}
+            alt=""
+            width="11"
+            height="11"
+            class="sc-icon"
+          />
+        </div>
+        <div
+          class="bg-brand-subtle border border-brand/10 rounded-lg px-2.5 py-1.5 flex items-center gap-[3px]"
+        >
+          <span
+            class="w-1 h-1 rounded-full bg-brand sc-bounce"
+            style="animation-delay:0ms"></span>
+          <span
+            class="w-1 h-1 rounded-full bg-brand sc-bounce"
+            style="animation-delay:150ms"></span>
+          <span
+            class="w-1 h-1 rounded-full bg-brand sc-bounce"
+            style="animation-delay:300ms"></span>
+        </div>
+      </div>
+
+      <!-- AI streamed response -->
+      <div id="sc-response" class="hidden gap-2 items-start">
+        <div
+          class="w-5 h-5 rounded-full bg-brand-subtle flex items-center justify-center shrink-0 mt-0.5"
+        >
+          <img
+            src={`${IC}/claude.svg`}
+            alt=""
+            width="11"
+            height="11"
+            class="sc-icon"
+          />
+        </div>
+        <div
+          class="bg-brand-subtle border border-brand/10 rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--ap-text-body)] leading-relaxed min-w-0"
+        >
+          <span id="sc-stream-text"></span><span
+            id="sc-cursor"
+            class="inline-block w-0.5 h-3 bg-brand ml-0.5 align-middle animate-pulse"
+          ></span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div data-step="3" class="flex items-center gap-2 pt-1">
-    <div class="flex gap-0.5">
-      <span class="w-1 h-1 rounded-full bg-brand animate-pulse"></span>
-      <span
-        class="w-1 h-1 rounded-full bg-brand animate-pulse [animation-delay:150ms]"
-      ></span>
-      <span
-        class="w-1 h-1 rounded-full bg-brand animate-pulse [animation-delay:300ms]"
-      ></span>
+  <!-- Footer — always visible -->
+  <div
+    class="flex items-center gap-2 pt-2 mt-1.5 border-t border-[var(--ap-border)]"
+  >
+    <!-- Idle state -->
+    <div id="sc-ft-idle" class="flex items-center gap-2 w-full">
+      <div class="w-1.5 h-1.5 rounded-full bg-success shrink-0"></div>
+      <span class="text-[9px] text-[var(--ap-text-tertiary)] flex-1"
+        >Connected via Arlopass</span
+      >
+      <span class="text-[9px] font-mono text-[var(--ap-text-tertiary)]"
+        >Claude 3.5</span
+      >
     </div>
-    <span class="text-[10px] text-[var(--ap-text-tertiary)]"
-      >Streaming via Arlopass · keys on your machine</span
-    >
+    <!-- Streaming state -->
+    <div id="sc-ft-stream" class="hidden items-center gap-2 w-full">
+      <div class="flex items-end gap-[3px] h-3">
+        <span
+          class="w-[3px] h-[3px] rounded-full bg-brand sc-bounce"
+          style="animation-delay:0ms"></span>
+        <span
+          class="w-[3px] h-[3px] rounded-full bg-brand sc-bounce"
+          style="animation-delay:150ms"></span>
+        <span
+          class="w-[3px] h-[3px] rounded-full bg-brand sc-bounce"
+          style="animation-delay:300ms"></span>
+      </div>
+      <span class="text-[9px] text-[var(--ap-text-tertiary)] flex-1"
+        >Streaming via Arlopass</span
+      >
+      <span
+        id="sc-ctx"
+        class="text-[9px] font-mono text-[var(--ap-text-tertiary)]"
+        >0/8K context</span
+      >
+    </div>
   </div>
+
+  <ClickPing id="sc-cursor-ping" />
 </PreviewPanel>
 
 <style>
-  .provider-icon-sm {
+  .sc-icon {
     filter: brightness(0) invert(0.3);
   }
+  @keyframes sc-bounce-anim {
+    0%,
+    80%,
+    100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-4px);
+    }
+  }
+  .sc-bounce {
+    animation: sc-bounce-anim 0.8s ease-in-out infinite;
+  }
 </style>
+
+<script>
+  const STREAM_TEXT =
+    "Added try-catch blocks with exponential backoff retry for each node…";
+
+  function scRun(p: HTMLElement) {
+    const q = (s: string) => p.querySelector(s) as HTMLElement | null;
+    const newMsg = q("#sc-new-msg")!;
+    const typing = q("#sc-typing")!;
+    const response = q("#sc-response")!;
+    const streamText = q("#sc-stream-text")!;
+    const cursorEl = q("#sc-cursor")!;
+    const ftIdle = q("#sc-ft-idle")!;
+    const ftStream = q("#sc-ft-stream")!;
+    const ctxEl = q("#sc-ctx")!;
+    const chat = q("#sc-chat")!;
+    const fade = q("#sc-fade")!;
+    if (!newMsg || !chat) return;
+
+    const tt: number[] = [];
+    const t = (fn: () => void, ms: number) =>
+      tt.push(window.setTimeout(fn, ms));
+
+    const scrollToBottom = () =>
+      chat.scrollTo({ top: chat.scrollHeight, behavior: "smooth" });
+    const updateFade = () => {
+      fade.style.opacity = chat.scrollTop > 4 ? "1" : "0";
+    };
+    chat.addEventListener("scroll", updateFade);
+
+    const showEl = (el: HTMLElement) => {
+      el.style.opacity = "1";
+      el.style.transform = "translateY(0)";
+    };
+    const hideEl = (el: HTMLElement) => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(8px)";
+    };
+    const showD = (el: HTMLElement) => {
+      el.classList.remove("hidden");
+      el.classList.add("flex");
+    };
+    const hideD = (el: HTMLElement) => {
+      el.classList.add("hidden");
+      el.classList.remove("flex");
+    };
+
+    // 2.5s — New user message
+    t(() => {
+      showEl(newMsg);
+      scrollToBottom();
+    }, 2500);
+
+    // 3.5s — Typing indicator
+    t(() => {
+      showD(typing);
+      scrollToBottom();
+    }, 3500);
+
+    // 4.5s — Hide typing, show response, start streaming
+    t(() => {
+      hideD(typing);
+      showD(response);
+      scrollToBottom();
+      // Switch footer
+      hideD(ftIdle);
+      showD(ftStream);
+      streamText.textContent = "";
+      cursorEl.style.display = "";
+
+      let i = 0;
+      const timer = window.setInterval(() => {
+        if (i < STREAM_TEXT.length) {
+          streamText.textContent = STREAM_TEXT.slice(0, i + 1);
+          i++;
+          const k = ((i * 3) / 1000).toFixed(1);
+          ctxEl.textContent = `${k}/8K context`;
+          if (i % 5 === 0) scrollToBottom();
+        } else {
+          clearInterval(timer);
+          cursorEl.style.display = "none";
+        }
+      }, 35);
+      tt.push(timer);
+    }, 4500);
+
+    // 11s — Reset and signal done
+    t(() => {
+      hideEl(newMsg);
+      hideD(response);
+      hideD(ftStream);
+      showD(ftIdle);
+      streamText.textContent = "";
+      cursorEl.style.display = "";
+      ctxEl.textContent = "0/8K context";
+      chat.scrollTop = 0;
+      fade.style.opacity = "0";
+
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 11000);
+
+    return tt;
+  }
+
+  const scP = document.querySelector(
+    "[data-preview]:has(#sc-new-msg)",
+  ) as HTMLElement;
+  if (scP) {
+    let at: number[] = [];
+    const reset = () => {
+      at.forEach((t) => clearTimeout(t));
+      at = [];
+      const q = (s: string) => scP.querySelector(s) as HTMLElement | null;
+      const nm = q("#sc-new-msg");
+      if (nm) {
+        nm.style.opacity = "0";
+        nm.style.transform = "translateY(8px)";
+      }
+      ["#sc-typing", "#sc-response"].forEach((s) => {
+        const el = q(s);
+        if (el) {
+          el.classList.add("hidden");
+          el.classList.remove("flex");
+        }
+      });
+      const fi = q("#sc-ft-idle");
+      if (fi) {
+        fi.classList.remove("hidden");
+        fi.classList.add("flex");
+      }
+      const fs = q("#sc-ft-stream");
+      if (fs) {
+        fs.classList.add("hidden");
+        fs.classList.remove("flex");
+      }
+      const st = q("#sc-stream-text");
+      if (st) st.textContent = "";
+      const cur = q("#sc-cursor");
+      if (cur) cur.style.display = "";
+      const ctx = q("#sc-ctx");
+      if (ctx) ctx.textContent = "0/8K context";
+      const ch = q("#sc-chat");
+      if (ch) ch.scrollTop = 0;
+      const fd = q("#sc-fade");
+      if (fd) fd.style.opacity = "0";
+    };
+
+    const obs = new MutationObserver(() => {
+      if (scP.classList.contains("preview-active")) {
+        reset();
+        at = scRun(scP) || [];
+      } else {
+        reset();
+      }
+    });
+    obs.observe(scP, { attributes: true, attributeFilter: ["class"] });
+    scP.addEventListener("preview:loop", () => {
+      reset();
+      at = scRun(scP) || [];
+    });
+    if (scP.classList.contains("preview-active")) {
+      at = scRun(scP) || [];
+    }
+  }
+</script>

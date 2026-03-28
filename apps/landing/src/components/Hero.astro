@@ -1,8 +1,7 @@
 ---
 import PreviewCarousel from "./ui/PreviewCarousel.astro";
-import ConnectionApproval from "./previews/ConnectionApproval.astro";
 import AppConnectionApproval from "./previews/AppConnectionApproval.astro";
-import ModelSwitch from "./previews/ModelSwitch.astro";
+import PermissionsManagement from "./previews/PermissionsManagement.astro";
 import StreamingChat from "./previews/StreamingChat.astro";
 ---
 
@@ -167,14 +166,14 @@ import StreamingChat from "./previews/StreamingChat.astro";
       class="flex justify-center items-center min-h-[400px] max-lg:min-h-[320px]"
     >
       <div
-        class="rounded-2xl bg-white/40 p-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg"
+        class="transition-all ease-in-out duration-200 rounded-2xl bg-white/40 p-1 shadow-2xl ring shadow-black/80 ring-black/5 backdrop-blur-lg"
       >
         <PreviewCarousel
-          interval={30000}
-          class="w-[300px] max-[480px]:w-[270px]"
+          interval={15000}
+          class="w-[300px] max-[480px]:w-[270px] transition-all ease-in-out duration-200"
         >
           <AppConnectionApproval />
-          <ModelSwitch />
+          <PermissionsManagement />
           <StreamingChat />
         </PreviewCarousel>
       </div>

@@ -2365,7 +2365,16 @@ async function dispatchTransportRequest(options: {
               options.dependencies.resolveBridgePairingHandle,
           }
           : {}),
-        sendNativeMessage: options.dependencies.sendNativeMessage,
+        // Use the persistent bridge port when available so non-streaming
+        // cloud/CLI operations hit the SAME bridge process that holds
+        // the connection handles in memory (avoids "unknown handle" errors
+        // from one-shot sendNativeMessage spawning a separate process).
+        sendNativeMessage: (() => {
+          const bp = getSharedBridgePort();
+          return bp !== undefined
+            ? async (_hostName: string, msg: Record<string, unknown>) => bp.send(msg)
+            : options.dependencies.sendNativeMessage;
+        })(),
       });
 
       if (options.dependencies.sendVaultMessage !== undefined) {

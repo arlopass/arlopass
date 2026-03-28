@@ -1,6 +1,6 @@
 // apps/bridge/src/vault/vault-store.ts
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync, unlinkSync } from "node:fs";
 import { dirname } from "node:path";
 
 import type {
@@ -155,10 +155,15 @@ export class VaultStore {
         try {
             this.#vault = decryptVault(fileData, key);
         } catch {
-            // Only count password mode failures as brute force
-            if (header.keyMode === "password") {
-                this.#lockout.recordFailure();
+            if (header.keyMode === "keychain") {
+                throw new VaultError(
+                    "The keychain key does not match the vault encryption key. " +
+                    "This usually means the keychain key file was deleted or replaced. " +
+                    "The vault data cannot be recovered — you'll need to reset the vault and set up your providers again.",
+                    "vault.keychain_mismatch",
+                );
             }
+            this.#lockout.recordFailure();
             throw new VaultError("Incorrect password.", "auth.invalid");
         }
 
@@ -437,5 +442,24 @@ export class VaultStore {
             clearTimeout(this.#autoLockTimer);
             this.#autoLockTimer = null;
         }
+    }
+
+    /**
+     * Destroy the vault file and reset to uninitialized state.
+     * This is irreversible — all stored credentials, providers, and app
+     * connections are permanently lost.
+     */
+    destroy(): void {
+        this.#wipeMemory();
+        try {
+            unlinkSync(this.#vaultFilePath);
+        } catch (err) {
+            const code = (err as NodeJS.ErrnoException).code;
+            if (code !== "ENOENT") {
+                throw new VaultError("Failed to delete vault file.", "vault.inaccessible");
+            }
+        }
+        this.#state = "uninitialized";
+        this.#keyMode = "password";
     }
 }

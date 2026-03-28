@@ -18,7 +18,10 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
 <PreviewPanel loop={16000}>
   <!-- Screen 1: App connection request -->
   <div id="aca-s1" class="flex flex-col gap-3 transition-opacity duration-350">
-    <div data-step="0" class="flex items-center gap-2">
+    <div
+      data-step="0"
+      class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+    >
       <img
         src="/ArlopassIcon.svg"
         alt=""
@@ -41,16 +44,22 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
       class="flex items-center gap-3 py-2 px-3 bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-lg"
     >
       <div
-        class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0"
+        class="w-8 h-8 rounded-md bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center shrink-0 overflow-hidden"
       >
-        N
+        <img
+          src="https://excalimate.com/favicon.svg"
+          alt=""
+          width="20"
+          height="20"
+          class="w-5 h-5"
+        />
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-xs font-semibold text-[var(--ap-text-primary)] truncate">
-          notes-app.io
+          excalimate.com
         </p>
         <p class="text-[10px] text-[var(--ap-text-tertiary)] truncate">
-          AI-powered note taking
+          Animated whiteboard presentations
         </p>
       </div>
     </div>
@@ -76,11 +85,10 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
   </div>
 
   <!-- Screen 2: Select providers -->
-  <div
-    id="aca-s2"
-    class="flex flex-col gap-3 absolute inset-x-0 top-0 p-5 opacity-0 transition-opacity duration-350 pointer-events-none"
-  >
-    <div class="flex items-center gap-2 mb-1">
+  <div id="aca-s2" class="hidden flex-col gap-3" data-aca-screen>
+    <div
+      class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+    >
       <svg
         class="text-[var(--ap-text-tertiary)]"
         width="14"
@@ -99,7 +107,7 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
       <span class="text-[9px] text-[var(--ap-text-tertiary)]">Step 1 of 2</span>
     </div>
     <p class="text-[10px] text-[var(--ap-text-tertiary)] leading-relaxed">
-      Choose which providers notes-app.io can use:
+      Choose which providers excalimate.com can use:
     </p>
     <div class="flex flex-col gap-1.5">
       <label
@@ -162,11 +170,10 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
   </div>
 
   <!-- Screen 3: Select models -->
-  <div
-    id="aca-s3"
-    class="flex flex-col gap-3 absolute inset-x-0 top-0 p-5 opacity-0 transition-opacity duration-350 pointer-events-none"
-  >
-    <div class="flex items-center gap-2 mb-1">
+  <div id="aca-s3" class="hidden flex-col gap-3" data-aca-screen>
+    <div
+      class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+    >
       <svg
         class="text-[var(--ap-text-tertiary)]"
         width="14"
@@ -217,11 +224,10 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
   </div>
 
   <!-- Screen 4: Confirm summary -->
-  <div
-    id="aca-s4"
-    class="flex flex-col gap-3 absolute inset-x-0 top-0 p-5 opacity-0 transition-opacity duration-350 pointer-events-none"
-  >
-    <div class="flex items-center gap-2 mb-1">
+  <div id="aca-s4" class="hidden flex-col gap-3" data-aca-screen>
+    <div
+      class="flex items-center gap-2 pb-2.5 border-b border-[var(--ap-border)]"
+    >
       <img
         src="/ArlopassIcon.svg"
         alt=""
@@ -238,12 +244,18 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
     >
       <div class="flex items-center gap-2">
         <div
-          class="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+          class="w-6 h-6 rounded-md bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] flex items-center justify-center shrink-0 overflow-hidden"
         >
-          N
+          <img
+            src="https://excalimate.com/favicon.svg"
+            alt=""
+            width="14"
+            height="14"
+            class="w-3.5 h-3.5"
+          />
         </div>
         <span class="text-xs font-medium text-[var(--ap-text-primary)]"
-          >notes-app.io</span
+          >excalimate.com</span
         >
       </div>
       <div class="border-t border-[var(--ap-border)] pt-2 flex flex-col gap-1">
@@ -277,7 +289,8 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
   <!-- Screen 5: Connecting spinner -->
   <div
     id="aca-spin"
-    class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 opacity-0 transition-opacity duration-300 pointer-events-none"
+    class="hidden flex-col items-center justify-center gap-3 py-8"
+    data-aca-screen
   >
     <div
       class="w-10 h-10 border-2 border-[var(--ap-border)] border-t-brand rounded-full animate-spin"
@@ -292,7 +305,8 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
   <!-- Screen 6: Success -->
   <div
     id="aca-ok"
-    class="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-5 opacity-0 transition-opacity duration-400 pointer-events-none"
+    class="hidden flex-col items-center justify-center gap-2.5 py-6"
+    data-aca-screen
   >
     <div
       class="w-11 h-11 rounded-full bg-[var(--ap-success-subtle)] flex items-center justify-center"
@@ -315,7 +329,7 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
     >
       <div class="flex flex-col gap-1 text-center">
         <p class="text-[10px] text-[var(--ap-text-tertiary)]">
-          notes-app.io can now use
+          excalimate.com can now use
         </p>
         <p class="text-[11px] font-medium text-[var(--ap-text-secondary)]">
           Claude 3.5 Sonnet &middot; GPT-4o
@@ -383,12 +397,12 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
         new CustomEvent("ping", { detail: { target: el, duration: dur } }),
       );
     const show = (el: HTMLElement) => {
-      el.style.opacity = "1";
-      el.style.pointerEvents = "auto";
+      el.classList.remove("hidden");
+      el.classList.add("flex");
     };
     const hide = (el: HTMLElement) => {
-      el.style.opacity = "0";
-      el.style.pointerEvents = "none";
+      el.classList.add("hidden");
+      el.classList.remove("flex");
     };
     const checkRow = (row: HTMLElement) => {
       row.querySelector(".aca-check")?.classList.add("aca-checked");
@@ -479,13 +493,10 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
       show(ok);
     }, 12000);
 
-    // Screen 6: Success for 2s, then reset
+    // Screen 6: Success for 2s, then reset all at once
     t(() => {
+      // Hide success and show s1 simultaneously — no empty gap
       hide(ok);
-    }, 14200);
-
-    // Reset all state
-    t(() => {
       // Reset checkboxes
       p.querySelectorAll(".aca-check").forEach((c) =>
         c.classList.remove("aca-checked"),
@@ -502,9 +513,11 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
         b.style.transform = "scale(1)";
       });
       // Reset screens
-      [s2, s3, s4, spin, ok].forEach(hide);
+      [s2, s3, s4, spin].forEach(hide);
       show(s1);
-    }, 14600);
+      // Signal carousel we're done
+      p.dispatchEvent(new CustomEvent("preview:done", { bubbles: false }));
+    }, 14200);
 
     return tt;
   }
@@ -519,18 +532,19 @@ const IC = "https://unpkg.com/@lobehub/icons-static-svg@latest/icons";
       at = [];
       const p = acaP;
       const q = (s: string) => p.querySelector(s) as HTMLElement | null;
-      // Reset all screens
+      // Reset all screens: hide all, show s1
       ["#aca-s2", "#aca-s3", "#aca-s4", "#aca-spin", "#aca-ok"].forEach((s) => {
         const el = q(s);
         if (el) {
-          el.style.opacity = "0";
-          el.style.pointerEvents = "none";
+          el.classList.add("hidden");
+          el.classList.remove("flex");
         }
       });
       const s1 = q("#aca-s1");
       if (s1) {
+        s1.classList.remove("hidden");
+        s1.classList.add("flex");
         s1.style.opacity = "1";
-        s1.style.pointerEvents = "auto";
       }
       // Reset checks
       p.querySelectorAll(".aca-check").forEach((c) =>
