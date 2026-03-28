@@ -65,6 +65,7 @@ export const MICROSOFT_FOUNDRY_MANIFEST: AdapterManifest = {
 
 const FOUNDRY_DEFAULT_MODEL = "gpt-4o-mini";
 const FOUNDRY_DEFAULT_API_VERSION = "v1";
+const FOUNDRY_OPENAI_API_VERSION = "2024-12-01-preview";
 const FOUNDRY_MODEL_IDS = [FOUNDRY_DEFAULT_MODEL] as const;
 
 type FoundrySession = Readonly<{
@@ -147,6 +148,23 @@ function normalizeApiUrl(value: string): string {
   }
 
   return parsed.toString().replace(/\/$/, "");
+}
+
+/**
+ * Extracts the resource-level base URL from a Foundry project URL.
+ *
+ * Input:  "https://res.services.ai.azure.com/api/projects/proj"
+ * Output: "https://res.services.ai.azure.com"
+ *
+ * The OpenAI-compatible endpoints live at the resource level, not under the project path.
+ */
+function extractResourceBaseUrl(projectUrl: string): string {
+  try {
+    const parsed = new URL(projectUrl);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return projectUrl;
+  }
 }
 
 function resolveMethodId(methodId: unknown): FoundryConnectionMethodId | undefined {
@@ -674,12 +692,13 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
 
     session.messages.push({ role: "user", content: message });
 
-    // Use the Azure OpenAI-compatible endpoint under the Foundry project:
-    // POST {projectEndpoint}/openai/deployments/{deployment-name}/chat/completions?api-version=v1
+    // OpenAI-compatible endpoints are at the resource level, not under /api/projects/{name}.
+    // POST https://{resource}.services.ai.azure.com/openai/deployments/{deployment}/chat/completions
+    const resourceBase = extractResourceBaseUrl(session.apiUrl);
     const endpoint = new URL(
-      `${session.apiUrl}/openai/deployments/${encodeURIComponent(session.deploymentName)}/chat/completions`,
+      `${resourceBase}/openai/deployments/${encodeURIComponent(session.deploymentName)}/chat/completions`,
     );
-    endpoint.searchParams.set("api-version", session.apiVersion);
+    endpoint.searchParams.set("api-version", FOUNDRY_OPENAI_API_VERSION);
 
     let response: Response;
     try {
