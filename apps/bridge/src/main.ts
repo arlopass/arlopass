@@ -330,6 +330,7 @@ type AdapterExecutionReasonCode =
   | "request.invalid"
   | "auth.invalid"
   | "auth.expired"
+  | "permission.denied"
   | "policy.denied"
   | "provider.unavailable"
   | "transport.timeout"
@@ -347,6 +348,7 @@ function normalizeAdapterExecutionReasonCode(
     case "request.invalid":
     case "auth.invalid":
     case "auth.expired":
+    case "permission.denied":
     case "policy.denied":
     case "provider.unavailable":
     case "transport.timeout":
@@ -710,10 +712,20 @@ export function buildCloudControlPlaneAdapter(
             ? { connectionInput: statelessConnectionInput }
             : {}),
         };
+        process.stderr.write(
+          `[arlopass-bridge] DEBUG adapter.createSession provider=${providerId} model=${modelId} method=${methodId} hasCredRef=${credentialRef !== undefined} hasConnInput=${statelessConnectionInput !== undefined}\n`,
+        );
         sessionId = await contract.createSession({
           ...sessionOptions,
         });
+        process.stderr.write(
+          `[arlopass-bridge] DEBUG adapter.createSession OK sessionId=${sessionId}\n`,
+        );
       } catch (error) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        process.stderr.write(
+          `[arlopass-bridge] DEBUG adapter.createSession FAILED provider=${providerId}: ${errMsg}\n`,
+        );
         throw toAdapterExecutionError(
           error,
           "Cloud adapter failed to create a chat session.",
@@ -724,35 +736,53 @@ export function buildCloudControlPlaneAdapter(
         typeof input["onChunk"] === "function"
           ? (input["onChunk"] as (chunk: string) => void)
           : undefined;
+      const prompt = toAdapterPrompt(messages);
+      process.stderr.write(
+        `[arlopass-bridge] DEBUG adapter.send provider=${providerId} sessionId=${sessionId} promptLen=${prompt.length} streaming=${onChunk !== undefined && typeof contract.streamMessage === "function"}\n`,
+      );
       try {
         if (onChunk !== undefined && typeof contract.streamMessage === "function") {
           let streamed = "";
           await contract.streamMessage(
             sessionId,
-            toAdapterPrompt(messages),
+            prompt,
             (chunk: string) => {
               streamed += chunk;
               onChunk(chunk);
             },
           );
           content = streamed;
+          process.stderr.write(
+            `[arlopass-bridge] DEBUG adapter.streamMessage OK provider=${providerId} contentLen=${content.length}\n`,
+          );
         } else {
           content = await contract.sendMessage(
             sessionId,
-            toAdapterPrompt(messages),
+            prompt,
             {
               ...(timeoutMs !== undefined ? { timeoutMs } : {}),
               ...(signal !== undefined ? { signal } : {}),
             },
           );
+          process.stderr.write(
+            `[arlopass-bridge] DEBUG adapter.sendMessage OK provider=${providerId} contentLen=${content.length} preview="${content.slice(0, 120)}"\n`,
+          );
         }
       } catch (error) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        const errName = error instanceof Error ? error.constructor.name : "unknown";
+        process.stderr.write(
+          `[arlopass-bridge] DEBUG adapter.send FAILED provider=${providerId} error=${errName}: ${errMsg}\n`,
+        );
         throw toAdapterExecutionError(
           error,
           "Cloud adapter failed to send a chat message.",
         );
       }
       if (typeof content !== "string" || content.trim().length === 0) {
+        process.stderr.write(
+          `[arlopass-bridge] DEBUG adapter.send EMPTY provider=${providerId} contentType=${typeof content} contentLen=${typeof content === "string" ? content.length : -1}\n`,
+        );
         throw new CloudConnectionServiceError(
           "Cloud adapter returned empty chat content.",
           "provider.unavailable",

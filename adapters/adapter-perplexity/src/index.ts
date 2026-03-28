@@ -14,7 +14,14 @@ import {
   type ValidateCredentialRefInput,
   type ValidationResult,
 } from "@arlopass/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
+import {
+  type ProtocolCapability,
+  AuthError,
+  PermissionError,
+  ProviderUnavailableError,
+  TimeoutError,
+  TransientNetworkError,
+} from "@arlopass/protocol";
 
 export const PERPLEXITY_CONNECTION_METHOD_IDS = {
   API_KEY: "perplexity.api_key",
@@ -55,12 +62,13 @@ export const PERPLEXITY_MANIFEST: AdapterManifest = {
 };
 
 const PERPLEXITY_DEFAULT_BASE_URL = "https://api.perplexity.ai";
-const PERPLEXITY_DEFAULT_MODEL = "sonar-pro";
+const PERPLEXITY_DEFAULT_MODEL = "perplexity/sonar-pro";
+const PERPLEXITY_DEFAULT_TIMEOUT_MS = 60_000;
 const PERPLEXITY_MODEL_IDS = [
-  "sonar",
-  "sonar-pro",
-  "sonar-reasoning",
-  "sonar-reasoning-pro",
+  "perplexity/sonar",
+  "perplexity/sonar-pro",
+  "perplexity/sonar-reasoning",
+  "perplexity/sonar-reasoning-pro",
 ] as const;
 
 const PERPLEXITY_MODEL_DESCRIPTORS: readonly ModelDescriptor[] = PERPLEXITY_MODEL_IDS.map((id) =>
@@ -70,20 +78,113 @@ const PERPLEXITY_MODEL_DESCRIPTORS: readonly ModelDescriptor[] = PERPLEXITY_MODE
   }),
 );
 
-type PerplexitySession = Readonly<{
+type PerplexitySession = {
   model: string;
-  messages: Array<Readonly<{ role: "user" | "assistant"; content: string }>>;
-}>;
+  history: Array<{ role: "user" | "assistant"; content: string }>;
+  apiKey: string;
+  baseUrl: string;
+  timeoutMs: number;
+};
 
 type StoredCredentialRef = Readonly<{
   providerId: string;
   methodId: PerplexityConnectionMethodId;
   endpointProfile: Readonly<Record<string, unknown>>;
   credentialDigest: string;
+  apiKey: string;
 }>;
+
+type AgentOutputContentPart = { text?: string; type?: string };
+type AgentOutputItem = { content?: AgentOutputContentPart[]; type?: string };
+type AgentResponse = {
+  output?: AgentOutputItem[];
+  status?: string;
+  error?: { message?: string };
+};
+
+type AgentStreamEvent = {
+  type?: string;
+  delta?: string;
+};
+
+type PerplexityErrorBody = {
+  error?: { message?: string; code?: string };
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function buildPerplexityHeaders(apiKey: string): Record<string, string> {
+  return {
+    "content-type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  };
+}
+
+function buildAgentInput(
+  history: Array<{ role: "user" | "assistant"; content: string }>,
+): Array<{ role: string; content: string }> {
+  return history.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
+}
+
+function extractAgentOutputText(data: AgentResponse): string {
+  if (!data.output) return "";
+  for (const item of data.output) {
+    if (item.type !== "message" || !item.content) continue;
+    const parts = item.content
+      .filter((p) => p.type === "output_text" && p.text)
+      .map((p) => p.text ?? "");
+    if (parts.length > 0) return parts.join("");
+  }
+  return "";
+}
+
+function mapNetworkError(error: unknown): never {
+  const err = error instanceof Error ? error : new Error(String(error));
+  const code = (err as NodeJS.ErrnoException).code;
+  if (code === "ECONNREFUSED" || code === "ENOTFOUND" || code === "ECONNRESET") {
+    throw new ProviderUnavailableError(`Perplexity API is not reachable: ${err.message}`, {
+      cause: err,
+    });
+  }
+  if (code === "ETIMEDOUT") {
+    throw new TimeoutError(`Perplexity API request timed out: ${err.message}`, { cause: err });
+  }
+  throw new TransientNetworkError(`Perplexity API network error: ${err.message}`, {
+    cause: err,
+  });
+}
+
+async function mapHttpError(response: Response): Promise<never> {
+  let errorBody: PerplexityErrorBody = {};
+  try {
+    errorBody = (await response.json()) as PerplexityErrorBody;
+  } catch {
+    // ignore parse errors
+  }
+  const message = errorBody.error?.message ?? response.statusText;
+
+  if (response.status === 401) {
+    throw new AuthError(`Perplexity API authentication failed: ${message}`);
+  }
+  if (response.status === 403) {
+    throw new PermissionError(`Perplexity API permission denied: ${message}`);
+  }
+  if (response.status === 429) {
+    throw new TransientNetworkError(`Perplexity API rate limit exceeded: ${message}`);
+  }
+  if (response.status >= 500) {
+    throw new ProviderUnavailableError(
+      `Perplexity API server error ${response.status}: ${message}`,
+    );
+  }
+  throw new TransientNetworkError(
+    `Perplexity API request failed with HTTP ${response.status}: ${message}`,
+  );
 }
 
 function normalizeNonEmptyString(value: unknown): string | undefined {
@@ -233,6 +334,7 @@ export class PerplexityAdapter implements CloudAdapterContractV2 {
     }
 
     const payload = requireInputRecord(input.input);
+    const apiKey = requireInputString(payload, "apiKey");
     const endpointProfile = resolveEndpointProfile(payload);
     const credentialDigest = resolveCredentialDigest(payload);
     const credentialRef = `credref.${providerId}.${methodId}.${++this.#credentialCounter}`;
@@ -241,6 +343,7 @@ export class PerplexityAdapter implements CloudAdapterContractV2 {
       methodId,
       endpointProfile,
       credentialDigest,
+      apiKey,
     });
 
     return {
@@ -311,6 +414,10 @@ export class PerplexityAdapter implements CloudAdapterContractV2 {
   }
 
   async discoverModels(ctx: CloudConnectionContext): Promise<readonly ModelDescriptor[]> {
+    const contextRecord = ctx as Readonly<Record<string, unknown>>;
+    const statelessInput = isRecord(contextRecord["connectionInput"])
+      ? contextRecord["connectionInput"]
+      : undefined;
     const validation = await this.validateCredentialRef({
       providerId: ctx.providerId,
       methodId: ctx.methodId,
@@ -318,7 +425,11 @@ export class PerplexityAdapter implements CloudAdapterContractV2 {
       endpointProfile: ctx.endpointProfile,
       correlationId: ctx.correlationId,
     });
-    if (!validation.ok) {
+    const canUseStatelessInput =
+      statelessInput !== undefined &&
+      (validation.reason === "credential_ref_not_found" ||
+        validation.reason === "credential_ref_missing");
+    if (!validation.ok && !canUseStatelessInput) {
       throw new AuthError(
         `Cannot discover models for invalid credential reference: ${validation.reason ?? "invalid_ref"}.`,
       );
@@ -359,9 +470,41 @@ export class PerplexityAdapter implements CloudAdapterContractV2 {
     const requestedModel = normalizeNonEmptyString(options?.["model"]);
     const model = requestedModel ?? PERPLEXITY_DEFAULT_MODEL;
     const sessionId = `perplexity-session-${++this.#sessionCounter}`;
+
+    const connectionInput = isRecord(options?.["connectionInput"])
+      ? options["connectionInput"]
+      : undefined;
+    const credentialRefKey = normalizeNonEmptyString(options?.["credentialRef"]);
+
+    let apiKey: string;
+    let baseUrl: string = PERPLEXITY_DEFAULT_BASE_URL;
+
+    if (connectionInput !== undefined) {
+      apiKey = requireInputString(connectionInput, "apiKey");
+      const rawBaseUrl = normalizeNonEmptyString(connectionInput["baseUrl"]);
+      baseUrl =
+        rawBaseUrl !== undefined ? normalizeBaseUrl(rawBaseUrl) : PERPLEXITY_DEFAULT_BASE_URL;
+    } else if (credentialRefKey !== undefined) {
+      const storedRef = this.#credentialRefs.get(credentialRefKey);
+      if (storedRef === undefined) {
+        throw new AuthError("Cannot create session: credential reference not found.");
+      }
+      apiKey = storedRef.apiKey;
+      baseUrl =
+        (normalizeNonEmptyString(storedRef.endpointProfile["baseUrl"]) as string) ??
+        PERPLEXITY_DEFAULT_BASE_URL;
+    } else {
+      throw new AuthError(
+        "Cannot create session: no credentials provided (supply connectionInput or credentialRef).",
+      );
+    }
+
     this.#sessions.set(sessionId, {
       model,
-      messages: [],
+      history: [],
+      apiKey,
+      baseUrl,
+      timeoutMs: PERPLEXITY_DEFAULT_TIMEOUT_MS,
     });
     return sessionId;
   }
@@ -372,10 +515,33 @@ export class PerplexityAdapter implements CloudAdapterContractV2 {
       throw new TransientNetworkError(`Session "${sessionId}" not found.`);
     }
 
-    session.messages.push({ role: "user", content: message });
-    const response = `[perplexity:${session.model}] ${message}`;
-    session.messages.push({ role: "assistant", content: response });
-    return response;
+    session.history.push({ role: "user", content: message });
+
+    const headers = buildPerplexityHeaders(session.apiKey);
+    const input = buildAgentInput(session.history);
+    let response: Response;
+    try {
+      response = await fetch(`${session.baseUrl}/v1/agent`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: session.model,
+          input,
+        }),
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+
+    const data = (await response.json()) as AgentResponse;
+    const text = extractAgentOutputText(data);
+    session.history.push({ role: "assistant", content: text });
+    return text;
   }
 
   async streamMessage(
@@ -383,11 +549,70 @@ export class PerplexityAdapter implements CloudAdapterContractV2 {
     message: string,
     onChunk: (chunk: string) => void,
   ): Promise<void> {
-    const response = await this.sendMessage(sessionId, message);
-    for (const token of response.split(" ")) {
-      const chunk = token.length > 0 ? `${token} ` : "";
-      if (chunk.length > 0) onChunk(chunk);
+    const session = this.#sessions.get(sessionId);
+    if (session === undefined) {
+      throw new TransientNetworkError(`Session "${sessionId}" not found.`);
     }
+    session.history.push({ role: "user", content: message });
+
+    const headers = buildPerplexityHeaders(session.apiKey);
+    const input = buildAgentInput(session.history);
+    let response: Response;
+    try {
+      response = await fetch(`${session.baseUrl}/v1/agent`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: session.model,
+          input,
+          stream: true,
+        }),
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+    if (response.body === null) {
+      throw new ProviderUnavailableError("Perplexity API response body is null.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = "";
+
+    try {
+      let streaming = true;
+      while (streaming) {
+        const { done, value } = await reader.read();
+        if (done) {
+          streaming = false;
+          break;
+        }
+        const text = decoder.decode(value, { stream: true });
+        for (const line of text.split("\n")) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const jsonStr = trimmed.slice(5).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const event = JSON.parse(jsonStr) as AgentStreamEvent;
+            if (event.type === "response.output_text.delta" && event.delta) {
+              onChunk(event.delta);
+              fullContent += event.delta;
+            }
+          } catch {
+            // skip malformed SSE lines
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    session.history.push({ role: "assistant", content: fullContent });
   }
 
   async healthCheck(): Promise<boolean> {

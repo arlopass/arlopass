@@ -1,6 +1,3 @@
-import { Group, Text, Box } from "@mantine/core";
-import { tokens } from "../theme.js";
-
 type OnboardingBannerProps = {
   step: number;
   totalSteps: number;
@@ -15,24 +12,17 @@ export function OnboardingBanner({
   bridgeConnected,
 }: OnboardingBannerProps) {
   return (
-    <Box
-      px={16}
-      py={12}
-      style={{
-        background: "#f8f9fa",
-        borderBottom: `1px solid ${tokens.color.border}`,
-      }}
-    >
-      <Group gap={6}>
+    <div className="px-4 py-3 bg-[var(--ap-bg-surface)] border-b border-[var(--ap-border)]">
+      <div className="flex items-center gap-1.5">
         {bridgeConnected && (
-          <Text size="sm" fw={500} c="#2b8a3e">
+          <span className="text-xs font-medium text-[var(--color-success)]">
             ✓ Bridge connected ·
-          </Text>
+          </span>
         )}
-        <Text size="sm" fw={500} c={tokens.color.textPrimary}>
+        <span className="text-xs font-medium text-[var(--ap-text-primary)]">
           Step {step} of {totalSteps}: {label}
-        </Text>
-      </Group>
-    </Box>
+        </span>
+      </div>
+    </div>
   );
 }

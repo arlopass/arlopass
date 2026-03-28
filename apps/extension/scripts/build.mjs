@@ -32,7 +32,7 @@ const legacyDistRoot = path.join(packageRoot, "dist");
 const moduleEntryPoints = {
   background: path.join(sourceRoot, "background.ts"),
   popup: path.join(sourceRoot, "popup.tsx"),
-  options: path.join(sourceRoot, "options.ts"),
+  options: path.join(sourceRoot, "options-react.tsx"),
   "options-onboarding": path.join(sourceRoot, "options-onboarding.tsx"),
   index: path.join(sourceRoot, "index.ts"),
 };
@@ -205,14 +205,6 @@ async function copyStaticAssets() {
       .replace(/href="dist\//g, 'href="');
     await writeFile(path.join(distRoot, asset), rewritten);
   }
-  // Copy the hand-written CSS (shared reset + options page styles).
-  // Source popup.css is referenced by options.html for its BEM styles.
-  // In dist/ the esbuild-generated popup.css (Mantine) overwrites it,
-  // so we also write it as legacy.css for the popup to load separately.
-  await copyFile(
-    path.join(packageRoot, "popup.css"),
-    path.join(distRoot, "legacy.css"),
-  );
 }
 
 async function copyExtensionIcons() {

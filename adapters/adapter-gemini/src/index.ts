@@ -14,7 +14,14 @@ import {
   type ValidateCredentialRefInput,
   type ValidationResult,
 } from "@arlopass/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
+import {
+  type ProtocolCapability,
+  AuthError,
+  PermissionError,
+  ProviderUnavailableError,
+  TimeoutError,
+  TransientNetworkError,
+} from "@arlopass/protocol";
 
 export const GEMINI_CONNECTION_METHOD_IDS = {
   API_KEY: "gemini.api_key",
@@ -64,6 +71,7 @@ export const GEMINI_MANIFEST: AdapterManifest = {
 
 const GEMINI_DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 const GEMINI_DEFAULT_MODEL = "gemini-2.5-flash";
+const GEMINI_DEFAULT_TIMEOUT_MS = 60_000;
 const GEMINI_MODEL_IDS = [
   "gemini-2.5-pro",
   "gemini-2.5-flash",
@@ -77,20 +85,127 @@ const GEMINI_MODEL_DESCRIPTORS: readonly ModelDescriptor[] = GEMINI_MODEL_IDS.ma
   }),
 );
 
-type GeminiSession = Readonly<{
-  model: string;
-  messages: Array<Readonly<{ role: "user" | "assistant"; content: string }>>;
+type GeminiAuthType = "api_key" | "oauth_access_token";
+
+type GeminiAuthConfig = Readonly<{
+  authType: GeminiAuthType;
+  apiKey?: string;
+  accessToken?: string;
 }>;
+
+type GeminiSession = {
+  model: string;
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  auth: GeminiAuthConfig;
+  baseUrl: string;
+  timeoutMs: number;
+};
 
 type StoredCredentialRef = Readonly<{
   providerId: string;
   methodId: GeminiConnectionMethodId;
   endpointProfile: Readonly<Record<string, unknown>>;
   credentialDigest: string;
+  auth: GeminiAuthConfig;
 }>;
+
+type GeminiContentPart = { text?: string };
+type GeminiContent = { role: string; parts: GeminiContentPart[] };
+type GeminiCandidate = { content?: { parts?: GeminiContentPart[] } };
+type GeminiGenerateResponse = { candidates?: GeminiCandidate[] };
+type GeminiErrorBody = { error?: { message?: string; status?: string } };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function buildGeminiUrl(
+  baseUrl: string,
+  model: string,
+  action: "generateContent" | "streamGenerateContent",
+): string {
+  const url = `${baseUrl}/v1beta/models/${model}:${action}`;
+  return action === "streamGenerateContent" ? `${url}?alt=sse` : url;
+}
+
+function buildGeminiHeaders(auth: GeminiAuthConfig): Record<string, string> {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  if (auth.authType === "api_key" && auth.apiKey) {
+    headers["x-goog-api-key"] = auth.apiKey;
+  } else if (auth.authType === "oauth_access_token" && auth.accessToken) {
+    headers["Authorization"] = `Bearer ${auth.accessToken}`;
+  }
+  return headers;
+}
+
+function toGeminiContents(
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+): GeminiContent[] {
+  return messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+}
+
+function mapNetworkError(error: unknown): never {
+  const err = error instanceof Error ? error : new Error(String(error));
+  const code = (err as NodeJS.ErrnoException).code;
+  if (code === "ECONNREFUSED" || code === "ENOTFOUND" || code === "ECONNRESET") {
+    throw new ProviderUnavailableError(`Gemini API is not reachable: ${err.message}`, {
+      cause: err,
+    });
+  }
+  if (code === "ETIMEDOUT") {
+    throw new TimeoutError(`Gemini API request timed out: ${err.message}`, { cause: err });
+  }
+  throw new TransientNetworkError(`Gemini API network error: ${err.message}`, { cause: err });
+}
+
+async function mapHttpError(response: Response): Promise<never> {
+  let errorBody: GeminiErrorBody = {};
+  try {
+    errorBody = (await response.json()) as GeminiErrorBody;
+  } catch {
+    // ignore parse errors
+  }
+  const message = errorBody.error?.message ?? response.statusText;
+
+  if (response.status === 401 || response.status === 403) {
+    throw new AuthError(`Gemini API authentication failed: ${message}`);
+  }
+  if (response.status === 429) {
+    throw new TransientNetworkError(`Gemini API rate limit exceeded: ${message}`);
+  }
+  if (response.status >= 500) {
+    throw new ProviderUnavailableError(
+      `Gemini API server error ${response.status}: ${message}`,
+    );
+  }
+  throw new TransientNetworkError(
+    `Gemini API request failed with HTTP ${response.status}: ${message}`,
+  );
+}
+
+function resolveGeminiAuth(
+  methodId: GeminiConnectionMethodId,
+  input: Readonly<Record<string, unknown>>,
+): GeminiAuthConfig {
+  if (methodId === GEMINI_CONNECTION_METHOD_IDS.API_KEY) {
+    const apiKey = normalizeNonEmptyString(input["apiKey"]);
+    if (apiKey === undefined) {
+      throw new AuthError('Connection method "gemini.api_key" requires input.apiKey.');
+    }
+    return { authType: "api_key", apiKey };
+  }
+  const accessToken = normalizeNonEmptyString(input["accessToken"]);
+  if (accessToken === undefined) {
+    throw new AuthError(
+      'Connection method "gemini.oauth_access_token" requires input.accessToken.',
+    );
+  }
+  return { authType: "oauth_access_token", accessToken };
 }
 
 function normalizeNonEmptyString(value: unknown): string | undefined {
@@ -210,6 +325,32 @@ function resolveCredentialDigest(
   });
 }
 
+function parseGeminiModelList(payload: unknown): readonly ModelDescriptor[] {
+  if (!isRecord(payload) || !Array.isArray(payload["models"])) {
+    return GEMINI_MODEL_DESCRIPTORS;
+  }
+  const models: ModelDescriptor[] = [];
+  for (const entry of payload["models"]) {
+    if (!isRecord(entry)) continue;
+    const rawName = typeof entry["name"] === "string" ? entry["name"].trim() : undefined;
+    if (rawName === undefined || rawName.length === 0) continue;
+    // Gemini returns "models/gemini-2.5-flash" — strip the "models/" prefix
+    const id = rawName.startsWith("models/") ? rawName.slice(7) : rawName;
+    const displayName =
+      typeof entry["displayName"] === "string" && entry["displayName"].trim().length > 0
+        ? entry["displayName"].trim()
+        : id;
+    // Only include generative models that support generateContent
+    const methods = Array.isArray(entry["supportedGenerationMethods"])
+      ? (entry["supportedGenerationMethods"] as unknown[])
+      : [];
+    if (methods.includes("generateContent") || methods.includes("streamGenerateContent")) {
+      models.push(Object.freeze({ id, displayName }));
+    }
+  }
+  return models.length > 0 ? models : GEMINI_MODEL_DESCRIPTORS;
+}
+
 export class GeminiAdapter implements CloudAdapterContractV2 {
   readonly manifest: AdapterManifest = GEMINI_MANIFEST;
   readonly requiredEndpointProfileFields = ["baseUrl"] as const;
@@ -264,12 +405,14 @@ export class GeminiAdapter implements CloudAdapterContractV2 {
     const payload = requireInputRecord(input.input);
     const endpointProfile = resolveEndpointProfile(payload);
     const credentialDigest = resolveCredentialDigest(methodId, payload);
+    const auth = resolveGeminiAuth(methodId, payload);
     const credentialRef = `credref.${providerId}.${methodId}.${++this.#credentialCounter}`;
     this.#credentialRefs.set(credentialRef, {
       providerId,
       methodId,
       endpointProfile,
       credentialDigest,
+      auth,
     });
 
     return {
@@ -340,6 +483,10 @@ export class GeminiAdapter implements CloudAdapterContractV2 {
   }
 
   async discoverModels(ctx: CloudConnectionContext): Promise<readonly ModelDescriptor[]> {
+    const contextRecord = ctx as Readonly<Record<string, unknown>>;
+    const statelessInput = isRecord(contextRecord["connectionInput"])
+      ? contextRecord["connectionInput"]
+      : undefined;
     const validation = await this.validateCredentialRef({
       providerId: ctx.providerId,
       methodId: ctx.methodId,
@@ -347,19 +494,59 @@ export class GeminiAdapter implements CloudAdapterContractV2 {
       endpointProfile: ctx.endpointProfile,
       correlationId: ctx.correlationId,
     });
-    if (!validation.ok) {
+    const canUseStatelessInput =
+      statelessInput !== undefined &&
+      (validation.reason === "credential_ref_not_found" ||
+        validation.reason === "credential_ref_missing");
+    if (!validation.ok && !canUseStatelessInput) {
       throw new AuthError(
         `Cannot discover models for invalid credential reference: ${validation.reason ?? "invalid_ref"}.`,
       );
     }
 
-    const baseUrl = normalizeNonEmptyString(ctx.endpointProfile["baseUrl"]) ?? GEMINI_DEFAULT_BASE_URL;
-    return GEMINI_MODEL_DESCRIPTORS.map((descriptor) =>
-      Object.freeze({
-        ...descriptor,
-        baseUrl,
-      }),
-    );
+    let auth: GeminiAuthConfig;
+    let baseUrl: string;
+    if (canUseStatelessInput && statelessInput !== undefined) {
+      const methodId = resolveMethodId(ctx.methodId);
+      if (methodId === undefined) {
+        throw new AuthError(`Unsupported connection method "${String(ctx.methodId)}".`);
+      }
+      auth = resolveGeminiAuth(methodId, statelessInput);
+      baseUrl =
+        normalizeNonEmptyString(ctx.endpointProfile["baseUrl"]) ??
+        normalizeNonEmptyString(statelessInput["baseUrl"]) ??
+        GEMINI_DEFAULT_BASE_URL;
+    } else {
+      const credentialRef = normalizeNonEmptyString(ctx.credentialRef);
+      if (credentialRef === undefined) {
+        throw new AuthError("Cannot discover models without a credential reference.");
+      }
+      const storedRef = this.#credentialRefs.get(credentialRef);
+      if (storedRef === undefined) {
+        throw new AuthError("Cannot discover models: credential reference is unavailable.");
+      }
+      auth = storedRef.auth;
+      baseUrl =
+        normalizeNonEmptyString(ctx.endpointProfile["baseUrl"]) ??
+        (normalizeNonEmptyString(storedRef.endpointProfile["baseUrl"]) as string) ??
+        GEMINI_DEFAULT_BASE_URL;
+    }
+
+    const headers = buildGeminiHeaders(auth);
+    try {
+      const response = await fetch(`${baseUrl}/v1beta/models`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!response.ok) {
+        return GEMINI_MODEL_DESCRIPTORS;
+      }
+      const payload: unknown = await response.json();
+      return parseGeminiModelList(payload);
+    } catch {
+      return GEMINI_MODEL_DESCRIPTORS;
+    }
   }
 
   async discoverCapabilities(ctx: CloudConnectionContext): Promise<CapabilityDescriptor> {
@@ -387,9 +574,41 @@ export class GeminiAdapter implements CloudAdapterContractV2 {
     const requestedModel = normalizeNonEmptyString(options?.["model"]);
     const model = requestedModel ?? GEMINI_DEFAULT_MODEL;
     const sessionId = `gemini-session-${++this.#sessionCounter}`;
+
+    const methodId = resolveMethodId(options?.["methodId"]);
+    const connectionInput = isRecord(options?.["connectionInput"])
+      ? options["connectionInput"]
+      : undefined;
+    const credentialRefKey = normalizeNonEmptyString(options?.["credentialRef"]);
+
+    let auth: GeminiAuthConfig;
+    let baseUrl: string = GEMINI_DEFAULT_BASE_URL;
+
+    if (connectionInput !== undefined && methodId !== undefined) {
+      auth = resolveGeminiAuth(methodId, connectionInput);
+      const rawBaseUrl = normalizeNonEmptyString(connectionInput["baseUrl"]);
+      baseUrl = rawBaseUrl !== undefined ? normalizeBaseUrl(rawBaseUrl) : GEMINI_DEFAULT_BASE_URL;
+    } else if (credentialRefKey !== undefined) {
+      const storedRef = this.#credentialRefs.get(credentialRefKey);
+      if (storedRef === undefined) {
+        throw new AuthError("Cannot create session: credential reference not found.");
+      }
+      auth = storedRef.auth;
+      baseUrl =
+        (normalizeNonEmptyString(storedRef.endpointProfile["baseUrl"]) as string) ??
+        GEMINI_DEFAULT_BASE_URL;
+    } else {
+      throw new AuthError(
+        "Cannot create session: no credentials provided (supply connectionInput or credentialRef).",
+      );
+    }
+
     this.#sessions.set(sessionId, {
       model,
       messages: [],
+      auth,
+      baseUrl,
+      timeoutMs: GEMINI_DEFAULT_TIMEOUT_MS,
     });
     return sessionId;
   }
@@ -401,9 +620,34 @@ export class GeminiAdapter implements CloudAdapterContractV2 {
     }
 
     session.messages.push({ role: "user", content: message });
-    const response = `[gemini:${session.model}] ${message}`;
-    session.messages.push({ role: "assistant", content: response });
-    return response;
+
+    const url = buildGeminiUrl(session.baseUrl, session.model, "generateContent");
+    const headers = buildGeminiHeaders(session.auth);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          contents: toGeminiContents(session.messages),
+        }),
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+
+    const data = (await response.json()) as GeminiGenerateResponse;
+    const text =
+      data.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text ?? "")
+        .join("") ?? "";
+    session.messages.push({ role: "assistant", content: text });
+    return text;
   }
 
   async streamMessage(
@@ -411,11 +655,77 @@ export class GeminiAdapter implements CloudAdapterContractV2 {
     message: string,
     onChunk: (chunk: string) => void,
   ): Promise<void> {
-    const response = await this.sendMessage(sessionId, message);
-    for (const token of response.split(" ")) {
-      const chunk = token.length > 0 ? `${token} ` : "";
-      if (chunk.length > 0) onChunk(chunk);
+    const session = this.#sessions.get(sessionId);
+    if (session === undefined) {
+      throw new TransientNetworkError(`Session "${sessionId}" not found.`);
     }
+    session.messages.push({ role: "user", content: message });
+
+    const url = buildGeminiUrl(
+      session.baseUrl,
+      session.model,
+      "streamGenerateContent",
+    );
+    const headers = buildGeminiHeaders(session.auth);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          contents: toGeminiContents(session.messages),
+        }),
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+    if (response.body === null) {
+      throw new ProviderUnavailableError("Gemini API response body is null.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = "";
+
+    try {
+      let streaming = true;
+      while (streaming) {
+        const { done, value } = await reader.read();
+        if (done) {
+          streaming = false;
+          break;
+        }
+        const text = decoder.decode(value, { stream: true });
+        for (const line of text.split("\n")) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const jsonStr = trimmed.slice(5).trim();
+          if (jsonStr === "[DONE]" || jsonStr.length === 0) continue;
+          try {
+            const event = JSON.parse(jsonStr) as GeminiGenerateResponse;
+            const parts = event.candidates?.[0]?.content?.parts;
+            if (parts) {
+              for (const part of parts) {
+                if (part.text) {
+                  onChunk(part.text);
+                  fullContent += part.text;
+                }
+              }
+            }
+          } catch {
+            // skip malformed SSE lines
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    session.messages.push({ role: "assistant", content: fullContent });
   }
 
   async healthCheck(): Promise<boolean> {

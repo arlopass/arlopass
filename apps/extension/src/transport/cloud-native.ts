@@ -163,6 +163,15 @@ function mapBridgeError(
     });
   }
 
+  if (reasonCode === "permission.denied") {
+    throw new ProtocolError(message, {
+      machineCode: PROTOCOL_MACHINE_CODES.PERMISSION_DENIED,
+      reasonCode: "permission.denied",
+      retryable: false,
+      ...(details !== undefined ? { details } : {}),
+    });
+  }
+
   if (reasonCode === "transport.transient_failure") {
     throw new TransientNetworkError(message, {
       ...(details !== undefined ? { details } : {}),
@@ -431,6 +440,16 @@ export async function runCloudBridgeCompletion(
 
   let response = await executeWithHandshake(handshake);
 
+  console.warn(
+    "[arlopass] cloud-native response:",
+    "type=", isRecord(response) ? response["type"] : typeof response,
+    "provider=", bridgeProviderId,
+    "model=", input.provider.modelId,
+    "hasContent=", isRecord(response) ? typeof response["content"] === "string" : false,
+    "contentLen=", isRecord(response) && typeof response["content"] === "string" ? (response["content"] as string).length : 0,
+    isRecord(response) && response["type"] === "error" ? `reason=${String(response["reasonCode"])} msg=${String(response["message"])}` : "",
+  );
+
   if (isRecord(response) && response["type"] === "error") {
     const reasonCode =
       typeof response["reasonCode"] === "string"
@@ -509,6 +528,13 @@ export async function runCloudBridgeCompletion(
   const content =
     typeof response["content"] === "string" ? response["content"].trim() : "";
   if (content.length === 0) {
+    console.warn(
+      "[arlopass] cloud-native EMPTY content",
+      "provider=", bridgeProviderId,
+      "model=", input.provider.modelId,
+      "rawContent=", JSON.stringify(response["content"]),
+      "fullResponse=", JSON.stringify(response).slice(0, 500),
+    );
     throw new ProviderUnavailableError(
       "Native bridge cloud execution returned empty assistant content.",
       {
@@ -521,6 +547,11 @@ export async function runCloudBridgeCompletion(
     );
   }
 
+  console.warn(
+    "[arlopass] cloud-native OK",
+    "provider=", bridgeProviderId,
+    "contentLen=", content.length,
+  );
   return content;
 }
 
@@ -627,8 +658,17 @@ export async function runCloudBridgeCompletionStream(
     const queue: string[] = [];
     const waiters: Array<(value: string | null) => void> = [];
     let streamDone = false;
+    let chunkCount = 0;
 
     const onChunk = (delta: string): void => {
+      if (chunkCount === 0) {
+        console.warn(
+          "[arlopass] cloud-native-stream FIRST_CHUNK",
+          "provider=", bridgeProviderId,
+          "deltaLen=", delta.length,
+        );
+      }
+      chunkCount++;
       const waiter = waiters.shift();
       if (waiter !== undefined) {
         waiter(delta);
@@ -664,6 +704,13 @@ export async function runCloudBridgeCompletionStream(
     )
       .then((response) => {
         streamDone = true;
+        console.warn(
+          "[arlopass] cloud-native-stream END",
+          "provider=", bridgeProviderId,
+          "chunks=", chunkCount,
+          "responseType=", isRecord(response) ? response["type"] : typeof response,
+          isRecord(response) && response["type"] === "error" ? `reason=${String(response["reasonCode"])} msg=${String(response["message"])}` : "",
+        );
         // Signal any waiting consumer that the stream is done.
         const waiter = waiters.shift();
         if (waiter !== undefined) {
@@ -687,6 +734,13 @@ export async function runCloudBridgeCompletionStream(
       })
       .catch((error: unknown) => {
         streamDone = true;
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.warn(
+          "[arlopass] cloud-native-stream ERROR",
+          "provider=", bridgeProviderId,
+          "chunks=", chunkCount,
+          "error=", errMsg,
+        );
         const waiter = waiters.shift();
         if (waiter !== undefined) {
           waiter(null);

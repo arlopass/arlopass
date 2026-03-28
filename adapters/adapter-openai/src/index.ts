@@ -14,7 +14,14 @@ import {
   type ValidateCredentialRefInput,
   type ValidationResult,
 } from "@arlopass/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
+import {
+  type ProtocolCapability,
+  AuthError,
+  PermissionError,
+  ProviderUnavailableError,
+  TimeoutError,
+  TransientNetworkError,
+} from "@arlopass/protocol";
 
 export const OPENAI_CONNECTION_METHOD_IDS = {
   API_KEY: "openai.api_key",
@@ -56,6 +63,7 @@ export const OPENAI_MANIFEST: AdapterManifest = {
 
 const OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1";
 const OPENAI_DEFAULT_MODEL = "gpt-5.3-codex";
+const OPENAI_DEFAULT_TIMEOUT_MS = 60_000;
 const OPENAI_MODEL_IDS = [
   "gpt-5.3-codex",
   "gpt-5.2",
@@ -71,20 +79,94 @@ const OPENAI_MODEL_DESCRIPTORS: readonly ModelDescriptor[] = OPENAI_MODEL_IDS.ma
   }),
 );
 
-type OpenAiSession = Readonly<{
+type OpenAiSession = {
   model: string;
-  messages: Array<Readonly<{ role: "user" | "assistant"; content: string }>>;
-}>;
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  apiKey: string;
+  baseUrl: string;
+  timeoutMs: number;
+  organization?: string;
+  project?: string;
+};
 
 type StoredCredentialRef = Readonly<{
   providerId: string;
   methodId: OpenAiConnectionMethodId;
   endpointProfile: Readonly<Record<string, unknown>>;
   credentialDigest: string;
+  apiKey: string;
 }>;
+
+type OpenAiChatResponse = {
+  choices?: Array<{ message?: { content?: string } }>;
+};
+
+type OpenAiStreamDelta = {
+  choices?: Array<{ delta?: { content?: string } }>;
+};
+
+type OpenAiErrorBody = {
+  error?: { message?: string };
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function buildOpenAiHeaders(
+  apiKey: string,
+  organization?: string,
+  project?: string,
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  };
+  if (organization) headers["OpenAI-Organization"] = organization;
+  if (project) headers["OpenAI-Project"] = project;
+  return headers;
+}
+
+function mapNetworkError(error: unknown): never {
+  const err = error instanceof Error ? error : new Error(String(error));
+  const code = (err as NodeJS.ErrnoException).code;
+  if (code === "ECONNREFUSED" || code === "ENOTFOUND" || code === "ECONNRESET") {
+    throw new ProviderUnavailableError(`OpenAI API is not reachable: ${err.message}`, {
+      cause: err,
+    });
+  }
+  if (code === "ETIMEDOUT") {
+    throw new TimeoutError(`OpenAI API request timed out: ${err.message}`, { cause: err });
+  }
+  throw new TransientNetworkError(`OpenAI API network error: ${err.message}`, { cause: err });
+}
+
+async function mapHttpError(response: Response): Promise<never> {
+  let errorBody: OpenAiErrorBody = {};
+  try {
+    errorBody = (await response.json()) as OpenAiErrorBody;
+  } catch {
+    // ignore parse errors
+  }
+  const message = errorBody.error?.message ?? response.statusText;
+
+  if (response.status === 401) {
+    throw new AuthError(`OpenAI API authentication failed: ${message}`);
+  }
+  if (response.status === 403) {
+    throw new PermissionError(`OpenAI API permission denied: ${message}`);
+  }
+  if (response.status === 429) {
+    throw new TransientNetworkError(`OpenAI API rate limit exceeded: ${message}`);
+  }
+  if (response.status >= 500) {
+    throw new ProviderUnavailableError(
+      `OpenAI API server error ${response.status}: ${message}`,
+    );
+  }
+  throw new TransientNetworkError(
+    `OpenAI API request failed with HTTP ${response.status}: ${message}`,
+  );
 }
 
 function normalizeNonEmptyString(value: unknown): string | undefined {
@@ -194,6 +276,20 @@ function resolveCredentialDigest(input: Readonly<Record<string, unknown>>): stri
   });
 }
 
+function parseOpenAiModelList(payload: unknown): readonly ModelDescriptor[] {
+  if (!isRecord(payload) || !Array.isArray(payload["data"])) {
+    return OPENAI_MODEL_DESCRIPTORS;
+  }
+  const models: ModelDescriptor[] = [];
+  for (const entry of payload["data"]) {
+    if (!isRecord(entry)) continue;
+    const id = typeof entry["id"] === "string" ? entry["id"].trim() : undefined;
+    if (id === undefined || id.length === 0) continue;
+    models.push(Object.freeze({ id, displayName: id }));
+  }
+  return models.length > 0 ? models : OPENAI_MODEL_DESCRIPTORS;
+}
+
 export class OpenAiAdapter implements CloudAdapterContractV2 {
   readonly manifest: AdapterManifest = OPENAI_MANIFEST;
   readonly requiredEndpointProfileFields = ["baseUrl"] as const;
@@ -238,6 +334,7 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
     }
 
     const payload = requireInputRecord(input.input);
+    const apiKey = requireInputString(payload, "apiKey");
     const endpointProfile = resolveEndpointProfile(payload);
     const credentialDigest = resolveCredentialDigest(payload);
     const credentialRef = `credref.${providerId}.${methodId}.${++this.#credentialCounter}`;
@@ -246,6 +343,7 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
       methodId,
       endpointProfile,
       credentialDigest,
+      apiKey,
     });
 
     return {
@@ -316,6 +414,10 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
   }
 
   async discoverModels(ctx: CloudConnectionContext): Promise<readonly ModelDescriptor[]> {
+    const contextRecord = ctx as Readonly<Record<string, unknown>>;
+    const statelessInput = isRecord(contextRecord["connectionInput"])
+      ? contextRecord["connectionInput"]
+      : undefined;
     const validation = await this.validateCredentialRef({
       providerId: ctx.providerId,
       methodId: ctx.methodId,
@@ -323,19 +425,61 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
       endpointProfile: ctx.endpointProfile,
       correlationId: ctx.correlationId,
     });
-    if (!validation.ok) {
+    const canUseStatelessInput =
+      statelessInput !== undefined &&
+      (validation.reason === "credential_ref_not_found" ||
+        validation.reason === "credential_ref_missing");
+    if (!validation.ok && !canUseStatelessInput) {
       throw new AuthError(
         `Cannot discover models for invalid credential reference: ${validation.reason ?? "invalid_ref"}.`,
       );
     }
 
-    const baseUrl = normalizeNonEmptyString(ctx.endpointProfile["baseUrl"]) ?? OPENAI_DEFAULT_BASE_URL;
-    return OPENAI_MODEL_DESCRIPTORS.map((descriptor) =>
-      Object.freeze({
-        ...descriptor,
-        baseUrl,
-      }),
-    );
+    let apiKey: string;
+    let baseUrl: string;
+    let organization: string | undefined;
+    let project: string | undefined;
+    if (canUseStatelessInput && statelessInput !== undefined) {
+      apiKey = requireInputString(statelessInput, "apiKey");
+      baseUrl =
+        normalizeNonEmptyString(ctx.endpointProfile["baseUrl"]) ??
+        normalizeNonEmptyString(statelessInput["baseUrl"]) ??
+        OPENAI_DEFAULT_BASE_URL;
+      organization = normalizeNonEmptyString(statelessInput["organization"]);
+      project = normalizeNonEmptyString(statelessInput["project"]);
+    } else {
+      const credentialRef = normalizeNonEmptyString(ctx.credentialRef);
+      if (credentialRef === undefined) {
+        throw new AuthError("Cannot discover models without a credential reference.");
+      }
+      const storedRef = this.#credentialRefs.get(credentialRef);
+      if (storedRef === undefined) {
+        throw new AuthError("Cannot discover models: credential reference is unavailable.");
+      }
+      apiKey = storedRef.apiKey;
+      baseUrl =
+        normalizeNonEmptyString(ctx.endpointProfile["baseUrl"]) ??
+        (normalizeNonEmptyString(storedRef.endpointProfile["baseUrl"]) as string) ??
+        OPENAI_DEFAULT_BASE_URL;
+      organization = normalizeNonEmptyString(storedRef.endpointProfile["organization"]);
+      project = normalizeNonEmptyString(storedRef.endpointProfile["project"]);
+    }
+
+    const headers = buildOpenAiHeaders(apiKey, organization, project);
+    try {
+      const response = await fetch(`${baseUrl}/models`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!response.ok) {
+        return OPENAI_MODEL_DESCRIPTORS;
+      }
+      const payload: unknown = await response.json();
+      return parseOpenAiModelList(payload);
+    } catch {
+      return OPENAI_MODEL_DESCRIPTORS;
+    }
   }
 
   async discoverCapabilities(ctx: CloudConnectionContext): Promise<CapabilityDescriptor> {
@@ -363,9 +507,48 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
     const requestedModel = normalizeNonEmptyString(options?.["model"]);
     const model = requestedModel ?? OPENAI_DEFAULT_MODEL;
     const sessionId = `openai-session-${++this.#sessionCounter}`;
+
+    const connectionInput = isRecord(options?.["connectionInput"])
+      ? options["connectionInput"]
+      : undefined;
+    const credentialRefKey = normalizeNonEmptyString(options?.["credentialRef"]);
+
+    let apiKey: string;
+    let baseUrl: string = OPENAI_DEFAULT_BASE_URL;
+    let organization: string | undefined;
+    let project: string | undefined;
+
+    if (connectionInput !== undefined) {
+      apiKey = requireInputString(connectionInput, "apiKey");
+      const rawBaseUrl = normalizeNonEmptyString(connectionInput["baseUrl"]);
+      baseUrl = rawBaseUrl !== undefined ? normalizeBaseUrl(rawBaseUrl) : OPENAI_DEFAULT_BASE_URL;
+      organization = normalizeNonEmptyString(connectionInput["organization"]);
+      project = normalizeNonEmptyString(connectionInput["project"]);
+    } else if (credentialRefKey !== undefined) {
+      const storedRef = this.#credentialRefs.get(credentialRefKey);
+      if (storedRef === undefined) {
+        throw new AuthError("Cannot create session: credential reference not found.");
+      }
+      apiKey = storedRef.apiKey;
+      baseUrl =
+        (normalizeNonEmptyString(storedRef.endpointProfile["baseUrl"]) as string) ??
+        OPENAI_DEFAULT_BASE_URL;
+      organization = normalizeNonEmptyString(storedRef.endpointProfile["organization"]);
+      project = normalizeNonEmptyString(storedRef.endpointProfile["project"]);
+    } else {
+      throw new AuthError(
+        "Cannot create session: no credentials provided (supply connectionInput or credentialRef).",
+      );
+    }
+
     this.#sessions.set(sessionId, {
       model,
       messages: [],
+      apiKey,
+      baseUrl,
+      timeoutMs: OPENAI_DEFAULT_TIMEOUT_MS,
+      organization,
+      project,
     });
     return sessionId;
   }
@@ -377,9 +560,31 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
     }
 
     session.messages.push({ role: "user", content: message });
-    const response = `[openai:${session.model}] ${message}`;
-    session.messages.push({ role: "assistant", content: response });
-    return response;
+
+    const headers = buildOpenAiHeaders(session.apiKey, session.organization, session.project);
+    let response: Response;
+    try {
+      response = await fetch(`${session.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: session.model,
+          messages: session.messages,
+        }),
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+
+    const data = (await response.json()) as OpenAiChatResponse;
+    const text = data.choices?.[0]?.message?.content ?? "";
+    session.messages.push({ role: "assistant", content: text });
+    return text;
   }
 
   async streamMessage(
@@ -387,11 +592,70 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
     message: string,
     onChunk: (chunk: string) => void,
   ): Promise<void> {
-    const response = await this.sendMessage(sessionId, message);
-    for (const token of response.split(" ")) {
-      const chunk = token.length > 0 ? `${token} ` : "";
-      if (chunk.length > 0) onChunk(chunk);
+    const session = this.#sessions.get(sessionId);
+    if (session === undefined) {
+      throw new TransientNetworkError(`Session "${sessionId}" not found.`);
     }
+    session.messages.push({ role: "user", content: message });
+
+    const headers = buildOpenAiHeaders(session.apiKey, session.organization, session.project);
+    let response: Response;
+    try {
+      response = await fetch(`${session.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model: session.model,
+          messages: session.messages,
+          stream: true,
+        }),
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+    if (response.body === null) {
+      throw new ProviderUnavailableError("OpenAI API response body is null.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = "";
+
+    try {
+      let streaming = true;
+      while (streaming) {
+        const { done, value } = await reader.read();
+        if (done) {
+          streaming = false;
+          break;
+        }
+        const text = decoder.decode(value, { stream: true });
+        for (const line of text.split("\n")) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const jsonStr = trimmed.slice(5).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const event = JSON.parse(jsonStr) as OpenAiStreamDelta;
+            const content = event.choices?.[0]?.delta?.content;
+            if (content) {
+              onChunk(content);
+              fullContent += content;
+            }
+          } catch {
+            // skip malformed SSE lines
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    session.messages.push({ role: "assistant", content: fullContent });
   }
 
   async healthCheck(): Promise<boolean> {

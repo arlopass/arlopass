@@ -274,8 +274,10 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         const controller = new AbortController();
         abortRef.current = controller;
 
+        // Snapshot manager message count before the generator adds any.
+        // Used after streaming to recover assistant content from all rounds.
+        const prevMsgCount = managerRef.current!.getMessages().length;
         let accumulated = "";
-        let preservedContent = "";
 
         try {
             const iterable = managerRef.current!.stream(content, opts?.pinned !== undefined ? { pinned: opts.pinned } : undefined);
@@ -296,14 +298,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                         }, 0);
                     }
                 } else if (event.type === "tool_call") {
-                    // Preserve text before tool call markup so it isn't lost
-                    if (accumulated.length > 0) {
-                        const cutPoint = event.matchRange.start;
-                        const beforeTool = accumulated.substring(0, cutPoint).trim();
-                        if (beforeTool.length > 0 && preservedContent.length === 0) {
-                            preservedContent = beforeTool;
-                        }
-                    }
+                    // Clear streaming display for tool execution UI
                     accumulated = "";
                     setStreamingContent("");
                     if (!usedToolsRef.current.includes(event.name)) {
@@ -329,13 +324,20 @@ export function useConversation(options?: UseConversationOptions): UseConversati
             }
 
             const tools = [...usedToolsRef.current];
-            // Combine any text preserved from before tool calls with the
-            // final round's content so the user sees the complete response.
-            const finalContent = preservedContent.length > 0 && accumulated.trim().length > 0
-                ? `${preservedContent}\n\n${accumulated}`
-                : preservedContent.length > 0
-                    ? preservedContent
-                    : accumulated;
+            // Recover assistant content from the ConversationManager's stored
+            // messages rather than relying on `accumulated` which gets reset on
+            // each tool_call event. The manager stores properly-stripped content
+            // (with tool markup removed when hideToolCalls is enabled) for every
+            // round, so joining those gives us the complete response text.
+            const managerMsgs = managerRef.current!.getMessages();
+            const storedAssistant = managerMsgs
+                .slice(prevMsgCount)
+                .filter((m) => m.role === "assistant")
+                .map((m) => m.content.trim())
+                .filter((c) => c.length > 0);
+            const finalContent = storedAssistant.length > 0
+                ? storedAssistant.join("\n\n")
+                : accumulated;
             const assistantMsg: TrackedChatMessage = {
                 id: assistantMsgId,
                 role: "assistant",
@@ -354,11 +356,15 @@ export function useConversation(options?: UseConversationOptions): UseConversati
             return userMsgId;
         } catch (err) {
             if (controller.signal.aborted) {
-                const abortContent = preservedContent.length > 0 && accumulated.trim().length > 0
-                    ? `${preservedContent}\n\n${accumulated}`
-                    : preservedContent.length > 0
-                        ? preservedContent
-                        : accumulated;
+                const managerMsgs = managerRef.current!.getMessages();
+                const storedAssistant = managerMsgs
+                    .slice(prevMsgCount)
+                    .filter((m) => m.role === "assistant")
+                    .map((m) => m.content.trim())
+                    .filter((c) => c.length > 0);
+                const abortContent = storedAssistant.length > 0
+                    ? storedAssistant.join("\n\n")
+                    : accumulated;
                 if (abortContent.length > 0) {
                     const partialMsg: TrackedChatMessage = {
                         id: assistantMsgId,
