@@ -249,6 +249,7 @@ export class ConversationManager {
         for (let round = 0; round < this.#maxToolRounds; round++) {
             const contextWindow = await this.#prepareContextWindow();
             let fullContent = "";
+            let chunksAlreadyYielded = false;
 
             if (round === 0 && shouldPrime) {
                 // Yield priming lifecycle events for UI feedback
@@ -270,6 +271,7 @@ export class ConversationManager {
                 for await (const event of this.#client.chat.stream({ messages: contextWindow })) {
                     if (event.type === "chunk") {
                         fullContent += event.delta;
+                        chunksAlreadyYielded = true;
                         yield event;
                     }
                 }
@@ -294,7 +296,18 @@ export class ConversationManager {
 
             const parsed = parseToolCalls(fullContent, this.#tools.map((t) => t.name), this.#tools);
             if (parsed.toolCalls.length === 0 || this.#tools.length === 0) {
-                // No tool calls — this is the final response, yield done
+                // No tool calls — this is the final response.
+                // If content was NOT already yielded as chunks (e.g. priming
+                // used non-streaming chat.send), yield it now so the UI can
+                // display it.
+                if (!chunksAlreadyYielded && fullContent.length > 0) {
+                    const displayContent = hideToolMarkup && parsed.matchRanges.length > 0
+                        ? stripToolCalls(fullContent, parsed.matchRanges).trim()
+                        : fullContent;
+                    if (displayContent.length > 0) {
+                        yield { type: "chunk" as const, delta: displayContent, index: 0, correlationId: "" };
+                    }
+                }
                 yield { type: "done" as const, correlationId: "" };
                 return;
             }
