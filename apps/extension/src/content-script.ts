@@ -667,3 +667,20 @@ function injectInpageProviderScript(): void {
 
 registerPageBridgeListener();
 injectInpageProviderScript();
+
+// ---------------------------------------------------------------------------
+// Provider change notifications: background → content script → page
+// ---------------------------------------------------------------------------
+
+chrome.runtime.onMessage.addListener((message: unknown) => {
+  if (
+    isRecord(message) &&
+    message["channel"] === "arlopass.providers.changed"
+  ) {
+    window.postMessage({
+      channel: CONTENT_TO_PAGE_CHANNEL,
+      source: "arlopass-content-script",
+      event: "providers-changed",
+    }, "*");
+  }
+});

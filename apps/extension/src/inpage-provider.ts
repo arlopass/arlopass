@@ -502,6 +502,20 @@ function createBridgeDispatcher() {
     consumeBufferedStreamResponse(requestId, response);
   });
 
+  // Listen for provider-changed events from the content script
+  window.addEventListener("message", (event) => {
+    if (event.source !== window) return;
+    const data = event.data;
+    if (
+      isRecord(data) &&
+      data["channel"] === CONTENT_TO_PAGE_CHANNEL &&
+      data["source"] === "arlopass-content-script" &&
+      data["event"] === "providers-changed"
+    ) {
+      window.dispatchEvent(new CustomEvent("arlopass:providers-changed"));
+    }
+  });
+
   const send = async (
     action: "request" | "disconnect",
     payload: unknown,

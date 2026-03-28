@@ -180,7 +180,44 @@ export async function sendVaultMessageViaProxy(
         try { void chrome.action?.setBadgeText?.({ text: "" }); } catch { /* ok */ }
     }
 
+    // Broadcast provider/app changes to all tabs so web SDKs refresh
+    const msgType = message["type"] as string;
+    if (
+        resp["type"] !== "error" && (
+            msgType === "vault.providers.save" ||
+            msgType === "vault.providers.delete" ||
+            msgType === "vault.apps.save" ||
+            msgType === "vault.apps.delete"
+        )
+    ) {
+        void broadcastProvidersChanged();
+    }
+
     return resp as Record<string, unknown>;
+}
+
+/** Broadcast to all tabs that providers/app-connections changed. */
+async function broadcastProvidersChanged(): Promise<void> {
+    try {
+        const tabs = await chrome.tabs.query({});
+        for (const tab of tabs) {
+            if (tab.id !== undefined) {
+                try {
+                    chrome.tabs.sendMessage(tab.id, { channel: "arlopass.providers.changed" });
+                } catch { /* tab may not have content script */ }
+            }
+        }
+    } catch { /* ignore */ }
+}
+
+/**
+ * Pre-warm the bridge session.  Call this at service worker startup so the
+ * handshake (auto-pair + challenge-response) completes before the first
+ * message arrives.  Failures are silently ignored — the session will be
+ * established on-demand when actually needed.
+ */
+export function preWarmBridgeSession(): void {
+    void getSessionToken().catch(() => { /* best effort */ });
 }
 
 // ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import {
 } from "@arlopass/telemetry";
 
 import { resolveAppId, validateAppIconUrl } from "./app-id.js";
+import { checkModelAvailability } from "./model-availability.js";
 import { resolveModelContextWindow } from "./model-context-windows.js";
 import { estimateTokenCount } from "./token-estimation.js";
 import {
@@ -46,6 +47,8 @@ import {
   type CorrelationId,
   type InternalClientConfig,
   type ListProvidersResult,
+  type ModelAvailabilityStatus,
+  type ModelRequirements,
   type ProtocolEnvelopePayload,
   type ProviderDescriptor,
   type ProviderListPayload,
@@ -457,6 +460,17 @@ export class ArlopassClient {
     };
   }
 
+  /**
+   * Checks whether the user's available providers satisfy model requirements.
+   * Pure computation — no network calls.
+   */
+  checkModelAvailability(
+    providers: readonly ProviderDescriptor[],
+    requirements: ModelRequirements,
+  ): ModelAvailabilityStatus {
+    return checkModelAvailability(providers, requirements);
+  }
+
   async connect(options: ConnectOptions): Promise<ConnectResult> {
     this.#assertState("connect", ["disconnected"]);
     const origin = options.origin ?? this.#config.origin;
@@ -466,7 +480,9 @@ export class ArlopassClient {
     const requestId = createRequestId(this.#config.randomId);
     const correlationId = createCorrelationId(this.#config.randomId);
     const candidateSessionId = createSessionId(this.#config.randomId);
-    const timeoutMs = options.timeoutMs ?? this.#config.timeoutMs;
+    // Connect waits for user approval in the extension popup, which can
+    // take up to 2 minutes.  Use a generous default unless overridden.
+    const timeoutMs = options.timeoutMs ?? Math.max(this.#config.timeoutMs, 120_000);
 
     const requestEnvelope = this.#createEnvelope<ConnectPayload>({
       requestId,
@@ -482,6 +498,12 @@ export class ArlopassClient {
         ...(options.appDescription !== undefined ? { appDescription: options.appDescription } : {}),
         ...(options.appIcon !== undefined && validateAppIconUrl(options.appIcon, origin)
           ? { appIcon: options.appIcon }
+          : {}),
+        ...(options.supportedModels !== undefined && options.supportedModels.length > 0
+          ? { supportedModels: options.supportedModels }
+          : {}),
+        ...(options.requiredModels !== undefined && options.requiredModels.length > 0
+          ? { requiredModels: options.requiredModels }
           : {}),
       },
       origin,
@@ -691,6 +713,29 @@ export class ArlopassClient {
     this.#appId = undefined;
     this.#selectedProvider = undefined;
     this.#capabilities = this.#config.defaultCapabilities;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Provider change notifications
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Register a callback that fires when the extension signals that
+   * providers or app-connection settings have changed.  Call
+   * `listProviders()` inside the callback to get the updated list.
+   *
+   * Returns an unsubscribe function.
+   */
+  onProvidersChanged(callback: () => void): () => void {
+    const handler = () => callback();
+    if (typeof window !== "undefined") {
+      window.addEventListener("arlopass:providers-changed", handler);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("arlopass:providers-changed", handler);
+      }
+    };
   }
 
   async #sendChat(

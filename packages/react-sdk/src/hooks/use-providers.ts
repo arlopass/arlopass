@@ -59,6 +59,15 @@ export function useProviders(): UseProvidersReturn {
         }
     }, [snapshot.state, listProviders]);
 
+    // Auto-refresh when extension signals provider/app changes
+    useEffect(() => {
+        if (snapshot.state !== "connected" && snapshot.state !== "degraded") return;
+        const unsubscribe = store.client.onProvidersChanged(() => {
+            void listProviders();
+        });
+        return unsubscribe;
+    }, [store, snapshot.state, listProviders]);
+
     return {
         providers: snapshot.providers,
         selectedProvider: snapshot.selectedProvider,
