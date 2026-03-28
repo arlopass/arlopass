@@ -655,7 +655,8 @@ export function AddProviderWizard({
                 type: "vault.credentials.get",
                 credentialId: cred.id,
               });
-              const fields = (resp.fields ?? {}) as Record<string, string>;
+              const credential = (resp["credential"] ?? {}) as Record<string, unknown>;
+              const fields = (credential["fields"] ?? {}) as Record<string, string>;
               dispatch({
                 type: "SELECT_CREDENTIAL",
                 credentialId: cred.id,
