@@ -66,7 +66,6 @@ export const MICROSOFT_FOUNDRY_MANIFEST: AdapterManifest = {
 
 const FOUNDRY_DEFAULT_MODEL = "gpt-4o-mini";
 const FOUNDRY_DEFAULT_API_VERSION = "v1";
-const FOUNDRY_OPENAI_API_VERSION = "2024-12-01-preview";
 const FOUNDRY_MODEL_IDS = [FOUNDRY_DEFAULT_MODEL] as const;
 
 type FoundrySession = Readonly<{
@@ -231,16 +230,6 @@ function resolveCredentialDigest(input: Readonly<Record<string, unknown>>): stri
 function resolveCredentialMaterial(input: Readonly<Record<string, unknown>>): FoundryCredentialMaterial {
   const apiKey = requireInputString(input, "apiKey");
   return Object.freeze({ apiKey });
-}
-
-function resolveEndpointProfileFromOptions(
-  options: Readonly<Record<string, unknown>> | undefined,
-): Readonly<Record<string, unknown>> {
-  const endpointProfile = options?.["endpointProfile"];
-  if (!isRecord(endpointProfile)) {
-    return Object.freeze({});
-  }
-  return Object.freeze({ ...endpointProfile });
 }
 
 function mapNetworkError(error: unknown): never {
@@ -640,47 +629,37 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
   async createSession(options?: Readonly<Record<string, unknown>>): Promise<string> {
     const requestedModel = normalizeNonEmptyString(options?.["model"]);
     const model = requestedModel ?? FOUNDRY_DEFAULT_MODEL;
-    const requestedMethodId = options?.["methodId"];
-    const resolvedMethodId =
-      requestedMethodId === undefined
-        ? FOUNDRY_CONNECTION_METHOD_IDS.API_KEY
-        : resolveMethodId(requestedMethodId);
-    if (resolvedMethodId === undefined) {
-      throw new AuthError(
-        `Unsupported connection method "${String(requestedMethodId)}" for Foundry session.`,
-      );
-    }
-    const endpointProfile = resolveEndpointProfileFromOptions(options);
-    const credentialRef = normalizeNonEmptyString(options?.["credentialRef"]);
-    const storedCredentialRef =
-      credentialRef !== undefined ? this.#credentialRefs.get(credentialRef) : undefined;
-    if (credentialRef !== undefined && storedCredentialRef === undefined) {
-      throw new AuthError(
-        "Foundry credential reference is unavailable. Re-test provider connection to refresh bridge credential state.",
-      );
-    }
+
+    // Resolve auth from connectionInput first (persisted in epoch record),
+    // then fall back to in-memory credential ref (lost on bridge restart).
     const connectionInput = isRecord(options?.["connectionInput"]) ? options["connectionInput"] : undefined;
+    const credentialRef = normalizeNonEmptyString(options?.["credentialRef"]);
+    const storedRef = credentialRef !== undefined ? this.#credentialRefs.get(credentialRef) : undefined;
+    const endpointProfile: Readonly<Record<string, unknown>> = isRecord(options?.["endpointProfile"])
+      ? options["endpointProfile"] as Readonly<Record<string, unknown>>
+      : Object.freeze({});
+
     const apiUrl = normalizeApiUrl(
       normalizeNonEmptyString(connectionInput?.["apiUrl"]) ??
       normalizeNonEmptyString(endpointProfile["apiUrl"]) ??
-      normalizeNonEmptyString(storedCredentialRef?.endpointProfile["apiUrl"]) ??
+      normalizeNonEmptyString(storedRef?.endpointProfile["apiUrl"]) ??
       "",
     );
     const apiVersion =
       normalizeNonEmptyString(connectionInput?.["apiVersion"]) ??
       normalizeNonEmptyString(endpointProfile["apiVersion"]) ??
-      normalizeNonEmptyString(storedCredentialRef?.endpointProfile["apiVersion"]) ??
+      normalizeNonEmptyString(storedRef?.endpointProfile["apiVersion"]) ??
       FOUNDRY_DEFAULT_API_VERSION;
-    // The deployment name (model ID) is the deployment the user selected
-    const deploymentName = model;
     const apiKey =
       normalizeNonEmptyString(connectionInput?.["apiKey"]) ??
-      normalizeNonEmptyString(storedCredentialRef?.credentialMaterial.apiKey);
+      normalizeNonEmptyString(storedRef?.credentialMaterial.apiKey);
     if (apiKey === undefined) {
       throw new AuthError(
         "Foundry session auth context is unavailable. Re-test provider connection to refresh bridge credential state.",
       );
     }
+
+    const deploymentName = model;
     const sessionId = `foundry-session-${++this.#sessionCounter}`;
     this.#sessions.set(sessionId, {
       model,
@@ -702,7 +681,6 @@ export class MicrosoftFoundryAdapter implements CloudAdapterContractV2 {
     session.messages.push({ role: "user", content: message });
 
     // POST https://{resource}.openai.azure.com/openai/v1/chat/completions
-    // Model name goes in the request body, not the URL path.
     const openAiBase = deriveOpenAiBaseUrl(session.apiUrl);
     const endpoint = `${openAiBase}/openai/v1/chat/completions`;
 
