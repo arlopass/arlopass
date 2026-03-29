@@ -9,6 +9,7 @@ import Breadcrumb from "../components/docs/Breadcrumb.astro";
 import PrevNextNav from "../components/docs/PrevNextNav.astro";
 import CopyAsMarkdown from "../components/docs/CopyAsMarkdown.astro";
 import Footer from "../components/Footer.astro";
+import SearchDialog from "../components/docs/SearchDialog.astro";
 import { getCategory, getPrevNext } from "../data/docs-nav";
 
 interface Props {
@@ -150,12 +151,15 @@ const breadcrumbLd = {
     <div
       class="mx-auto max-w-7xl border-x border-[var(--ap-border)] min-h-screen flex flex-col"
     >
-      <DocsHeader />
+      <div data-pagefind-ignore>
+        <DocsHeader />
+      </div>
 
       <div class="flex flex-1 min-h-0">
         {/* Sidebar — hidden on mobile, shown on lg+ */}
         <aside
           id="docs-sidebar"
+          data-pagefind-ignore
           class="w-60 shrink-0 border-r border-[var(--ap-border)] bg-[var(--ap-bg-base)] hidden lg:block overflow-y-auto
                  fixed lg:static inset-y-14 left-0 z-40 -translate-x-full lg:translate-x-0 transition-transform duration-300"
         >
@@ -214,5 +218,6 @@ const breadcrumbLd = {
       <Footer />
       <ChatSidebarIsland client:only="react" />
     </div>
+    <SearchDialog />
   </body>
 </html>

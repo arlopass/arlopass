@@ -4,6 +4,7 @@ import ChatSidebarIsland from "../../components/islands/ChatSidebarIsland";
 import DocsHeader from "../../components/docs/DocsHeader.astro";
 import DocsSidebar from "../../components/docs/DocsSidebar.astro";
 import Footer from "../../components/Footer.astro";
+import SearchDialog from "../../components/docs/SearchDialog.astro";
 import { DOCS_NAV, ALL_DOCS } from "../../data/docs-nav";
 
 const title = "Arlopass Documentation";
@@ -126,5 +127,6 @@ const itemListLd = {
       <Footer />
       <ChatSidebarIsland client:only="react" />
     </div>
+    <SearchDialog />
   </body>
 </html>
