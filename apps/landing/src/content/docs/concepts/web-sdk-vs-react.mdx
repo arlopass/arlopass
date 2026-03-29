@@ -1,0 +1,139 @@
+---
+title: "Web SDK vs React SDK"
+description: "When to use each — or both. Side-by-side comparison and migration path."
+category: "Concepts"
+order: 4
+lastUpdated: 2026-03-29
+keywords: ["comparison", "web sdk", "react sdk"]
+schema: "Article"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+
+When to use each — or both
+
+### Two SDKs, one protocol
+
+Arlopass ships two SDKs. The Web SDK (`@arlopass/web-sdk`) is the core — a framework-agnostic TypeScript client that handles connections, state machines, envelope construction, and streaming. The React SDK (`@arlopass/react`) wraps the Web SDK with hooks, providers, error boundaries, and a reactive state layer. They speak the same protocol and use the same transport.
+
+### Side-by-side comparison
+
+| Dimension | Web SDK | React SDK |
+|-----------|---------|-----------|
+| **Setup** | Create client, pass transport, manage lifecycle manually | Wrap in `<ArlopassProvider>`, hooks handle lifecycle |
+| **State management** | Manual — poll getters or build your own reactive layer | Automatic — ClientStore + useSyncExternalStore |
+| **Error handling** | try/catch around every operation | ArlopassErrorBoundary + error state in hooks |
+| **Streaming** | for-await-of loop, manual DOM updates | Hook returns streaming content, RAF-batched re-renders |
+| **Testing** | Mock the ArlopassTransport interface directly | createMockTransport + render with ArlopassProvider |
+| **Bundle size** | Smaller — no React dependency | Includes web-sdk + React integration layer |
+| **Framework** | Any — vanilla JS, Vue, Svelte, Angular | React 18+ only |
+
+### When to use the Web SDK
+
+Use the Web SDK when you're not using React — vanilla JavaScript, Vue, Svelte, Angular, or any other framework. It's also the right choice when you need full control over the client lifecycle, want to build your own reactive abstraction on top, or need the smallest possible bundle.
+
+```ts title="Web SDK usage"
+import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({ transport: window.arlopass });
+await client.connect({ appId: "my-app" });
+
+const providers = await client.listProviders();
+await client.selectProvider({ providerId: "ollama", modelId: "llama3" });
+
+const convo = new ConversationManager({ client });
+for await (const event of convo.stream("Hello!")) {
+  if (event.type === "token") process.stdout.write(event.token);
+}
+
+await client.disconnect();
+```
+
+### When to use the React SDK
+
+Use the React SDK when you're building a React application and want managed state, automatic re-renders, streaming optimization, error boundaries, and a hooks-based API. It handles the hard parts — state synchronization, concurrent rendering safety, and streaming batching — so you can focus on your UI.
+
+```tsx title="React SDK usage"
+import { ArlopassProvider, useConnection, useProviders, useChat } from "@arlopass/react";
+
+function App() {
+  return (
+    <ArlopassProvider appId="my-app">
+      <Chat />
+    </ArlopassProvider>
+  );
+}
+
+function Chat() {
+  const { state } = useConnection();
+  const { providers, select } = useProviders();
+  const { messages, stream } = useChat({ systemPrompt: "Be helpful." });
+
+  // State management, error handling, streaming optimization —
+  // all handled by the hooks. You write the UI.
+}
+```
+
+### Hook-to-pattern mapping
+
+Every React SDK hook replaces a specific Web SDK pattern. If you're familiar with the Web SDK, this mapping shows what each hook encapsulates.
+
+```ts title="What each hook replaces"
+// Each React hook replaces a manual Web SDK pattern:
+
+// useConnection()     → client.connect() / client.disconnect() / client.state
+// useProviders()      → client.listProviders() / client.selectProvider()
+// useChat()           → client.chat.send() / client.chat.stream()
+// useConversation()   → new ConversationManager({ client })
+// useClient()         → escape hatch — returns the raw ArlopassClient
+// ArlopassChatReadyGate   → if (state === "connected" && selectedProvider)
+```
+
+<Callout type="info" title="useClient() — the escape hatch">
+The React SDK re-exports all Web SDK types. If you need the raw `ArlopassClient` for an operation not covered by hooks, call `useClient()`. You lose automatic state sync for that operation, but you get full control. Use it sparingly.
+</Callout>
+
+```tsx title="Escape hatch"
+import { useClient } from "@arlopass/react";
+
+function AdvancedFeature() {
+  // useClient() gives you the raw ArlopassClient when you need full control.
+  // The React SDK wraps @arlopass/web-sdk — so all web-sdk types
+  // are re-exported from @arlopass/react.
+  const client = useClient();
+
+  // You can use client directly for operations not covered by hooks,
+  // but you lose automatic state sync and streaming optimization.
+  // Use sparingly.
+}
+```
+
+### Using both
+
+Because the React SDK wraps the Web SDK, you're already using both. Types like `ProviderDescriptor`, `ClientState`, and `ChatStreamEvent` are re-exported from `@arlopass/react`. You don't need to install `@arlopass/web-sdk` separately unless you're importing something the React SDK doesn't re-export (which is rare).
+
+### Migration path
+
+If you started with the Web SDK and want to move to React, the migration is additive. Wrap your app in `ArlopassProvider`, replace imperative client calls with hooks, and remove your manual state management code. Your existing type imports keep working because the React SDK re-exports them.
+
+```ts title="Additive migration"
+// If you started with the Web SDK and want to add React SDK:
+
+// Before — manual state management
+const client = new ArlopassClient({ transport: window.arlopass });
+// ... manage state, re-renders, cleanup yourself
+
+// After — wrap in ArlopassProvider, use hooks
+import { ArlopassProvider, useConnection } from "@arlopass/react";
+
+// The React SDK re-exports web-sdk types, so your existing
+// type imports still work:
+import type { ProviderDescriptor, ClientState } from "@arlopass/react";
+
+// Migration is additive — you don't rewrite anything,
+// you wrap and replace imperative code with hooks.
+```
+
+<Callout type="tip" title="Related">
+See [State Management](/docs/concepts/state-management) for how the React SDK stays in sync with the client, or [Hooks Reference](/docs/reference/react/hooks) for the complete hook API.
+</Callout>

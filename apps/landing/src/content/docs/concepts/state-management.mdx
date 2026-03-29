@@ -1,0 +1,191 @@
+---
+title: "State management"
+description: "How the React SDK stays in sync with the ArlopassClient using ClientStore and useSyncExternalStore."
+category: "Concepts"
+order: 3
+lastUpdated: 2026-03-29
+keywords: ["state", "store", "sync"]
+schema: "Article"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+
+How the React SDK stays in sync with the ArlopassClient
+
+### The challenge
+
+`ArlopassClient` is a plain TypeScript class. It has getters like `.state`, `.sessionId`, and `.selectedProvider` — but they're not reactive. Nothing in the Web SDK knows about React, and that's intentional. The SDK is framework-agnostic. So how does the React SDK keep components in sync with an external, non-reactive object?
+
+```ts title="The problem"
+// ArlopassClient has internal state — but it's just getters, not reactive.
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({ transport: window.arlopass });
+await client.connect({ appId: "my-app" });
+
+client.state;            // "connected" — a plain getter
+client.sessionId;        // "uuid-1234" — a plain getter
+client.selectedProvider; // null — a plain getter
+
+// React components won't re-render when these change.
+// There's no .onChange() callback, no EventEmitter, no observable.
+// The SDK is deliberately framework-agnostic.
+```
+
+### ClientStore
+
+The answer is `ClientStore`. It wraps a `ArlopassClient` and maintains a snapshot — a plain object that represents the client's current state at a point in time. When the store detects a change, it creates a new snapshot object and notifies subscribers. When nothing changes, it keeps the same object reference.
+
+```ts title="ClientStore internals"
+// ClientStore wraps ArlopassClient and maintains a reactive snapshot.
+
+class ClientStore {
+  #client: ArlopassClient;
+  #snapshot: ClientSnapshot;
+  #subscriptions = new Subscriptions();
+
+  constructor(client: ArlopassClient) {
+    this.#client = client;
+    this.#snapshot = createInitialSnapshot();
+    this.#startHeartbeat(); // 500ms safety-net polling
+  }
+
+  // React's useSyncExternalStore calls these two:
+  getSnapshot(): ClientSnapshot { return this.#snapshot; }
+  subscribe(listener: () => void): () => void {
+    return this.#subscriptions.subscribe(listener);
+  }
+
+  // Called after every SDK operation
+  refreshSnapshot(): void {
+    const next = buildSnapshot({
+      state: this.#client.state,
+      sessionId: this.#client.sessionId ?? null,
+      selectedProvider: this.#client.selectedProvider ?? null,
+      providers: this.#providers,
+      error: this.#error,
+    });
+    // Only notify if something actually changed
+    if (!snapshotsEqual(this.#snapshot, next)) {
+      this.#snapshot = next;
+      this.#subscriptions.notify();
+    }
+  }
+}
+```
+
+### useSyncExternalStore
+
+React 18 introduced `useSyncExternalStore` specifically for this pattern — reading from an external store that isn't managed by React. It guarantees tear-free reads (no partial state) and works correctly with concurrent features like Suspense and transitions. Every Arlopass hook uses it under the hood.
+
+```ts title="React integration"
+// React 18's useSyncExternalStore — the bridge between external and React state.
+
+import { useSyncExternalStore } from "react";
+
+// Full snapshot — used internally
+function useStoreSnapshot(): ClientSnapshot {
+  const { store } = useArlopassContext();
+  return useSyncExternalStore(
+    (cb) => store.subscribe(cb),
+    () => store.getSnapshot(),
+    () => store.getSnapshot(), // server snapshot (same for SSR safety)
+  );
+}
+
+// Selective subscription — each hook picks its slice
+function useStoreSelector<T>(selector: (snap: ClientSnapshot) => T): T {
+  const { store } = useArlopassContext();
+  return useSyncExternalStore(
+    (cb) => store.subscribe(cb),
+    () => selector(store.getSnapshot()),
+    () => selector(store.getSnapshot()),
+  );
+}
+
+// So useConnection() only re-renders on state/sessionId changes,
+// useProviders() only re-renders on provider list changes, etc.
+```
+
+<Callout type="info" title="Why not useState?">
+If you used `useState` + `useEffect` to sync external state, you'd have a render with stale data before the effect fires. With concurrent rendering, you could get tearing — different parts of the tree reading different snapshots. And state changes from outside React (extension crashes, transport drops) wouldn't trigger updates at all. `useSyncExternalStore` solves all of these.
+</Callout>
+
+### Snapshot identity
+
+The key to avoiding unnecessary re-renders is snapshot identity. The store compares the current snapshot to the next one field-by-field. If nothing changed, it keeps the old object. Since `useSyncExternalStore` uses `Object.is` to compare, same reference means no re-render.
+
+```ts title="snapshotsEqual"
+// A new snapshot object is created ONLY when values actually differ.
+
+function snapshotsEqual(a: ClientSnapshot, b: ClientSnapshot): boolean {
+  return (
+    a.state === b.state &&
+    a.sessionId === b.sessionId &&
+    a.selectedProvider === b.selectedProvider &&
+    a.providers === b.providers &&  // referential equality — same array
+    a.error === b.error
+  );
+}
+
+// If nothing changed, the old snapshot object is kept.
+// useSyncExternalStore compares by reference (Object.is).
+// Same reference = no re-render. This is what prevents
+// the 500ms heartbeat from causing unnecessary re-renders.
+```
+
+### Primary sync and safety-net polling
+
+The store uses two complementary strategies. The primary strategy is wrap-and-refresh: every SDK operation goes through the store, which calls `refreshSnapshot()` after completion. The safety net is a 500ms heartbeat that catches changes the store didn't initiate — like the extension unloading or the bridge dropping. The snapshot equality check means the heartbeat is effectively free when nothing has changed.
+
+```ts title="Two sync strategies"
+// Two complementary sync strategies keep the UI accurate.
+
+// 1. PRIMARY: Wrap-and-refresh
+//    Every SDK operation goes through the store, which calls
+//    refreshSnapshot() after the operation completes.
+//
+//    connect() → client.connect() → refreshSnapshot()
+//    selectProvider() → client.selectProvider() → refreshSnapshot()
+//    stream() → each token → refreshSnapshot()
+
+// 2. SAFETY NET: 500ms heartbeat polling
+//    Some state changes happen outside the store's control:
+//    - Extension unloads or crashes
+//    - Bridge connection drops
+//    - Another tab disconnects the same session
+//
+//    The heartbeat catches these by periodically reading
+//    client.state and comparing to the last snapshot.
+//    The snapshot equality check prevents spurious re-renders.
+
+const HEARTBEAT_INTERVAL_MS = 500;
+this.#heartbeatId = setInterval(() => {
+  this.refreshSnapshot(); // No-op if nothing changed
+}, HEARTBEAT_INTERVAL_MS);
+```
+
+### Selective subscriptions
+
+Each hook subscribes to only the slice of state it needs via `useStoreSelector`. `useConnection()` cares about `state` and `sessionId`. `useProviders()` cares about the provider list. A change to the provider list doesn't re-render components that only use `useConnection()`.
+
+### Streaming optimization
+
+During streaming, tokens can arrive hundreds of times per second. Re-rendering on every token would destroy performance. The store uses `requestAnimationFrame` with `setTimeout` microbatching — tokens accumulate, and the store refreshes at most ~60 times per second. Each render sees the latest accumulated content, not individual tokens.
+
+```ts title="Streaming batching"
+// Streaming tokens arrive very fast — potentially hundreds per second.
+// Re-rendering on every token would tank performance.
+
+// The store uses requestAnimationFrame + setTimeout microbatching:
+// 1. Token arrives → schedule a RAF callback (if not already scheduled)
+// 2. RAF fires → batch all accumulated tokens → refreshSnapshot() once
+// 3. Result: ~60 refreshes/sec max, regardless of token rate
+
+// This means the UI stays smooth during streaming, and each render
+// has the latest accumulated content — not one render per token.
+```
+
+<Callout type="tip" title="Related">
+See [Web SDK vs React SDK](/docs/concepts/web-sdk-vs-react) for when to use each SDK, or [Hooks Reference](/docs/reference/react/hooks) for the full list of available hooks and their return types.
+</Callout>
