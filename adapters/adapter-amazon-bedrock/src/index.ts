@@ -16,7 +16,7 @@ import {
   type ValidateCredentialRefInput,
   type ValidationResult,
 } from "@arlopass/adapter-runtime";
-import { type ProtocolCapability, AuthError, PermissionError, ProviderUnavailableError, TimeoutError, TransientNetworkError } from "@arlopass/protocol";
+import { type ProtocolCapability, AuthError, ProviderUnavailableError, TimeoutError, TransientNetworkError } from "@arlopass/protocol";
 
 export const BEDROCK_CONNECTION_METHOD_IDS = {
   API_KEY: "bedrock.api_key",
@@ -310,7 +310,7 @@ function resolveBedrockAuth(
       throw new AuthError('Connection method "bedrock.aws_access_key" requires accessKeyId and secretAccessKey.');
     }
     const sessionToken = normalizeNonEmptyString(input["sessionToken"]);
-    return { methodId, accessKeyId, secretAccessKey, sessionToken };
+    return { methodId, accessKeyId, secretAccessKey, ...(sessionToken !== undefined ? { sessionToken } : {}) };
   }
   // Assume Role: store method ID for connection tracking; live calls will fail with a clear error at session creation
   return { methodId };
@@ -433,7 +433,7 @@ function buildBedrockHeaders(
       service: "bedrock",
       accessKeyId: auth.accessKeyId,
       secretAccessKey: auth.secretAccessKey,
-      sessionToken: auth.sessionToken,
+      ...(auth.sessionToken !== undefined ? { sessionToken: auth.sessionToken } : {}),
     });
   }
   return { "content-type": "application/json" };

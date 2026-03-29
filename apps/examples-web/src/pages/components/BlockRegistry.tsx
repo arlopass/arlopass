@@ -399,7 +399,7 @@ function ChatBlockPreview() {
   ]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState("");
-  const [streamMeta, setStreamMeta] = useState<{
+  const [, setStreamMeta] = useState<{
     model: string;
     tools?: string[] | undefined;
   } | null>(null);

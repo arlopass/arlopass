@@ -17,6 +17,7 @@ describe("BridgeHandler vault.* messages", () => {
         const vaultStore = new VaultStore({
             vaultFilePath: join(dir, "vault.encrypted"),
             lockoutFilePath: join(dir, "vault-lockout.json"),
+            minPasswordLength: 1,
         });
         handler = new BridgeHandler({ vaultStore });
         sessionToken = await obtainSessionToken(handler);

@@ -14,7 +14,7 @@ import {
   type ValidateCredentialRefInput,
   type ValidationResult,
 } from "@arlopass/adapter-runtime";
-import { type ProtocolCapability, AuthError, PermissionError, ProviderUnavailableError, TimeoutError, TransientNetworkError } from "@arlopass/protocol";
+import { type ProtocolCapability, AuthError, ProviderUnavailableError, TimeoutError, TransientNetworkError } from "@arlopass/protocol";
 
 export const VERTEX_CONNECTION_METHOD_IDS = {
   API_KEY: "vertex.api_key",
@@ -266,7 +266,8 @@ function buildVertexUrl(
   return `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/${publisher}/models/${model}:${action}`;
 }
 
-function buildVertexHeaders(auth: VertexAuthConfig): Record<string, string> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function buildVertexHeaders(_auth: VertexAuthConfig): Record<string, string> {
   // API key auth passes the key in the URL query string, not a header
   return { "content-type": "application/json" };
 }
@@ -502,7 +503,6 @@ export class GoogleVertexAiAdapter implements CloudAdapterContractV2 {
 
     const projectId = normalizeNonEmptyString(ctx.endpointProfile["projectId"]) ?? VERTEX_DEFAULT_PROJECT_ID;
     const location = normalizeNonEmptyString(ctx.endpointProfile["location"]) ?? VERTEX_DEFAULT_LOCATION;
-    const publisher = normalizeNonEmptyString(ctx.endpointProfile["publisher"]) ?? "google";
 
     // Resolve API key for live discovery
     let apiKey: string | undefined;

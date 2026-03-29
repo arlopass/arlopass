@@ -17,7 +17,6 @@ import {
 import {
   type ProtocolCapability,
   AuthError,
-  PermissionError,
   ProviderUnavailableError,
   TimeoutError,
   TransientNetworkError,

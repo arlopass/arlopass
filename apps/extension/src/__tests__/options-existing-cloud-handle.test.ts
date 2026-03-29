@@ -9,6 +9,7 @@ function createChromeStub(
     id: string;
     lastError?: { message?: string };
     sendNativeMessage: typeof sendNativeMessage;
+    sendMessage: (message: Record<string, unknown>, callback: NativeMessageCallback) => void;
   };
   storage: {
     local: {
@@ -16,10 +17,17 @@ function createChromeStub(
     };
   };
 } {
+  // sendMessage routes through the vault proxy — unwrap the envelope and
+  // delegate to the sendNativeMessage mock so test assertions work.
+  const sendMessage = (envelope: Record<string, unknown>, callback: NativeMessageCallback) => {
+    const inner = (envelope["message"] ?? envelope) as Record<string, unknown>;
+    sendNativeMessage("com.arlopass.bridge", inner, callback);
+  };
   return {
     runtime: {
       id: "ext.test.arlopass",
       sendNativeMessage,
+      sendMessage,
     },
     storage: {
       local: {

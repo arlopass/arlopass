@@ -2,7 +2,11 @@
   "name": "arlopass",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Arlopass monorepo workspace bootstrap",
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
@@ -22,10 +26,11 @@
     "dev:bash:bridge": "bash ./scripts/dev/run-dev.sh bridge",
     "dev:bash:full": "bash ./scripts/dev/run-dev.sh full",
     "install:all": "pnpm install",
+    "prepare": "husky",
     "build": "pnpm -r --if-present run build",
     "lint": "pnpm -r --if-present run lint",
     "typecheck": "pnpm -r --if-present run typecheck",
-    "test": "vitest --workspace vitest.workspace.ts --run --passWithNoTests",
+    "test": "vitest --run --passWithNoTests",
     "test:e2e": "pnpm exec playwright test",
     "test:e2e:extension": "pnpm exec playwright test --project=extension",
     "test:e2e:webapp": "pnpm exec playwright test --project=webapp",
@@ -34,12 +39,17 @@
     "test:e2e:live": "pnpm exec playwright test --project=live-setup --project=live-providers",
     "test:e2e:report": "pnpm exec playwright show-report e2e/playwright-report"
   },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": "eslint --max-warnings=0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^22.14.1",
     "@typescript-eslint/eslint-plugin": "^8.30.1",
     "@typescript-eslint/parser": "^8.30.1",
     "eslint": "^8.57.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "typescript": "^5.8.3",
     "vitest": "^4.1.2"
   },

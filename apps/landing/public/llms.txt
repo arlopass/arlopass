@@ -10,15 +10,15 @@ Arlopass is a free, open-source browser extension and developer SDK that lets we
 - **License:** MIT (fully open source)
 - **Price:** Free (users bring their own AI subscriptions)
 - **Platforms:** Chrome browser extension, npm SDK (@arlopass/web-sdk)
-- **Supported Providers:** Ollama, Anthropic Claude, OpenAI GPT, Google Gemini, Amazon Bedrock, Google Vertex AI, Perplexity, Microsoft Foundry, LM Studio, Mistral
+- **Supported Providers:** Ollama, Anthropic Claude, OpenAI GPT, Google Gemini, Amazon Bedrock, Google Vertex AI, Perplexity, Microsoft Foundry
 - **Developer Integration:** ~10 lines of code with connect(), createChat(), chat.stream()
-- **Key Security Feature:** API keys stored in OS keychain (Windows Credential Manager, macOS Keychain, Linux Secret Service), never in the browser or on servers
-- **Enterprise Features:** Zero-trust architecture, Ed25519-signed policy bundles, JSONL + OTLP audit trails, SOC 2 / ISO 27001 / NIST 800-53 / GDPR / HIPAA control alignment
+- **Key Security Feature:** API keys encrypted in a local vault file (AES-256-GCM), secured by master password or OS keychain — never in the browser or on servers
+- **Enterprise Features:** Zero-trust architecture, Ed25519-signed policy bundles, JSONL + OTLP audit trails, SOC 2 / ISO 27001 / ISO 42001 / GDPR control alignment
 
 ## How It Works
 
 1. User installs the Arlopass browser extension (30 seconds, no account needed)
-2. User connects their AI providers (keys stored in OS keychain)
+2. User connects their AI providers (keys encrypted in local vault)
 3. When a web app wants to use AI, the user sees what it needs, picks a model, and approves the connection. The app then uses their AI seamlessly.
 
 ## For Developers

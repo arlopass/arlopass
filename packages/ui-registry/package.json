@@ -1,6 +1,7 @@
 {
   "name": "@arlopass/ui",
   "version": "0.1.0",
+  "description": "CLI registry for installing Arlopass React UI blocks",
   "license": "MIT",
   "type": "module",
   "bin": {

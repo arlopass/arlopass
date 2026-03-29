@@ -41,9 +41,15 @@ describe("resolveModelContextWindow", () => {
     });
 
     it("resolves Claude 4.6 (1M)", () => {
-        expect(resolveModelContextWindow("claude-opus-4-6")).toBe(1_000_000);
-        expect(resolveModelContextWindow("claude-sonnet-4-6")).toBe(1_000_000);
-        expect(resolveModelContextWindow("claude-opus-4.6")).toBe(1_000_000);
+        expect(resolveModelContextWindow("claude-opus-4-6-1m")).toBe(1_000_000);
+        expect(resolveModelContextWindow("claude-sonnet-4-6-1m")).toBe(1_000_000);
+        expect(resolveModelContextWindow("claude-opus-4.6-1m")).toBe(1_000_000);
+    });
+
+    it("resolves Claude 4.6 (200K)", () => {
+        expect(resolveModelContextWindow("claude-opus-4-6")).toBe(200_000);
+        expect(resolveModelContextWindow("claude-sonnet-4-6")).toBe(200_000);
+        expect(resolveModelContextWindow("claude-opus-4.6")).toBe(200_000);
     });
 
     it("resolves Claude 4.5 (200K)", () => {

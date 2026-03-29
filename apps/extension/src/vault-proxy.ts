@@ -327,7 +327,6 @@ async function discoverCloudModels(
     const connectionHandle = (metadata["connectionHandle"] ?? "").trim();
     const providerId = (metadata["providerId"] ?? "").trim();
     const methodId = (metadata["methodId"] ?? "").trim();
-    const nativeHostName = (metadata["nativeHostName"] ?? "com.arlopass.bridge").trim();
     const endpointProfileHash = (metadata["endpointProfileHash"] ?? "").trim();
 
     if (connectionHandle.length === 0 || providerId.length === 0 || methodId.length === 0) {

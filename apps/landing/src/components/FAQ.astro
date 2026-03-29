@@ -3,12 +3,12 @@ const faqs = [
   {
     question: "What is Arlopass?",
     answer:
-      "Arlopass is an open-source browser extension and developer SDK that lets web applications use a user's own AI providers — like Ollama, Claude, GPT, or Bedrock — without the application ever seeing, touching, or storing the user's API keys. According to security researchers, over 80% of API key leaks occur through client-side code or misconfigured servers (GitGuardian, 2025). Arlopass eliminates this entire attack surface.",
+      "Arlopass is an open-source browser extension and developer SDK that lets web applications use a user's own AI providers — like Ollama, Claude, GPT, or Bedrock — without the application ever seeing, touching, or storing the user's API keys. API keys routinely leak through client-side code, server logs, and misconfigured deployments. Arlopass eliminates this entire attack surface by keeping credentials in an encrypted vault on the user's device.",
   },
   {
     question: "How does Arlopass keep my API keys safe?",
     answer:
-      "Your API keys are stored in your operating system's native keychain — Windows Credential Manager, macOS Keychain, or Linux Secret Service. They never enter browser storage (like localStorage) and never leave your device. When a web app requests AI access, the request routes through the Arlopass extension on your machine, where keys are injected at the last moment. The app receives only the AI response, never your credentials.",
+      "Your API keys are encrypted in a vault file on your device using AES-256-GCM, secured by a master password or your OS keychain (Windows Credential Manager, macOS Keychain, or Linux Secret Service). They never enter browser storage and never leave your device. When a web app requests AI access, the request routes through the native bridge on your machine, which injects credentials at the last moment. The app receives only the AI response, never your credentials.",
   },
   {
     question: "Which AI providers does Arlopass support?",
@@ -30,11 +30,7 @@ const faqs = [
     answer:
       "Absolutely. Arlopass has first-class support for Ollama and LM Studio, enabling fully local, zero-cloud AI in any web application. When using local models, your prompts and responses never leave your machine — achieving true zero-exposure AI access with no internet dependency.",
   },
-  {
-    question: "Does Arlopass work for enterprise teams?",
-    answer:
-      "Yes. Arlopass Enterprise provides zero-trust AI governance with signed policy bundles (Ed25519), org-wide provider allowlists, model restrictions, data-handling rules, and cryptographic audit trails (JSONL + OTLP export). It deploys via MDM (Intune, Jamf) with pre-mapped control alignment for SOC 2, ISO 27001, NIST 800-53, GDPR, and HIPAA compliance frameworks.",
-  },
+
 ];
 const faqSchema = {
   "@context": "https://schema.org",

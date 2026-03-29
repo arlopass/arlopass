@@ -22,7 +22,7 @@ describe("VaultStore", () => {
     });
 
     function createStore() {
-        return new VaultStore({ vaultFilePath: vaultPath, lockoutFilePath: lockoutPath });
+        return new VaultStore({ vaultFilePath: vaultPath, lockoutFilePath: lockoutPath, minPasswordLength: 1 });
     }
 
     describe("lifecycle", () => {
@@ -74,11 +74,11 @@ describe("VaultStore", () => {
 
         it("status returns the current state", () => {
             const store = createStore();
-            expect(store.status()).toEqual({ state: "uninitialized" });
+            expect(store.status()).toEqual({ state: "uninitialized", minPasswordLength: 1 });
             store.setup({ keyMode: "password", password: "s" });
-            expect(store.status()).toEqual({ state: "unlocked", keyMode: "password" });
+            expect(store.status()).toEqual({ state: "unlocked", keyMode: "password", minPasswordLength: 1 });
             store.lock();
-            expect(store.status()).toEqual({ state: "locked", keyMode: "password" });
+            expect(store.status()).toEqual({ state: "locked", keyMode: "password", minPasswordLength: 1 });
         });
     });
 
@@ -256,6 +256,7 @@ describe("VaultStore", () => {
                 vaultFilePath: vaultPath,
                 lockoutFilePath: lockoutPath,
                 autoLockMs: 50, // 50ms for fast test
+                minPasswordLength: 1,
             });
             store.setup({ keyMode: "password", password: "p" });
             expect(store.getState()).toBe("unlocked");
@@ -269,6 +270,7 @@ describe("VaultStore", () => {
                 vaultFilePath: vaultPath,
                 lockoutFilePath: lockoutPath,
                 autoLockMs: 150,
+                minPasswordLength: 1,
             });
             store.setup({ keyMode: "password", password: "p" });
 
@@ -290,6 +292,7 @@ describe("VaultStore", () => {
                 vaultFilePath: vaultPath,
                 lockoutFilePath: lockoutPath,
                 autoLockMs: 50,
+                minPasswordLength: 1,
             });
             store1.setup({ keyMode: "password", password: "p" });
             store1.saveCredential({ id: "cred.1", connectorId: "a", name: "K", fields: { k: "v" } });

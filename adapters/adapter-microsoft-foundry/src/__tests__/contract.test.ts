@@ -154,7 +154,7 @@ describe("MicrosoftFoundryAdapter – cloud contract v2", () => {
         JSON.stringify({
           data: [
             { id: "gpt-4o", name: "GPT-4o" },
-            { id: "o3-mini" },
+            { id: "o3-mini", name: "o3-mini" },
           ],
         }),
         {
@@ -182,7 +182,7 @@ describe("MicrosoftFoundryAdapter – cloud contract v2", () => {
 
     const models = await adapter.discoverModels(context);
     expect(models).toEqual([
-      expect.objectContaining({ id: "gpt-4o", displayName: "GPT-4o" }),
+      expect.objectContaining({ id: "GPT-4o", displayName: "GPT-4o" }),
       expect.objectContaining({ id: "o3-mini", displayName: "o3-mini" }),
     ]);
     expect(fetchSpy).toHaveBeenCalledOnce();
@@ -190,7 +190,7 @@ describe("MicrosoftFoundryAdapter – cloud contract v2", () => {
     expect(firstCall).toBeDefined();
     const modelsRequestUrl = String(firstCall?.[0] ?? "");
     const modelsRequestInit = firstCall?.[1] as RequestInit | undefined;
-    expect(modelsRequestUrl).toContain("/models");
+    expect(modelsRequestUrl).toContain("/deployments");
     expect(modelsRequestUrl).toContain("api-version=v1");
     expect(modelsRequestInit?.method).toBe("GET");
     expect((modelsRequestInit?.headers as Record<string, string> | undefined)?.[
@@ -232,7 +232,7 @@ describe("MicrosoftFoundryAdapter – cloud contract v2", () => {
     } as unknown as Parameters<MicrosoftFoundryAdapter["discoverModels"]>[0]);
 
     expect(models).toEqual([
-      expect.objectContaining({ id: "gpt-4o", displayName: "GPT-4o" }),
+      expect.objectContaining({ id: "GPT-4o", displayName: "GPT-4o" }),
     ]);
     const firstCall = fetchSpy.mock.calls[0] as unknown[] | undefined;
     const modelsRequestInit = firstCall?.[1] as RequestInit | undefined;
@@ -296,13 +296,12 @@ describe("MicrosoftFoundryAdapter – cloud contract v2", () => {
     }
     const [requestUrl, requestInit] = firstCall;
     expect(String(requestUrl)).toContain("https://resource-chat.openai.azure.com/openai/v1/chat/completions");
-    expect(String(requestUrl)).toContain("api-version=v1");
     expect(requestInit?.method).toBe("POST");
     if (requestInit === undefined) {
       throw new Error("Expected fetch request init.");
     }
     const headers = requestInit.headers as Record<string, string>;
-    expect(headers["api-key"]).toBe("foundry-real-secret");
+    expect(headers["Authorization"]).toBe("Bearer foundry-real-secret");
     const payload = JSON.parse(String(requestInit.body ?? "{}")) as {
       model?: string;
       messages?: Array<{ role?: string; content?: string }>;

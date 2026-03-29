@@ -28,8 +28,7 @@ export function useAutoScroll<E extends HTMLElement>(
     if (!isStreamingRef.current) {
       scrollToBottom();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, deps); // eslint-disable-line -- deps intentionally dynamic
 
   // rAF loop during streaming — keeps scroll pinned every frame
   useEffect(() => {

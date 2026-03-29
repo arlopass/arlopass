@@ -16,7 +16,7 @@
     "https://*/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http: https:"
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http: https: data:; connect-src 'self' http: https:"
   },
   "background": {
     "service_worker": "dist/background.js",

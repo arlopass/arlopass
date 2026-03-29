@@ -547,8 +547,8 @@ export class OpenAiAdapter implements CloudAdapterContractV2 {
       apiKey,
       baseUrl,
       timeoutMs: OPENAI_DEFAULT_TIMEOUT_MS,
-      organization,
-      project,
+      ...(organization !== undefined ? { organization } : {}),
+      ...(project !== undefined ? { project } : {}),
     });
     return sessionId;
   }

@@ -41,7 +41,7 @@ const principles = [
     label: "Zero-trust",
     title: "Keys never leave the device",
     description:
-      "API credentials are stored in your OS keychain — not in the browser, not on a server. The web app never touches your keys. HMAC authentication with ephemeral session keys at every trust boundary.",
+      "API credentials are encrypted in a vault file on your device using AES-256-GCM — not in the browser, not on a server. The web app never touches your keys. HMAC authentication with ephemeral session keys at every trust boundary.",
   },
   {
     label: "Open source",
@@ -53,7 +53,7 @@ const principles = [
     label: "Privacy",
     title: "No backend, no tracking",
     description:
-      "Arlopass has no cloud infrastructure, no user accounts, no analytics, and no telemetry. The extension runs locally. Pair it with Ollama for fully offline, zero-exposure AI.",
+      "Arlopass has no cloud infrastructure, no user accounts, and no telemetry. The extension and native bridge run locally. Pair it with Ollama for fully offline, zero-exposure AI.",
   },
   {
     label: "Standards",
@@ -128,9 +128,9 @@ const stats = [
           class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
         >
           Today, web apps that use AI force a bad choice: paste your API key
-          into an app you don't fully control, or don't use AI at all. According
-          to GitGuardian, over 80% of API key leaks happen through client-side
-          code or misconfigured servers. Keys end up in browser storage, server
+          into an app you don't fully control, or don't use AI at all. API keys
+          routinely leak through client-side code, server logs, and
+          misconfigured deployments. Keys end up in browser storage, server
           logs, and third-party analytics.
         </p>
         <p

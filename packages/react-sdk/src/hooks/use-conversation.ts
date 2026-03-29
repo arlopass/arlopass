@@ -122,7 +122,6 @@ export function useConversation(options?: UseConversationOptions): UseConversati
         // which resolves maxTokens dynamically from the current model.
         if (stateContextInfo.maxTokens > 0) return stateContextInfo;
         return live;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stateContextInfo, selectedProviderKey]);
 
     // Recreate the ConversationManager when the selected provider/model changes

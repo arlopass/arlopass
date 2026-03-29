@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NumberInput } from "@mantine/core";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconChevronDown, IconClock } from "@tabler/icons-react";
 import { PrimaryButton } from "../PrimaryButton.js";
 import type { AppPermissions, AppRules, AppLimits } from "./app-storage.js";
 
@@ -177,6 +177,8 @@ export type ConfigureSettingsStepProps = {
   onLimitChange: (key: keyof AppLimits, value: number) => void;
   onSave: () => void;
   saving: boolean;
+  /** When true, shows a "coming soon" overlay over the settings */
+  comingSoon?: boolean;
 };
 
 export function ConfigureSettingsStep({
@@ -188,6 +190,7 @@ export function ConfigureSettingsStep({
   onLimitChange,
   onSave,
   saving,
+  comingSoon = false,
 }: ConfigureSettingsStepProps) {
   const rulesCount = [
     rules.lowTokenUsage,
@@ -202,7 +205,18 @@ export function ConfigureSettingsStep({
 
   return (
     <>
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1.5">
+      {comingSoon && (
+        <div className="flex items-center gap-2 px-3 py-2 mb-1 rounded-md bg-[var(--ap-bg-card)] border border-[var(--ap-border)]">
+          <IconClock size={14} className="text-[var(--color-brand)] shrink-0" />
+          <span className="text-[11px] text-[var(--ap-text-secondary)] leading-snug">
+            App settings are <span className="font-semibold text-[var(--ap-text-primary)]">coming soon</span> and aren't enforced yet. You can save defaults now and they'll apply once available.
+          </span>
+        </div>
+      )}
+      <div className={`flex-1 min-h-0 overflow-y-auto pr-1.5 relative ${comingSoon ? "pointer-events-none" : ""}`}>
+        {comingSoon && (
+          <div className="absolute inset-0 bg-[var(--ap-bg-base)]/60 z-10 rounded-md" />
+        )}
         <div className="flex flex-col gap-3">
           <CollapsibleSection
             title="Rules"
@@ -276,7 +290,7 @@ export function ConfigureSettingsStep({
       </div>
 
       <PrimaryButton onClick={onSave} disabled={saving} loading={saving}>
-        {saving ? "Saving..." : "Save settings"}
+        {saving ? "Saving..." : comingSoon ? "Save & connect" : "Save settings"}
       </PrimaryButton>
     </>
   );

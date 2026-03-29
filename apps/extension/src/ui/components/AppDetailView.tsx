@@ -37,7 +37,6 @@ export type AppDetailViewProps = {
 export function AppDetailView({
   app,
   rawProviders,
-  onBack: _onBack,
   onSettingsClick,
   navLink,
 }: AppDetailViewProps) {
@@ -354,6 +353,7 @@ export function AppDetailView({
                 }
                 onSave={() => void handleSaveSettings()}
                 saving={false}
+                comingSoon
               />
             )}
           </div>

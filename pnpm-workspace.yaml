@@ -2,3 +2,7 @@ packages:
   - "packages/*"
   - "apps/*"
   - "adapters/*"
+
+# Note: ops/ is intentionally excluded from workspace globs.
+# It is run independently to keep operational and reliability tooling isolated
+# from default recursive workspace commands.

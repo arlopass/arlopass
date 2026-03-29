@@ -1,0 +1,228 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import PageHero from "../components/ui/PageHero.astro";
+
+const pageTitle = "Terms of Service — Arlopass";
+const pageDesc =
+  "Terms of service for the Arlopass open-source browser extension, developer SDK, and website. MIT licensed software provided as-is with no warranties.";
+
+const effectiveDate = "March 29, 2026";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Terms of Service — Arlopass",
+  description: pageDesc,
+  url: "https://arlopass.com/terms",
+  publisher: {
+    "@type": "Organization",
+    name: "Arlopass",
+    url: "https://arlopass.com",
+  },
+};
+
+interface Section {
+  id: string;
+  label: string;
+  title: string;
+  content: string[];
+}
+
+const sections: Section[] = [
+  {
+    id: "acceptance",
+    label: "Acceptance",
+    title: "Acceptance of terms",
+    content: [
+      "By accessing the Arlopass website (arlopass.com), installing the Arlopass browser extension, using the native bridge application, or integrating the Arlopass developer SDKs, you agree to these terms of service. If you do not agree, do not use the software or website.",
+    ],
+  },
+  {
+    id: "description",
+    label: "Description",
+    title: "What Arlopass is",
+    content: [
+      "Arlopass is a free, open-source browser extension, native bridge application, and developer SDK that enables web applications to use AI providers chosen and controlled by the end user. Arlopass routes AI requests through the user's locally installed software — it does not provide AI models, AI hosting, or AI processing services.",
+      "Arlopass is not an AI provider. It is an access management layer. The AI capabilities you access through Arlopass are provided by third-party services (such as Anthropic, OpenAI, Google, Amazon, Microsoft, or self-hosted models like Ollama) and are subject to those providers' own terms and pricing.",
+    ],
+  },
+  {
+    id: "license",
+    label: "License",
+    title: "Open-source license",
+    content: [
+      "The Arlopass browser extension, native bridge, SDKs, protocol, and adapters are released under the MIT License. You may use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software, subject to the conditions of the MIT License included in the source code.",
+      "The MIT License is the authoritative legal agreement governing your use of the software. In the event of any conflict between these terms and the MIT License, the MIT License prevails for the software itself.",
+    ],
+  },
+  {
+    id: "no-warranty",
+    label: "No warranty",
+    title: "Disclaimer of warranties",
+    content: [
+      "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. Arlopass makes no guarantees about the availability, reliability, accuracy, or security of the software or website.",
+      "Arlopass does not guarantee that the software will be error-free, uninterrupted, or free of vulnerabilities. You are responsible for evaluating the software's suitability for your use case and for securing your own systems.",
+    ],
+  },
+  {
+    id: "liability",
+    label: "Liability",
+    title: "Limitation of liability",
+    content: [
+      "To the maximum extent permitted by applicable law, Arlopass and its contributors shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits, data, or goodwill, arising from or related to your use of the software or website, regardless of the theory of liability.",
+      "This limitation applies whether the claim is based on warranty, contract, tort (including negligence), strict liability, or any other legal theory, even if Arlopass has been advised of the possibility of such damages.",
+    ],
+  },
+  {
+    id: "your-responsibilities",
+    label: "Your responsibilities",
+    title: "Your responsibilities",
+    content: [
+      "You are responsible for your use of the software, including compliance with all applicable laws and regulations. You are responsible for the security of your own devices, API credentials, and AI provider accounts.",
+      "You are responsible for the content of the prompts you send to AI providers through Arlopass. Arlopass does not monitor, filter, or moderate the content of your AI interactions.",
+      "If you integrate Arlopass into a web application as a developer, you are responsible for informing your users that your application uses the Arlopass SDK, and for complying with applicable privacy and data protection laws in your jurisdiction.",
+    ],
+  },
+  {
+    id: "ai-providers",
+    label: "AI providers",
+    title: "Third-party AI providers",
+    content: [
+      "Arlopass connects to AI providers that you configure. Each provider (such as Anthropic, OpenAI, Google, Amazon, Microsoft, or Perplexity) has its own terms of service, acceptable use policies, and pricing. You are responsible for complying with those terms.",
+      "Arlopass is not responsible for the behavior, output, accuracy, availability, or pricing of any third-party AI provider. Your relationship with each AI provider is between you and that provider.",
+    ],
+  },
+  {
+    id: "credentials",
+    label: "Credentials",
+    title: "API credentials and security",
+    content: [
+      "API credentials you enter into Arlopass are encrypted and stored locally on your device. Arlopass does not transmit your credentials to any Arlopass-operated server. However, Arlopass cannot guarantee absolute security of locally stored data — physical access to your device or compromise of your operating system could expose stored credentials.",
+      "You should use strong master passwords, keep your operating system and browser up to date, and follow the security recommendations of your AI providers.",
+    ],
+  },
+  {
+    id: "website",
+    label: "Website",
+    title: "Website and content",
+    content: [
+      "The content on arlopass.com (including documentation, guides, and marketing copy) is provided for informational purposes. While we strive for accuracy, we do not guarantee that all content is complete, current, or error-free.",
+      "The website is hosted on Cloudflare Pages and is subject to Cloudflare's terms of service for content delivery. Links to third-party websites or resources are provided for convenience and do not imply endorsement.",
+    ],
+  },
+  {
+    id: "contributions",
+    label: "Contributions",
+    title: "Open-source contributions",
+    content: [
+      "Contributions to Arlopass (such as pull requests, issues, or code submissions) are governed by the MIT License. By submitting a contribution, you represent that you have the right to license it under the MIT License and that your contribution does not infringe any third-party rights.",
+    ],
+  },
+  {
+    id: "termination",
+    label: "Termination",
+    title: "Termination",
+    content: [
+      "Since Arlopass is open-source software with no user accounts, there is no account to terminate. You may stop using the software at any time by uninstalling the browser extension and native bridge.",
+      "We reserve the right to modify, suspend, or discontinue the website or any associated services (such as the Chrome Web Store listing or npm package registry) at any time without prior notice.",
+    ],
+  },
+  {
+    id: "governing-law",
+    label: "Governing law",
+    title: "Governing law and disputes",
+    content: [
+      "These terms are governed by the laws of Romania, without regard to conflict of law principles. Any disputes arising from these terms or your use of the software shall be subject to the exclusive jurisdiction of the courts in Romania.",
+      "If any provision of these terms is found to be unenforceable, the remaining provisions continue in full force and effect.",
+    ],
+  },
+  {
+    id: "changes",
+    label: "Changes",
+    title: "Changes to these terms",
+    content: [
+      "We may update these terms to reflect changes in the software, our practices, or for legal reasons. Material changes will be noted on this page with an updated effective date. Continued use of the software after changes constitutes acceptance of the revised terms.",
+    ],
+  },
+  {
+    id: "contact",
+    label: "Contact",
+    title: "Contact",
+    content: [
+      "Questions about these terms can be directed to hello@arlopass.com.",
+    ],
+  },
+];
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDesc}
+  canonicalUrl="https://arlopass.com/terms"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <Nav />
+  <main>
+    <PageHero
+      label="Legal"
+      title="Terms of service"
+      description="Arlopass is free, open-source software under the MIT License. These terms cover the website, browser extension, native bridge, and developer SDKs."
+    />
+
+    <div class="border-t border-[var(--ap-border)]">
+      <div class="px-4 md:px-6 lg:px-8 py-4">
+        <p class="text-xs text-[var(--ap-text-tertiary)]">
+          Effective date: {effectiveDate}
+        </p>
+      </div>
+    </div>
+
+    {/* ── Table of contents ─────────────────────────────────── */}
+    <section class="bg-[var(--ap-bg-surface)] border-y border-[var(--ap-border)]">
+      <div class="px-4 md:px-6 lg:px-8 py-8">
+        <nav aria-label="Terms of service sections">
+          <ol class="flex flex-wrap gap-x-6 gap-y-2 list-none">
+            {
+              sections.map((s) => (
+                <li>
+                  <a
+                    href={`#${s.id}`}
+                    class="text-sm text-[var(--ap-text-secondary)] no-underline hover:text-brand transition-colors"
+                  >
+                    {s.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+      </div>
+    </section>
+
+    {/* ── Terms sections ────────────────────────────────────── */}
+    {
+      sections.map((s) => (
+        <section id={s.id} class="border-b border-[var(--ap-border)]">
+          <div class="px-4 md:px-6 lg:px-8 py-10 md:py-14">
+            <span class="block text-sm font-pixel tracking-[0.08em] text-brand mb-2">
+              {s.label}
+            </span>
+            <h2 class="text-xl font-semibold tracking-tight text-[var(--ap-text-primary)] mb-4">
+              {s.title}
+            </h2>
+            <div class="flex flex-col gap-4 max-w-[65ch]">
+              {s.content.map((para) => (
+                <p class="text-sm text-[var(--ap-text-secondary)] leading-[1.7]">
+                  {para}
+                </p>
+              ))}
+            </div>
+          </div>
+        </section>
+      ))
+    }
+  </main>
+  <Footer />
+</Layout>

@@ -84,11 +84,7 @@ const theme = createTheme({
   },
 });
 
-export default function ChatSidebarPanel({
-  onClose,
-}: {
-  onClose: () => void;
-}) {
+export default function ChatSidebarPanel({ onClose }: { onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Inject dark vars stylesheet once on mount
@@ -111,7 +107,12 @@ export default function ChatSidebarPanel({
       forceColorScheme="dark"
       getRootElement={() => containerRef.current || document.body}
     >
-      <ArlopassProvider>
+      <ArlopassProvider
+        appName="Arlopass"
+        appIcon={window.location.origin + "/ArlopassIcon.svg"}
+        appDescription="Your AI, your models, your rules."
+        appSuffix="chat"
+      >
         <div
           ref={containerRef}
           id="arlopass-chat-panel"

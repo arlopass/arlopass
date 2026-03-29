@@ -2,6 +2,8 @@
   "name": "@arlopass/examples-web",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "description": "Example React web app demonstrating Arlopass SDK integrations",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -32,8 +34,8 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.7",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.4.1",
     "typescript": "^5.8.3",
     "vite": "^7.3.1"

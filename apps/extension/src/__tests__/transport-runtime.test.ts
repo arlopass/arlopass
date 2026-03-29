@@ -2252,7 +2252,7 @@ describe("registerDefaultTransportStreamPortListener", () => {
     }
 
     const harness = createPortHarness();
-    const defaultPostMessage = harness.port.postMessage;
+    const defaultPostMessage = harness.port.postMessage as (message: unknown) => void;
     harness.port.postMessage = vi.fn((message: unknown) => {
       if (
         typeof message === "object" &&

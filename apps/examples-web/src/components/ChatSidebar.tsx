@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionIcon,
-  Box,
   Button,
   Menu,
-  Pill,
   Popover,
   ScrollArea,
   Text,
@@ -290,7 +288,6 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
     toolActivity,
     contextInfo,
     stream: convStream,
-    clearMessages,
   } = useConversation({
     systemPrompt: CHAT_SYSTEM_PROMPT,
     tools: toolsRef.current,
@@ -497,7 +494,6 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   // ─── Render ──────────────────────────────────────────────────────────
 
   const modelLabel = selModel ? fmtModel(selModel) : null;
-  const providerLabel = selProvider?.providerName ?? null;
 
   return (
     <div className="chat-sidebar">

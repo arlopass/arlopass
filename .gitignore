@@ -17,4 +17,4 @@ do-not-touch.md
 compliance/.env
 compliance/compose
 .vscode/mcp.json
-.env
+**/.env

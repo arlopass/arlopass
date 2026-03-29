@@ -273,6 +273,26 @@ async function syncLegacyDistRuntimeAssets() {
   }
 }
 
+/** esbuild plugin that re-copies static assets after every rebuild. */
+function staticAssetCopyPlugin() {
+  return {
+    name: "static-asset-copy",
+    setup(b) {
+      b.onEnd(async () => {
+        try {
+          await Promise.all([
+            processManifest(),
+            copyStaticAssets(),
+            syncLegacyDistRuntimeAssets(),
+          ]);
+        } catch {
+          // Non-fatal — files may not exist on first run.
+        }
+      });
+    },
+  };
+}
+
 async function runWatchBuild() {
   // Run static asset copies first (manifest, HTML, icons) so the
   // extension directory is complete before esbuild starts watching.
@@ -282,7 +302,11 @@ async function runWatchBuild() {
   await copyProviderIcons();
   await buildTailwindCSS();
 
-  const moduleContext = await context(createModuleBundleConfig());
+  const copyPlugin = staticAssetCopyPlugin();
+  const moduleContext = await context({
+    ...createModuleBundleConfig(),
+    plugins: [copyPlugin],
+  });
   const contentContext = await context(createContentScriptBundleConfig());
 
   await Promise.all([moduleContext.watch(), contentContext.watch()]);

@@ -1,6 +1,7 @@
 {
   "name": "@arlopass/audit",
   "version": "0.1.0",
+  "description": "Structured audit event models and exporters for Arlopass decisions",
   "license": "MIT",
   "type": "module",
   "publishConfig": {

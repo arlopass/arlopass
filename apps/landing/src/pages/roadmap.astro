@@ -18,70 +18,76 @@ interface RoadmapItem {
 
 const now: RoadmapItem[] = [
   {
-    title: "ISO 27001 certification",
+    title: "Extension v1 — redesigned UI/UX",
     description:
-      "Completing our ISO 27001 information security management system certification with external auditors.",
-    tag: "Compliance",
+      "A ground-up redesign of the extension popup and options page for a cleaner, faster, more intuitive experience. Improved provider management, connection flow, and settings.",
+    tag: "Extension",
   },
   {
-    title: "SOC 2 Type II audit",
+    title: "Vercel AI SDK adapter",
     description:
-      "Working through the SOC 2 Type II observation period with our auditing firm.",
-    tag: "Compliance",
+      "Drop-in Arlopass transport for the Vercel AI SDK — use useChat and streamText with any user-provided model.",
+    tag: "Developer",
   },
   {
     title: "Safari extension",
     description:
-      "Native Safari Web Extension using the same core with WebKit-specific adaptations.",
-    tag: "Platform",
+      "Native Safari Web Extension using the same core with WebKit-specific adaptations. Bringing Arlopass to every major browser.",
+    tag: "Extension",
   },
   {
     title: "React UI component library",
     description:
       "Pre-built, styled React components — chat bubbles, model pickers, provider status — for rapid integration.",
-    tag: "SDK",
+    tag: "Developer",
   },
 ];
 
 const next: RoadmapItem[] = [
   {
-    title: "Enterprise admin dashboard",
-    description:
-      "Centralized dashboard for IT teams to manage policy bundles, view audit logs, and monitor AI usage across the organization.",
-    tag: "Enterprise",
-  },
-  {
-    title: "SCIM user provisioning",
-    description:
-      "Automated user provisioning and deprovisioning via SCIM for enterprise identity providers.",
-    tag: "Enterprise",
-  },
-  {
     title: "MCP tool integration",
     description:
       "Support for Model Context Protocol tools, allowing web apps to expose tools and resources to AI models via the Arlopass bridge.",
-    tag: "SDK",
-  },
-  {
-    title: "Provider health monitoring",
-    description:
-      "Real-time provider latency and availability monitoring visible in the extension popup.",
-    tag: "Platform",
+    tag: "Developer",
   },
   {
     title: "Image and multimodal support",
     description:
       "First-class support for image inputs and multimodal models across all adapters.",
-    tag: "SDK",
+    tag: "Developer",
+  },
+  {
+    title: "Provider health monitoring",
+    description:
+      "Real-time provider latency and availability monitoring visible in the extension popup.",
+    tag: "Extension",
+  },
+  {
+    title: "Conversation history",
+    description:
+      "Persistent conversation history across sessions, stored locally in the vault. Search, bookmark, and resume past chats.",
+    tag: "Extension",
+  },
+  {
+    title: "LangChain / LlamaIndex adapters",
+    description:
+      "Arlopass transport adapters for LangChain.js and LlamaIndex.TS — bring user-provided models to any agentic framework.",
+    tag: "Developer",
+  },
+  {
+    title: "ISO 27001 & SOC 2 certification",
+    description:
+      "Completing our ISO 27001 ISMS and SOC 2 Type II observation period with external auditors.",
+    tag: "Compliance",
   },
 ];
 
 const later: RoadmapItem[] = [
   {
-    title: "Mobile companion app",
+    title: "AI cost tracking",
     description:
-      "iOS and Android app for managing provider connections and viewing AI activity on mobile.",
-    tag: "Platform",
+      "Per-app, per-model cost estimation and budgeting with usage alerts visible in the extension.",
+    tag: "Extension",
   },
   {
     title: "Plugin marketplace",
@@ -90,29 +96,29 @@ const later: RoadmapItem[] = [
     tag: "Ecosystem",
   },
   {
-    title: "AI cost tracking",
+    title: "Mobile companion app",
     description:
-      "Per-app, per-model cost estimation and budgeting with usage alerts.",
-    tag: "Platform",
+      "iOS and Android app for managing provider connections and viewing AI activity on mobile.",
+    tag: "Extension",
   },
   {
-    title: "Federated audit logs",
+    title: "Enterprise admin dashboard",
     description:
-      "Cross-organization audit log federation for enterprise compliance reporting.",
+      "Centralized dashboard for IT teams to manage policy bundles, view audit logs, and monitor AI usage across the organization.",
     tag: "Enterprise",
   },
 ];
 
 function tagColor(tag: string): string {
   switch (tag) {
-    case "Compliance":
+    case "Extension":
+      return "bg-[var(--ap-brand-subtle)] text-brand";
+    case "Developer":
       return "bg-[var(--ap-success-subtle)] text-success";
-    case "Platform":
-      return "bg-[var(--ap-brand-subtle)] text-brand";
-    case "SDK":
-      return "bg-[var(--ap-brand-subtle)] text-brand";
-    case "Enterprise":
+    case "Compliance":
       return "bg-[var(--ap-bg-elevated)] text-[var(--ap-text-secondary)]";
+    case "Enterprise":
+      return "bg-[var(--ap-bg-elevated)] text-[var(--ap-text-tertiary)]";
     case "Ecosystem":
       return "bg-[var(--ap-bg-elevated)] text-[var(--ap-text-secondary)]";
     default:

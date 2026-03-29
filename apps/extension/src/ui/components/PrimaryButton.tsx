@@ -1,6 +1,3 @@
-import { useRef } from "react";
-import { triggerClickPing } from "./animation-utils.js";
-
 export type PrimaryButtonProps = {
   children: string;
   onClick?: (() => void) | undefined;
@@ -10,8 +7,7 @@ export type PrimaryButtonProps = {
 };
 
 /**
- * Full-width action button with press animation and click-ping effect.
- * Matches the landing page preview button interactions.
+ * Full-width action button with press animation.
  */
 export function PrimaryButton({
   children,
@@ -20,11 +16,8 @@ export function PrimaryButton({
   loading,
   variant = "primary",
 }: PrimaryButtonProps) {
-  const ref = useRef<HTMLButtonElement>(null);
-
   const handleClick = () => {
     if (disabled || loading) return;
-    if (ref.current) triggerClickPing(ref.current);
     onClick?.();
   };
 
@@ -44,7 +37,6 @@ export function PrimaryButton({
 
   return (
     <button
-      ref={ref}
       type="button"
       onClick={handleClick}
       disabled={disabled || loading}

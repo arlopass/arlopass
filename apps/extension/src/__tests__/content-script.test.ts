@@ -42,6 +42,9 @@ async function loadContentScriptHarness(): Promise<ContentScriptHarness> {
     sendMessage,
     getURL,
     lastError: undefined as { message?: string } | undefined,
+    onMessage: {
+      addListener: vi.fn(),
+    },
   };
 
   const windowPostMessage = vi.fn();

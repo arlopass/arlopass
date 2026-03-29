@@ -182,6 +182,7 @@ export function AppConnectWizard({
             }
             onSave={() => void handleSave()}
             saving={state.saving}
+            comingSoon
           />
         )}
       </div>

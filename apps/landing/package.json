@@ -2,6 +2,8 @@
   "name": "@arlopass/landing",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "description": "Astro-based marketing and documentation site for Arlopass",
   "type": "module",
   "scripts": {
     "dev": "astro dev",

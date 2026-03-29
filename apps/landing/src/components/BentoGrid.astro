@@ -2,7 +2,6 @@
 import SecureVault from "./previews/SecureVault.astro";
 import ModelPicker from "./previews/ModelPicker.astro";
 import PermissionsIllustration from "./previews/PermissionsIllustration.astro";
-import EnterpriseGovernance from "./previews/EnterpriseGovernance.astro";
 import PreviewCarousel from "./ui/PreviewCarousel.astro";
 ---
 
@@ -67,8 +66,8 @@ import PreviewCarousel from "./ui/PreviewCarousel.astro";
           <p
             class="mt-1.5 text-sm leading-relaxed text-[var(--ap-text-secondary)]"
           >
-            API credentials are stored in your OS keychain — never in the
-            browser, never on a server. AES-256-GCM encryption at rest.
+            API credentials are encrypted in a local vault on your device —
+            never in the browser, never on a server. AES-256-GCM encryption at rest.
           </p>
         </div>
       </div>
@@ -173,7 +172,7 @@ import PreviewCarousel from "./ui/PreviewCarousel.astro";
   </div>
 
   <!-- Row 2 -->
-  <div class="grid lg:grid-cols-3 border-x border-b border-[var(--ap-border)]">
+  <div class="grid lg:grid-cols-2 border-x border-b border-[var(--ap-border)]">
     <!-- Card 3: Providers -->
     <div class="relative border-r border-[var(--ap-border)]">
       <div class="flex h-full flex-col overflow-hidden">
@@ -218,7 +217,7 @@ import PreviewCarousel from "./ui/PreviewCarousel.astro";
     </div>
 
     <!-- Card 4: Permissions -->
-    <div class="relative border-r border-[var(--ap-border)]">
+    <div class="relative">
       <div class="flex h-full flex-col overflow-hidden">
         <div class="relative h-[280px] overflow-hidden">
           <canvas
@@ -255,49 +254,6 @@ import PreviewCarousel from "./ui/PreviewCarousel.astro";
           >
             Approve connections once, set rate limits, toggle providers — all
             from one place.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 5: Enterprise -->
-    <div class="relative">
-      <div class="flex h-full flex-col overflow-hidden">
-        <div class="relative h-[280px] overflow-hidden">
-          <canvas
-            data-mosaic-src="/img/bg5.webp"
-            class="absolute inset-0 w-full h-full"></canvas>
-          <div class="absolute inset-0 bg-[var(--ap-mosaic-overlay)]"></div>
-          <div class="relative z-10 h-full pt-5 px-5 bento-glass">
-            <div
-              class="h-full -mb-2 rounded-t-xl bg-[var(--ap-glass-bg)] pt-1 px-1 shadow-2xl ring shadow-black/80 ring-[var(--ap-glass-ring)] backdrop-blur-lg overflow-hidden"
-            >
-              <div
-                class="h-full rounded-t-lg bg-[var(--ap-bg-base)] p-4 overflow-hidden"
-              >
-                <PreviewCarousel class="h-full w-full">
-                  <EnterpriseGovernance />
-                </PreviewCarousel>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          class="border-t border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 px-8 py-6 sm:px-10"
-        >
-          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
-            >Enterprise</span
-          >
-          <p
-            class="mt-1.5 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)]"
-          >
-            Governance without the headaches
-          </p>
-          <p
-            class="mt-1.5 text-sm leading-relaxed text-[var(--ap-text-secondary)]"
-          >
-            Signed policy bundles, audit trails, and compliance-ready controls
-            for your organization.
           </p>
         </div>
       </div>

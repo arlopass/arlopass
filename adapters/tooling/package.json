@@ -1,6 +1,7 @@
 {
   "name": "@arlopass/adapter-tooling",
   "version": "0.1.0",
+  "description": "Utilities for adapter development, validation, and local testing",
   "license": "MIT",
   "type": "module",
   "publishConfig": {

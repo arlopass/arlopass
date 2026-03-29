@@ -1,6 +1,7 @@
 {
   "name": "@arlopass/telemetry",
   "version": "0.1.0",
+  "description": "Metrics, tracing helpers, and redaction utilities for Arlopass",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
