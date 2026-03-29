@@ -1,0 +1,100 @@
+---
+---
+
+<header
+  class="sticky top-0 z-50 bg-[var(--ap-bg-surface)] border-b border-[var(--ap-border)] h-14"
+>
+  <div class="h-full px-4 md:px-6 flex items-center gap-4">
+    {/* Logo */}
+    <a href="/" class="flex items-center shrink-0 no-underline" aria-label="Arlopass home">
+      <img src="/ArlopassLogo-Light.svg" alt="Arlopass" class="h-5 w-auto" id="docs-logo-light" />
+      <img src="/ArlopassLogo-Dark.svg" alt="Arlopass" class="h-5 w-auto hidden" id="docs-logo-dark" />
+    </a>
+
+    {/* Docs label */}
+    <a href="/docs" class="text-sm font-pixel tracking-[0.08em] text-brand no-underline">
+      Docs
+    </a>
+
+    {/* Spacer */}
+    <div class="flex-1"></div>
+
+    {/* Search pill (placeholder — Pagefind wired in Phase 5) */}
+    <button
+      class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--ap-bg-card)] border border-[var(--ap-border)] text-sm text-[var(--ap-text-tertiary)] cursor-pointer hover:border-[var(--ap-border-strong)] transition-colors"
+      id="docs-search-trigger"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <span>Search docs...</span>
+      <kbd class="ml-2 text-[10px] text-[var(--ap-text-tertiary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded px-1.5 py-0.5 font-mono">Ctrl+K</kbd>
+    </button>
+
+    {/* Back to site link */}
+    <a
+      href="/"
+      class="text-sm text-[var(--ap-text-secondary)] hover:text-[var(--ap-text-primary)] transition-colors no-underline hidden md:block"
+    >
+      &larr; arlopass.com
+    </a>
+
+    {/* Theme toggle */}
+    <button
+      id="docs-theme-toggle"
+      class="flex items-center justify-center w-8 h-8 rounded-md bg-transparent border border-[var(--ap-border)] text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-primary)] hover:border-[var(--ap-border-strong)] transition-all cursor-pointer"
+      aria-label="Toggle theme"
+    >
+      <svg class="docs-theme-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      <svg class="docs-theme-moon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
+    </button>
+
+    {/* Mobile sidebar toggle */}
+    <button
+      class="lg:hidden flex items-center justify-center w-8 h-8 rounded-md bg-transparent border border-[var(--ap-border)] text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-primary)] transition-colors cursor-pointer"
+      id="docs-sidebar-toggle"
+      aria-label="Toggle sidebar"
+      aria-expanded="false"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+  </div>
+</header>
+
+<script>
+  // Theme toggle (same pattern as landing Nav.astro)
+  const themeBtn = document.getElementById('docs-theme-toggle');
+  const logoLight = document.getElementById('docs-logo-light');
+  const logoDark = document.getElementById('docs-logo-dark');
+
+  function updateDocsThemeUI() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    themeBtn?.querySelector('.docs-theme-sun')?.classList.toggle('hidden', !isDark);
+    themeBtn?.querySelector('.docs-theme-moon')?.classList.toggle('hidden', isDark);
+    logoLight?.classList.toggle('hidden', isDark);
+    logoDark?.classList.toggle('hidden', !isDark);
+  }
+
+  const saved = localStorage.getItem('arlopass-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  updateDocsThemeUI();
+
+  themeBtn?.addEventListener('click', () => {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('arlopass-theme', next);
+    updateDocsThemeUI();
+  });
+
+  // Sidebar toggle (mobile)
+  const sidebarToggle = document.getElementById('docs-sidebar-toggle');
+  const sidebar = document.getElementById('docs-sidebar');
+  sidebarToggle?.addEventListener('click', () => {
+    const open = sidebar?.classList.toggle('!translate-x-0');
+    sidebar?.classList.toggle('-translate-x-full', !open);
+    sidebarToggle.setAttribute('aria-expanded', String(!!open));
+  });
+</script>

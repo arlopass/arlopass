@@ -1,0 +1,40 @@
+---
+import { DOCS_NAV } from '../../data/docs-nav';
+
+interface Props {
+  currentSlug: string;
+}
+
+const { currentSlug } = Astro.props;
+---
+
+<nav class="h-full overflow-y-auto py-4 px-3" aria-label="Documentation navigation">
+  {DOCS_NAV.map((cat, catIdx) => (
+    <div class:list={[catIdx > 0 && 'mt-6']}>
+      <p class="text-xs font-pixel tracking-[0.08em] text-[var(--ap-text-tertiary)] uppercase mb-2 px-2">
+        {cat.label}
+      </p>
+      <ul class="list-none space-y-0.5">
+        {cat.items.map((item) => {
+          const isActive = currentSlug === item.slug;
+          return (
+            <li>
+              <a
+                href={`/docs/${item.slug}`}
+                class:list={[
+                  'block text-sm py-1.5 px-2 rounded-r-sm no-underline transition-colors duration-300',
+                  isActive
+                    ? 'text-[var(--ap-text-primary)] font-medium border-l-2 border-brand bg-[var(--ap-brand-subtle)] -ml-px'
+                    : 'text-[var(--ap-text-secondary)] hover:bg-[var(--ap-bg-card)] hover:text-[var(--ap-text-primary)] border-l-2 border-transparent -ml-px',
+                ]}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  ))}
+</nav>
