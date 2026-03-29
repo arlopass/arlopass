@@ -2,9 +2,24 @@ import { MantineProvider, createTheme } from "@mantine/core";
 import { ArlopassProvider } from "@arlopass/react";
 import { ChatSidebar } from "./ChatSidebar";
 
-// Mantine CSS is imported HERE — inside the lazy chunk.
-// It only loads when the user actually opens the chat panel.
-import "@mantine/core/styles.css";
+// Import ONLY the component CSS files we actually use (layer versions).
+// These use @layer mantine, so they cannot override the page's own styles.
+import "@mantine/core/styles/global.layer.css";
+import "@mantine/core/styles/default-css-variables.layer.css";
+import "@mantine/core/styles/UnstyledButton.layer.css";
+import "@mantine/core/styles/Button.layer.css";
+import "@mantine/core/styles/ActionIcon.layer.css";
+import "@mantine/core/styles/Text.layer.css";
+import "@mantine/core/styles/Input.layer.css";
+import "@mantine/core/styles/ScrollArea.layer.css";
+import "@mantine/core/styles/Menu.layer.css";
+import "@mantine/core/styles/Popover.layer.css";
+import "@mantine/core/styles/Pill.layer.css";
+import "@mantine/core/styles/Tooltip.layer.css";
+import "@mantine/core/styles/ModalBase.layer.css";
+import "@mantine/core/styles/Overlay.layer.css";
+import "@mantine/core/styles/Loader.layer.css";
+import "@mantine/core/styles/CloseButton.layer.css";
 
 const theme = createTheme({
   primaryColor: "brand",
