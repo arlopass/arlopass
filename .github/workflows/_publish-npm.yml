@@ -18,7 +18,7 @@ on:
         type: boolean
     secrets:
       NPM_TOKEN:
-        required: true
+        required: false
 
 permissions:
   contents: read
@@ -68,6 +68,30 @@ jobs:
           for dir in ${{ steps.packages.outputs.dirs }}; do
             PKG_NAME=$(node -p "require('./${dir}/package.json').name")
             PKG_VERSION="${{ inputs.version }}"
+
+            if [ -n "${NODE_AUTH_TOKEN:-}" ]; then
+              echo "AUTH mode: npm token"
+            else
+              echo "AUTH mode: OIDC trusted publishing"
+            fi
+
+            # Force publish version to match the release tag version without committing changes.
+            (cd "${dir}" && npm pkg set version="${PKG_VERSION}" >/dev/null)
+
+            # Strip compiled test artifacts from dist to keep release tarballs clean.
+            if [ -d "${dir}/dist" ]; then
+              find "${dir}/dist" -type d -name "__tests__" -prune -exec rm -rf {} +
+              find "${dir}/dist" -type f \( \
+                -name "*.test.js" -o \
+                -name "*.test.js.map" -o \
+                -name "*.test.d.ts" -o \
+                -name "*.test.d.ts.map" -o \
+                -name "*.spec.js" -o \
+                -name "*.spec.js.map" -o \
+                -name "*.spec.d.ts" -o \
+                -name "*.spec.d.ts.map" \
+              \) -delete
+            fi
 
             # Check if already published (idempotency)
             if npm view "${PKG_NAME}@${PKG_VERSION}" version 2>/dev/null; then

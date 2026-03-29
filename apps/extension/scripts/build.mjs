@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile, access } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,7 +42,9 @@ const sharedBuildOptions = {
   target: [isFirefox ? "firefox109" : "chrome120"],
   platform: "browser",
   tsconfig: path.join(packageRoot, "tsconfig.json"),
-  sourcemap: true,
+  // Production builds should ship lean artifacts. Keep sourcemaps only for watch mode.
+  sourcemap: isWatchMode,
+  minify: !isWatchMode,
   logLevel: "info",
   legalComments: "none",
   jsx: "automatic",
@@ -266,10 +268,13 @@ async function syncLegacyDistRuntimeAssets() {
   ];
 
   for (const asset of runtimeAssets) {
-    await copyFile(
-      path.join(distRoot, asset),
-      path.join(legacyDistRoot, asset),
-    );
+    const source = path.join(distRoot, asset);
+    try {
+      await access(source);
+    } catch {
+      continue;
+    }
+    await copyFile(source, path.join(legacyDistRoot, asset));
   }
 }
 
