@@ -1,0 +1,282 @@
+---
+title: "Streaming responses"
+description: "Add real-time streaming tokens, typing indicators, and stop functionality to your AI chat."
+category: "Tutorials"
+order: 2
+lastUpdated: 2026-03-29
+keywords: ["streaming", "real-time", "tokens", "tutorial"]
+schema: "HowTo"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+import StepList from '../../../components/docs/StepList.astro';
+
+Add real-time streaming to see AI responses as they're generated.
+
+### What you'll build
+
+A chat interface that shows AI responses word-by-word as they arrive, with a streaming indicator and the ability to stop generation mid-stream.
+
+<Callout type="info" title="Prerequisites">
+  This tutorial builds on the [First Chat App](/docs/tutorials/first-chat-app) tutorial. Complete that first if you haven't already.
+</Callout>
+
+<StepList steps={[
+  { title: "Use stream() instead of send()", body: "stream() delivers tokens in real time, while send() waits for the complete response." },
+  { title: "Show streamingContent", body: "Render the partial text so the user sees the AI typing in real time." },
+  { title: "Track streaming state", body: "Use isStreaming to disable inputs and show loading indicators." },
+  { title: "Add a stop button", body: "Call stop() to abort the current stream." },
+  { title: "Handle the onDelta callback", body: "Subscribe to stream events for custom token processing." },
+]} />
+
+### Step 1 — Use stream() instead of send()
+
+The useConversation hook provides two methods for sending messages: stream() delivers tokens in real time, while send() waits for the complete response. Use stream() for interactive chat.
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, isStreaming } = useConversation();
+
+  async function handleSend(text: string) {
+    // stream() sends the message and streams the response token-by-token.
+    // The response is automatically appended to the messages array when done.
+    await stream(text);
+  }
+
+  // send() waits for the full response before updating messages.
+  // Use it when you don't need real-time output.
+  // await send(text);
+}
+```
+
+### Step 2 — Show streamingContent
+
+While a response is being generated, streamingContent holds the partial text. Render it below the completed messages so the user sees the AI "typing" in real time.
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, streamingContent, isStreaming } = useConversation();
+
+  return (
+    <div>
+      {/* Completed messages */}
+      {messages.map((msg) => (
+        <div key={msg.id}>
+          <strong>{msg.role}:</strong> {msg.content}
+        </div>
+      ))}
+
+      {/* Partial response while streaming */}
+      {isStreaming && streamingContent && (
+        <div style={{ opacity: 0.7 }}>
+          <strong>assistant:</strong> {streamingContent}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Step 3 — Track streaming state
+
+isStreaming is true while a response is being generated. Use it to disable inputs and show loading indicators.
+
+```tsx title="ChatInput.tsx"
+function ChatInput({ onSend }: { onSend: (text: string) => void }) {
+  const { isStreaming } = useConversation();
+
+  return (
+    <div>
+      <input placeholder="Type a message..." disabled={isStreaming} />
+      <button disabled={isStreaming}>
+        {isStreaming ? "Generating..." : "Send"}
+      </button>
+    </div>
+  );
+}
+```
+
+### Step 4 — Add a stop button
+
+Call stop() to abort the current stream. The partial response is preserved in the messages array — nothing is lost.
+
+```tsx title="ChatControls.tsx"
+import { useConversation } from "@arlopass/react";
+
+function ChatControls() {
+  const { isStreaming, stop } = useConversation();
+
+  return (
+    <div>
+      {isStreaming && (
+        <button onClick={() => stop()}>
+          ⏹ Stop generating
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+### Step 5 — Handle the onDelta callback
+
+For custom token processing (word counting, syntax highlighting, etc.), subscribe to "stream" events. Each delta gives you the latest chunk of text.
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+import { useRef } from "react";
+
+function Chat() {
+  const wordCount = useRef(0);
+
+  const { messages, stream, subscribe } = useConversation();
+
+  // Subscribe to stream events for custom processing
+  function handleSend(text: string) {
+    wordCount.current = 0;
+
+    // Subscribe to stream deltas for this response
+    const unsub = subscribe("stream", (delta: string) => {
+      // Count words as they arrive
+      const words = delta.split(/\s+/).filter(Boolean);
+      wordCount.current += words.length;
+      console.log("Words so far:", wordCount.current);
+    });
+
+    stream(text).finally(unsub);
+  }
+
+  return /* your UI */;
+}
+```
+
+### Complete example
+
+Here's a full streaming chat app with a send/stop toggle button:
+
+```tsx title="App.tsx"
+import { useState } from "react";
+import {
+  ArlopassProvider,
+  ChatReadyGate,
+  useConversation,
+} from "@arlopass/react";
+
+function Chat() {
+  const {
+    messages,
+    streamingContent,
+    isStreaming,
+    stream,
+    stop,
+  } = useConversation({
+    systemPrompt: "You are a helpful assistant.",
+  });
+  const [input, setInput] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isStreaming) return;
+    const text = input;
+    setInput("");
+    await stream(text);
+  }
+
+  return (
+    <div style={{ maxWidth: 600, margin: "0 auto" }}>
+      <div style={{ minHeight: 300, padding: 16 }}>
+        {messages.map((msg) => (
+          <div key={msg.id} style={{ padding: "8px 0" }}>
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
+            {msg.content}
+          </div>
+        ))}
+        {isStreaming && streamingContent && (
+          <div style={{ padding: "8px 0", opacity: 0.7, fontStyle: "italic" }}>
+            <strong>AI:</strong> {streamingContent}
+          </div>
+        )}
+      </div>
+      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          disabled={isStreaming}
+          style={{ flex: 1, padding: 8 }}
+        />
+        {isStreaming ? (
+          <button type="button" onClick={() => stop()}>
+            Stop
+          </button>
+        ) : (
+          <button type="submit" disabled={!input.trim()}>
+            Send
+          </button>
+        )}
+      </form>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ArlopassProvider appId="streaming-demo">
+      <ChatReadyGate
+        connecting={<p>Connecting...</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
+        error={(err) => <p>Error: {err.message}</p>}
+      >
+        <Chat />
+      </ChatReadyGate>
+    </ArlopassProvider>
+  );
+}
+```
+
+### React SDK vs Web SDK
+
+The React SDK manages streaming state automatically. Here's the comparison:
+
+#### React SDK
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+const { messages, stream, streamingContent, isStreaming, stop } =
+  useConversation();
+
+// Stream a message — UI updates automatically
+await stream("Explain React hooks");
+
+// Stop mid-stream
+stop();
+```
+
+#### Web SDK
+
+```typescript title="main.ts"
+import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({ transport: window.arlopass });
+await client.connect({ appId: "streaming-demo" });
+
+const convo = new ConversationManager({ client });
+
+// Stream token-by-token
+for await (const event of convo.stream("Explain React hooks")) {
+  if (event.type === "delta") {
+    document.getElementById("output")!.textContent += event.content;
+  }
+}
+
+// To abort: call convo.stop()
+```
+
+<Callout type="tip" title="What's next">
+  Build a [provider selection UI](/docs/tutorials/provider-selection) or add [tool calling](/docs/tutorials/adding-tool-calling) to your chat.
+</Callout>

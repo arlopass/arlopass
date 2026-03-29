@@ -1,0 +1,290 @@
+---
+title: "Build your first chat app"
+description: "Build a complete AI chat interface with streaming responses using the Arlopass SDK."
+category: "Tutorials"
+order: 1
+lastUpdated: 2026-03-29
+keywords: ["tutorial", "chat app", "streaming", "react"]
+schema: "HowTo"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+import StepList from '../../../components/docs/StepList.astro';
+
+Create a complete AI chat interface with React in 15 minutes.
+
+### What you'll build
+
+A fully functional chat UI with message history, real-time streaming responses, a text input, and a stop button — all powered by any AI provider through the Arlopass extension.
+
+<Callout type="info" title="Prerequisites">
+  Make sure you've installed the React SDK and the Arlopass browser extension. See the [React Quickstart](/docs/getting-started/quickstart-react) if you haven't done that yet.
+</Callout>
+
+<StepList steps={[
+  { title: "Set up the provider", body: "Wrap your app in ArlopassProvider to connect to the browser extension." },
+  { title: "Add the chat ready gate", body: "ChatReadyGate renders fallback UIs for connecting, missing-provider, and error states." },
+  { title: "Create the chat component", body: "The useConversation hook manages messages, streaming, and tool calls." },
+  { title: "Render messages", body: "Map over the messages array to display the conversation." },
+  { title: "Add streaming indicator", body: "Show the AI's partial response as it types in real time." },
+  { title: "Add input form", body: "Create a controlled input and call stream() on submit." },
+  { title: "Add stop button", body: "Call stop() to abort the current stream." },
+]} />
+
+### Step 1 — Set up the provider
+
+Wrap your app in ArlopassProvider. This connects to the browser extension and manages the AI client lifecycle. You can optionally set a default provider and model.
+
+```tsx title="App.tsx"
+import { ArlopassProvider } from "@arlopass/react";
+
+function App() {
+  return (
+    <ArlopassProvider appId="my-chat-app" defaultProvider="ollama" defaultModel="llama3">
+      <ChatApp />
+    </ArlopassProvider>
+  );
+}
+```
+
+### Step 2 — Add the chat ready gate
+
+ChatReadyGate renders fallback UIs for connecting, missing-provider, and error states. Your chat component only mounts once everything is ready.
+
+```tsx title="ChatApp.tsx"
+import { ChatReadyGate } from "@arlopass/react";
+
+function ChatApp() {
+  return (
+    <ChatReadyGate
+      connecting={<p>Connecting to Arlopass extension...</p>}
+      noProvider={<p>Please select a provider in the extension.</p>}
+      error={(err) => <p>Something went wrong: {err.message}</p>}
+    >
+      <Chat />
+    </ChatReadyGate>
+  );
+}
+```
+
+### Step 3 — Create the chat component
+
+The useConversation hook manages messages, streaming, and tool calls. Pass a systemPrompt to set the AI's behaviour.
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const {
+    messages,
+    streamingContent,
+    isStreaming,
+    stream,
+    stop,
+  } = useConversation({
+    systemPrompt: "You are a helpful assistant. Be concise.",
+  });
+
+  // We'll build the UI in the next steps
+  return <div>Chat component</div>;
+}
+```
+
+### Step 4 — Render messages
+
+Map over the messages array. Each message has an id, role ("user" or "assistant"), and content string.
+
+```tsx title="Chat.tsx (JSX)"
+{messages.map((msg) => (
+  <div key={msg.id} style={{ padding: "8px 0" }}>
+    <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
+    {msg.content}
+  </div>
+))}
+```
+
+### Step 5 — Add streaming indicator
+
+While isStreaming is true, streamingContent holds the partial response text. Render it below your message list so the user sees the AI typing in real time.
+
+```tsx title="Chat.tsx (JSX)"
+{isStreaming && streamingContent && (
+  <div style={{ padding: "8px 0", opacity: 0.7 }}>
+    <strong>AI:</strong> {streamingContent}
+  </div>
+)}
+```
+
+### Step 6 — Add input form
+
+Create a controlled input and call stream() on submit. Clear the input immediately so the user can keep typing. Disable the input while streaming.
+
+```tsx title="Chat.tsx"
+const [input, setInput] = useState("");
+
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  if (!input.trim() || isStreaming) return;
+  const text = input;
+  setInput("");
+  await stream(text);
+}
+
+// In your JSX:
+<form onSubmit={handleSubmit}>
+  <input
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    placeholder="Type a message..."
+    disabled={isStreaming}
+  />
+  <button type="submit" disabled={isStreaming || !input.trim()}>
+    Send
+  </button>
+</form>
+```
+
+### Step 7 — Add stop button
+
+Call stop() to abort the current stream. The partial response is kept in the messages array.
+
+```tsx title="Chat.tsx (JSX)"
+{isStreaming && (
+  <button onClick={() => stop()}>
+    Stop generating
+  </button>
+)}
+```
+
+### Complete example
+
+Here's the full working app — copy it into your project and you're ready to chat:
+
+```tsx title="App.tsx"
+import { useState } from "react";
+import {
+  ArlopassProvider,
+  ChatReadyGate,
+  useConversation,
+} from "@arlopass/react";
+
+function Chat() {
+  const {
+    messages,
+    streamingContent,
+    isStreaming,
+    stream,
+    stop,
+  } = useConversation({
+    systemPrompt: "You are a helpful assistant. Be concise.",
+  });
+  const [input, setInput] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isStreaming) return;
+    const text = input;
+    setInput("");
+    await stream(text);
+  }
+
+  return (
+    <div style={{ maxWidth: 600, margin: "0 auto" }}>
+      <div style={{ minHeight: 300, padding: 16 }}>
+        {messages.map((msg) => (
+          <div key={msg.id} style={{ padding: "8px 0" }}>
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
+            {msg.content}
+          </div>
+        ))}
+        {isStreaming && streamingContent && (
+          <div style={{ padding: "8px 0", opacity: 0.7 }}>
+            <strong>AI:</strong> {streamingContent}
+          </div>
+        )}
+      </div>
+      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          disabled={isStreaming}
+          style={{ flex: 1, padding: 8 }}
+        />
+        <button type="submit" disabled={isStreaming || !input.trim()}>
+          Send
+        </button>
+        {isStreaming && (
+          <button type="button" onClick={() => stop()}>
+            Stop
+          </button>
+        )}
+      </form>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ArlopassProvider appId="my-chat-app">
+      <ChatReadyGate
+        connecting={<p>Connecting...</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
+        error={(err) => <p>Error: {err.message}</p>}
+      >
+        <Chat />
+      </ChatReadyGate>
+    </ArlopassProvider>
+  );
+}
+```
+
+### React SDK vs Web SDK
+
+The React SDK wraps the Web SDK in hooks and components. Here's the same chat in both approaches:
+
+#### React SDK
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, streamingContent, isStreaming, stop } =
+    useConversation({ systemPrompt: "You are a helpful assistant." });
+
+  return (
+    <div>
+      {messages.map((msg) => (
+        <div key={msg.id}>{msg.role}: {msg.content}</div>
+      ))}
+      {isStreaming && <div>AI: {streamingContent}</div>}
+      <button onClick={() => stream("Hello!")}>Send</button>
+      {isStreaming && <button onClick={stop}>Stop</button>}
+    </div>
+  );
+}
+```
+
+#### Web SDK
+
+```typescript title="main.ts"
+import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({ transport: window.arlopass });
+await client.connect({ appId: "my-chat-app" });
+
+const convo = new ConversationManager({
+  client,
+  systemPrompt: "You are a helpful assistant.",
+});
+
+for await (const event of convo.stream("Hello!")) {
+  if (event.type === "delta") {
+    process.stdout.write(event.content);
+  }
+}
+```
+
+<Callout type="tip" title="What's next">
+  Learn how to [customise streaming behaviour](/docs/tutorials/streaming-responses), build a [provider selection UI](/docs/tutorials/provider-selection), or [add tool calling](/docs/tutorials/adding-tool-calling).
+</Callout>
