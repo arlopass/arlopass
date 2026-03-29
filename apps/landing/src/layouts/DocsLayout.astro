@@ -1,14 +1,15 @@
 ---
-import type { MarkdownHeading } from 'astro';
-import '../styles/global.css';
-import DocsHeader from '../components/docs/DocsHeader.astro';
-import DocsSidebar from '../components/docs/DocsSidebar.astro';
-import TableOfContents from '../components/docs/TableOfContents.astro';
-import Breadcrumb from '../components/docs/Breadcrumb.astro';
-import PrevNextNav from '../components/docs/PrevNextNav.astro';
-import CopyAsMarkdown from '../components/docs/CopyAsMarkdown.astro';
-import Footer from '../components/Footer.astro';
-import { getCategory, getPrevNext } from '../data/docs-nav';
+import type { MarkdownHeading } from "astro";
+import "../styles/global.css";
+import ChatSidebarIsland from '../components/islands/ChatSidebarIsland';
+import DocsHeader from "../components/docs/DocsHeader.astro";
+import DocsSidebar from "../components/docs/DocsSidebar.astro";
+import TableOfContents from "../components/docs/TableOfContents.astro";
+import Breadcrumb from "../components/docs/Breadcrumb.astro";
+import PrevNextNav from "../components/docs/PrevNextNav.astro";
+import CopyAsMarkdown from "../components/docs/CopyAsMarkdown.astro";
+import Footer from "../components/Footer.astro";
+import { getCategory, getPrevNext } from "../data/docs-nav";
 
 interface Props {
   frontmatter: {
@@ -33,24 +34,56 @@ const lastModified = frontmatter.lastUpdated.toISOString();
 
 // JSON-LD structured data
 const jsonLd: Record<string, unknown> = {
-  '@context': 'https://schema.org',
-  '@type': frontmatter.schema || 'TechArticle',
+  "@context": "https://schema.org",
+  "@type": frontmatter.schema || "TechArticle",
   headline: frontmatter.title,
   description: frontmatter.description,
   dateModified: lastModified,
   url: canonicalUrl,
-  author: { '@type': 'Organization', name: 'Arlopass', url: 'https://arlopass.com' },
-  publisher: { '@type': 'Organization', name: 'Arlopass', url: 'https://arlopass.com' },
+  author: {
+    "@type": "Organization",
+    name: "Arlopass",
+    url: "https://arlopass.com",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "Arlopass",
+    url: "https://arlopass.com",
+  },
 };
 
 const breadcrumbLd = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://arlopass.com' },
-    { '@type': 'ListItem', position: 2, name: 'Docs', item: 'https://arlopass.com/docs' },
-    ...(category ? [{ '@type': 'ListItem', position: 3, name: category.label, item: canonicalUrl }] : []),
-    { '@type': 'ListItem', position: category ? 4 : 3, name: frontmatter.title, item: canonicalUrl },
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: "https://arlopass.com",
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Docs",
+      item: "https://arlopass.com/docs",
+    },
+    ...(category
+      ? [
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: category.label,
+            item: canonicalUrl,
+          },
+        ]
+      : []),
+    {
+      "@type": "ListItem",
+      position: category ? 4 : 3,
+      name: frontmatter.title,
+      item: canonicalUrl,
+    },
   ],
 };
 ---
@@ -90,11 +123,16 @@ const breadcrumbLd = {
     <meta name="twitter:site" content="@arlopass" />
 
     {/* AI crawlers */}
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+    <meta
+      name="robots"
+      content="index, follow, max-snippet:-1, max-image-preview:large"
+    />
     <meta name="last-modified" content={lastModified} />
-    {frontmatter.keywords && frontmatter.keywords.length > 0 && (
-      <meta name="keywords" content={frontmatter.keywords.join(', ')} />
-    )}
+    {
+      frontmatter.keywords && frontmatter.keywords.length > 0 && (
+        <meta name="keywords" content={frontmatter.keywords.join(", ")} />
+      )
+    }
 
     <meta name="author" content="Arlopass" />
     <meta name="theme-color" content="#1C1917" />
@@ -102,11 +140,16 @@ const breadcrumbLd = {
 
     {/* JSON-LD */}
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(breadcrumbLd)}
+    />
   </head>
 
   <body class="bg-[var(--ap-bg-base)] text-[var(--ap-text-body)]">
-    <div class="mx-auto max-w-7xl border-x border-[var(--ap-border)] min-h-screen flex flex-col">
+    <div
+      class="mx-auto max-w-7xl border-x border-[var(--ap-border)] min-h-screen flex flex-col"
+    >
       <DocsHeader />
 
       <div class="flex flex-1 min-h-0">
@@ -122,19 +165,24 @@ const breadcrumbLd = {
         {/* Main content */}
         <main class="flex-1 min-w-0 px-4 md:px-8 lg:px-12 py-8">
           <article class="max-w-[65ch] mx-auto">
-            <Breadcrumb category={category?.label || frontmatter.category} title={frontmatter.title} />
+            <Breadcrumb
+              category={category?.label || frontmatter.category}
+              title={frontmatter.title}
+            />
 
             {/* Page title + copy button */}
             <div class="flex items-start justify-between gap-4 mb-8">
-              <h1 class="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-[var(--ap-text-primary)]">
+              <h1
+                class="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-[var(--ap-text-primary)]"
+              >
                 {frontmatter.title}
               </h1>
               {rawContent && <CopyAsMarkdown rawContent={rawContent} />}
             </div>
 
             {/* MDX content rendered here */}
-            <div class="
-              prose-docs
+            <div
+              class="prose-docs
               [&>p]:text-base [&>p]:leading-relaxed [&>p]:text-[var(--ap-text-body)] [&>p]:mb-4
               [&>h2]:text-[clamp(1.25rem,2.5vw,1.75rem)] [&>h2]:font-bold [&>h2]:tracking-tight [&>h2]:text-[var(--ap-text-primary)] [&>h2]:mt-12 [&>h2]:mb-4
               [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:tracking-tight [&>h3]:text-[var(--ap-text-primary)] [&>h3]:mt-8 [&>h3]:mb-3
@@ -148,8 +196,8 @@ const breadcrumbLd = {
               [&_strong]:text-[var(--ap-text-primary)] [&_strong]:font-semibold
               [&_table]:w-full [&_table]:text-sm [&_table]:border-collapse [&_table]:my-6
               [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-[var(--ap-text-tertiary)] [&_th]:uppercase [&_th]:tracking-wide [&_th]:bg-[var(--ap-bg-surface)] [&_th]:border-b [&_th]:border-[var(--ap-border)]
-              [&_td]:px-4 [&_td]:py-3 [&_td]:border-b [&_td]:border-[var(--ap-border)] [&_td]:text-[var(--ap-text-body)]
-            ">
+              [&_td]:px-4 [&_td]:py-3 [&_td]:border-b [&_td]:border-[var(--ap-border)] [&_td]:text-[var(--ap-text-body)]"
+            >
               <slot />
             </div>
 
@@ -164,6 +212,7 @@ const breadcrumbLd = {
       </div>
 
       <Footer />
+      <ChatSidebarIsland client:idle />
     </div>
   </body>
 </html>

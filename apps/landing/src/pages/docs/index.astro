@@ -1,29 +1,31 @@
 ---
-import '../../styles/global.css';
-import DocsHeader from '../../components/docs/DocsHeader.astro';
-import DocsSidebar from '../../components/docs/DocsSidebar.astro';
-import Footer from '../../components/Footer.astro';
-import { DOCS_NAV, ALL_DOCS } from '../../data/docs-nav';
+import "../../styles/global.css";
+import ChatSidebarIsland from '../../components/islands/ChatSidebarIsland';
+import DocsHeader from "../../components/docs/DocsHeader.astro";
+import DocsSidebar from "../../components/docs/DocsSidebar.astro";
+import Footer from "../../components/Footer.astro";
+import { DOCS_NAV, ALL_DOCS } from "../../data/docs-nav";
 
-const title = 'Arlopass Documentation';
-const description = 'Guides, tutorials, and API reference for the Arlopass AI wallet SDK.';
-const canonicalUrl = 'https://arlopass.com/docs';
+const title = "Arlopass Documentation";
+const description =
+  "Guides, tutorials, and API reference for the Arlopass AI wallet SDK.";
+const canonicalUrl = "https://arlopass.com/docs";
 
 const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
   name: title,
   description,
   url: canonicalUrl,
-  publisher: { '@type': 'Organization', name: 'Arlopass' },
+  publisher: { "@type": "Organization", name: "Arlopass" },
 };
 
 const itemListLd = {
-  '@context': 'https://schema.org',
-  '@type': 'ItemList',
+  "@context": "https://schema.org",
+  "@type": "ItemList",
   numberOfItems: ALL_DOCS.length,
   itemListElement: ALL_DOCS.map((item, i) => ({
-    '@type': 'ListItem',
+    "@type": "ListItem",
     position: i + 1,
     name: item.label,
     url: `https://arlopass.com/docs/${item.slug}`,
@@ -62,7 +64,10 @@ const itemListLd = {
   </head>
 
   <body class="bg-[var(--ap-bg-base)] text-[var(--ap-text-body)]">
-    <div class="mx-auto max-w-7xl border-x border-[var(--ap-border)] min-h-screen flex flex-col" data-pagefind-ignore>
+    <div
+      class="mx-auto max-w-7xl border-x border-[var(--ap-border)] min-h-screen flex flex-col"
+      data-pagefind-ignore
+    >
       <DocsHeader />
 
       <div class="flex flex-1 min-h-0">
@@ -76,36 +81,50 @@ const itemListLd = {
 
         <main class="flex-1 min-w-0 px-4 md:px-8 lg:px-12 py-8">
           <div class="max-w-3xl mx-auto">
-            <span class="block text-sm font-pixel tracking-[0.08em] text-brand">Documentation</span>
-            <h1 class="mt-2 text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-[var(--ap-text-primary)]">
+            <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+              >Documentation</span
+            >
+            <h1
+              class="mt-2 text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-[var(--ap-text-primary)]"
+            >
               Arlopass Docs
             </h1>
-            <p class="mt-3 text-base leading-relaxed text-[var(--ap-text-secondary)] max-w-[520px]">
-              Everything you need to integrate Arlopass into your web app — from quickstart to API reference.
+            <p
+              class="mt-3 text-base leading-relaxed text-[var(--ap-text-secondary)] max-w-[520px]"
+            >
+              Everything you need to integrate Arlopass into your web app — from
+              quickstart to API reference.
             </p>
 
             <div class="mt-12 space-y-10">
-              {DOCS_NAV.map((cat) => (
-                <section>
-                  <h2 class="text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-4">{cat.label}</h2>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {cat.items.map((item) => (
-                      <a
-                        href={`/docs/${item.slug}`}
-                        class="block p-4 rounded-md bg-[var(--ap-bg-card)] border border-[var(--ap-border)] hover:bg-[var(--ap-bg-surface)] hover:border-[var(--ap-border-strong)] transition-colors duration-300 no-underline"
-                      >
-                        <span class="text-sm font-medium text-[var(--ap-text-primary)]">{item.label}</span>
-                      </a>
-                    ))}
-                  </div>
-                </section>
-              ))}
+              {
+                DOCS_NAV.map((cat) => (
+                  <section>
+                    <h2 class="text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-4">
+                      {cat.label}
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {cat.items.map((item) => (
+                        <a
+                          href={`/docs/${item.slug}`}
+                          class="block p-4 rounded-md bg-[var(--ap-bg-card)] border border-[var(--ap-border)] hover:bg-[var(--ap-bg-surface)] hover:border-[var(--ap-border-strong)] transition-colors duration-300 no-underline"
+                        >
+                          <span class="text-sm font-medium text-[var(--ap-text-primary)]">
+                            {item.label}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                ))
+              }
             </div>
           </div>
         </main>
       </div>
 
       <Footer />
+      <ChatSidebarIsland client:idle />
     </div>
   </body>
 </html>
