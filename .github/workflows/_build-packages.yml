@@ -10,7 +10,7 @@ on:
       node-version:
         description: "Node.js version"
         required: false
-        default: "20"
+        default: "22"
         type: string
 
 permissions:
