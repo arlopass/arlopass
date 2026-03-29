@@ -140,8 +140,28 @@ jobs:
             IFS=',' read -ra targets <<< "${{ needs.resolve-scope.outputs.targets }}"
             for target in "${targets[@]}"; do
               pnpm -r --filter "${target}..." --if-present run build
-              pnpm -r --filter "${target}..." --if-present run test
             done
+
+            # Run Vitest from workspace root with scoped projects to avoid
+            # per-package cwd resolution issues for vitest.workspace.ts entries.
+            declare -A seen=()
+            project_args=()
+            for target in "${targets[@]}"; do
+              while IFS= read -r abs_path; do
+                [ -n "${abs_path}" ] || continue
+                rel_path="${abs_path#${GITHUB_WORKSPACE}/}"
+                if [ -n "${rel_path}" ] && [ -z "${seen[${rel_path}]+x}" ]; then
+                  seen["${rel_path}"]=1
+                  project_args+=("--project" "${rel_path}")
+                fi
+              done < <(pnpm -r --filter "${target}..." exec pwd | sed '/^$/d')
+            done
+
+            if [ ${#project_args[@]} -eq 0 ]; then
+              echo "::warning::No scoped Vitest projects resolved; skipping tests"
+            else
+              pnpm exec vitest run --passWithNoTests "${project_args[@]}"
+            fi
           fi
 
   build-verify:
