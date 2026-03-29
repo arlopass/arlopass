@@ -25,3 +25,8 @@ User-agent: Bingbot
 Allow: /
 
 Sitemap: https://arlopass.com/sitemap.xml
+
+# AI context files
+# See https://llmstxt.org/ for the llms.txt specification
+# llms.txt: https://arlopass.com/llms.txt
+# llms-full.txt: https://arlopass.com/llms-full.txt
