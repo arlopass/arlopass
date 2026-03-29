@@ -1,0 +1,122 @@
+---
+title: "Quickstart: Web SDK"
+description: "Get started with the Arlopass Web SDK in 5 steps — connect, list providers, select a model, and send your first message."
+category: "Getting Started"
+order: 3
+lastUpdated: 2026-03-29
+keywords: ["quickstart", "web sdk", "typescript", "getting started"]
+schema: "HowTo"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+import StepList from '../../../components/docs/StepList.astro';
+
+Send your first AI message in 5 minutes.
+
+<Callout type="tip" title="Using React?">
+  Jump to the [React Quickstart](/docs/getting-started/quickstart-react) instead — it has hooks and components that handle connection state for you.
+</Callout>
+
+<StepList steps={[
+  { title: "Install the Web SDK", body: "Install the package from npm." },
+  { title: "Create a client", body: "The client needs a transport — the bridge to the browser extension." },
+  { title: "Connect to the extension", body: "Call connect() with your app ID to handshake with the extension." },
+  { title: "Select a provider", body: "List the providers the user has configured, then select one." },
+  { title: "Send a message", body: "Send a chat completion request. The response comes from whatever model the user chose." },
+]} />
+
+### Step 1 — Install the Web SDK
+
+```bash title="Terminal"
+npm install @arlopass/web-sdk
+```
+
+### Step 2 — Create a client
+
+The client needs a transport — the bridge to the browser extension. The extension injects it at `window.arlopass`.
+
+```typescript title="client.ts"
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({
+  transport: window.arlopass,
+});
+```
+
+### Step 3 — Connect to the extension
+
+Call `connect()` with your app ID. This handshakes with the extension and verifies the user has it installed.
+
+```typescript title="client.ts"
+await client.connect({ appId: "my-app" });
+console.log("Connected to Arlopass extension");
+```
+
+### Step 4 — Select a provider
+
+List the providers the user has configured, then select one. The extension handles all credential management.
+
+```typescript title="client.ts"
+const providers = await client.listProviders();
+console.log("Available providers:", providers);
+
+// Select the first available provider
+await client.selectProvider(providers[0].id);
+```
+
+### Step 5 — Send a message
+
+Send a chat completion request. The response comes back from whatever model the user chose.
+
+```typescript title="client.ts"
+const response = await client.chat.send({
+  messages: [
+    { role: "system", content: "You are a helpful assistant." },
+    { role: "user", content: "Hello! What can you do?" },
+  ],
+});
+
+console.log(response.content);
+```
+
+<Callout type="info" title="Your keys stay in the vault">
+  When you add a provider through the extension, your API keys are encrypted and stored on the bridge using AES-256-GCM. The SDK never sees your credentials — the bridge attaches them to requests server-side. See the [Security Model](/docs/concepts/security-model) for details.
+</Callout>
+
+### Complete example
+
+Here's everything together in a single file you can run:
+
+```typescript title="main.ts"
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+async function main() {
+  // 1. Create the client
+  const client = new ArlopassClient({
+    transport: window.arlopass,
+  });
+
+  // 2. Connect to the extension
+  await client.connect({ appId: "my-app" });
+
+  // 3. Pick a provider
+  const providers = await client.listProviders();
+  await client.selectProvider(providers[0].id);
+
+  // 4. Send a message
+  const response = await client.chat.send({
+    messages: [
+      { role: "system", content: "You are a helpful assistant." },
+      { role: "user", content: "Explain Arlopass in one sentence." },
+    ],
+  });
+
+  console.log(response.content);
+}
+
+main();
+```
+
+<Callout type="info" title="Next steps">
+  Now that you're sending messages, explore [streaming responses](/docs/tutorials/streaming-responses), [conversation management](/docs/guides/conversation-management), and [tool calling](/docs/guides/tool-calling).
+</Callout>

@@ -1,0 +1,236 @@
+---
+title: "Quickstart: React SDK"
+description: "Build your first AI-powered React app with Arlopass in 5 steps using hooks, providers, and streaming."
+category: "Getting Started"
+order: 4
+lastUpdated: 2026-03-29
+keywords: ["quickstart", "react", "hooks", "getting started"]
+schema: "HowTo"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+import StepList from '../../../components/docs/StepList.astro';
+
+Build your first AI-powered React component in 5 minutes.
+
+<StepList steps={[
+  { title: "Install the React SDK", body: "Install the package from npm." },
+  { title: "Wrap your app in ArlopassProvider", body: "The provider connects to the browser extension and manages the AI client lifecycle." },
+  { title: "Add ChatReadyGate", body: "The gate handles loading, missing-provider, and error states so your chat component only renders when ready." },
+  { title: "Use the useConversation hook", body: "The hook gives you the message list, a streaming send function, and status flags." },
+  { title: "Build the UI", body: "Wire up an input and a message list. The hook handles the rest." },
+]} />
+
+### Step 1 — Install the React SDK
+
+```bash title="Terminal"
+npm install @arlopass/react
+```
+
+### Step 2 — Wrap your app in ArlopassProvider
+
+The provider connects to the browser extension and manages the AI client lifecycle.
+
+```tsx title="App.tsx"
+import { ArlopassProvider } from "@arlopass/react";
+
+function App() {
+  return (
+    <ArlopassProvider appId="my-app">
+      <YourApp />
+    </ArlopassProvider>
+  );
+}
+```
+
+### Step 3 — Add ChatReadyGate
+
+The gate handles loading, missing-provider, and error states so your chat component only renders when everything is ready.
+
+```tsx title="YourApp.tsx"
+import { ChatReadyGate } from "@arlopass/react";
+
+function YourApp() {
+  return (
+    <ChatReadyGate
+      connecting={<p>Connecting to extension...</p>}
+      noProvider={<p>Please select a provider in the extension.</p>}
+      error={(err) => <p>Error: {err.message}</p>}
+    >
+      <Chat />
+    </ChatReadyGate>
+  );
+}
+```
+
+### Step 4 — Use the useConversation hook
+
+The hook gives you the message list, a streaming send function, and status flags. No manual state management needed.
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, isStreaming } = useConversation();
+
+  async function handleSend(text: string) {
+    await stream({
+      messages: [...messages, { role: "user", content: text }],
+    });
+  }
+
+  return /* your UI */;
+}
+```
+
+### Step 5 — Build the UI
+
+Wire up an input and a message list. The hook handles the rest.
+
+```tsx title="Chat.tsx"
+import { useState } from "react";
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, isStreaming } = useConversation();
+  const [input, setInput] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isStreaming) return;
+    const text = input;
+    setInput("");
+    await stream({
+      messages: [...messages, { role: "user", content: text }],
+    });
+  }
+
+  return (
+    <div>
+      <div>
+        {messages.map((msg, i) => (
+          <div key={i}>
+            <strong>{msg.role}:</strong> {msg.content}
+          </div>
+        ))}
+      </div>
+      <form onSubmit={handleSubmit}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          disabled={isStreaming}
+        />
+        <button type="submit" disabled={isStreaming}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+```
+
+<Callout type="info" title="Your keys stay in the vault">
+  When you add a provider through the extension, your API keys are encrypted and stored on the bridge using AES-256-GCM. The SDK never sees your credentials — the bridge attaches them to requests server-side. See the [Security Model](/docs/concepts/security-model) for details.
+</Callout>
+
+### Complete example
+
+Here's a full working chat component you can drop into any React app:
+
+```tsx title="App.tsx"
+import { useState } from "react";
+import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, isStreaming } = useConversation();
+  const [input, setInput] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isStreaming) return;
+    const text = input;
+    setInput("");
+    await stream({
+      messages: [...messages, { role: "user", content: text }],
+    });
+  }
+
+  return (
+    <div>
+      <div>
+        {messages.map((msg, i) => (
+          <div key={i}>
+            <strong>{msg.role}:</strong> {msg.content}
+          </div>
+        ))}
+      </div>
+      <form onSubmit={handleSubmit}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          disabled={isStreaming}
+        />
+        <button type="submit" disabled={isStreaming}>
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ArlopassProvider appId="my-app">
+      <ChatReadyGate
+        connecting={<p>Connecting...</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
+        error={(err) => <p>Error: {err.message}</p>}
+      >
+        <Chat />
+      </ChatReadyGate>
+    </ArlopassProvider>
+  );
+}
+```
+
+### React SDK vs Web SDK
+
+The React SDK wraps the same Web SDK calls in hooks and components. Here's the same "send a message" feature in both:
+
+#### React SDK
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, isStreaming } = useConversation();
+
+  async function send(text: string) {
+    await stream({
+      messages: [...messages, { role: "user", content: text }],
+    });
+  }
+}
+```
+
+#### Web SDK
+
+```typescript title="main.ts"
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({ transport: window.arlopass });
+await client.connect({ appId: "my-app" });
+
+const providers = await client.listProviders();
+await client.selectProvider(providers[0].id);
+
+const response = await client.chat.send({
+  messages: [{ role: "user", content: "Hello!" }],
+});
+```
+
+<Callout type="info" title="Next steps">
+  Explore [building a full chat app](/docs/tutorials/first-chat-app), [guard components](/docs/guides/guard-components), and [tool calling](/docs/guides/tool-calling).
+</Callout>

@@ -1,0 +1,85 @@
+---
+title: "Installation"
+description: "Install the Arlopass browser extension and SDK packages to start building AI-powered web apps."
+category: "Getting Started"
+order: 2
+lastUpdated: 2026-03-29
+keywords: ["install", "npm", "browser extension", "setup"]
+schema: "HowTo"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+
+Install the SDKs and get your environment ready.
+
+### Prerequisites
+
+- **Node.js 18+** — required for both SDKs
+- **React 18+** — required if using the React SDK
+- **Arlopass browser extension** — installed in the user's browser to provide AI credentials
+
+### React SDK
+
+The React SDK gives you hooks, providers, and guard components for building AI-powered React apps.
+
+```bash title="Terminal"
+npm install @arlopass/react
+```
+
+### Web SDK
+
+The Web SDK is framework-agnostic. Use it with vanilla JavaScript, Svelte, Vue, or any other framework.
+
+```bash title="Terminal"
+npm install @arlopass/web-sdk
+```
+
+<Callout type="info" title="You don't need both">
+  The React SDK includes `@arlopass/web-sdk` as a dependency — you don't need to install both. Only install the Web SDK directly if you're not using React.
+</Callout>
+
+### Browser extension
+
+Arlopass requires the browser extension to be installed in the end user's browser. The extension manages provider credentials and exposes the secure transport that the SDKs connect to. Install the Arlopass browser extension from the Chrome Web Store.
+
+### Verify installation
+
+Add one of these import checks to confirm everything is wired up:
+
+```typescript title="React SDK"
+import { ArlopassProvider, useConversation } from "@arlopass/react";
+
+console.log("React SDK loaded ✓");
+```
+
+```typescript title="Web SDK"
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+console.log("Web SDK loaded ✓");
+```
+
+### Components Library
+
+The optional components library provides headless React primitives for building chat interfaces.
+
+```bash title="Terminal"
+npm install @arlopass/react-ui
+```
+
+<Callout type="info" title="Optional">
+  The components library is optional — you can build everything with the React SDK hooks alone. The primitives package adds ready-made compound components that save time on common UI patterns.
+</Callout>
+
+You can also use the block registry CLI to copy pre-styled Tailwind blocks into your project:
+
+```bash title="Terminal"
+npx @arlopass/ui add chat
+```
+
+### TypeScript
+
+Both SDKs ship with full TypeScript declarations. No `@types` packages needed — just import and go.
+
+<Callout type="tip" title="Next steps">
+  Ready to write code? Pick a quickstart: [Web SDK](/docs/getting-started/quickstart-web-sdk) or [React SDK](/docs/getting-started/quickstart-react).
+</Callout>
