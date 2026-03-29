@@ -23,9 +23,12 @@ import "@mantine/core/styles/UnstyledButton.layer.css";
 import "@mantine/core/styles/CloseButton.layer.css";
 
 const theme = createTheme({
+  fontFamily:
+    "'Geist Sans Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+  fontFamilyMonospace:
+    "'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace",
   primaryColor: "brand",
   defaultRadius: "sm",
-  cssVariablesSelector: "#arlopass-interactive",
   colors: {
     brand: [
       "#FFF7ED",
@@ -40,17 +43,18 @@ const theme = createTheme({
       "#7C2D12",
     ],
   },
+  fontSizes: {
+    xs: "12px",
+    sm: "14px",
+    md: "16px",
+    lg: "18px",
+    xl: "20px",
+  },
 });
 
 export function InteractiveApp({ children }: { children: React.ReactNode }) {
   return (
-    <MantineProvider
-      theme={theme}
-      defaultColorScheme="dark"
-      getRootElement={() =>
-        document.getElementById("arlopass-interactive") || document.body
-      }
-    >
+    <MantineProvider theme={theme} forceColorScheme="dark">
       <div id="arlopass-interactive" data-mantine-color-scheme="dark">
         <InteractiveProvider>{children}</InteractiveProvider>
       </div>
