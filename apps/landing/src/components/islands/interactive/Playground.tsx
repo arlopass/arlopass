@@ -215,21 +215,27 @@ export default function Playground() {
               <Button
                 size="xs"
                 variant="subtle"
-                onClick={() => window.location.href = "/docs/interactive/connection"}
+                onClick={() =>
+                  (window.location.href = "/docs/interactive/connection")
+                }
               >
                 Connection settings →
               </Button>
               <Button
                 size="xs"
                 variant="subtle"
-                onClick={() => window.location.href = "/docs/interactive/providers"}
+                onClick={() =>
+                  (window.location.href = "/docs/interactive/providers")
+                }
               >
                 Provider explorer →
               </Button>
               <Button
                 size="xs"
                 variant="subtle"
-                onClick={() => window.location.href = "/docs/interactive/chat"}
+                onClick={() =>
+                  (window.location.href = "/docs/interactive/chat")
+                }
               >
                 Chat transcript →
               </Button>

@@ -1,6 +1,6 @@
 ---
 import "../../styles/global.css";
-import ChatSidebarIsland from '../../components/islands/ChatSidebarIsland';
+import ChatSidebarIsland from "../../components/islands/ChatSidebarIsland";
 import DocsHeader from "../../components/docs/DocsHeader.astro";
 import DocsSidebar from "../../components/docs/DocsSidebar.astro";
 import Footer from "../../components/Footer.astro";
@@ -124,7 +124,7 @@ const itemListLd = {
       </div>
 
       <Footer />
-      <ChatSidebarIsland client:idle />
+      <ChatSidebarIsland client:only="react" />
     </div>
   </body>
 </html>

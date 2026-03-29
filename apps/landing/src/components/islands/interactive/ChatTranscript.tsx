@@ -22,7 +22,9 @@ export default function ChatTranscript() {
         >
           Clear
         </Button>
-        <Text size="sm" c="dimmed">{history.length} message{history.length !== 1 ? "s" : ""}</Text>
+        <Text size="sm" c="dimmed">
+          {history.length} message{history.length !== 1 ? "s" : ""}
+        </Text>
       </Group>
 
       {/* Messages */}
@@ -32,7 +34,13 @@ export default function ChatTranscript() {
             <Text c="dimmed" ta="center">
               No messages yet — use the Playground to send messages.
             </Text>
-            <Button variant="subtle" size="sm" onClick={() => window.location.href = "/docs/interactive/playground"}>
+            <Button
+              variant="subtle"
+              size="sm"
+              onClick={() =>
+                (window.location.href = "/docs/interactive/playground")
+              }
+            >
               Go to Playground →
             </Button>
           </Stack>

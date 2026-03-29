@@ -317,14 +317,10 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
 
   // Provider/model selection with localStorage persistence
   const [selProv, setSelProv] = useState<string | null>(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem(CHAT_PROV_KEY)
-      : null,
+    typeof window !== "undefined" ? localStorage.getItem(CHAT_PROV_KEY) : null,
   );
   const [selModel, setSelModel] = useState<string | null>(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem(CHAT_MODEL_KEY)
-      : null,
+    typeof window !== "undefined" ? localStorage.getItem(CHAT_MODEL_KEY) : null,
   );
 
   const selProvider = useMemo(
@@ -796,9 +792,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
                 )}
                 {toolActivity.phase === "result" && (
                   <div className="chat-tool-activity">
-                    <span style={{ color: "var(--ap-text-tertiary)" }}>
-                      ✓
-                    </span>
+                    <span style={{ color: "var(--ap-text-tertiary)" }}>✓</span>
                     <span className="chat-tool-pill">
                       {toolActivity.name.replace(/_/g, " ")}
                     </span>

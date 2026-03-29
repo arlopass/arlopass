@@ -1,25 +1,53 @@
-import { Stack, Title, Text, Button, Group, Badge, Card, Select, Alert } from "@mantine/core";
+import {
+  Stack,
+  Title,
+  Text,
+  Button,
+  Group,
+  Badge,
+  Card,
+  Select,
+  Alert,
+} from "@mantine/core";
 import { useInteractive } from "../InteractiveContext";
 
 export default function ProviderExplorer() {
   const {
-    provs, provOpts, modelOpts,
-    selProv, setSelProv, selModel, setSelModel,
-    run, doList, doSelect,
-    sid, busy, isBusy, fb, setFb,
+    provs,
+    provOpts,
+    modelOpts,
+    selProv,
+    setSelProv,
+    selModel,
+    setSelModel,
+    run,
+    doList,
+    doSelect,
+    sid,
+    busy,
+    isBusy,
+    fb,
+    setFb,
   } = useInteractive();
 
   return (
     <Stack gap="lg">
       <Title order={2}>Providers</Title>
       <Text c="dimmed">
-        List available providers, browse their models, and select a provider/model pair for chat.
+        List available providers, browse their models, and select a
+        provider/model pair for chat.
       </Text>
 
       {/* Feedback */}
       {fb && (
         <Alert
-          color={fb.kind === "error" ? "red" : fb.kind === "success" ? "teal" : "blue"}
+          color={
+            fb.kind === "error"
+              ? "red"
+              : fb.kind === "success"
+                ? "teal"
+                : "blue"
+          }
           title={fb.title}
           withCloseButton
           onClose={() => setFb(null)}
@@ -36,7 +64,11 @@ export default function ProviderExplorer() {
 
       {/* List button */}
       <Button
-        onClick={() => run("List Providers", async () => { await doList(); })}
+        onClick={() =>
+          run("List Providers", async () => {
+            await doList();
+          })
+        }
         loading={busy === "List Providers"}
         disabled={!sid || (isBusy && busy !== "List Providers")}
       >
@@ -73,7 +105,11 @@ export default function ProviderExplorer() {
             />
 
             <Button
-              onClick={() => run("Select", async () => { await doSelect(); })}
+              onClick={() =>
+                run("Select", async () => {
+                  await doSelect();
+                })
+              }
               loading={busy === "Select"}
               disabled={!selProv || !selModel || (isBusy && busy !== "Select")}
             >
@@ -86,13 +122,19 @@ export default function ProviderExplorer() {
       {/* Provider list details */}
       {provs.length > 0 && (
         <Stack gap="xs">
-          <Text fw={600} size="sm">All providers</Text>
+          <Text fw={600} size="sm">
+            All providers
+          </Text>
           {provs.map((p) => (
             <Card key={p.providerId} withBorder padding="sm">
               <Group justify="space-between">
                 <Group gap="xs">
-                  <Text size="sm" fw={500}>{p.providerName}</Text>
-                  <Badge size="xs" variant="light">{p.providerId}</Badge>
+                  <Text size="sm" fw={500}>
+                    {p.providerName}
+                  </Text>
+                  <Badge size="xs" variant="light">
+                    {p.providerId}
+                  </Badge>
                 </Group>
                 <Badge size="sm" color="blue" variant="light">
                   {p.models.length} model{p.models.length !== 1 ? "s" : ""}
@@ -103,8 +145,16 @@ export default function ProviderExplorer() {
                   <Badge
                     key={m}
                     size="xs"
-                    variant={m === selModel && p.providerId === selProv ? "filled" : "dot"}
-                    color={m === selModel && p.providerId === selProv ? "teal" : "gray"}
+                    variant={
+                      m === selModel && p.providerId === selProv
+                        ? "filled"
+                        : "dot"
+                    }
+                    color={
+                      m === selModel && p.providerId === selProv
+                        ? "teal"
+                        : "gray"
+                    }
                   >
                     {m}
                   </Badge>

@@ -1,4 +1,13 @@
-import { Stack, Title, Text, Card, Badge, Group, Code, Loader } from "@mantine/core";
+import {
+  Stack,
+  Title,
+  Text,
+  Card,
+  Badge,
+  Group,
+  Code,
+  Loader,
+} from "@mantine/core";
 import { useInteractive } from "../InteractiveContext";
 
 export default function EventLog() {
@@ -8,20 +17,24 @@ export default function EventLog() {
     <Stack gap="lg">
       <Title order={2}>Event Log</Title>
       <Text c="dimmed">
-        Real-time log of all SDK operations — connections, provider listings, chat requests, and errors.
+        Real-time log of all SDK operations — connections, provider listings,
+        chat requests, and errors.
       </Text>
 
       {isBusy && (
         <Group gap="xs">
           <Loader size="xs" />
-          <Text size="sm" c="dimmed">{busy}…</Text>
+          <Text size="sm" c="dimmed">
+            {busy}…
+          </Text>
         </Group>
       )}
 
       {logs.length === 0 ? (
         <Card withBorder p="xl">
           <Text c="dimmed" ta="center">
-            No log entries yet. Use the Playground or other interactive pages to generate SDK events.
+            No log entries yet. Use the Playground or other interactive pages to
+            generate SDK events.
           </Text>
         </Card>
       ) : (
@@ -31,12 +44,20 @@ export default function EventLog() {
               <Group gap="xs" mb={4}>
                 <Badge
                   size="sm"
-                  color={entry.level === "success" ? "teal" : entry.level === "error" ? "red" : "blue"}
+                  color={
+                    entry.level === "success"
+                      ? "teal"
+                      : entry.level === "error"
+                        ? "red"
+                        : "blue"
+                  }
                   variant="light"
                 >
                   {entry.level}
                 </Badge>
-                <Text size="xs" c="dimmed">{entry.at}</Text>
+                <Text size="xs" c="dimmed">
+                  {entry.at}
+                </Text>
               </Group>
               <Text size="sm">{entry.message}</Text>
               {entry.details && (

@@ -1,7 +1,7 @@
 ---
 import type { MarkdownHeading } from "astro";
 import "../styles/global.css";
-import ChatSidebarIsland from '../components/islands/ChatSidebarIsland';
+import ChatSidebarIsland from "../components/islands/ChatSidebarIsland";
 import DocsHeader from "../components/docs/DocsHeader.astro";
 import DocsSidebar from "../components/docs/DocsSidebar.astro";
 import TableOfContents from "../components/docs/TableOfContents.astro";
@@ -212,7 +212,7 @@ const breadcrumbLd = {
       </div>
 
       <Footer />
-      <ChatSidebarIsland client:idle />
+      <ChatSidebarIsland client:only="react" />
     </div>
   </body>
 </html>
