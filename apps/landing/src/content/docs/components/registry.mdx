@@ -1,0 +1,251 @@
+---
+title: "Block registry"
+description: "Pre-built UI blocks for chat, provider selection, connection status, and more — install via CLI or copy from the registry."
+category: "Components Library"
+order: 8
+lastUpdated: 2026-03-29
+keywords: ["blocks", "registry", "cli", "chat", "widget", "components"]
+schema: "TechArticle"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+
+Pre-styled Tailwind blocks you copy into your project with a single command.
+
+Blocks are complete, styled UI components built on top of the `@arlopass/react-ui` primitives. Instead of installing them as a dependency, the CLI copies the source files into your project so you have full control over the code.
+
+---
+
+### Install a block
+
+```bash title="Terminal"
+npx @arlopass/ui add chat
+```
+
+---
+
+### Available blocks
+
+| ID | Name | Description |
+|----|------|-------------|
+| `chat` | Chat | Complete chat interface with avatars, message bubbles, typing indicator, streaming cursor, tool activity, context bar, scroll fade, and auto-scroll |
+| `chatbot` | Chatbot Widget | Floating chatbot bubble with expandable chat panel (depends on chat) |
+| `provider-picker` | Provider Picker | Styled provider and model selection dropdowns |
+| `connection-banner` | Connection Banner | Connection status banner with install prompt |
+| `install-button` | Install Button | Styled button/link to install the Arlopass extension |
+| `extension-required` | Extension Required Gate | Feature-level gate that shows an install prompt when the extension is missing |
+| `app-required` | App Required Gate | Full-app gate that blocks the entire UI with an install page when extension is missing |
+
+---
+
+### CLI commands
+
+```bash title="Terminal"
+# Add a single block
+npx @arlopass/ui add chat
+
+# Add multiple blocks
+npx @arlopass/ui add chat chatbot provider-picker
+
+# List available blocks
+npx @arlopass/ui list
+
+# Overwrite existing files
+npx @arlopass/ui add chat --force
+
+# Preview without writing files
+npx @arlopass/ui add chat --dry-run
+
+# Custom output directory
+npx @arlopass/ui add chat --out src/ui
+```
+
+---
+
+### Configuration
+
+On first run, the CLI creates a `arlopass-ui.json` file in your project root. You can edit it to change the output directory or other settings.
+
+```json title="arlopass-ui.json"
+// arlopass-ui.json — auto-created on first `add`
+{
+  "outputDir": "src/components/arlopass",
+  "typescript": true
+}
+```
+
+---
+
+### Chat block
+
+A full chat interface with message list, streaming indicator, input field, and send/stop buttons. Wrap it in an `ArlopassProvider` and you're ready to go.
+
+```tsx title="Chat usage"
+import { ArlopassProvider } from "@arlopass/react";
+import { ArlopassChat } from "./components/arlopass/chat";
+
+function App() {
+  return (
+    <ArlopassProvider>
+      <ArlopassChat
+        systemPrompt="You are a helpful assistant."
+        placeholder="Ask me anything…"
+      />
+    </ArlopassProvider>
+  );
+}
+```
+
+---
+
+### Chatbot widget block
+
+A floating chat widget that renders a toggle bubble in the corner of the screen. Opens an expandable panel with the full chat interface. It wraps `ArlopassProvider` and guard components internally — just drop it anywhere.
+
+```tsx title="Chatbot widget"
+import { ArlopassChatbot } from "./components/arlopass/chatbot";
+
+function App() {
+  return (
+    <div>
+      <h1>My App</h1>
+      {/* Floating chat widget — renders a bubble in the bottom-right */}
+      <ArlopassChatbot
+        buttonLabel="Ask AI"
+        position="bottom-right"
+        systemPrompt="You are a customer support agent."
+      />
+    </div>
+  );
+}
+```
+
+---
+
+### Provider picker block
+
+Styled provider and model selection dropdowns. Fires an `onSelect` callback when the user confirms their choice.
+
+```tsx title="Provider picker"
+import { ArlopassProviderPicker } from "./components/arlopass/provider-picker";
+
+function Settings() {
+  return (
+    <ArlopassProviderPicker
+      onSelect={(providerId, modelId) => {
+        console.log("Selected:", providerId, modelId);
+      }}
+    />
+  );
+}
+```
+
+---
+
+### Connection banner block
+
+Shows contextual banners based on the Arlopass extension connection state: an install prompt when not detected, a reconnect message when disconnected, and a success indicator when connected.
+
+```tsx title="Connection banner"
+import { ArlopassConnectionBanner } from "./components/arlopass/connection-banner";
+
+function App() {
+  return (
+    <div>
+      <ArlopassConnectionBanner installUrl="https://chromewebstore.google.com" />
+      {/* rest of your app */}
+    </div>
+  );
+}
+```
+
+---
+
+### Install button
+
+A styled button/link that directs users to install the Arlopass extension. Use inside `<ArlopassNotInstalled>` or any "not installed" fallback.
+
+```tsx title="Install button"
+import { ArlopassInstallButton, ArlopassNotInstalled } from "@arlopass/react";
+
+function Header() {
+  return (
+    <header>
+      <h1>My App</h1>
+      <ArlopassNotInstalled>
+        <ArlopassInstallButton installUrl="https://chromewebstore.google.com" />
+      </ArlopassNotInstalled>
+    </header>
+  );
+}
+```
+
+---
+
+### Extension required gate (feature-level)
+
+Wraps a feature that needs the Arlopass extension. When the extension is missing, shows a fallback prompt. When installed, renders the feature normally. Use for individual AI-powered features in apps that also work without Arlopass.
+
+```tsx title="Extension required gate"
+import { ArlopassExtensionGate, ArlopassInstallButton } from "@arlopass/react";
+
+function App() {
+  return (
+    <div>
+      <h1>My App</h1>
+
+      {/* This feature only shows when the extension is installed */}
+      <ArlopassExtensionGate
+        fallback={({ installUrl }) => (
+          <div>
+            <p>AI search requires the Arlopass extension.</p>
+            <ArlopassInstallButton installUrl={installUrl} />
+          </div>
+        )}
+      >
+        <AIPoweredSearch />
+      </ArlopassExtensionGate>
+
+      {/* This feature hides silently when no extension */}
+      <ArlopassExtensionGate>
+        <AIChatWidget />
+      </ArlopassExtensionGate>
+    </div>
+  );
+}
+```
+
+---
+
+### App required gate (full-app)
+
+Blocks the entire app when Arlopass is not installed. Use this when your app cannot function at all without the extension.
+
+```tsx title="App required gate"
+import { ArlopassProvider, ArlopassRequiredGate, ArlopassInstallButton } from "@arlopass/react";
+
+function App() {
+  return (
+    <ArlopassProvider appId="my-app">
+      <ArlopassRequiredGate
+        fallback={({ installUrl }) => (
+          <div style={{ textAlign: "center", padding: 40 }}>
+            <h2>Arlopass Required</h2>
+            <p>This app needs the Arlopass extension to work.</p>
+            <p>Install the extension to connect your AI providers.</p>
+            <ArlopassInstallButton installUrl={installUrl} />
+          </div>
+        )}
+      >
+        <MainApp />
+      </ArlopassRequiredGate>
+    </ArlopassProvider>
+  );
+}
+```
+
+---
+
+<Callout type="info" title="You own the source">
+  After copying, the block source lives in your project. Edit the markup, swap Tailwind for your own design system, add props — it's your code now. The primitives from `@arlopass/react-ui` remain as npm dependencies for behaviour and state management.
+</Callout>
