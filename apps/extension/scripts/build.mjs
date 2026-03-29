@@ -183,6 +183,14 @@ async function processManifest() {
   delete manifest.key;
 
   if (isFirefox) {
+    // Firefox uses background.scripts instead of background.service_worker
+    if (manifest.background?.service_worker) {
+      const bgScript = manifest.background.service_worker;
+      manifest.background = {
+        scripts: [bgScript],
+        type: manifest.background.type,
+      };
+    }
     // Add Firefox-specific settings
     manifest.browser_specific_settings = {
       gecko: {

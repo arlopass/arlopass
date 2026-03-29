@@ -19,7 +19,7 @@
     "dev:e2e-harness": "pnpm --filter @arlopass/e2e-harness dev",
     "build:e2e-harness": "pnpm --filter @arlopass/e2e-harness build",
     "dev:landing": "pnpm --filter @arlopass/landing dev",
-    "build:landing": "pnpm --filter @arlopass/landing build",
+    "build:landing": "pnpm -r --filter \"@arlopass/landing...\" --if-present run build",
     "dev:bash:setup": "bash ./scripts/dev/run-dev.sh setup",
     "dev:bash:validate": "bash ./scripts/dev/run-dev.sh validate",
     "dev:bash:watch": "bash ./scripts/dev/run-dev.sh watch",
