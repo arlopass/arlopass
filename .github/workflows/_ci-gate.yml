@@ -40,7 +40,7 @@ jobs:
 
           if [ "$SCOPE" = "core" ]; then
             echo "mode=scoped" >> "$GITHUB_OUTPUT"
-            echo "targets=@arlopass/protocol,@arlopass/audit,@arlopass/telemetry,@arlopass/policy,@arlopass/adapter-runtime,@arlopass/adapter-tooling,@arlopass/web-sdk" >> "$GITHUB_OUTPUT"
+            echo "targets=@arlopass/protocol,@arlopass/audit,@arlopass/telemetry,@arlopass/policy,@arlopass/adapter-runtime,@arlopass/adapter-tooling,@arlopass/web-sdk,@arlopass/react,@arlopass/react-ui,@arlopass/ai-sdk-transport" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 

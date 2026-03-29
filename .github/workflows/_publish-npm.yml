@@ -55,7 +55,7 @@ jobs:
         id: packages
         run: |
           if [ "${{ inputs.scope }}" = "core" ]; then
-            echo "dirs=packages/protocol packages/audit packages/telemetry packages/policy adapters/runtime adapters/tooling packages/web-sdk" >> "$GITHUB_OUTPUT"
+            echo "dirs=packages/protocol packages/audit packages/telemetry packages/policy adapters/runtime adapters/tooling packages/web-sdk packages/react-sdk packages/react-ui packages/ai-sdk-transport" >> "$GITHUB_OUTPUT"
           elif [ "${{ inputs.scope }}" = "bridge" ]; then
             echo "dirs=apps/bridge" >> "$GITHUB_OUTPUT"
           else

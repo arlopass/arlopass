@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280" />
+<title>Arlopass — Chrome Web Store Screenshot</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #fafaf9;
+    --bg-surface: #ffffff;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text-primary: #1c1917;
+    --text-body: #292524;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --brand: #DB4D12;
+    --brand-hover: #9a3412;
+    --brand-subtle: #fff7ed;
+    --success: #4d7c0f;
+    --mosaic-overlay: rgba(28, 25, 23, 0.4);
+    --glass-bg: rgba(38, 35, 32, 0.6);
+    --glass-ring: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    width: 1280px;
+    height: 800px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  /* ── Canvas: stripe top, two columns, stripe bottom ── */
+  .canvas {
+    position: relative;
+    width: 1280px;
+    height: 800px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Stripe bars (span full width) ── */
+  .stripe-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 20px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 20px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Left panel ── */
+  .left-panel {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 64px;
+  }
+
+  .text-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+
+  .headline {
+    font-size: 52px;
+    font-weight: 780;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+
+  .subline {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    max-width: 440px;
+  }
+
+  .logo { height: 38px; width: fit-content; }
+
+  /* ── Right panel (mosaic + glass-framed screenshot) ── */
+  .right-panel {
+    position: relative;
+    overflow: hidden;
+    background: #1c1917;
+  }
+  .mosaic-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--mosaic-overlay);
+  }
+
+  /* ── Glass frame ── */
+  .glass-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-ring);
+    border-radius: 20px;
+    padding: 4px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  .device-inner {
+    background: #1c1917;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Browser chrome ── */
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #292524;
+    border-bottom: 1px solid #44403c;
+  }
+  .browser-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .browser-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #57534e;
+  }
+  .browser-url {
+    flex: 1;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px;
+    color: #a8a29e;
+    background: #1c1917;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #44403c;
+  }
+  .browser-ext-icon {
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+  }
+
+  /* ── Screenshot slot ── */
+  .screenshot-area {
+    width: 380px;
+    height: 560px;
+    background: #1c1917;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /*
+   * ╔══════════════════════════════════════════════╗
+   * ║  INSERT SCREENSHOT HERE                      ║
+   * ║  Replace the placeholder with:               ║
+   * ║  <img src="path/to/popup.png"                ║
+   * ║       class="screenshot-img" />              ║
+   * ╚══════════════════════════════════════════════╝
+   */
+  .screenshot-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transform: scale(1.01);
+  }
+
+  .screenshot-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    text-align: center;
+  }
+  .screenshot-placeholder svg {
+    width: 28px; height: 28px;
+    opacity: 0.3;
+  }
+
+  /* ── Brand accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(140).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Left panel -->
+  <div class="left-panel">
+    <div class="text-block">
+      <span class="pixel-label">Secure Vault</span>
+      <h1 class="headline">API keys locked<br/>in your <em>vault</em>.</h1>
+      <p class="subline">Credentials are encrypted in your OS keychain. They never leave your device — not even to the apps you trust.</p>
+    </div>
+
+    <img class="logo" src="../public/ArlopassLogo-Light.svg" alt="Arlopass" />
+  </div>
+
+  <!-- Right panel: mosaic + glass-framed popup -->
+  <div class="right-panel">
+    <canvas class="mosaic-canvas" data-mosaic-src="../public/img/bg3.webp"></canvas>
+    <div class="mosaic-overlay"></div>
+
+    <div class="glass-frame">
+      <div class="device-inner">
+        <img src="main-wallet-vault.png"
+               class="screenshot-img"
+               alt="Arlopass extension popup" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(140).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+<script src="mosaic.js"></script>
+</body>
+</html>

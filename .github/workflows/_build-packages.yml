@@ -46,6 +46,9 @@ jobs:
               "@arlopass/adapter-runtime"
               "@arlopass/adapter-tooling"
               "@arlopass/web-sdk"
+              "@arlopass/react"
+              "@arlopass/react-ui"
+              "@arlopass/ai-sdk-transport"
             )
           elif [ "${{ inputs.scope }}" = "bridge" ]; then
             targets=("@arlopass/bridge")

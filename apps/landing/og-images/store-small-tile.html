@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=440" />
+<title>Arlopass — Small Promo Tile</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #fafaf9;
+    --bg-surface: #ffffff;
+    --border: #e7e5e4;
+    --text-primary: #1c1917;
+    --text-secondary: #78716c;
+    --brand: #DB4D12;
+  }
+
+  body {
+    width: 440px;
+    height: 280px;
+    overflow: hidden;
+    background: var(--bg-surface);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-primary);
+  }
+
+  .canvas {
+    position: relative;
+    width: 440px;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 28px 32px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  /* ── Top stripe ── */
+  .stripe-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: stretch;
+    height: 10px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 2px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  .logo { height: 28px; width: fit-content; }
+
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+
+  .headline {
+    font-size: 22px;
+    font-weight: 750;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+
+  .subline {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 240px;
+  }
+
+  /* ── Partial screenshot in bottom-right ── */
+  .preview-peek {
+    position: absolute;
+    bottom: -8px;
+    right: -12px;
+    background: rgba(38, 35, 32, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 3px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    z-index: 2;
+  }
+  .preview-peek-inner {
+    background: #1c1917;
+    border-radius: 9px;
+    overflow: hidden;
+    width: 160px;
+    height: 200px;
+  }
+  .preview-peek-inner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #57534e;
+    font-size: 9px;
+  }
+
+  /* ── Bottom stripe ── */
+  .stripe-bar-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: stretch;
+    height: 10px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  /* ── Brand accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 120px;
+    height: 2px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="stripe-bar">
+    <script>document.write(Array(60).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <img class="logo" src="../public/ArlopassLogo-Light.svg" alt="Arlopass" />
+  <span class="pixel-label">Your AI. Your pass.</span>
+  <h1 class="headline">Your AI, your models,<br/>your <em>rules</em>.</h1>
+  <p class="subline">Open-source browser extension for AI access management. Your keys never leave your device.</p>
+
+  <!-- Partial screenshot peeking from bottom-right -->
+  <div class="preview-peek">
+    <div class="preview-peek-inner">
+      <img src="main-wallet-providers.png"
+               class="screenshot-img"
+               alt="Arlopass extension popup" />
+    </div>
+  </div>
+
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(60).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+  <div class="accent-line"></div>
+</div>
+</body>
+</html>

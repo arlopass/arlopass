@@ -273,6 +273,21 @@ body:has(#popup-root) {
 }
 
 /* ============================================
+   Utility: icon inversion (dark mode only)
+   Dark-filled SVG icons become white in dark mode.
+   In light mode, stay dark (no filter needed).
+   ============================================ */
+.icon-invert-dark {
+  filter: brightness(0) invert(1) opacity(0.9);
+}
+
+@media (prefers-color-scheme: light) {
+  .icon-invert-dark {
+    filter: none;
+  }
+}
+
+/* ============================================
    Utility: sr-only (screen reader only)
    ============================================ */
 .sr-only {

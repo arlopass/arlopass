@@ -52,6 +52,9 @@ jobs:
             "packages/telemetry/package.json"
             "packages/policy/package.json"
             "packages/web-sdk/package.json"
+            "packages/react-sdk/package.json"
+            "packages/react-ui/package.json"
+            "packages/ai-sdk-transport/package.json"
             "adapters/runtime/package.json"
             "adapters/tooling/package.json"
           )

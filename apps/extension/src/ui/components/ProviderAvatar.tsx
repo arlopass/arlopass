@@ -78,12 +78,7 @@ export function ProviderAvatar({ providerKey, size }: ProviderAvatarProps) {
           alt=""
           width={imgSize}
           height={imgSize}
-          className="shrink-0 object-contain"
-          style={
-            invert
-              ? { filter: "brightness(0) invert(1) opacity(0.9)" }
-              : undefined
-          }
+          className={`shrink-0 object-contain${invert ? " icon-invert-dark" : ""}`}
         />
       </div>
     );

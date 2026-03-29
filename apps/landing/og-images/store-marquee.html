@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1400" />
+<title>Arlopass — Marquee Promo Tile</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #fafaf9;
+    --bg-surface: #ffffff;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text-primary: #1c1917;
+    --text-body: #292524;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --brand: #DB4D12;
+    --brand-hover: #9a3412;
+    --brand-subtle: #fff7ed;
+    --success: #4d7c0f;
+    --mosaic-overlay: rgba(28, 25, 23, 0.4);
+    --glass-bg: rgba(38, 35, 32, 0.6);
+    --glass-ring: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    width: 1400px;
+    height: 560px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  /* ── Canvas ── */
+  .canvas {
+    position: relative;
+    width: 1400px;
+    height: 560px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Stripe bars ── */
+  .stripe-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Left panel ── */
+  .left-panel {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px 56px;
+  }
+
+  .text-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+
+  .headline {
+    font-size: 48px;
+    font-weight: 780;
+    line-height: 1.04;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+
+  .subline {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    max-width: 440px;
+  }
+
+  /* ── Stats row ── */
+  .stats {
+    display: flex;
+    align-items: center;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0 22px;
+    border-left: 1px solid var(--border);
+  }
+  .stat:first-child {
+    padding-left: 0;
+    border-left: none;
+  }
+  .stat-value {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Right panel (dark mosaic + glass screenshot) ── */
+  .right-panel {
+    position: relative;
+    overflow: hidden;
+    background: #1c1917;
+  }
+  .mosaic-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--mosaic-overlay);
+  }
+
+  /* ── Glass frame ── */
+  .glass-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-ring);
+    border-radius: 20px;
+    padding: 4px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  .device-inner {
+    background: #1c1917;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Browser chrome ── */
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #292524;
+    border-bottom: 1px solid #44403c;
+  }
+  .browser-dots {
+    display: flex;
+    gap: 4px;
+  }
+  .browser-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #57534e;
+  }
+  .browser-url {
+    flex: 1;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9px;
+    color: #a8a29e;
+    background: #1c1917;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #44403c;
+  }
+  .browser-ext-icon {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Screenshot slot ── */
+  .screenshot-area {
+    width: 340px;
+    height: 420px;
+    background: #1c1917;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .screenshot-img {
+    width: 100%;
+    height: 460px;
+    object-fit: cover;
+    object-position: top center;
+    transform: scale(1.01);
+  }
+
+  .screenshot-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #78716c;
+    font-size: 12px;
+    text-align: center;
+  }
+  .screenshot-placeholder svg {
+    width: 24px; height: 24px;
+    opacity: 0.3;
+  }
+
+  /* ── Brand accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(160).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Left panel -->
+  <div class="left-panel">
+    <div class="text-block">
+      <span class="pixel-label">Your AI. Your pass.</span>
+      <h1 class="headline">Your AI, your models,<br/>your <em>rules</em>.</h1>
+      <p class="subline">
+        The open-source browser extension that lets web apps use your AI providers — without ever seeing your API keys.
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value">10 lines</span>
+        <span class="stat-label">to integrate</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">0 keys</span>
+        <span class="stat-label">on your server</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">Any model</span>
+        <span class="stat-label">user's choice</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel: mosaic + glass-framed popup -->
+  <div class="right-panel">
+    <canvas class="mosaic-canvas" data-mosaic-src="../public/img/bg3.webp"></canvas>
+    <div class="mosaic-overlay"></div>
+
+    <div class="glass-frame">
+      <div class="device-inner">
+        <img src="main-wallet-providers.png"
+               class="screenshot-img"
+               alt="Arlopass extension popup" />
+    </div>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(160).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+<script src="mosaic.js"></script>
+</body>
+</html>

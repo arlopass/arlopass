@@ -178,6 +178,10 @@ async function processManifest() {
     }
   }
 
+  // The `key` field pins the extension ID during local unpacked development.
+  // It must be stripped for all store uploads — the store assigns its own key.
+  delete manifest.key;
+
   if (isFirefox) {
     // Add Firefox-specific settings
     manifest.browser_specific_settings = {
@@ -188,7 +192,6 @@ async function processManifest() {
     };
     // Remove Chrome-only fields
     delete manifest.minimum_chrome_version;
-    delete manifest.key;
   }
 
   await writeFile(
