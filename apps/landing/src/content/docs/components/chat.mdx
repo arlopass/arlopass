@@ -1,0 +1,293 @@
+---
+title: "Chat"
+description: "Chat primitive component for building AI chat interfaces with streaming, tool support, and full state control."
+category: "Components Library"
+order: 2
+lastUpdated: 2026-03-29
+keywords: ["chat", "component", "primitive", "streaming"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../components/docs/ApiTable.astro';
+import Callout from '../../../components/docs/Callout.astro';
+
+Compound chat interface with messages, streaming, input, and tool support.
+
+```tsx
+import { Chat } from "@arlopass/react-ui";
+```
+
+---
+
+### Parts
+
+| Name | Element | Purpose |
+|------|---------|---------|
+| `Chat.Root` | div | Manages conversation state (uncontrolled) or accepts external state (controlled). Renders the outermost wrapper. |
+| `Chat.Header` | div | Container for the chat header area (title, controls). Sets `data-part="header"`. |
+| `Chat.Messages` | render prop | Provides the message list via a render-prop child. Auto-scrolls with rAF pinning during streaming. |
+| `Chat.Message` | div | Wraps a single message inside Messages. Accepts a TrackedChatMessage. Provides context to child parts. |
+| `Chat.Avatar` | div | Avatar circle for a message. Accepts a role prop ("user" \| "assistant"). Sets `data-part="avatar"`. |
+| `Chat.Bubble` | div | Message bubble container. Reads role from Message context. Sets `data-part="bubble"`. |
+| `Chat.MessageContent` | div | Renders the text content of the current Chat.Message. |
+| `Chat.MessageMeta` | div | Slot for provider/model attribution below assistant messages. Sets `data-part="message-meta"`. |
+| `Chat.ToolPills` | div | Renders tool usage pills for assistant messages. Accepts formatToolName prop. Sets `data-part="tool-pills"`. |
+| `Chat.Input` | textarea | Auto-growing text input wired to Chat.Root state. |
+| `Chat.SendButton` | button | Sends the current input. Disabled when empty or streaming. |
+| `Chat.StopButton` | button | Aborts the active stream. Hidden when not streaming. |
+| `Chat.StreamingIndicator` | span | Visible only while a response is being streamed. |
+| `Chat.TypingIndicator` | div | Bouncing dots shown when streaming starts before any content arrives. Accepts dotCount prop (default 3). |
+| `Chat.StreamCursor` | span | Pulsing cursor bar at the end of streaming content. Sets `data-part="stream-cursor"`. |
+| `Chat.ToolActivity` | div | Live tool execution phases (priming, matched, executing, result). Sets data-phase attribute. |
+| `Chat.EmptyState` | div | Shown when the message list is empty. |
+| `Chat.ScrollFade` | div | Gradient fade overlay at the top of the messages area. Controlled via visible prop. |
+| `Chat.Footer` | div | Footer status bar container. Sets data-state to "streaming" or "idle". |
+| `Chat.ContextBar` | div | Context window usage indicator with usage levels (normal/warning/critical). Accepts formatTokens prop. |
+
+---
+
+### Uncontrolled usage
+
+Wrap in a `<ArlopassProvider>` and `Chat.Root` manages all conversation state internally via `useConversation`.
+
+```tsx title="Uncontrolled chat"
+import { ArlopassProvider } from "@arlopass/react";
+import { Chat } from "@arlopass/react-ui";
+
+function MyChat() {
+  return (
+    <ArlopassProvider>
+      <Chat.Root systemPrompt="You are a helpful assistant.">
+        <Chat.Header>
+          <span>Documentation Assistant</span>
+        </Chat.Header>
+
+        <Chat.ScrollFade visible={hasScrolled} />
+        <Chat.EmptyState>No messages yet — say hello!</Chat.EmptyState>
+        <Chat.Messages>
+          {(messages) => (
+            <>
+              {messages.map((msg) => (
+                <Chat.Message key={msg.id} message={msg}>
+                  <Chat.Avatar role={msg.role}>{/* icon */}</Chat.Avatar>
+                  <div>
+                    <Chat.Bubble>
+                      <Chat.MessageContent />
+                    </Chat.Bubble>
+                    <Chat.MessageMeta>Claude 3.5 · Anthropic</Chat.MessageMeta>
+                    <Chat.ToolPills />
+                  </div>
+                </Chat.Message>
+              ))}
+            </>
+          )}
+        </Chat.Messages>
+
+        <Chat.TypingIndicator />
+        <Chat.ToolActivity />
+
+        <Chat.Input placeholder="Type a message…" />
+        <Chat.SendButton>Send</Chat.SendButton>
+        <Chat.StopButton>Stop</Chat.StopButton>
+
+        <Chat.Footer>
+          <Chat.ContextBar />
+        </Chat.Footer>
+      </Chat.Root>
+    </ArlopassProvider>
+  );
+}
+```
+
+---
+
+### Controlled usage
+
+Pass `messages` and callbacks to manage state yourself. Useful when you need access to the conversation outside the Chat tree.
+
+```tsx title="Controlled chat"
+import { useConversation } from "@arlopass/react";
+import { Chat } from "@arlopass/react-ui";
+
+function ControlledChat() {
+  const conv = useConversation({ systemPrompt: "Be concise." });
+
+  return (
+    <Chat.Root
+      messages={conv.messages}
+      streamingContent={conv.streamingContent}
+      streamingMessageId={conv.streamingMessageId}
+      isStreaming={conv.isStreaming}
+      isSending={conv.isSending}
+      onSend={(text) => conv.stream(text)}
+      onStop={conv.stop}
+      error={conv.error}
+      toolActivity={conv.toolActivity}
+      contextInfo={conv.contextInfo}
+    >
+      <Chat.Header>AI Chat</Chat.Header>
+      <Chat.Messages>
+        {(messages) => messages.map(msg => (
+          <Chat.Message key={msg.id} message={msg}>
+            <Chat.Avatar role={msg.role} />
+            <div>
+              <Chat.Bubble>
+                <Chat.MessageContent />
+                {msg.role === "assistant" && conv.isStreaming && (
+                  <Chat.StreamCursor />
+                )}
+              </Chat.Bubble>
+              <Chat.MessageMeta>Model info here</Chat.MessageMeta>
+              <Chat.ToolPills formatToolName={(n) => n.replace(/_/g, " ")} />
+            </div>
+          </Chat.Message>
+        ))}
+      </Chat.Messages>
+      <Chat.TypingIndicator dotCount={3} />
+      <Chat.ToolActivity />
+      <Chat.Input placeholder="Ask anything…" />
+      <Chat.SendButton>Send</Chat.SendButton>
+      <Chat.Footer>
+        <Chat.ContextBar />
+      </Chat.Footer>
+    </Chat.Root>
+  );
+}
+```
+
+---
+
+### Chat.Root — uncontrolled props
+
+<ApiTable props={[
+  { name: "systemPrompt", type: "string", description: "Prepended as a system message to every request." },
+  { name: "tools", type: "ToolDefinition[]", description: "Tool definitions the model can call." },
+  { name: "maxTokens", type: "number", description: "Context window limit in tokens. Auto-detected from model if omitted." },
+  { name: "maxToolRounds", type: "number", default: "5", description: "Maximum tool-call rounds before returning text." },
+  { name: "primeTools", type: "boolean", default: "false", description: "Enable tool priming for all messages." },
+  { name: "hideToolCalls", type: "boolean", default: "false", description: "Strip tool-call markup from streamed/returned text." },
+  { name: "initialMessages", type: "TrackedChatMessage[]", description: "Seed the message list (e.g. restored from storage)." }
+]} />
+
+### Chat.Root — controlled props
+
+<ApiTable props={[
+  { name: "messages", type: "readonly TrackedChatMessage[]", required: true, description: "Full message list. When provided, Chat.Root becomes controlled." },
+  { name: "streamingContent", type: "string", description: "Accumulated text of the current streaming response." },
+  { name: "streamingMessageId", type: "MessageId | null", description: "ID of the message currently being streamed." },
+  { name: "isStreaming", type: "boolean", description: "True while a stream is in progress." },
+  { name: "isSending", type: "boolean", description: "True while a non-streaming send is in progress." },
+  { name: "onSend", type: "(content: string) => Promise<MessageId>", description: "Called when the user submits input." },
+  { name: "onStop", type: "() => void", description: "Called when the user clicks Stop." },
+  { name: "error", type: "ArlopassSDKError | null", description: "Error from the last operation." },
+  { name: "toolActivity", type: "ToolActivityState", description: "Current tool execution state (priming, matched, executing, result, idle)." },
+  { name: "contextInfo", type: "ContextWindowInfo", description: "Context window usage info (maxTokens, usedTokens, usageRatio)." }
+]} />
+
+---
+
+### Data attributes
+
+<ApiTable props={[
+  { name: "data-state", type: '"idle" | "streaming" | "sending" | "error"', default: '"idle"', description: "Set on Chat.Root and Chat.Footer. Reflects current chat state." },
+  { name: "data-role", type: '"user" | "assistant" | "system"', description: "Set on Chat.Message, Chat.Avatar, Chat.Bubble, Chat.MessageMeta." },
+  { name: "data-status", type: '"pending" | "streaming" | "complete" | "error"', description: "Set on Chat.Message and Chat.Bubble." },
+  { name: "data-part", type: "string", description: 'Identifies the component: "header", "avatar", "bubble", "typing-indicator", "typing-dot", "stream-cursor", "message-meta", "tool-pills", "tool-pill", "footer", "context-bar", "scroll-fade", "tool-activity".' },
+  { name: "data-phase", type: '"priming" | "matched" | "executing" | "result"', description: "Set on Chat.ToolActivity. Reflects the current tool execution phase." },
+  { name: "data-usage", type: '"normal" | "warning" | "critical"', default: '"normal"', description: "Set on Chat.ContextBar. Reflects context window usage level." }
+]} />
+
+### Styling
+
+All parts render plain HTML elements with data attributes. Use CSS attribute selectors to style each state:
+
+```css title="CSS"
+/* Message bubbles by role */
+[data-part="bubble"][data-role="user"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+[data-part="bubble"][data-role="assistant"] {
+  background: var(--surface-accent);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+/* Avatars */
+[data-part="avatar"] {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-part="avatar"][data-role="user"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+[data-part="avatar"][data-role="assistant"] {
+  background: var(--surface-accent);
+}
+
+/* Typing dots with bounce animation */
+[data-part="typing-dot"] {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: bounce 0.8s ease-in-out infinite;
+}
+
+/* Streaming cursor */
+[data-part="stream-cursor"] {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--accent);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Context bar usage levels */
+[data-part="context-bar"][data-usage="warning"] { color: var(--warning); }
+[data-part="context-bar"][data-usage="critical"] { color: var(--danger); }
+
+/* Tool activity phases */
+[data-part="tool-activity"][data-phase="executing"] {
+  opacity: 0.8;
+}
+
+/* Scroll fade gradient */
+[data-part="scroll-fade"][data-state="visible"] {
+  opacity: 1;
+  background: linear-gradient(to bottom, var(--surface), transparent);
+}
+[data-part="scroll-fade"][data-state="hidden"] {
+  opacity: 0;
+}
+
+/* Footer states */
+[data-part="footer"][data-state="streaming"] {
+  border-top-color: var(--accent);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  [data-part="typing-dot"],
+  [data-part="stream-cursor"] {
+    animation: none;
+  }
+}
+```
+
+---
+
+### Accessibility
+
+<Callout type="info" title="Keyboard & ARIA">
+`Chat.Input` supports **Enter** to send and **Shift+Enter** for new lines. `Chat.SendButton` and `Chat.StopButton` are native `<button>` elements with `aria-label` attributes. The message list uses `role="log"` so screen readers announce new messages automatically.
+</Callout>

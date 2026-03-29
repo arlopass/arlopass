@@ -1,0 +1,112 @@
+---
+title: "Message"
+description: "Standalone message display component for rendering individual chat messages with role, content, timestamp, and status."
+category: "Components Library"
+order: 3
+lastUpdated: 2026-03-29
+keywords: ["message", "component", "primitive"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../components/docs/ApiTable.astro';
+
+Standalone message display component.
+
+```tsx
+import { Message } from "@arlopass/react-ui";
+```
+
+---
+
+### Parts
+
+| Name | Element | Purpose |
+|------|---------|---------|
+| `Message.Root` | div | Outermost wrapper. Provides message context to children. |
+| `Message.Content` | div | Renders the text/markdown content of the message. |
+| `Message.Role` | span | Displays the message role (user, assistant, system). |
+| `Message.Timestamp` | time | Renders the message timestamp. |
+| `Message.Status` | span | Shows message delivery status (pending, sent, error). |
+| `Message.ToolCalls` | div | Slot for rendering tool-call information within the message. |
+
+---
+
+### Message.Root props
+
+<ApiTable props={[
+  { name: "message", type: "TrackedChatMessage", required: true, description: "The message object to display." },
+  { name: "children", type: "ReactNode", description: "Sub-components to render inside the message." }
+]} />
+
+---
+
+### Standalone usage
+
+Use `Message` on its own to render a single message outside of a `Chat` context.
+
+```tsx title="Message display"
+import { Message } from "@arlopass/react-ui";
+
+function SingleMessage({ msg }) {
+  return (
+    <Message.Root message={msg}>
+      <Message.Role />
+      <Message.Content />
+      <Message.Timestamp />
+      <Message.Status />
+      <Message.ToolCalls />
+    </Message.Root>
+  );
+}
+```
+
+### Inside Chat.Messages
+
+Compose with `Chat.Message` inside the `Chat.Messages` render prop for full chat integration.
+
+```tsx title="Inside Chat"
+import { Chat, Message } from "@arlopass/react-ui";
+
+<Chat.Root systemPrompt="You are helpful.">
+  <Chat.Messages>
+    {(messages) =>
+      messages.map((msg) => (
+        <Chat.Message key={msg.id} message={msg}>
+          <Message.Root message={msg}>
+            <Message.Role />
+            <Message.Content />
+          </Message.Root>
+        </Chat.Message>
+      ))
+    }
+  </Chat.Messages>
+  <Chat.Input />
+  <Chat.SendButton>Send</Chat.SendButton>
+</Chat.Root>
+```
+
+---
+
+### Data attributes
+
+<ApiTable props={[
+  { name: "data-role", type: '"user" | "assistant" | "system"', description: "Set on Message.Root. The message role." },
+  { name: "data-status", type: '"pending" | "sent" | "error"', description: "Set on Message.Root. Delivery status of the message." }
+]} />
+
+### Styling
+
+```css title="CSS"
+/* Role-based message styling */
+[data-role="user"] {
+  justify-content: flex-end;
+}
+
+[data-role="assistant"] {
+  justify-content: flex-start;
+}
+
+[data-status="error"] {
+  border-left: 3px solid red;
+}
+```

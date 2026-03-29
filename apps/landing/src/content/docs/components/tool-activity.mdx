@@ -1,0 +1,112 @@
+---
+title: "ToolActivity"
+description: "Tool call execution display component for rendering function calling status, arguments, and results."
+category: "Components Library"
+order: 6
+lastUpdated: 2026-03-29
+keywords: ["tool", "activity", "component", "function calling"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../components/docs/ApiTable.astro';
+
+Tool call execution display.
+
+```tsx
+import { ToolActivity } from "@arlopass/react-ui";
+```
+
+---
+
+### Parts
+
+| Name | Element | Purpose |
+|------|---------|---------|
+| `ToolActivity.Root` | div | Wraps tool-call display. Tracks whether any call is still in progress. |
+| `ToolActivity.Call` | div | Renders a single tool-call invocation. Supports render-prop children. |
+| `ToolActivity.Result` | div | Renders the result of a tool call. |
+
+---
+
+### ToolActivity.Root props
+
+<ApiTable props={[
+  { name: "toolCalls", type: "readonly ToolCallInfo[]", description: "Array of tool calls to display." },
+  { name: "children", type: "ReactNode", description: "Sub-components to render inside the activity wrapper." }
+]} />
+
+### ToolActivity.Call props
+
+<ApiTable props={[
+  { name: "toolCall", type: "ToolCallInfo", required: true, description: "The tool call to display." },
+  { name: "children", type: "((toolCall: ToolCallInfo) => ReactNode) | ReactNode", description: "Render-prop or static content. Defaults to the tool name." }
+]} />
+
+### ToolActivity.Result props
+
+<ApiTable props={[
+  { name: "toolCall", type: "ToolCallInfo", required: true, description: "The tool call whose result to display." }
+]} />
+
+---
+
+### Usage
+
+```tsx title="ToolActivity"
+import { ToolActivity } from "@arlopass/react-ui";
+
+function ToolCalls({ toolCalls }) {
+  return (
+    <ToolActivity.Root toolCalls={toolCalls}>
+      {toolCalls.map((tc) => (
+        <div key={tc.id}>
+          <ToolActivity.Call toolCall={tc}>
+            {(call) => (
+              <span>
+                🔧 {call.name}({JSON.stringify(call.arguments)})
+              </span>
+            )}
+          </ToolActivity.Call>
+          <ToolActivity.Result toolCall={tc} />
+        </div>
+      ))}
+    </ToolActivity.Root>
+  );
+}
+```
+
+### Inside a Chat message
+
+Compose with `Message` to show tool activity inline within conversation messages.
+
+```tsx title="With Chat.Messages"
+import { Chat, Message, ToolActivity } from "@arlopass/react-ui";
+
+<Chat.Messages>
+  {(messages) =>
+    messages.map((msg) => (
+      <Chat.Message key={msg.id} message={msg}>
+        <Message.Root message={msg}>
+          <Message.Content />
+          {msg.toolCalls && (
+            <ToolActivity.Root toolCalls={msg.toolCalls}>
+              {msg.toolCalls.map((tc) => (
+                <ToolActivity.Call key={tc.id} toolCall={tc} />
+              ))}
+            </ToolActivity.Root>
+          )}
+        </Message.Root>
+      </Chat.Message>
+    ))
+  }
+</Chat.Messages>
+```
+
+---
+
+### Data attributes
+
+<ApiTable props={[
+  { name: "data-state", type: '"active" | "idle"', default: '"idle"', description: "Set on ToolActivity.Root. Active while any tool call is in progress." },
+  { name: "data-status", type: '"pending" | "running" | "complete" | "error"', description: "Set on ToolActivity.Call and ToolActivity.Result. Status of the individual tool call." }
+]} />

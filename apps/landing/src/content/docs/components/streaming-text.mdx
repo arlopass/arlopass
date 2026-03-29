@@ -1,0 +1,102 @@
+---
+title: "StreamingText"
+description: "Streaming text renderer with a typing cursor for displaying real-time AI responses."
+category: "Components Library"
+order: 4
+lastUpdated: 2026-03-29
+keywords: ["streaming", "text", "component", "primitive"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../components/docs/ApiTable.astro';
+
+Streaming text renderer with typing cursor.
+
+```tsx
+import { StreamingText } from "@arlopass/react-ui";
+```
+
+---
+
+### Props
+
+<ApiTable props={[
+  { name: "content", type: "string", required: true, description: "The text content to display." },
+  { name: "isStreaming", type: "boolean", required: true, description: "Whether the text is currently being streamed." },
+  { name: "cursor", type: "string", default: '"▌"', description: "Cursor character shown while streaming." }
+]} />
+
+---
+
+### Usage
+
+```tsx title="StreamingText"
+import { StreamingText } from "@arlopass/react-ui";
+
+function StreamingDemo({ content, isStreaming }) {
+  return (
+    <StreamingText
+      content={content}
+      isStreaming={isStreaming}
+      cursor="▌"
+    />
+  );
+}
+```
+
+### With Chat
+
+Commonly used inside `Chat.Messages` to render the in-progress assistant response.
+
+```tsx title="Inside Chat"
+import { Chat, StreamingText } from "@arlopass/react-ui";
+
+<Chat.Root systemPrompt="You are helpful.">
+  <Chat.Messages>
+    {(messages, streamingContent, isStreaming) => (
+      <>
+        {messages.map((msg) => (
+          <div key={msg.id}>{msg.content}</div>
+        ))}
+        {streamingContent && (
+          <StreamingText content={streamingContent} isStreaming={isStreaming} />
+        )}
+      </>
+    )}
+  </Chat.Messages>
+  <Chat.Input />
+  <Chat.SendButton>Send</Chat.SendButton>
+</Chat.Root>
+```
+
+---
+
+### Data attributes
+
+<ApiTable props={[
+  { name: "data-state", type: '"streaming" | "idle"', default: '"idle"', description: "Reflects whether text is currently being streamed." }
+]} />
+
+### Styling
+
+The component renders a `<span>` element. The cursor character is appended as a text node while streaming.
+
+```css title="CSS"
+/* Animate the cursor while streaming */
+[data-state="streaming"] {
+  /* Cursor blinks */
+}
+
+[data-state="streaming"]::after {
+  animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+[data-state="idle"] {
+  /* Final state — no cursor visible */
+}
+```

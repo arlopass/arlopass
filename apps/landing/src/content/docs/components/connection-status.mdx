@@ -1,0 +1,101 @@
+---
+title: "ConnectionStatus"
+description: "Connection state display component for showing real-time WebSocket connection status."
+category: "Components Library"
+order: 7
+lastUpdated: 2026-03-29
+keywords: ["connection", "status", "component"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../components/docs/ApiTable.astro';
+
+Connection state display.
+
+```tsx
+import { ConnectionStatus } from "@arlopass/react-ui";
+```
+
+---
+
+### Props
+
+<ApiTable props={[
+  { name: "state", type: "ClientState", description: 'Connection state override. When omitted, reads from the nearest ArlopassProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".' },
+  { name: "sessionId", type: "string", description: "Session ID override. When omitted, reads from ArlopassProvider." },
+  { name: "children", type: "ReactNode", description: "Custom content. Defaults to rendering the state string." }
+]} />
+
+---
+
+### Uncontrolled usage
+
+Inside a `<ArlopassProvider>`, the component reads connection state automatically via `useConnection`.
+
+```tsx title="ConnectionStatus"
+import { ArlopassProvider } from "@arlopass/react";
+import { ConnectionStatus } from "@arlopass/react-ui";
+
+function StatusBar() {
+  return (
+    <ArlopassProvider>
+      <ConnectionStatus />
+    </ArlopassProvider>
+  );
+}
+```
+
+### Controlled usage
+
+Pass the `state` prop to override auto-detection. Useful for storybooks, tests, or custom state management.
+
+```tsx title="Controlled"
+import { ConnectionStatus } from "@arlopass/react-ui";
+
+function CustomStatus({ state }) {
+  return (
+    <ConnectionStatus state={state}>
+      {state === "connected" ? "🟢 Online" : "🔴 Offline"}
+    </ConnectionStatus>
+  );
+}
+```
+
+---
+
+### Data attributes
+
+<ApiTable props={[
+  { name: "data-state", type: '"disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed"', description: "Set on the root div. Mirrors the current connection state." }
+]} />
+
+### Styling
+
+The component renders a plain `<div>` with a `data-state` attribute. Use CSS selectors to style each state:
+
+```css title="CSS"
+/* Color-code connection states */
+[data-state="connected"] {
+  color: #22c55e;
+}
+
+[data-state="degraded"] {
+  color: #eab308;
+}
+
+[data-state="disconnected"],
+[data-state="failed"] {
+  color: #ef4444;
+}
+
+[data-state="connecting"],
+[data-state="reconnecting"] {
+  color: #3b82f6;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+```
