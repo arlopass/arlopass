@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && npx pagefind --site dist --glob \"docs/**/*.html\"",
+    "build": "astro build && npx pagefind --site dist --glob \"docs/**/*.html\" && node --import tsx scripts/generate-llms-txt.ts",
     "preview": "astro preview",
     "check": "astro check"
   },
@@ -33,6 +33,7 @@
     "@types/dompurify": "^3.0.5",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "pagefind": "^1.4.0"
+    "pagefind": "^1.4.0",
+    "tsx": "^4.21.0"
   }
 }
