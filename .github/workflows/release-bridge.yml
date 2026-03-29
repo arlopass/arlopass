@@ -6,6 +6,10 @@ on:
       - "bridge/v*"
   workflow_dispatch:
     inputs:
+      release_tag:
+        description: "Release tag (e.g. bridge/v1.2.3)"
+        required: true
+        type: string
       dry_run:
         description: "Dry-run mode (draft release, no npm publish)"
         required: false
@@ -25,8 +29,14 @@ jobs:
     steps:
       - name: Parse tag
         id: parse
+        shell: bash
         run: |
-          TAG="${GITHUB_REF_NAME}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.release_tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
           if [[ "${TAG}" =~ ^bridge/v(.+)$ ]]; then
             echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
             echo "tag=${TAG}" >> "$GITHUB_OUTPUT"

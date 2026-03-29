@@ -7,11 +7,20 @@ on:
       - "package.json"
       - "adapters/**/package.json"
       - "apps/extension/manifest.json"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  production-gate:
+    name: Production Gate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Confirm production release gate
+        run: echo "Production environment gate passed"
+
   detect:
     name: Detect version bumps
     runs-on: ubuntu-latest
@@ -107,7 +116,7 @@ jobs:
 
   tag-core:
     name: Tag core release
-    needs: detect
+    needs: [detect, production-gate]
     if: needs.detect.outputs.core_bumped == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -129,7 +138,7 @@ jobs:
 
   tag-extension:
     name: Tag extension release
-    needs: detect
+    needs: [detect, production-gate]
     if: needs.detect.outputs.extension_bumped == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -151,7 +160,7 @@ jobs:
 
   tag-adapters:
     name: Tag adapter releases
-    needs: detect
+    needs: [detect, production-gate]
     if: needs.detect.outputs.adapters_json != '[]'
     runs-on: ubuntu-latest
     strategy:
