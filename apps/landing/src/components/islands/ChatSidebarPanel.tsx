@@ -3,6 +3,9 @@ import { ArlopassProvider } from "@arlopass/react";
 import { ChatSidebar } from "./ChatSidebar";
 import { useEffect, useRef } from "react";
 
+// Chat sidebar layout & component styles (scoped to #arlopass-chat-panel)
+import "./chat-sidebar.css";
+
 // Individual component CSS (layer versions — won't bleed global resets)
 import "@mantine/core/styles/global.layer.css";
 import "@mantine/core/styles/default-css-variables.layer.css";
