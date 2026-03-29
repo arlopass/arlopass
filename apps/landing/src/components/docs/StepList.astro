@@ -1,0 +1,31 @@
+---
+interface Step {
+  title: string;
+  body: string;
+}
+
+interface Props {
+  steps: Step[];
+}
+
+const { steps } = Astro.props;
+---
+
+<div class="my-6 space-y-0">
+  {steps.map((step, i) => (
+    <div class="flex gap-4">
+      <div class="flex flex-col items-center">
+        <div class="h-8 w-8 rounded-full bg-brand text-white text-sm font-bold flex items-center justify-center shrink-0">
+          {i + 1}
+        </div>
+        {i < steps.length - 1 && (
+          <div class="w-px flex-1 bg-[var(--ap-border)] min-h-6"></div>
+        )}
+      </div>
+      <div class="pb-8 last:pb-0">
+        <p class="font-semibold text-[var(--ap-text-primary)] mb-1">{step.title}</p>
+        <p class="text-sm text-[var(--ap-text-body)] leading-relaxed">{step.body}</p>
+      </div>
+    </div>
+  ))}
+</div>
