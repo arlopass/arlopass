@@ -1,0 +1,159 @@
+---
+---
+
+<dialog id="docs-search-dialog" class="search-dialog">
+  <div class="search-dialog-inner">
+    <div id="pagefind-container"></div>
+    <button class="search-dialog-close" aria-label="Close search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+</dialog>
+
+<style>
+  .search-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    border: none;
+    background: transparent;
+    padding: 0;
+    max-width: 100vw;
+    max-height: 100vh;
+    width: 100%;
+    height: 100%;
+  }
+  .search-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+  .search-dialog-inner {
+    position: relative;
+    max-width: 560px;
+    margin: 10vh auto 0;
+    background: var(--ap-bg-elevated);
+    border: 1px solid var(--ap-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  .search-dialog-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--ap-text-tertiary);
+    cursor: pointer;
+    z-index: 10;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 150ms;
+  }
+  .search-dialog-close:hover {
+    color: var(--ap-text-primary);
+  }
+
+  /* Pagefind UI overrides for Arlopass theme */
+  :global(.pagefind-ui) {
+    --pagefind-ui-scale: 0.9;
+    --pagefind-ui-primary: #db4d12;
+    --pagefind-ui-text: var(--ap-text-body, #d6d3d1);
+    --pagefind-ui-background: var(--ap-bg-elevated, #3d3835);
+    --pagefind-ui-border: var(--ap-border, #44403c);
+    --pagefind-ui-tag: var(--ap-bg-surface, #292524);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 8px;
+    --pagefind-ui-image-border-radius: 8px;
+    --pagefind-ui-image-box-ratio: 0;
+    --pagefind-ui-font: 'Geist Sans Variable', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  :global(.pagefind-ui .pagefind-ui__search-input) {
+    background: var(--ap-bg-surface, #292524);
+    color: var(--ap-text-body, #d6d3d1);
+    font-size: 14px;
+    height: 44px;
+  }
+  :global(.pagefind-ui .pagefind-ui__search-input::placeholder) {
+    color: var(--ap-text-tertiary, #78716c);
+  }
+  :global(.pagefind-ui .pagefind-ui__result-link) {
+    color: var(--ap-text-primary, #fafaf9);
+    font-weight: 500;
+  }
+  :global(.pagefind-ui .pagefind-ui__result-link:hover) {
+    color: #db4d12;
+  }
+  :global(.pagefind-ui .pagefind-ui__result-excerpt) {
+    color: var(--ap-text-secondary, #a8a29e);
+    font-size: 13px;
+  }
+  :global(.pagefind-ui mark) {
+    color: #db4d12;
+    background: transparent;
+    font-weight: 600;
+  }
+  :global(.pagefind-ui .pagefind-ui__message) {
+    color: var(--ap-text-tertiary, #78716c);
+    font-size: 13px;
+    padding: 16px;
+  }
+</style>
+
+<script>
+  let pagefindLoaded = false;
+
+  async function openSearch() {
+    const dialog = document.getElementById('docs-search-dialog') as HTMLDialogElement;
+    if (!dialog) return;
+
+    dialog.showModal();
+
+    // Lazy-load Pagefind UI on first open
+    if (!pagefindLoaded) {
+      const { PagefindUI } = await import('@pagefind/default-ui');
+      new PagefindUI({
+        element: '#pagefind-container',
+        showSubResults: true,
+        showImages: false,
+        autofocus: true,
+        resetStyles: false,
+      });
+      pagefindLoaded = true;
+    }
+
+    // Focus the search input
+    setTimeout(() => {
+      const input = dialog.querySelector<HTMLInputElement>('.pagefind-ui__search-input');
+      input?.focus();
+    }, 50);
+  }
+
+  // Search trigger button
+  document.getElementById('docs-search-trigger')?.addEventListener('click', openSearch);
+
+  // Ctrl+K / Cmd+K shortcut
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      openSearch();
+    }
+  });
+
+  // Close button
+  document.querySelector('.search-dialog-close')?.addEventListener('click', () => {
+    (document.getElementById('docs-search-dialog') as HTMLDialogElement)?.close();
+  });
+
+  // Close on backdrop click
+  document.getElementById('docs-search-dialog')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      (e.target as HTMLDialogElement).close();
+    }
+  });
+
+  // Close on Escape (native dialog behavior, but ensure cleanup)
+  document.getElementById('docs-search-dialog')?.addEventListener('close', () => {
+    // Optional cleanup
+  });
+</script>
