@@ -1,50 +1,40 @@
-import {
-  Box,
-  ScrollArea,
-  Text,
-  TextInput,
-  UnstyledButton,
-} from "@mantine/core";
+import { Box, Kbd, ScrollArea, Text, UnstyledButton } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
-import { useState } from "react";
 import { NAVIGATION } from "../navigation";
 import { navigate, useRoute } from "../router";
+import { spotlight } from "./DocsSpotlight";
 
 export function Sidebar() {
   const currentPage = useRoute();
-  const [search, setSearch] = useState("");
-  const lower = search.toLowerCase();
-
-  const filtered = search.trim()
-    ? NAVIGATION.map((cat) => ({
-        ...cat,
-        items: cat.items.filter((item) =>
-          item.label.toLowerCase().includes(lower),
-        ),
-      })).filter((cat) => cat.items.length > 0)
-    : NAVIGATION;
 
   return (
     <>
       <Box px="sm" pb="sm" pt={4}>
-        <TextInput
-          placeholder="Search docs..."
-          size="xs"
-          leftSection={<IconSearch size={14} stroke={1.5} />}
-          value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-          styles={{
-            input: {
-              background: "var(--ap-bg-surface)",
-              border: "1px solid var(--ap-border)",
-              color: "var(--ap-text-body)",
-              "&::placeholder": { color: "var(--ap-text-tertiary)" },
-            },
+        <UnstyledButton
+          onClick={() => spotlight.open()}
+          w="100%"
+          px="xs"
+          py={6}
+          fz="xs"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: "var(--ap-bg-surface)",
+            border: "1px solid var(--ap-border)",
+            borderRadius: "var(--ap-radius-sm)",
+            color: "var(--ap-text-tertiary)",
           }}
-        />
+        >
+          <IconSearch size={14} stroke={1.5} />
+          <span style={{ flex: 1 }}>Search docs...</span>
+          <Kbd size="xs" style={{ fontSize: 10 }}>
+            Ctrl + K
+          </Kbd>
+        </UnstyledButton>
       </Box>
       <ScrollArea type="scroll" scrollbarSize={6} style={{ flex: 1 }} px="sm">
-        {filtered.map((cat, catIdx) => (
+        {NAVIGATION.map((cat, catIdx) => (
           <Box key={cat.label} mb={4} mt={catIdx === 0 ? 0 : 16}>
             <Text
               fz={11}

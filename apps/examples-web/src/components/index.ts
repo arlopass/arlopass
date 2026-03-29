@@ -20,6 +20,7 @@ export type { ChatSidebarProps } from "./ChatSidebar";
 
 export { Layout } from "./Layout";
 export { Sidebar } from "./Sidebar";
+export { DocsSpotlight } from "./DocsSpotlight";
 export { ApiTable } from "./ApiTable";
 export { StepList } from "./StepList";
 export { CodeComparison } from "./CodeComparison";

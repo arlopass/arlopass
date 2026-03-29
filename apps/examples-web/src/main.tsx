@@ -5,9 +5,11 @@ import { Notifications } from "@mantine/notifications";
 
 import App from "./App";
 import { SDKProvider } from "./components";
+import { DocsSpotlight } from "./components/DocsSpotlight";
 import "./styles.css";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
+import "@mantine/spotlight/styles.css";
 
 const arlopassTheme = createTheme({
   fontFamily:
@@ -45,6 +47,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <SDKProvider>
         <Notifications position="top-right" />
         <App />
+        <DocsSpotlight />
       </SDKProvider>
     </MantineProvider>
   </React.StrictMode>,

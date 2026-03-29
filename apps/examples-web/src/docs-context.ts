@@ -14,7 +14,7 @@ export type DocEntry = {
   keywords: string[];
 };
 
-const DOCS: DocEntry[] = [
+export const DOCS: DocEntry[] = [
   {
     id: "overview",
     title: "Arlopass Overview",
