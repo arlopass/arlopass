@@ -142,19 +142,18 @@ jobs:
               pnpm -r --filter "${target}..." --if-present run build
             done
 
-            # Run Vitest from workspace root with scoped projects to avoid
+            # Run Vitest from workspace root with scoped project names to avoid
             # per-package cwd resolution issues for vitest.workspace.ts entries.
             declare -A seen=()
             project_args=()
             for target in "${targets[@]}"; do
-              while IFS= read -r abs_path; do
-                [ -n "${abs_path}" ] || continue
-                rel_path="${abs_path#${GITHUB_WORKSPACE}/}"
-                if [ -n "${rel_path}" ] && [ -z "${seen[${rel_path}]+x}" ]; then
-                  seen["${rel_path}"]=1
-                  project_args+=("--project" "${rel_path}")
+              while IFS= read -r project_name; do
+                [ -n "${project_name}" ] || continue
+                if [ -z "${seen[${project_name}]+x}" ]; then
+                  seen["${project_name}"]=1
+                  project_args+=("--project" "${project_name}")
                 fi
-              done < <(pnpm -r --filter "${target}..." exec pwd | sed '/^$/d')
+              done < <(pnpm -r --filter "${target}..." exec node -p "require('./package.json').name" | sed '/^$/d')
             done
 
             if [ ${#project_args[@]} -eq 0 ]; then
