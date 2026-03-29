@@ -1,0 +1,221 @@
+---
+title: "Types"
+description: "TypeScript types exported from @arlopass/react and re-exported from @arlopass/web-sdk."
+category: "React SDK Reference"
+order: 4
+lastUpdated: 2026-03-29
+keywords: ["types", "typescript", "interfaces"]
+schema: "TechArticle"
+---
+
+All types are importable from `@arlopass/react`. This includes React-specific types and re-exports from `@arlopass/web-sdk`.
+
+```tsx
+import type {
+  MessageId,
+  TrackedChatMessage,
+  ToolCallInfo,
+  SubscriptionEvent,
+  ChatSubscribe,
+  ChatSubscribeNoTools,
+  ArlopassProviderProps,
+} from "@arlopass/react";
+```
+
+---
+
+### React SDK types
+
+#### MessageId
+
+```tsx
+type MessageId = string;
+```
+
+Opaque string identifier for tracked messages (UUID v4).
+
+#### TrackedChatMessage
+
+```tsx
+type TrackedChatMessage = Readonly<{
+  id: MessageId;
+  role: ChatRole;
+  content: string;
+  inResponseTo?: MessageId;
+  status: "pending" | "streaming" | "complete" | "error";
+  pinned: boolean;
+  toolCalls?: readonly ToolCallInfo[];
+}>;
+```
+
+Immutable message object returned by `useChat` and `useConversation`. Extends the base `ChatMessage` with tracking metadata.
+
+#### ToolCallInfo
+
+```tsx
+type ToolCallInfo = Readonly<{
+  toolCallId: string;
+  name: string;
+  arguments: Record<string, unknown>;
+  result?: string;
+  status: "pending" | "executing" | "complete" | "error";
+}>;
+```
+
+Attached to a `TrackedChatMessage` when the assistant invokes tools.
+
+#### SubscriptionEvent
+
+```tsx
+type SubscriptionEvent =
+  | "response"
+  | "stream"
+  | "error"
+  | "tool_call"
+  | "tool_result"
+  | "tool_priming_start"
+  | "tool_priming_match"
+  | "tool_priming_end";
+```
+
+#### ChatSubscribe
+
+```tsx
+type ChatSubscribe = {
+  (event: "response", messageId: MessageId, handler: (msg: TrackedChatMessage) => void): () => void;
+  (event: "response", handler: (msg: TrackedChatMessage) => void): () => void;
+  (event: "stream", messageId: MessageId, handler: (delta: string, accumulated: string) => void): () => void;
+  (event: "error", handler: (error: ArlopassSDKError, messageId: MessageId | null) => void): () => void;
+  (event: "error", messageId: MessageId, handler: (error: ArlopassSDKError) => void): () => void;
+  (event: "tool_call", handler: (toolCallId: string, name: string, args: Record<string, unknown>, messageId: MessageId) => void): () => void;
+  (event: "tool_call", messageId: MessageId, handler: (toolCallId: string, name: string, args: Record<string, unknown>) => void): () => void;
+  (event: "tool_result", handler: (toolCallId: string, name: string, result: string, messageId: MessageId) => void): () => void;
+  (event: "tool_result", messageId: MessageId, handler: (toolCallId: string, name: string, result: string) => void): () => void;
+  (event: "tool_priming_start", handler: (message: string) => void): () => void;
+  (event: "tool_priming_match", handler: (tools: readonly string[]) => void): () => void;
+  (event: "tool_priming_end", handler: () => void): () => void;
+};
+```
+
+Overloaded subscribe function returned by `useConversation`. Supports targeted subscriptions by message ID.
+
+#### ChatSubscribeNoTools
+
+```tsx
+type ChatSubscribeNoTools = {
+  (event: "response", messageId: MessageId, handler: (msg: TrackedChatMessage) => void): () => void;
+  (event: "response", handler: (msg: TrackedChatMessage) => void): () => void;
+  (event: "stream", messageId: MessageId, handler: (delta: string, accumulated: string) => void): () => void;
+  (event: "error", handler: (error: ArlopassSDKError, messageId: MessageId | null) => void): () => void;
+  (event: "error", messageId: MessageId, handler: (error: ArlopassSDKError) => void): () => void;
+};
+```
+
+Restricted subscribe type returned by `useChat` (no tool events).
+
+#### ArlopassProviderProps
+
+```tsx
+type ArlopassProviderProps = Readonly<{
+  appId?: string;
+  appSuffix?: string;
+  appName?: string;
+  appDescription?: string;
+  appIcon?: string;
+  defaultProvider?: string;
+  defaultModel?: string;
+  autoConnect?: boolean;
+  onError?: (error: ArlopassSDKError) => void;
+  children: React.ReactNode;
+}>;
+```
+
+#### ClientSnapshot
+
+```tsx
+type ClientSnapshot = Readonly<{
+  state: ClientState;
+  sessionId: string | null;
+  selectedProvider: Readonly<{ providerId: string; modelId: string }> | null;
+  providers: readonly ProviderDescriptor[];
+  error: ArlopassSDKError | null;
+}>;
+```
+
+Internal store snapshot exposed by the provider context.
+
+---
+
+### Re-exported from @arlopass/web-sdk
+
+These types are re-exported so you only need the `@arlopass/react` package.
+
+```tsx
+// Re-exported from @arlopass/web-sdk — no need to install web-sdk separately
+import type {
+  ChatMessage,
+  ChatRole,
+  ClientState,
+  ProviderDescriptor,
+  SelectProviderInput,
+  ChatOperationOptions,
+  ChatStreamEvent,
+  ArlopassSDKError,
+  ArlopassStateError,
+  ArlopassTransport,
+  ToolDefinition,
+  ConversationStreamEvent,
+  ToolCall,
+  ToolResult,
+  ToolCallEvent,
+  ToolResultEvent,
+  ToolPrimingStartEvent,
+  ToolPrimingMatchEvent,
+  ToolPrimingEndEvent,
+} from "@arlopass/react";
+```
+
+#### ChatMessage
+
+```tsx
+type ChatMessage = Readonly<{ role: ChatRole; content: string }>;
+```
+
+#### ChatRole
+
+```tsx
+type ChatRole = "system" | "user" | "assistant";
+```
+
+#### ClientState
+
+```tsx
+type ClientState = "disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed";
+```
+
+#### ProviderDescriptor
+
+```tsx
+type ProviderDescriptor = Readonly<{
+  providerId: string;
+  providerName: string;
+  models: readonly string[];
+}>;
+```
+
+#### SelectProviderInput
+
+```tsx
+type SelectProviderInput = Readonly<{ providerId: string; modelId: string }>;
+```
+
+#### ToolDefinition
+
+```tsx
+type ToolDefinition = Readonly<{
+  name: string;
+  description: string;
+  parameters?: ToolParameterSchema;
+  handler?: (args: Record<string, unknown>) => Promise<string> | string;
+}>;
+```

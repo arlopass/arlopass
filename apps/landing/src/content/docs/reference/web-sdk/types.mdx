@@ -1,0 +1,402 @@
+---
+title: "Types"
+description: "All TypeScript types exported from @arlopass/web-sdk."
+category: "Web SDK Reference"
+order: 3
+lastUpdated: 2026-03-29
+keywords: ["types", "typescript", "interfaces"]
+schema: "TechArticle"
+---
+
+All types exported from `@arlopass/web-sdk`.
+
+```tsx
+import type {
+  ChatMessage,
+  ChatRole,
+  ClientState,
+  ContextWindowInfo,
+  ChatInput,
+  ChatOperationOptions,
+  ChatStreamEvent,
+  ChatSendResult,
+  ConnectOptions,
+  ConnectResult,
+  ProviderDescriptor,
+  SelectProviderInput,
+  SelectProviderResult,
+  ListProvidersResult,
+  SessionId,
+  RequestId,
+  CorrelationId,
+  TransportRequest,
+  TransportResponse,
+  TransportStream,
+} from "@arlopass/web-sdk";
+```
+
+---
+
+### Core types
+
+#### ChatRole
+
+```tsx
+type ChatRole = "system" | "user" | "assistant";
+```
+
+#### ChatMessage
+
+```tsx
+type ChatMessage = Readonly<{
+  role: ChatRole;
+  content: string;
+}>;
+```
+
+#### ClientState
+
+```tsx
+type ClientState =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "degraded"
+  | "reconnecting"
+  | "failed";
+```
+
+#### ChatInput
+
+```tsx
+type ChatInput = Readonly<{
+  messages: readonly ChatMessage[];
+}>;
+```
+
+#### ChatOperationOptions
+
+```tsx
+type ChatOperationOptions = Readonly<{
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}>;
+```
+
+#### ChatStreamEvent
+
+```tsx
+type ChatStreamEvent =
+  | Readonly<{ type: "chunk"; delta: string; index: number; correlationId: string }>
+  | Readonly<{ type: "done"; correlationId: string }>;
+```
+
+#### ChatSendResult
+
+```tsx
+type ChatSendResult = Readonly<{
+  message: ChatMessage;
+  correlationId: string;
+}>;
+```
+
+#### ContextWindowInfo
+
+```tsx
+type ContextWindowInfo = Readonly<{
+  maxTokens: number;           // Context window size for the model
+  usedTokens: number;          // Estimated tokens in the context window
+  reservedOutputTokens: number; // Tokens reserved for model response
+  remainingTokens: number;     // Tokens still available for input
+  usageRatio: number;          // 0–1 fraction of input budget used
+}>;
+```
+
+Returned by `ArlopassClient.getContextInfo()` and `ConversationManager.getContextInfo()`. Use `usageRatio` for progress bars and `remainingTokens` for "context full" warnings.
+
+#### ID types
+
+```tsx
+type RequestId = string;
+type CorrelationId = string;
+type SessionId = string;
+```
+
+---
+
+### Connection types
+
+#### ConnectOptions
+
+```tsx
+type ConnectOptions = Readonly<{
+  appId?: string;
+  appSuffix?: string;
+  appName?: string;
+  appDescription?: string;
+  appIcon?: string;
+  origin?: string;
+  timeoutMs?: number;
+}>;
+```
+
+#### ConnectResult
+
+```tsx
+type ConnectResult = Readonly<{
+  sessionId: string;
+  capabilities: readonly ProtocolCapability[];
+  protocolVersion: string;
+  correlationId: string;
+}>;
+```
+
+---
+
+### Provider types
+
+#### ProviderDescriptor
+
+```tsx
+type ProviderDescriptor = Readonly<{
+  providerId: string;
+  providerName: string;
+  models: readonly string[];
+}>;
+```
+
+#### SelectProviderInput
+
+```tsx
+type SelectProviderInput = Readonly<{
+  providerId: string;
+  modelId: string;
+}>;
+```
+
+#### SelectProviderResult
+
+```tsx
+type SelectProviderResult = Readonly<{
+  providerId: string;
+  modelId: string;
+  correlationId: string;
+}>;
+```
+
+#### ListProvidersResult
+
+```tsx
+type ListProvidersResult = Readonly<{
+  providers: readonly ProviderDescriptor[];
+  correlationId: string;
+}>;
+```
+
+---
+
+### Transport types
+
+```tsx
+import type { ArlopassTransport } from "@arlopass/web-sdk";
+```
+
+#### ArlopassTransport
+
+```tsx
+interface ArlopassTransport {
+  request<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportResponse<TRes>>;
+  stream<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportStream<TRes>>;
+  disconnect?(sessionId: string): Promise<void>;
+}
+```
+
+#### TransportRequest
+
+```tsx
+type TransportRequest<TPayload = unknown> = Readonly<{
+  envelope: ProtocolEnvelopePayload<TPayload>;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}>;
+```
+
+#### TransportResponse
+
+```tsx
+type TransportResponse<TPayload = unknown> = Readonly<{
+  envelope: ProtocolEnvelopePayload<TPayload>;
+}>;
+```
+
+#### TransportStream
+
+```tsx
+type TransportStream<TPayload = unknown> = AsyncIterable<TransportResponse<TPayload>>;
+```
+
+---
+
+### Payload types
+
+#### ConnectPayload
+
+```tsx
+type ConnectPayload = Readonly<{
+  appId: string;
+  requestedCapabilities: readonly ProtocolCapability[];
+  appName?: string;
+  appDescription?: string;
+  appIcon?: string;
+}>;
+```
+
+#### ChatSendPayload
+
+```tsx
+type ChatSendPayload = Readonly<{
+  messages: readonly ChatMessage[];
+}>;
+```
+
+#### ChatSendResponsePayload
+
+```tsx
+type ChatSendResponsePayload = Readonly<{
+  message: ChatMessage;
+}>;
+```
+
+#### ChatStreamPayload
+
+```tsx
+type ChatStreamPayload = ChatSendPayload;
+```
+
+#### ChatStreamChunkPayload / ChatStreamDonePayload
+
+```tsx
+type ChatStreamChunkPayload = Readonly<{ type: "chunk"; delta: string; index: number }>;
+```
+
+```tsx
+type ChatStreamDonePayload = Readonly<{ type: "done" }>;
+```
+
+---
+
+### Tool types
+
+```tsx
+import type {
+  ToolDefinition,
+  ToolParameterSchema,
+  ToolCall,
+  ToolResult,
+  ToolCallEvent,
+  ToolResultEvent,
+  ToolPrimingStartEvent,
+  ToolPrimingMatchEvent,
+  ToolPrimingEndEvent,
+  ConversationStreamEvent,
+} from "@arlopass/web-sdk";
+```
+
+#### ToolParameterSchema
+
+```tsx
+type ToolParameterSchema = Readonly<{
+  type: "object";
+  properties?: Readonly<Record<string, Readonly<{
+    type: string;
+    description?: string;
+    enum?: readonly string[];
+  }>>>;
+  required?: readonly string[];
+}>;
+```
+
+#### ToolDefinition
+
+```tsx
+type ToolDefinition = Readonly<{
+  name: string;
+  description: string;
+  parameters?: ToolParameterSchema;
+  handler?: (args: Record<string, unknown>) => Promise<string> | string;
+}>;
+```
+
+#### ToolCall
+
+```tsx
+type ToolCall = Readonly<{
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+  matchRange: Readonly<{ start: number; end: number }>;
+}>;
+```
+
+#### ToolResult
+
+```tsx
+type ToolResult = Readonly<{
+  toolCallId: string;
+  name: string;
+  result: string;
+}>;
+```
+
+#### ToolCallEvent
+
+```tsx
+type ToolCallEvent = Readonly<{
+  type: "tool_call";
+  toolCallId: string;
+  name: string;
+  arguments: Record<string, unknown>;
+  matchRange: Readonly<{ start: number; end: number }>;
+}>;
+```
+
+#### ToolResultEvent
+
+```tsx
+type ToolResultEvent = Readonly<{
+  type: "tool_result";
+  toolCallId: string;
+  name: string;
+  result: string;
+}>;
+```
+
+#### ToolPrimingStartEvent
+
+```tsx
+type ToolPrimingStartEvent = Readonly<{ type: "tool_priming_start"; message: string }>;
+```
+
+#### ToolPrimingMatchEvent
+
+```tsx
+type ToolPrimingMatchEvent = Readonly<{ type: "tool_priming_match"; tools: readonly string[] }>;
+```
+
+#### ToolPrimingEndEvent
+
+```tsx
+type ToolPrimingEndEvent = Readonly<{ type: "tool_priming_end" }>;
+```
+
+#### ConversationStreamEvent
+
+```tsx
+type ConversationStreamEvent =
+  | ChatStreamEvent
+  | ToolCallEvent
+  | ToolResultEvent
+  | ToolPrimingStartEvent
+  | ToolPrimingMatchEvent
+  | ToolPrimingEndEvent;
+```

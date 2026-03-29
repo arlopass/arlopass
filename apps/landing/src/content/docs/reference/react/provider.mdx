@@ -1,0 +1,100 @@
+---
+title: "ArlopassProvider"
+description: "Root context provider for the React SDK — wrap your app to enable all hooks and guard components."
+category: "React SDK Reference"
+order: 1
+lastUpdated: 2026-03-29
+keywords: ["provider", "ArlopassProvider", "react"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../../components/docs/ApiTable.astro';
+import Callout from '../../../../components/docs/Callout.astro';
+
+The root context provider. Wrap your app (or the subtree that needs AI) with `<ArlopassProvider>` to enable all hooks and guard components.
+
+```tsx
+import { ArlopassProvider } from "@arlopass/react";
+```
+
+### Props
+
+<ApiTable props={[
+  { name: "appId", type: "string", description: "Full reverse-domain app identifier. Auto-derived from the page origin if omitted." },
+  { name: "appSuffix", type: "string", description: "Suffix appended to the auto-derived domain prefix. Ignored when appId is set." },
+  { name: "appName", type: "string", description: "Human-readable app name sent during the connect handshake." },
+  { name: "appDescription", type: "string", description: "Short app description sent during the connect handshake." },
+  { name: "appIcon", type: "string", description: "URL to a square icon/logo (https:// or data: URI)." },
+  { name: "defaultProvider", type: "string", description: "Provider ID to auto-select after connecting. Must be paired with defaultModel." },
+  { name: "defaultModel", type: "string", description: "Model ID to auto-select after connecting. Must be paired with defaultProvider." },
+  { name: "autoConnect", type: "boolean", default: "true", description: "Connect to the Arlopass extension automatically on mount." },
+  { name: "onError", type: "(error: ArlopassSDKError) => void", description: "Called when a connection or auto-select error occurs." },
+  { name: "children", type: "ReactNode", required: true, description: "Child components that consume the Arlopass context." }
+]} />
+
+### Mount sequence
+
+1. Detects the injected transport from `window.arlopass` (set by the browser extension).
+2. Creates a `ArlopassClient` instance bound to that transport.
+3. If `autoConnect` is `true` and the transport is available, calls `client.connect()` with the configured app identity.
+4. If `defaultProvider` and `defaultModel` are set, calls `client.selectProvider()` after connecting.
+5. Publishes the store via React context so child hooks can read snapshot state.
+
+### Unmount / cleanup
+
+On unmount the provider calls `client.disconnect()` and destroys the internal store. Any in-flight operations are cancelled.
+
+<Callout type="info" title="Transport not found">
+If the Arlopass extension is not installed, the provider still renders its children. Hooks will report `state: "disconnected"` and guard components can show an install prompt.
+</Callout>
+
+### Examples
+
+**Basic usage**
+
+```tsx
+import { ArlopassProvider } from "@arlopass/react";
+
+function App() {
+  return (
+    <ArlopassProvider>
+      <MyChat />
+    </ArlopassProvider>
+  );
+}
+```
+
+**Auto-select provider and model**
+
+```tsx
+<ArlopassProvider
+  defaultProvider="openai"
+  defaultModel="gpt-4o"
+>
+  <MyChat />
+</ArlopassProvider>
+```
+
+**App identity**
+
+```tsx
+<ArlopassProvider
+  appSuffix="my-chat"
+  appName="My Chat App"
+  appDescription="A demo chat application"
+  appIcon="https://example.com/icon.png"
+>
+  <MyChat />
+</ArlopassProvider>
+```
+
+**Manual connect with error callback**
+
+```tsx
+<ArlopassProvider
+  onError={(err) => console.error(err.machineCode, err.message)}
+  autoConnect={false}
+>
+  <MyChat />
+</ArlopassProvider>
+```

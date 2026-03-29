@@ -1,0 +1,130 @@
+---
+title: "ConversationManager"
+description: "High-level conversation controller — context-window management, summarization, tool calling, and message pinning."
+category: "Web SDK Reference"
+order: 2
+lastUpdated: 2026-03-29
+keywords: ["conversation", "manager", "context window"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../../components/docs/ApiTable.astro';
+
+High-level conversation controller built on top of `ArlopassClient`. Handles context-window management, summarization, tool calling, and message pinning.
+
+```tsx
+import { ConversationManager } from "@arlopass/web-sdk";
+```
+
+---
+
+### Constructor options
+
+<ApiTable props={[
+  { name: "client", type: "ArlopassClient", required: true, description: "Connected ArlopassClient instance." },
+  { name: "maxTokens", type: "number", description: "Context window limit in tokens. Auto-detected from the selected model if omitted." },
+  { name: "reserveOutputTokens", type: "number", default: "1024", description: "Tokens reserved for the model's response." },
+  { name: "systemPrompt", type: "string", description: "System prompt prepended to every request." },
+  { name: "summarize", type: "boolean", default: "false", description: "Enable automatic summarization when the context window fills." },
+  { name: "summarizationPrompt", type: "string", default: '"Summarize the following conversation concisely…"', description: "Custom prompt used for summarization." },
+  { name: "tools", type: "ToolDefinition[]", default: "[]", description: "Tool definitions the model can call." },
+  { name: "maxToolRounds", type: "number", default: "5", description: "Maximum consecutive tool-call rounds before returning text." },
+  { name: "primeTools", type: "boolean", default: "false", description: "Enable tool priming for all messages globally." },
+  { name: "hideToolCalls", type: "boolean", default: "false", description: "Strip tool-call markup from responses globally." }
+]} />
+
+---
+
+### Properties
+
+<ApiTable props={[
+  { name: "maxTokens", type: "number", description: "Configured context window limit (readonly getter)." }
+]} />
+
+---
+
+### Methods
+
+<ApiTable props={[
+  { name: "send", type: "(content: string, options?: PinOptions) => Promise<ChatMessage>", description: "Send a user message and receive a complete response. Executes tool calls automatically if handlers are defined." },
+  { name: "stream", type: "(content: string, options?: PinOptions) => AsyncIterable<ConversationStreamEvent>", description: "Send a user message and stream the response. Yields chunk, done, tool_call, tool_result, and tool_priming_* events." },
+  { name: "addMessage", type: "(message: ChatMessage, options?: PinOptions) => void", description: "Manually add a message to the conversation history." },
+  { name: "getMessages", type: "() => readonly ChatMessage[]", description: "Get all messages including the system prompt." },
+  { name: "getContextWindow", type: "() => readonly ChatMessage[]", description: "Get the messages that would be sent in the next request (after summarization/truncation)." },
+  { name: "getTokenCount", type: "() => number", description: "Estimated total tokens in the current context window." },
+  { name: "getContextInfo", type: "() => ContextWindowInfo", description: "Returns a snapshot of context window usage: maxTokens, usedTokens, reservedOutputTokens, remainingTokens, and usageRatio (0–1)." },
+  { name: "setPin", type: "(index: number, pinned: boolean) => void", description: "Toggle pin status of a message by index. Pinned messages survive summarization." },
+  { name: "clear", type: "() => void", description: "Remove all messages from the conversation." },
+  { name: "submitToolResult", type: "(toolCallId: string, result: string) => void", description: "Submit a result for a manual tool call (tools without a handler)." }
+]} />
+
+---
+
+### PinOptions
+
+Options passed to `send`, `stream`, and `addMessage`.
+
+<ApiTable props={[
+  { name: "pinned", type: "boolean", description: "Pin the message so it survives context-window summarization." },
+  { name: "primeTools", type: "boolean", description: "Force tool priming for this message (overrides manager-level setting)." },
+  { name: "hideToolCalls", type: "boolean", description: "Hide tool call markup for this message (overrides manager-level setting)." }
+]} />
+
+---
+
+### ConversationStreamEvent
+
+Discriminated union yielded by `stream()`. Extends the base `ChatStreamEvent` with tool and priming events.
+
+```tsx
+type ConversationStreamEvent =
+  | { type: "chunk"; delta: string; index: number; correlationId: string }
+  | { type: "done"; correlationId: string }
+  | { type: "tool_call"; toolCallId: string; name: string; arguments: Record<string, unknown>; matchRange: { start: number; end: number } }
+  | { type: "tool_result"; toolCallId: string; name: string; result: string }
+  | { type: "tool_priming_start"; message: string }
+  | { type: "tool_priming_match"; tools: readonly string[] }
+  | { type: "tool_priming_end" };
+```
+
+---
+
+### ContextWindowInfo
+
+Returned by `getContextInfo()`. Provides a snapshot of context window usage — useful for building token meters, "context full" warnings, and adaptive UI that responds to how much space is left.
+
+```tsx
+type ContextWindowInfo = Readonly<{
+  maxTokens: number;           // Context window size for the model
+  usedTokens: number;          // Tokens currently in the context window
+  reservedOutputTokens: number; // Tokens reserved for model output
+  remainingTokens: number;     // Tokens left for new input
+  usageRatio: number;          // 0–1 fraction of input budget used
+}>;
+```
+
+---
+
+### Example
+
+```tsx
+const manager = new ConversationManager({
+  client,
+  systemPrompt: "You are a helpful assistant.",
+  tools: [{ name: "search", description: "Search", handler: async () => "results" }],
+});
+
+// Non-streaming
+const reply = await manager.send("What is the weather?");
+
+// Streaming
+for await (const event of manager.stream("Tell me more")) {
+  if (event.type === "chunk") process.stdout.write(event.delta);
+  if (event.type === "tool_call") console.log("Tool:", event.name);
+}
+
+// Context window usage
+const info = manager.getContextInfo();
+console.log(`${info.usedTokens}/${info.maxTokens} tokens (${Math.round(info.usageRatio * 100)}%)`);
+console.log(`${info.remainingTokens} tokens remaining for input`);
+```

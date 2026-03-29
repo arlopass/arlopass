@@ -1,0 +1,115 @@
+---
+title: "ArlopassClient"
+description: "Core client class — manages connection state, provider selection, and chat operations over the protocol transport."
+category: "Web SDK Reference"
+order: 1
+lastUpdated: 2026-03-29
+keywords: ["client", "ArlopassClient", "web sdk"]
+schema: "TechArticle"
+---
+
+import ApiTable from '../../../../components/docs/ApiTable.astro';
+import Callout from '../../../../components/docs/Callout.astro';
+
+The core client class. Manages connection state, provider selection, and chat operations over the protocol transport.
+
+```tsx
+import { ArlopassClient } from "@arlopass/web-sdk";
+```
+
+---
+
+### Constructor options
+
+<ApiTable props={[
+  { name: "transport", type: "ArlopassTransport", required: true, description: "Transport implementation (provided by the browser extension via window.arlopass)." },
+  { name: "origin", type: "string", default: '"https://app.arlopass.local"', description: "Origin URL for envelope metadata. Auto-set to window.location.origin when in a browser." },
+  { name: "timeoutMs", type: "number", default: "5000", description: "Default request timeout in milliseconds." },
+  { name: "envelopeTtlMs", type: "number", default: "60000", description: "Time-to-live for protocol envelopes." },
+  { name: "protocolVersion", type: "string", default: '"1.0.0"', description: "Protocol version string." },
+  { name: "nonce", type: "string", description: "Nonce for envelope signatures." },
+  { name: "now", type: "() => Date", description: "Clock function for envelope timestamps. Defaults to () => new Date()." },
+  { name: "randomId", type: "() => string", description: "ID generator for request/correlation IDs. Defaults to crypto.randomUUID()." },
+  { name: "defaultCapabilities", type: "readonly ProtocolCapability[]", description: "Capabilities to request during connect." },
+  { name: "defaultProviderId", type: "string", default: '"provider.system"', description: "Fallback provider ID for envelopes before selection." },
+  { name: "defaultModelId", type: "string", default: '"model.default"', description: "Fallback model ID for envelopes before selection." },
+  { name: "tracing", type: "TelemetryTracing", description: "Optional tracing hook for observability." }
+]} />
+
+```tsx
+const client = new ArlopassClient({ transport, origin: window.location.origin });
+```
+
+---
+
+### Properties
+
+<ApiTable props={[
+  { name: "state", type: "ClientState", description: "Current connection state (readonly getter)." },
+  { name: "sessionId", type: "string | undefined", description: "Active session ID after connect, undefined before." },
+  { name: "selectedProvider", type: "{ providerId: string; modelId: string } | undefined", description: "Currently selected provider/model pair." },
+  { name: "contextWindowSize", type: "number", description: "Context window size in tokens for the selected model. Falls back to 4096 for unknown models." },
+  { name: "chat", type: "{ send, stream }", description: "Chat operation namespace (see Methods below)." }
+]} />
+
+---
+
+### Methods
+
+<ApiTable props={[
+  { name: "connect", type: "(options: ConnectOptions) => Promise<ConnectResult>", description: "Establish connection with the extension. Transitions state: disconnected → connecting → connected." },
+  { name: "disconnect", type: "() => Promise<void>", description: "Disconnect and reset state to disconnected." },
+  { name: "listProviders", type: "() => Promise<ListProvidersResult>", description: "Fetch available providers and models. Requires connected state." },
+  { name: "selectProvider", type: "(input: SelectProviderInput) => Promise<SelectProviderResult>", description: "Select a provider/model pair. Requires connected state." },
+  { name: "chat.send", type: "(input: ChatInput, options?: ChatOperationOptions) => Promise<ChatSendResult>", description: "Send messages and receive a complete response. Requires connected state + selected provider." },
+  { name: "chat.stream", type: "(input: ChatInput, options?: ChatOperationOptions) => AsyncIterable<ChatStreamEvent>", description: "Send messages and stream the response as chunks. Supports AbortSignal via options.signal." },
+  { name: "getContextInfo", type: "(messages: readonly ChatMessage[], reserveOutputTokens?: number) => ContextWindowInfo", description: 'Compute context window usage for the selected model given a set of messages. Useful for token meters and "context full" warnings.' }
+]} />
+
+```tsx
+const client = new ArlopassClient({ transport: window.arlopass });
+
+await client.connect({ appId: "com.example.myapp" });
+const { providers } = await client.listProviders();
+await client.selectProvider({ providerId: "openai", modelId: "gpt-4o" });
+```
+
+```tsx
+// Non-streaming
+const result = await client.chat.send({
+  messages: [{ role: "user", content: "Hello" }],
+});
+console.log(result.message.content);
+
+// Streaming
+for await (const event of client.chat.stream({
+  messages: [{ role: "user", content: "Hello" }],
+})) {
+  if (event.type === "chunk") process.stdout.write(event.delta);
+}
+
+// Context window info
+const info = client.getContextInfo(messages);
+console.log(`${info.usedTokens}/${info.maxTokens} (${Math.round(info.usageRatio * 100)}%)`);
+console.log("Window size:", client.contextWindowSize);
+```
+
+---
+
+### State machine
+
+```text
+// State machine transitions:
+//
+// disconnected ──connect()──→ connecting ──success──→ connected
+//                                  │                      │
+//                                  └──fail──→ failed      ├──degraded
+//                                                         │
+// connected ──disconnect()──→ disconnected       reconnecting
+//                                                    │
+//                                                    └──→ connected | failed
+```
+
+<Callout type="info" title="State guards">
+Methods that require a connected state (listProviders, selectProvider, chat.*) throw a `ArlopassStateError` if called in an invalid state.
+</Callout>
