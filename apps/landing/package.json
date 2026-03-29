@@ -1,36 +1,38 @@
 {
-    "name": "@arlopass/landing",
-    "version": "0.1.0",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "dev": "astro dev",
-        "build": "astro build",
-        "preview": "astro preview",
-        "check": "astro check"
-    },
-    "dependencies": {
-        "@arlopass/react": "file:../../packages/react-sdk",
-        "@arlopass/web-sdk": "file:../../packages/web-sdk",
-        "@astrojs/check": "^0.9.8",
-        "@astrojs/mdx": "^5.0.3",
-        "@astrojs/react": "^5.0.2",
-        "@astrojs/sitemap": "^3.7.2",
-        "@mantine/core": "^8.3.18",
-        "@mantine/hooks": "^8.3.18",
-        "@tabler/icons-react": "^3.41.0",
-        "@tailwindcss/vite": "^4.2.2",
-        "astro": "^6.1.1",
-        "dompurify": "^3.3.3",
-        "marked": "^17.0.5",
-        "react": "^19.2.4",
-        "react-dom": "^19.2.4",
-        "tailwindcss": "^4.2.2",
-        "typescript": "^5.9.3"
-    },
-    "devDependencies": {
-        "@types/dompurify": "^3.0.5",
-        "@types/react": "^19.2.14",
-        "@types/react-dom": "^19.2.3"
-    }
+  "name": "@arlopass/landing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && npx pagefind --site dist --glob \"docs/**/*.html\"",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@arlopass/react": "workspace:*",
+    "@arlopass/web-sdk": "workspace:*",
+    "@astrojs/check": "^0.9.8",
+    "@astrojs/mdx": "^5.0.3",
+    "@astrojs/react": "^5.0.2",
+    "@astrojs/sitemap": "^3.7.2",
+    "@mantine/core": "^8.3.18",
+    "@mantine/hooks": "^8.3.18",
+    "@tabler/icons-react": "^3.41.0",
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^6.1.1",
+    "dompurify": "^3.3.3",
+    "marked": "^17.0.5",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@pagefind/default-ui": "^1.4.0",
+    "@types/dompurify": "^3.0.5",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "pagefind": "^1.4.0"
+  }
 }
