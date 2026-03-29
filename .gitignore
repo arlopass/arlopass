@@ -13,3 +13,7 @@ e2e/test-results/
 e2e/playwright-report/
 /playwright/.cache/
 do-not-touch.md
+
+compliance/.env
+compliance/compose
+.vscode/mcp.json
