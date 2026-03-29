@@ -87,15 +87,33 @@ const theme = createTheme({
 export default function ChatSidebarPanel({ onClose }: { onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Inject dark vars stylesheet once on mount
+  // Inject dark vars stylesheet and mark all chat-related styles for
+  // persistence across Astro View Transition head-swaps.
   useEffect(() => {
     const id = "arlopass-chat-dark-vars";
     if (!document.getElementById(id)) {
       const style = document.createElement("style");
       style.id = id;
+      style.setAttribute("data-chat-persist", "");
       style.textContent = DARK_VARS_CSS;
       document.head.appendChild(style);
     }
+
+    // Tag Vite-injected <style> tags (dev) so astro:before-swap preserves them
+    document.querySelectorAll("style[data-vite-dev-id]").forEach((el) => {
+      const devId = el.getAttribute("data-vite-dev-id") ?? "";
+      if (devId.includes("chat-sidebar") || devId.includes("@mantine/core")) {
+        el.setAttribute("data-chat-persist", "");
+      }
+    });
+    // Tag production <link> tags for chat CSS chunks
+    document.querySelectorAll<HTMLLinkElement>("link[rel=stylesheet]").forEach((el) => {
+      const href = el.href || "";
+      if (href.includes("ChatSidebar") || href.includes("chat-sidebar")) {
+        el.setAttribute("data-chat-persist", "");
+      }
+    });
+
     return () => {
       document.getElementById(id)?.remove();
     };
@@ -132,7 +150,14 @@ export default function ChatSidebarPanel({ onClose }: { onClose: () => void }) {
           <ChatSidebar
             onClose={onClose}
             onNavigate={(pageId) => {
-              window.location.href = "/docs/" + pageId;
+              const url = "/docs/" + pageId;
+              // Use Astro View Transitions soft navigation when available.
+              // Falls back to full page load if ClientRouter isn't active.
+              import("astro:transitions/client")
+                .then(({ navigate }) => navigate(url))
+                .catch(() => {
+                  window.location.href = url;
+                });
             }}
           />
         </div>

@@ -1,0 +1,110 @@
+---
+
+---
+
+<dialog
+  id="store-coming-soon"
+  class="m-auto p-0 bg-transparent border-none max-w-md w-[calc(100%-2rem)] backdrop:bg-black/60 backdrop:backdrop-blur-sm open:animate-[dialog-in_200ms_ease-out]"
+>
+  <div
+    class="bg-[var(--ap-bg-card)] border border-[var(--ap-border)] rounded-xl p-8 sm:p-10 shadow-2xl"
+  >
+    <div class="flex items-center gap-3 mb-4">
+      <span
+        class="flex items-center justify-center w-10 h-10 rounded-full bg-[color-mix(in_oklch,var(--color-brand)_12%,transparent)] border border-[color-mix(in_oklch,var(--color-brand)_25%,transparent)]"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--color-brand)"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          ><circle cx="12" cy="12" r="10"></circle><polyline
+            points="12 6 12 12 16 14"></polyline></svg
+        >
+      </span>
+      <h2 class="text-lg font-semibold text-[var(--ap-text-primary)] m-0">
+        Coming soon
+      </h2>
+    </div>
+    <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-6">
+      We've submitted Arlopass to the browser extension stores and are waiting
+      for approval. Store listings will be available soon &mdash; check back
+      shortly.
+    </p>
+    <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-8">
+      In the meantime, you can <a
+        href="https://github.com/arlopass/arlopass"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-brand no-underline hover:text-[var(--ap-text-link-hover)] transition-colors"
+        >install from source on GitHub</a
+      >.
+    </p>
+    <button
+      id="store-coming-soon-close"
+      class="w-full text-sm font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border-strong)] py-2.5 px-5 rounded-lg cursor-pointer hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] transition-all"
+    >
+      Got it
+    </button>
+  </div>
+</dialog>
+
+<style>
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    dialog {
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  function initStoreComingSoon() {
+    const dialog = document.getElementById(
+      "store-coming-soon",
+    ) as HTMLDialogElement | null;
+    if (!dialog) return;
+
+    const closeBtn = document.getElementById("store-coming-soon-close");
+    closeBtn?.addEventListener("click", () => dialog.close());
+
+    // Close on backdrop click
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+
+    // Close on Escape is handled natively by <dialog>
+
+    // Event delegation: any element with data-store-coming-soon opens the dialog
+    document.addEventListener("click", (e) => {
+      const trigger = (e.target as HTMLElement).closest(
+        "[data-store-coming-soon]",
+      );
+      if (trigger) {
+        e.preventDefault();
+        dialog.showModal();
+      }
+    });
+  }
+
+  // Run on initial load
+  initStoreComingSoon();
+
+  // Re-run after Astro page transitions (View Transitions)
+  document.addEventListener("astro:after-swap", initStoreComingSoon);
+</script>

@@ -26,11 +26,9 @@
     <div
       class="flex flex-wrap justify-center gap-3 max-[480px]:flex-col max-[480px]:items-stretch max-[480px]:px-4"
     >
-      <a
-        href="https://chrome.google.com/webstore"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-2 text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-3.5 px-7 rounded-lg no-underline hover:opacity-85 transition-opacity"
+      <button
+        data-store-coming-soon
+        class="inline-flex items-center justify-center gap-2 text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-3.5 px-7 rounded-lg border-none cursor-pointer hover:opacity-85 transition-opacity"
       >
         <svg
           width="18"
@@ -50,7 +48,7 @@
             y2="3"></line></svg
         >
         Install for Chrome
-      </a>
+      </button>
       <a
         href="/docs/getting-started/quickstart-web-sdk"
         class="inline-flex items-center justify-center gap-2 text-sm font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border-strong)] py-3.5 px-7 rounded-lg no-underline hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] hover:text-[var(--ap-text-primary)] transition-all"

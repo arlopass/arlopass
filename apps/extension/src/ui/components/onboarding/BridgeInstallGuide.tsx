@@ -50,7 +50,7 @@ const OS_LABELS: Record<OS, string> = {
 
 const DOWNLOAD_URL =
   "https://github.com/arlopass/arlopass/releases/latest/download/arlopass-bridge-win-x64.exe";
-const INSTALL_COMMAND = "curl -fsSL https://arlopassai.com/install.sh | sh";
+const INSTALL_COMMAND = "curl -fsSL https://arlopass.com/install.sh | sh";
 
 function WindowsInstructions() {
   return (
@@ -544,7 +544,7 @@ export function BridgeInstallGuide({
                     span
                     size="sm"
                     component="a"
-                    href="https://docs.arlopassai.com/bridge"
+                    href="https://docs.arlopass.com/bridge"
                     target="_blank"
                     rel="noopener noreferrer"
                     c={tokens.color.textPrimary}

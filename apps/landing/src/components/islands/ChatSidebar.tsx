@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionIcon,
-  Box,
   Button,
   Menu,
-  Pill,
   Popover,
   ScrollArea,
   Text,
@@ -24,7 +22,8 @@ import {
 import { useConnection, useProviders, useConversation } from "@arlopass/react";
 import type { ContextWindowInfo, ToolDefinition } from "@arlopass/react";
 import { searchDocs } from "./docs-search";
-import { DOCS_NAV as NAVIGATION } from "../../data/docs-nav";
+// TODO: Re-enable when navigate_to_page tool is restored
+// import { DOCS_NAV as NAVIGATION } from "../../data/docs-nav";
 import { Markdown } from "./Markdown";
 
 const CHAT_PROV_KEY = "arlopass.examples.chat.lastProvider";
@@ -58,32 +57,31 @@ Important:
 - Reference specific Arlopass concepts (providers, models, vault, app connections)
 - If asked about implementation, show @arlopass/web-sdk TypeScript code`;
 
-function buildTools(
-  onNavigateRef: React.RefObject<((pageId: string) => void) | undefined>,
-): ToolDefinition[] {
-  const allPageIds = NAVIGATION.flatMap((cat) =>
-    cat.items.map((item) => item.slug),
-  );
-  const allItems = NAVIGATION.flatMap((cat) =>
-    cat.items.map((item) => ({ ...item, category: cat.label })),
-  );
-  const pageList = allItems
-    .map((item) => `${item.slug}: ${item.label} (${item.category})`)
-    .join(", ");
+function buildTools(): ToolDefinition[] {
+  // const onNavigateRef = ...;
+  // const allPageIds = NAVIGATION.flatMap((cat) =>
+  //   cat.items.map((item) => item.slug),
+  // );
+  // const allItems = NAVIGATION.flatMap((cat) =>
+  //   cat.items.map((item) => ({ ...item, category: cat.label })),
+  // );
+  // const pageList = allItems
+  //   .map((item) => `${item.slug}: ${item.label} (${item.category})`)
+  //   .join(", ");
 
-  function resolvePageId(input: string): string | null {
-    if (allPageIds.includes(input)) return input;
-    const bySegment = allPageIds.find((id) => id.endsWith(`/${input}`));
-    if (bySegment) return bySegment;
-    const lower = input.toLowerCase();
-    const byLabel = allItems.find((item) => item.label.toLowerCase() === lower);
-    if (byLabel) return byLabel.slug;
-    const byPartial = allItems.find((item) =>
-      item.label.toLowerCase().includes(lower),
-    );
-    if (byPartial) return byPartial.slug;
-    return null;
-  }
+  // function resolvePageId(input: string): string | null {
+  //   if (allPageIds.includes(input)) return input;
+  //   const bySegment = allPageIds.find((id) => id.endsWith(`/${input}`));
+  //   if (bySegment) return bySegment;
+  //   const lower = input.toLowerCase();
+  //   const byLabel = allItems.find((item) => item.label.toLowerCase() === lower);
+  //   if (byLabel) return byLabel.slug;
+  //   const byPartial = allItems.find((item) =>
+  //     item.label.toLowerCase().includes(lower),
+  //   );
+  //   if (byPartial) return byPartial.slug;
+  //   return null;
+  // }
 
   return [
     {
@@ -117,34 +115,35 @@ function buildTools(
         );
       },
     },
-    {
-      name: "navigate_to_page",
-      description: `Navigate the user to a specific page in the docs. Available pages: ${pageList}. Use this when the user asks to see a demo, example, or specific page.`,
-      parameters: {
-        type: "object",
-        properties: {
-          page_id: {
-            type: "string",
-            description: "The page slug to navigate to",
-            enum: allPageIds,
-          },
-        },
-        required: ["page_id"],
-      },
-      handler: async (args) => {
-        const raw = typeof args.page_id === "string" ? args.page_id : "";
-        const pageId = resolvePageId(raw);
-        if (!pageId) {
-          return JSON.stringify({
-            success: false,
-            error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}`,
-          });
-        }
-        onNavigateRef.current?.(pageId);
-        const label = allItems.find((i) => i.slug === pageId)?.label ?? pageId;
-        return JSON.stringify({ success: true, navigated_to: pageId, label });
-      },
-    },
+    // TODO: Re-enable once View Transition style persistence is solid
+    // {
+    //   name: "navigate_to_page",
+    //   description: `Navigate the user to a specific page in the docs. Available pages: ${pageList}. Use this when the user asks to see a demo, example, or specific page.`,
+    //   parameters: {
+    //     type: "object",
+    //     properties: {
+    //       page_id: {
+    //         type: "string",
+    //         description: "The page slug to navigate to",
+    //         enum: allPageIds,
+    //       },
+    //     },
+    //     required: ["page_id"],
+    //   },
+    //   handler: async (args) => {
+    //     const raw = typeof args.page_id === "string" ? args.page_id : "";
+    //     const pageId = resolvePageId(raw);
+    //     if (!pageId) {
+    //       return JSON.stringify({
+    //         success: false,
+    //         error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}`,
+    //       });
+    //     }
+    //     onNavigateRef.current?.(pageId);
+    //     const label = allItems.find((i) => i.slug === pageId)?.label ?? pageId;
+    //     return JSON.stringify({ success: true, navigated_to: pageId, label });
+    //   },
+    // },
   ];
 }
 
@@ -266,9 +265,10 @@ function ModelDropdown({
 
 // ─── Component ───────────────────────────────────────────────────────
 
-export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
-  const onNavigateRef = useRef(onNavigate);
-  onNavigateRef.current = onNavigate;
+export function ChatSidebar({ onClose }: ChatSidebarProps) {
+  // TODO: Re-enable when navigate_to_page tool is restored
+  // const onNavigateRef = useRef(onNavigate);
+  // onNavigateRef.current = onNavigate;
 
   // React SDK hooks
   const {
@@ -284,7 +284,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   // Stable tools ref (built once)
   const toolsRef = useRef<ToolDefinition[] | null>(null);
   if (toolsRef.current === null) {
-    toolsRef.current = buildTools(onNavigateRef);
+    toolsRef.current = buildTools();
   }
 
   const {
@@ -294,7 +294,6 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
     toolActivity,
     contextInfo,
     stream: convStream,
-    clearMessages,
   } = useConversation({
     systemPrompt: CHAT_SYSTEM_PROMPT,
     tools: toolsRef.current,
@@ -309,6 +308,18 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   const inputHistoryRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const draftRef = useRef("");
+
+  // Track message IDs that were streamed so we skip the enter animation.
+  // Updated synchronously during render (before JSX) so refs are current.
+  const streamedMsgIdsRef = useRef<Set<string>>(new Set());
+  const prevStreamingRef = useRef(isStreaming);
+  if (prevStreamingRef.current && !isStreaming) {
+    const lastMsg = trackedMessages[trackedMessages.length - 1];
+    if (lastMsg?.role === "assistant") {
+      streamedMsgIdsRef.current.add(lastMsg.id);
+    }
+  }
+  prevStreamingRef.current = isStreaming;
 
   // Track which provider/model was active for each assistant message
   const msgMetaRef = useRef<Map<string, { provider: string; model: string }>>(
@@ -501,7 +512,6 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
   // ─── Render ──────────────────────────────────────────────────────────
 
   const modelLabel = selModel ? fmtModel(selModel) : null;
-  const providerLabel = selProvider?.providerName ?? null;
 
   return (
     <div className="chat-sidebar">
@@ -585,7 +595,7 @@ export function ChatSidebar({ onClose, onNavigate }: ChatSidebarProps) {
               return null;
 
             return (
-              <div key={m.id} className="chat-msg chat-msg-enter">
+              <div key={m.id} className={`chat-msg${streamedMsgIdsRef.current.has(m.id) ? "" : " chat-msg-enter"}`}>
                 {/* Avatar */}
                 <div
                   className={

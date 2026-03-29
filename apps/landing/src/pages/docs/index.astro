@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import "../../styles/global.css";
 import ChatSidebarIsland from "../../components/islands/ChatSidebarIsland";
 import DocsHeader from "../../components/docs/DocsHeader.astro";
@@ -64,7 +65,20 @@ const itemListLd = {
     <meta name="color-scheme" content="dark light" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <script type="application/ld+json" set:html={JSON.stringify(itemListLd)} />
+
+    <ClientRouter />
   </head>
+
+  <script>
+    // Preserve dynamically-loaded chat sidebar styles across View Transitions.
+    document.addEventListener("astro:before-swap", (e: any) => {
+      const persist = document.querySelectorAll("[data-chat-persist]");
+      for (const el of persist) {
+        if (el.id && e.newDocument.getElementById(el.id)) continue;
+        e.newDocument.head.appendChild(el.cloneNode(true));
+      }
+    });
+  </script>
 
   <body class="bg-[var(--ap-bg-base)] text-[var(--ap-text-body)]">
     <div
@@ -127,7 +141,7 @@ const itemListLd = {
       </div>
 
       <Footer />
-      <ChatSidebarIsland client:only="react" />
+      <ChatSidebarIsland client:only="react" transition:persist="chat-sidebar" />
     </div>
     <SearchDialog />
   </body>

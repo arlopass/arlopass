@@ -8,6 +8,6 @@
     },
     "firefox": {
         "$comment": "Firefox uses allowed_extensions with the gecko add-on ID.",
-        "id": "arlopass-wallet@arlopassai.com"
+        "id": "arlopass-wallet@arlopass.com"
     }
 }

@@ -68,7 +68,7 @@ export class ArlopassChatTransport {
             );
         }
 
-        const chatMessages = convertMessages(options.messages as any);
+        const chatMessages = convertMessages(options.messages);
         const signal = options.abortSignal;
 
         const iterable = client.chat.stream(
@@ -80,6 +80,7 @@ export class ArlopassChatTransport {
     }
 
     async reconnectToStream(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _options: ReconnectOptions,
     ): Promise<ReadableStream<UIMessageChunkLike> | null> {
         return null;
@@ -104,7 +105,7 @@ export class ArlopassChatTransport {
         const transport = getInjectedTransport();
         if (transport === undefined) {
             throw new Error(
-                "Arlopass extension not detected. Install it from https://arlopassai.com to use AI models.",
+                "Arlopass extension not detected. Install it from https://arlopass.com to use AI models.",
             );
         }
 

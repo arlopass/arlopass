@@ -129,10 +129,24 @@
     }, 50);
   }
 
-  // Search trigger button
-  document.getElementById('docs-search-trigger')?.addEventListener('click', openSearch);
+  function initSearchDialog() {
+    // Search trigger button
+    document.getElementById('docs-search-trigger')?.addEventListener('click', openSearch);
 
-  // Ctrl+K / Cmd+K shortcut
+    // Close button
+    document.querySelector('.search-dialog-close')?.addEventListener('click', () => {
+      (document.getElementById('docs-search-dialog') as HTMLDialogElement)?.close();
+    });
+
+    // Close on backdrop click
+    document.getElementById('docs-search-dialog')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        (e.target as HTMLDialogElement).close();
+      }
+    });
+  }
+
+  // Ctrl+K / Cmd+K shortcut (only bind once — persists across navigations)
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
@@ -140,20 +154,6 @@
     }
   });
 
-  // Close button
-  document.querySelector('.search-dialog-close')?.addEventListener('click', () => {
-    (document.getElementById('docs-search-dialog') as HTMLDialogElement)?.close();
-  });
-
-  // Close on backdrop click
-  document.getElementById('docs-search-dialog')?.addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) {
-      (e.target as HTMLDialogElement).close();
-    }
-  });
-
-  // Close on Escape (native dialog behavior, but ensure cleanup)
-  document.getElementById('docs-search-dialog')?.addEventListener('close', () => {
-    // Optional cleanup
-  });
+  // Re-bind DOM listeners after each View Transition navigation
+  document.addEventListener("astro:page-load", initSearchDialog);
 </script>

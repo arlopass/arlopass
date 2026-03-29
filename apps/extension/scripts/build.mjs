@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readFile, rm, writeFile, access } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  readFile,
+  rm,
+  writeFile,
+  access,
+} from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -194,8 +201,11 @@ async function processManifest() {
     // Add Firefox-specific settings
     manifest.browser_specific_settings = {
       gecko: {
-        id: "arlopass-wallet@arlopassai.com",
+        id: "arlopass-wallet@arlopass.com",
         strict_min_version: "109.0",
+        data_collection_permissions: {
+          required: ["none"],
+        },
       },
     };
     // Remove Chrome-only fields

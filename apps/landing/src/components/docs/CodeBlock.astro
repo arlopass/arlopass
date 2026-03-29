@@ -50,21 +50,27 @@ const { code, lang = "typescript", filename } = Astro.props;
 </div>
 
 <script>
-  document.querySelectorAll("[data-copy-code]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const pre = btn.closest("div")?.parentElement?.querySelector("pre");
-      if (!pre) return;
-      const text = pre.textContent || "";
-      navigator.clipboard.writeText(text).then(() => {
-        const svg = btn.querySelector("svg");
-        if (svg) {
-          const original = svg.innerHTML;
-          svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
-          setTimeout(() => {
-            svg.innerHTML = original;
-          }, 2000);
-        }
+  function initCodeBlocks() {
+    document.querySelectorAll("[data-copy-code]").forEach((btn) => {
+      if ((btn as any).__codeCopyBound) return;
+      (btn as any).__codeCopyBound = true;
+      btn.addEventListener("click", () => {
+        const pre = btn.closest("div")?.parentElement?.querySelector("pre");
+        if (!pre) return;
+        const text = pre.textContent || "";
+        navigator.clipboard.writeText(text).then(() => {
+          const svg = btn.querySelector("svg");
+          if (svg) {
+            const original = svg.innerHTML;
+            svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            setTimeout(() => {
+              svg.innerHTML = original;
+            }, 2000);
+          }
+        });
       });
     });
-  });
+  }
+
+  document.addEventListener("astro:page-load", initCodeBlocks);
 </script>

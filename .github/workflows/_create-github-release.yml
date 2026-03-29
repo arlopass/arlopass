@@ -72,10 +72,10 @@ jobs:
             **One-liner (recommended):**
             ```bash
             # macOS / Linux
-            curl -fsSL https://arlopassai.com/install.sh | sh
+            curl -fsSL https://arlopass.com/install.sh | sh
 
             # Windows (PowerShell)
-            irm https://arlopassai.com/install.ps1 | iex
+            irm https://arlopass.com/install.ps1 | iex
             ```
 
             **npm (requires Node.js):**

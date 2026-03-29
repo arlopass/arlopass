@@ -96,11 +96,9 @@ import StreamingChat from "./previews/StreamingChat.astro";
       <div
         class="flex flex-wrap gap-3 mb-10 max-lg:justify-center max-[480px]:flex-col max-[480px]:items-stretch"
       >
-        <a
-          href="https://chrome.google.com/webstore"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-3 px-6 rounded-lg no-underline hover:opacity-85 transition-opacity max-[480px]:justify-center"
+        <button
+          data-store-coming-soon
+          class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-3 px-6 rounded-lg border-none cursor-pointer hover:opacity-85 transition-opacity max-[480px]:justify-center"
         >
           <svg
             width="18"
@@ -120,7 +118,7 @@ import StreamingChat from "./previews/StreamingChat.astro";
               y2="3"></line></svg
           >
           Install for Chrome
-        </a>
+        </button>
         <a
           href="https://github.com/arlopass"
           target="_blank"

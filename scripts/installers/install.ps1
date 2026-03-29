@@ -54,7 +54,7 @@ function Get-LatestRelease {
 # ---- Default extension IDs (overridden via -ChromeExtId / -EdgeExtId / -FirefoxExtId) ----
 $DEFAULT_CHROME_EXT_ID  = "gebhamhhckkjfjibomllkpicongnebkh"
 $DEFAULT_EDGE_EXT_ID    = ""   # Set after Edge Add-ons store publishing
-$DEFAULT_FIREFOX_EXT_ID = "arlopass-wallet@arlopassai.com"
+$DEFAULT_FIREFOX_EXT_ID = "arlopass-wallet@arlopass.com"
 
 function Register-NativeHosts {
     param(

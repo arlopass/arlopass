@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import StoreComingSoonDialog from "../components/ui/StoreComingSoonDialog.astro";
 
 interface Props {
   title?: string;
@@ -133,5 +134,6 @@ const jsonLdWebPage = {
     >
       <slot />
     </div>
+    <StoreComingSoonDialog />
   </body>
 </html>

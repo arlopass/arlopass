@@ -30,23 +30,29 @@ const { rawContent } = Astro.props;
 <template data-md-source>{rawContent}</template>
 
 <script>
-  document.querySelectorAll("[data-copy-md]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const tmpl =
-        btn.parentElement?.querySelector("[data-md-source]") ??
-        btn.closest("[data-md-source]") ??
-        document.querySelector("[data-md-source]");
-      const md = tmpl?.textContent || "";
-      navigator.clipboard.writeText(md).then(() => {
-        const label = btn.querySelector("[data-copy-label]");
-        if (label) {
-          const original = label.textContent;
-          label.textContent = "Copied!";
-          setTimeout(() => {
-            label.textContent = original;
-          }, 2000);
-        }
+  function initCopyMarkdown() {
+    document.querySelectorAll("[data-copy-md]").forEach((btn) => {
+      if ((btn as any).__mdCopyBound) return;
+      (btn as any).__mdCopyBound = true;
+      btn.addEventListener("click", () => {
+        const tmpl =
+          btn.parentElement?.querySelector("[data-md-source]") ??
+          btn.closest("[data-md-source]") ??
+          document.querySelector("[data-md-source]");
+        const md = tmpl?.textContent || "";
+        navigator.clipboard.writeText(md).then(() => {
+          const label = btn.querySelector("[data-copy-label]");
+          if (label) {
+            const original = label.textContent;
+            label.textContent = "Copied!";
+            setTimeout(() => {
+              label.textContent = original;
+            }, 2000);
+          }
+        });
       });
     });
-  });
+  }
+
+  document.addEventListener("astro:page-load", initCopyMarkdown);
 </script>

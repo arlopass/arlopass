@@ -163,49 +163,54 @@
 </header>
 
 <script>
-  // Theme toggle (same pattern as landing Nav.astro)
-  const themeBtn = document.getElementById("docs-theme-toggle");
-  const logoLight = document.getElementById("docs-logo-light");
-  const logoDark = document.getElementById("docs-logo-dark");
+  // Re-initialize after each View Transition navigation
+  function initDocsHeader() {
+    const themeBtn = document.getElementById("docs-theme-toggle");
+    const logoLight = document.getElementById("docs-logo-light");
+    const logoDark = document.getElementById("docs-logo-dark");
 
-  function updateDocsThemeUI() {
-    const isDark =
-      document.documentElement.getAttribute("data-theme") === "dark";
-    themeBtn
-      ?.querySelector(".docs-theme-sun")
-      ?.classList.toggle("hidden", !isDark);
-    themeBtn
-      ?.querySelector(".docs-theme-moon")
-      ?.classList.toggle("hidden", isDark);
-    logoLight?.classList.toggle("hidden", isDark);
-    logoDark?.classList.toggle("hidden", !isDark);
+    function updateDocsThemeUI() {
+      const isDark =
+        document.documentElement.getAttribute("data-theme") === "dark";
+      themeBtn
+        ?.querySelector(".docs-theme-sun")
+        ?.classList.toggle("hidden", !isDark);
+      themeBtn
+        ?.querySelector(".docs-theme-moon")
+        ?.classList.toggle("hidden", isDark);
+      logoLight?.classList.toggle("hidden", isDark);
+      logoDark?.classList.toggle("hidden", !isDark);
+    }
+
+    const saved = localStorage.getItem("arlopass-theme");
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+    updateDocsThemeUI();
+
+    themeBtn?.addEventListener("click", () => {
+      const html = document.documentElement;
+      const current = html.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      html.setAttribute("data-theme", next);
+      localStorage.setItem("arlopass-theme", next);
+      updateDocsThemeUI();
+    });
+
+    // Chat toggle
+    const chatToggle = document.getElementById("docs-chat-toggle");
+    chatToggle?.addEventListener("click", () => {
+      document.dispatchEvent(new CustomEvent("toggle-chat"));
+    });
+
+    // Sidebar toggle (mobile)
+    const sidebarToggle = document.getElementById("docs-sidebar-toggle");
+    const sidebar = document.getElementById("docs-sidebar");
+    sidebarToggle?.addEventListener("click", () => {
+      const open = sidebar?.classList.toggle("!translate-x-0");
+      sidebar?.classList.toggle("-translate-x-full", !open);
+      sidebarToggle.setAttribute("aria-expanded", String(!!open));
+    });
   }
 
-  const saved = localStorage.getItem("arlopass-theme");
-  if (saved) document.documentElement.setAttribute("data-theme", saved);
-  updateDocsThemeUI();
-
-  themeBtn?.addEventListener("click", () => {
-    const html = document.documentElement;
-    const current = html.getAttribute("data-theme");
-    const next = current === "dark" ? "light" : "dark";
-    html.setAttribute("data-theme", next);
-    localStorage.setItem("arlopass-theme", next);
-    updateDocsThemeUI();
-  });
-
-  // Chat toggle
-  const chatToggle = document.getElementById("docs-chat-toggle");
-  chatToggle?.addEventListener("click", () => {
-    document.dispatchEvent(new CustomEvent("toggle-chat"));
-  });
-
-  // Sidebar toggle (mobile)
-  const sidebarToggle = document.getElementById("docs-sidebar-toggle");
-  const sidebar = document.getElementById("docs-sidebar");
-  sidebarToggle?.addEventListener("click", () => {
-    const open = sidebar?.classList.toggle("!translate-x-0");
-    sidebar?.classList.toggle("-translate-x-full", !open);
-    sidebarToggle.setAttribute("aria-expanded", String(!!open));
-  });
+  // Runs on initial load AND after each View Transition navigation
+  document.addEventListener("astro:page-load", initDocsHeader);
 </script>
