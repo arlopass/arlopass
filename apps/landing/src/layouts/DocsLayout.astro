@@ -1,0 +1,169 @@
+---
+import type { MarkdownHeading } from 'astro';
+import '../styles/global.css';
+import DocsHeader from '../components/docs/DocsHeader.astro';
+import DocsSidebar from '../components/docs/DocsSidebar.astro';
+import TableOfContents from '../components/docs/TableOfContents.astro';
+import Breadcrumb from '../components/docs/Breadcrumb.astro';
+import PrevNextNav from '../components/docs/PrevNextNav.astro';
+import CopyAsMarkdown from '../components/docs/CopyAsMarkdown.astro';
+import Footer from '../components/Footer.astro';
+import { getCategory, getPrevNext } from '../data/docs-nav';
+
+interface Props {
+  frontmatter: {
+    title: string;
+    description: string;
+    category: string;
+    lastUpdated: Date;
+    schema?: string;
+    keywords?: string[];
+    interactive?: boolean;
+  };
+  headings: MarkdownHeading[];
+  slug: string;
+  rawContent?: string;
+}
+
+const { frontmatter, headings, slug, rawContent } = Astro.props;
+const category = getCategory(slug);
+const { prev, next } = getPrevNext(slug);
+const canonicalUrl = `https://arlopass.com/docs/${slug}`;
+const lastModified = frontmatter.lastUpdated.toISOString();
+
+// JSON-LD structured data
+const jsonLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': frontmatter.schema || 'TechArticle',
+  headline: frontmatter.title,
+  description: frontmatter.description,
+  dateModified: lastModified,
+  url: canonicalUrl,
+  author: { '@type': 'Organization', name: 'Arlopass', url: 'https://arlopass.com' },
+  publisher: { '@type': 'Organization', name: 'Arlopass', url: 'https://arlopass.com' },
+};
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://arlopass.com' },
+    { '@type': 'ListItem', position: 2, name: 'Docs', item: 'https://arlopass.com/docs' },
+    ...(category ? [{ '@type': 'ListItem', position: 3, name: category.label, item: canonicalUrl }] : []),
+    { '@type': 'ListItem', position: category ? 4 : 3, name: frontmatter.title, item: canonicalUrl },
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <script is:inline>
+      (function () {
+        var t = localStorage.getItem("arlopass-theme");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {/* Primary SEO */}
+    <title>{frontmatter.title} — Arlopass Docs</title>
+    <meta name="description" content={frontmatter.description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    {/* Favicon */}
+    <link rel="icon" type="image/svg+xml" href="/ArlopassIcon.svg" />
+
+    {/* Open Graph */}
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={frontmatter.title} />
+    <meta property="og:description" content={frontmatter.description} />
+    <meta property="og:site_name" content="Arlopass" />
+    <meta property="article:modified_time" content={lastModified} />
+
+    {/* Twitter */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={frontmatter.title} />
+    <meta name="twitter:description" content={frontmatter.description} />
+    <meta name="twitter:site" content="@arlopass" />
+
+    {/* AI crawlers */}
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+    <meta name="last-modified" content={lastModified} />
+    {frontmatter.keywords && frontmatter.keywords.length > 0 && (
+      <meta name="keywords" content={frontmatter.keywords.join(', ')} />
+    )}
+
+    <meta name="author" content="Arlopass" />
+    <meta name="theme-color" content="#1C1917" />
+    <meta name="color-scheme" content="dark light" />
+
+    {/* JSON-LD */}
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
+  </head>
+
+  <body class="bg-[var(--ap-bg-base)] text-[var(--ap-text-body)]">
+    <div class="mx-auto max-w-7xl border-x border-[var(--ap-border)] min-h-screen flex flex-col">
+      <DocsHeader />
+
+      <div class="flex flex-1 min-h-0">
+        {/* Sidebar — hidden on mobile, shown on lg+ */}
+        <aside
+          id="docs-sidebar"
+          class="w-60 shrink-0 border-r border-[var(--ap-border)] bg-[var(--ap-bg-base)] hidden lg:block overflow-y-auto
+                 fixed lg:static inset-y-14 left-0 z-40 -translate-x-full lg:translate-x-0 transition-transform duration-300"
+        >
+          <DocsSidebar currentSlug={slug} />
+        </aside>
+
+        {/* Main content */}
+        <main class="flex-1 min-w-0 px-4 md:px-8 lg:px-12 py-8">
+          <article class="max-w-[65ch] mx-auto">
+            <Breadcrumb category={category?.label || frontmatter.category} title={frontmatter.title} />
+
+            {/* Page title + copy button */}
+            <div class="flex items-start justify-between gap-4 mb-8">
+              <h1 class="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-[var(--ap-text-primary)]">
+                {frontmatter.title}
+              </h1>
+              {rawContent && <CopyAsMarkdown rawContent={rawContent} />}
+            </div>
+
+            {/* MDX content rendered here */}
+            <div class="
+              prose-docs
+              [&>p]:text-base [&>p]:leading-relaxed [&>p]:text-[var(--ap-text-body)] [&>p]:mb-4
+              [&>h2]:text-[clamp(1.25rem,2.5vw,1.75rem)] [&>h2]:font-bold [&>h2]:tracking-tight [&>h2]:text-[var(--ap-text-primary)] [&>h2]:mt-12 [&>h2]:mb-4
+              [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:tracking-tight [&>h3]:text-[var(--ap-text-primary)] [&>h3]:mt-8 [&>h3]:mb-3
+              [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4 [&>ul]:space-y-1.5 [&>ul]:text-[var(--ap-text-body)]
+              [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4 [&>ol]:space-y-1.5 [&>ol]:text-[var(--ap-text-body)]
+              [&>pre]:rounded-lg [&>pre]:bg-[var(--ap-bg-code)] [&>pre]:p-5 [&>pre]:overflow-x-auto [&>pre]:my-6 [&>pre]:text-sm [&>pre]:leading-[1.7]
+              [&>blockquote]:border-l-2 [&>blockquote]:border-[var(--ap-border-strong)] [&>blockquote]:pl-4 [&>blockquote]:text-[var(--ap-text-secondary)] [&>blockquote]:my-4
+              [&_code]:font-mono [&_:not(pre)>code]:text-amber [&_:not(pre)>code]:bg-[var(--ap-bg-surface)] [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:px-1.5 [&_:not(pre)>code]:rounded [&_:not(pre)>code]:text-[0.875em]
+              [&_a]:text-[var(--ap-text-link)] [&_a]:no-underline hover:[&_a]:text-[var(--ap-text-link-hover)] [&_a]:transition-colors
+              [&>hr]:border-[var(--ap-border)] [&>hr]:my-8
+              [&_strong]:text-[var(--ap-text-primary)] [&_strong]:font-semibold
+              [&_table]:w-full [&_table]:text-sm [&_table]:border-collapse [&_table]:my-6
+              [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-[var(--ap-text-tertiary)] [&_th]:uppercase [&_th]:tracking-wide [&_th]:bg-[var(--ap-bg-surface)] [&_th]:border-b [&_th]:border-[var(--ap-border)]
+              [&_td]:px-4 [&_td]:py-3 [&_td]:border-b [&_td]:border-[var(--ap-border)] [&_td]:text-[var(--ap-text-body)]
+            ">
+              <slot />
+            </div>
+
+            <PrevNextNav prev={prev} next={next} />
+          </article>
+        </main>
+
+        {/* Table of Contents — lg+ only */}
+        <aside class="w-[200px] shrink-0 hidden lg:block py-8 pr-4">
+          <TableOfContents headings={headings} />
+        </aside>
+      </div>
+
+      <Footer />
+    </div>
+  </body>
+</html>
