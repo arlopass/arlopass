@@ -4,11 +4,20 @@ description: "Gate UI on connection, provider, and chat readiness with positive 
 category: "How-to Guides"
 order: 5
 lastUpdated: 2026-03-29
-keywords: ["guards", "gates", "connection gate", "provider gate", "chat ready", "conditional rendering", "react"]
+keywords:
+  [
+    "guards",
+    "gates",
+    "connection gate",
+    "provider gate",
+    "chat ready",
+    "conditional rendering",
+    "react",
+  ]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 You want to conditionally render UI based on connection, provider, and error states.
 
@@ -63,8 +72,8 @@ function ConnectedApp() {
         <div>
           <h2>Select a Provider</h2>
           <p>
-            Open the Arlopass extension popup and choose an AI provider
-            before using the chat.
+            Open the Arlopass extension popup and choose an AI provider before
+            using the chat.
           </p>
         </div>
       }
@@ -317,7 +326,14 @@ import { useState } from "react";
 
 function Header() {
   return (
-    <header style={{ display: "flex", gap: 12, padding: 16, borderBottom: "1px solid #eee" }}>
+    <header
+      style={{
+        display: "flex",
+        gap: 12,
+        padding: 16,
+        borderBottom: "1px solid #eee",
+      }}
+    >
       <h2 style={{ margin: 0 }}>Chat App</h2>
       <ArlopassNotInstalled>
         <span style={{ color: "red" }}>Extension not installed</span>
@@ -333,7 +349,9 @@ function Header() {
           <span style={{ color: "red" }}>
             {error.message}
             {error.retryable && retry && (
-              <button onClick={retry} style={{ marginLeft: 4 }}>Retry</button>
+              <button onClick={retry} style={{ marginLeft: 4 }}>
+                Retry
+              </button>
             )}
           </span>
         )}
@@ -377,8 +395,14 @@ function Chat() {
           disabled={isStreaming}
           style={{ flex: 1, padding: 8 }}
         />
-        <button type="submit" disabled={isStreaming || !input.trim()}>Send</button>
-        {isStreaming && <button type="button" onClick={stop}>Stop</button>}
+        <button type="submit" disabled={isStreaming || !input.trim()}>
+          Send
+        </button>
+        {isStreaming && (
+          <button type="button" onClick={stop}>
+            Stop
+          </button>
+        )}
       </form>
     </div>
   );
@@ -419,5 +443,7 @@ export default function App() {
 ```
 
 <Callout type="tip" title="Related">
-  See the [Guards API reference](/docs/reference/react-sdk/guards) for complete props documentation, or the [Error Handling guide](/docs/guides/error-handling) for error-specific patterns.
+  See the [Guards API reference](/docs/reference/react-sdk/guards) for complete
+  props documentation, or the [Error Handling
+  guide](/docs/guides/error-handling) for error-specific patterns.
 </Callout>

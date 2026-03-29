@@ -8,7 +8,7 @@ keywords: ["tools", "function calling", "auto-execute"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 You want the AI model to call functions in your application.
 
@@ -47,7 +47,7 @@ function Chat() {
         // Handler provided → auto-execute mode
         handler: async (args) => {
           const res = await fetch(
-            `/api/weather?city=${args.city}&units=${args.units ?? "celsius"}`
+            `/api/weather?city=${args.city}&units=${args.units ?? "celsius"}`,
           );
           const data = await res.json();
           return JSON.stringify(data);
@@ -59,7 +59,9 @@ function Chat() {
   return (
     <div>
       {messages.map((msg) => (
-        <div key={msg.id}>{msg.role}: {msg.content}</div>
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+        </div>
       ))}
       {isStreaming && <div>AI: {streamingContent}</div>}
     </div>
@@ -92,7 +94,7 @@ const convo = new ConversationManager({
       },
       handler: async (args) => {
         const res = await fetch(
-          `/api/weather?city=${args.city}&units=${args.units ?? "celsius"}`
+          `/api/weather?city=${args.city}&units=${args.units ?? "celsius"}`,
         );
         return JSON.stringify(await res.json());
       },
@@ -117,30 +119,25 @@ Omit the `handler` and the SDK emits a `tool_call` event instead of executing. Y
 import { useConversation } from "@arlopass/react";
 
 function Chat() {
-  const {
-    messages,
-    stream,
-    submitToolResult,
-    streamingContent,
-    isStreaming,
-  } = useConversation({
-    systemPrompt: "You are a helpful assistant.",
-    tools: [
-      {
-        name: "create_order",
-        description: "Create a new order. Requires user confirmation.",
-        parameters: {
-          type: "object",
-          properties: {
-            item: { type: "string", description: "Item to order" },
-            quantity: { type: "number", description: "Number of items" },
+  const { messages, stream, submitToolResult, streamingContent, isStreaming } =
+    useConversation({
+      systemPrompt: "You are a helpful assistant.",
+      tools: [
+        {
+          name: "create_order",
+          description: "Create a new order. Requires user confirmation.",
+          parameters: {
+            type: "object",
+            properties: {
+              item: { type: "string", description: "Item to order" },
+              quantity: { type: "number", description: "Number of items" },
+            },
+            required: ["item", "quantity"],
           },
-          required: ["item", "quantity"],
+          // No handler → manual mode
         },
-        // No handler → manual mode
-      },
-    ],
-  });
+      ],
+    });
 
   // Listen for tool calls from the subscribe API
   // or check incoming messages for tool_call events.
@@ -154,7 +151,9 @@ function Chat() {
   return (
     <div>
       {messages.map((msg) => (
-        <div key={msg.id}>{msg.role}: {msg.content}</div>
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+        </div>
       ))}
       {isStreaming && <div>AI: {streamingContent}</div>}
     </div>
@@ -193,11 +192,14 @@ for await (const event of convo.stream("Order 3 widgets")) {
   if (event.type === "tool_call") {
     // Show confirmation UI, then submit result
     const orderId = `ORD-${Date.now()}`;
-    convo.submitToolResult(event.toolCallId, JSON.stringify({
-      orderId,
-      item: event.arguments.item,
-      quantity: event.arguments.quantity,
-    }));
+    convo.submitToolResult(
+      event.toolCallId,
+      JSON.stringify({
+        orderId,
+        item: event.arguments.item,
+        quantity: event.arguments.quantity,
+      }),
+    );
   }
   if (event.type === "delta") {
     process.stdout.write(event.content);
@@ -255,7 +257,9 @@ function Chat() {
   return (
     <div>
       {messages.map((msg) => (
-        <div key={msg.id}>{msg.role}: {msg.content}</div>
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+        </div>
       ))}
     </div>
   );
@@ -270,7 +274,9 @@ Set `maxToolRounds` to prevent infinite tool-call loops. The default is 5. After
 
 ```tsx title="React SDK"
 const { messages, stream } = useConversation({
-  tools: [/* ... */],
+  tools: [
+    /* ... */
+  ],
   maxToolRounds: 3, // Stop after 3 rounds of tool calls (default: 5)
 });
 
@@ -283,7 +289,9 @@ const { messages, stream } = useConversation({
 ```ts title="Web SDK"
 const convo = new ConversationManager({
   client,
-  tools: [/* ... */],
+  tools: [
+    /* ... */
+  ],
   maxToolRounds: 3, // Stop after 3 rounds (default: 5)
 });
 
@@ -332,7 +340,9 @@ function Chat() {
   return (
     <div>
       {messages.map((msg) => (
-        <div key={msg.id}>{msg.role}: {msg.content}</div>
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+        </div>
       ))}
       {isStreaming && <div>AI: {streamingContent}</div>}
     </div>
@@ -346,7 +356,11 @@ A chat app with auto-execute weather lookup and manual reminder creation:
 
 ```tsx title="App.tsx"
 import { useState } from "react";
-import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
+import {
+  ArlopassProvider,
+  ChatReadyGate,
+  useConversation,
+} from "@arlopass/react";
 
 const tools = [
   {
@@ -416,7 +430,7 @@ function Chat() {
     const reminderId = `REM-${Date.now()}`;
     submitToolResult(
       pendingTool.id,
-      JSON.stringify({ reminderId, ...pendingTool.args })
+      JSON.stringify({ reminderId, ...pendingTool.args }),
     );
     setPendingTool(null);
   }
@@ -426,8 +440,7 @@ function Chat() {
       <div style={{ minHeight: 300, padding: 16 }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ padding: "8px 0" }}>
-            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-            {msg.content}
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
           </div>
         ))}
         {isStreaming && streamingContent && (
@@ -440,7 +453,8 @@ function Chat() {
       {pendingTool && (
         <div style={{ padding: 16, border: "1px solid orange" }}>
           <p>
-            Create reminder: "{pendingTool.args.text}" at {pendingTool.args.time}?
+            Create reminder: "{pendingTool.args.text}" at{" "}
+            {pendingTool.args.time}?
           </p>
           <button onClick={handleConfirm}>Confirm</button>
           <button onClick={() => setPendingTool(null)}>Cancel</button>
@@ -459,7 +473,9 @@ function Chat() {
           Send
         </button>
         {isStreaming && (
-          <button type="button" onClick={() => stop()}>Stop</button>
+          <button type="button" onClick={() => stop()}>
+            Stop
+          </button>
         )}
       </form>
     </div>
@@ -482,5 +498,8 @@ export default function App() {
 ```
 
 <Callout type="tip" title="Related">
-  See the [Hooks reference](/docs/reference/react-sdk/hooks) for complete `useConversation` tool options, or the [Tool Calling tutorial](/docs/tutorials/adding-tool-calling) for a step-by-step introduction.
+  See the [Hooks reference](/docs/reference/react-sdk/hooks) for complete
+  `useConversation` tool options, or the [Tool Calling
+  tutorial](/docs/tutorials/adding-tool-calling) for a step-by-step
+  introduction.
 </Callout>

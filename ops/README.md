@@ -25,10 +25,10 @@ ops/
 
 ```bash
 # All reliability suites
-npm run test -- ./ops/tests/chaos
-npm run test -- ./ops/tests/release-gates
-npm run test -- ./ops/tests/soak
-npm run test -- ./ops/tests/version-skew
+pnpm run test -- ./ops/tests/chaos
+pnpm run test -- ./ops/tests/release-gates
+pnpm run test -- ./ops/tests/soak
+pnpm run test -- ./ops/tests/version-skew
 ```
 
 ## Runbooks

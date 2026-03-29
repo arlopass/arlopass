@@ -1,0 +1,48 @@
+---
+/**
+ * Reusable section heading block for interior pages.
+ * Matches the landing page pattern: font-pixel label → bold heading → body description.
+ *
+ * Props:
+ *   label       – terracotta pixel-font label
+ *   title       – section heading (h2)
+ *   description – optional body text
+ *   id          – optional anchor id
+ *   bg          – "base" | "surface" background (default: "base")
+ */
+interface Props {
+  label: string;
+  title: string;
+  description?: string;
+  id?: string;
+  bg?: "base" | "surface";
+}
+
+const { label, title, description, id, bg = "base" } = Astro.props;
+---
+
+<section
+  class:list={[bg === "surface" && "bg-[var(--ap-bg-surface)]"]}
+  id={id}
+  aria-labelledby={id ? `${id}-heading` : undefined}
+>
+  <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+    <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+      {label}
+    </span>
+    <h2
+      id={id ? `${id}-heading` : undefined}
+      class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+    >
+      {title}
+    </h2>
+    {
+      description && (
+        <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+          {description}
+        </p>
+      )
+    }
+  </div>
+  <slot />
+</section>

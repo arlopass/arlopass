@@ -90,7 +90,7 @@ export default defineConfig({
     ],
 
     webServer: {
-        command: "npm run build:examples && npm run preview -w @arlopass/examples-web",
+        command: "pnpm run build:examples && pnpm --filter @arlopass/examples-web run preview",
         url: "http://localhost:4173",
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,

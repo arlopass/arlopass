@@ -18,30 +18,56 @@ const { props } = Astro.props;
   <table class="w-full text-sm border-collapse">
     <thead>
       <tr class="bg-[var(--ap-bg-surface)]">
-        <th class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide">Prop</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide">Type</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide">Default</th>
-        <th class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide">Description</th>
+        <th
+          class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide"
+          >Prop</th
+        >
+        <th
+          class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide"
+          >Type</th
+        >
+        <th
+          class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide"
+          >Default</th
+        >
+        <th
+          class="px-4 py-3 text-left text-xs font-medium text-[var(--ap-text-tertiary)] uppercase tracking-wide"
+          >Description</th
+        >
       </tr>
     </thead>
     <tbody>
-      {props.map((prop) => (
-        <tr class="border-t border-[var(--ap-border)]">
-          <td class="px-4 py-3 align-top">
-            <code class="font-mono text-amber text-[0.875em]">{prop.name}</code>
-            {prop.required && (
-              <span class="ml-1.5 text-xs bg-brand/10 text-brand rounded px-1.5 py-0.5">required</span>
-            )}
-          </td>
-          <td class="px-4 py-3 align-top">
-            <code class="font-mono text-[var(--ap-text-tertiary)] text-[0.875em]">{prop.type}</code>
-          </td>
-          <td class="px-4 py-3 align-top text-[var(--ap-text-tertiary)]">
-            {prop.default ? <code class="font-mono text-[0.875em]">{prop.default}</code> : '—'}
-          </td>
-          <td class="px-4 py-3 align-top text-[var(--ap-text-body)]">{prop.description}</td>
-        </tr>
-      ))}
+      {
+        props.map((prop) => (
+          <tr class="border-t border-[var(--ap-border)]">
+            <td class="px-4 py-3 align-top">
+              <code class="font-mono text-amber text-[0.875em]">
+                {prop.name}
+              </code>
+              {prop.required && (
+                <span class="ml-1.5 text-xs bg-brand/10 text-brand rounded px-1.5 py-0.5">
+                  required
+                </span>
+              )}
+            </td>
+            <td class="px-4 py-3 align-top">
+              <code class="font-mono text-[var(--ap-text-tertiary)] text-[0.875em]">
+                {prop.type}
+              </code>
+            </td>
+            <td class="px-4 py-3 align-top text-[var(--ap-text-tertiary)]">
+              {prop.default ? (
+                <code class="font-mono text-[0.875em]">{prop.default}</code>
+              ) : (
+                "—"
+              )}
+            </td>
+            <td class="px-4 py-3 align-top text-[var(--ap-text-body)]">
+              {prop.description}
+            </td>
+          </tr>
+        ))
+      }
     </tbody>
   </table>
 </div>

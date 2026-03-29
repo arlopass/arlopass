@@ -4,11 +4,20 @@ description: "Mock transports, test streaming, simulate errors, and verify tool 
 category: "How-to Guides"
 order: 4
 lastUpdated: 2026-03-29
-keywords: ["testing", "mock transport", "vitest", "testing-library", "streaming", "error simulation", "react"]
+keywords:
+  [
+    "testing",
+    "mock transport",
+    "vitest",
+    "testing-library",
+    "streaming",
+    "error simulation",
+    "react",
+  ]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 You want to write tests for components that use Arlopass hooks.
 
@@ -19,7 +28,10 @@ You want to write tests for components that use Arlopass hooks.
 #### React SDK
 
 ```tsx title="React component test"
-import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
+import {
+  createMockTransport,
+  MockArlopassProvider,
+} from "@arlopass/react/testing";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import Chat from "./Chat";
@@ -40,7 +52,7 @@ describe("Chat", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     // Your component is now connected to a mock Arlopass backend
@@ -87,7 +99,10 @@ describe("ConversationManager", () => {
 Use `chatError` to simulate chat failures and `failOn` to make specific capabilities fail. This lets you test your error UI and retry logic.
 
 ```tsx title="error-tests.tsx"
-import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
+import {
+  createMockTransport,
+  MockArlopassProvider,
+} from "@arlopass/react/testing";
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import Chat from "./Chat";
@@ -101,7 +116,7 @@ describe("Chat error handling", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     // Component should display the error
@@ -115,7 +130,7 @@ describe("Chat error handling", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     // Provider listing fails — component should show fallback
@@ -128,7 +143,10 @@ describe("Chat error handling", () => {
 Use `streamChunks` for fine-grained control over chunk delivery, or `streamResponse` for a convenience string that auto-splits. Combine with `latency` to simulate realistic streaming timing.
 
 ```tsx title="streaming-tests.tsx"
-import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
+import {
+  createMockTransport,
+  MockArlopassProvider,
+} from "@arlopass/react/testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
@@ -144,7 +162,7 @@ describe("Chat streaming", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -166,7 +184,7 @@ describe("Chat streaming", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     // streamResponse auto-splits into chunks for streaming
@@ -179,7 +197,10 @@ describe("Chat streaming", () => {
 For integration tests that mount your full app (not just wrapped components), use `mockWindowArlopass()` and `cleanupWindowArlopass()` to control the global transport. Always clean up in `afterEach`.
 
 ```ts title="integration-tests.ts"
-import { mockWindowArlopass, cleanupWindowArlopass } from "@arlopass/react/testing";
+import {
+  mockWindowArlopass,
+  cleanupWindowArlopass,
+} from "@arlopass/react/testing";
 import { createMockTransport } from "@arlopass/react/testing";
 import { describe, it, afterEach } from "vitest";
 
@@ -215,7 +236,10 @@ describe("Integration tests", () => {
 A full test suite with vitest and @testing-library/react covering messaging, streaming, errors, and input state:
 
 ```tsx title="Chat.test.tsx"
-import { createMockTransport, MockArlopassProvider } from "@arlopass/react/testing";
+import {
+  createMockTransport,
+  MockArlopassProvider,
+} from "@arlopass/react/testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect } from "vitest";
@@ -260,9 +284,7 @@ function Chat() {
           </div>
         ))}
       </div>
-      {isStreaming && (
-        <div data-testid="streaming">{streamingContent}</div>
-      )}
+      {isStreaming && <div data-testid="streaming">{streamingContent}</div>}
       <form onSubmit={handleSubmit}>
         <input
           value={input}
@@ -289,7 +311,7 @@ describe("Chat component", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -305,9 +327,7 @@ describe("Chat component", () => {
 
     // AI response appears after streaming completes
     await waitFor(() => {
-      expect(screen.getByTestId("assistant")).toHaveTextContent(
-        "Hello there!"
-      );
+      expect(screen.getByTestId("assistant")).toHaveTextContent("Hello there!");
     });
   });
 
@@ -319,7 +339,7 @@ describe("Chat component", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -340,7 +360,7 @@ describe("Chat component", () => {
     render(
       <MockArlopassProvider transport={transport}>
         <Chat />
-      </MockArlopassProvider>
+      </MockArlopassProvider>,
     );
 
     const input = screen.getByPlaceholderText("Type a message...");
@@ -357,12 +377,15 @@ describe("Chat component", () => {
       () => {
         expect(input).not.toBeDisabled();
       },
-      { timeout: 2000 }
+      { timeout: 2000 },
     );
   });
 });
 ```
 
 <Callout type="tip" title="Related">
-  See the [Testing API reference](/docs/reference/react-sdk/testing) for complete `createMockTransport` options, or the [ArlopassClient reference](/docs/reference/web-sdk/arlopass-client) for web SDK testing patterns.
+  See the [Testing API reference](/docs/reference/react-sdk/testing) for
+  complete `createMockTransport` options, or the [ArlopassClient
+  reference](/docs/reference/web-sdk/arlopass-client) for web SDK testing
+  patterns.
 </Callout>

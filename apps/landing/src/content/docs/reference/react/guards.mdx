@@ -8,7 +8,7 @@ keywords: ["guards", "gates", "connection", "provider"]
 schema: "TechArticle"
 ---
 
-import ApiTable from '../../../../components/docs/ApiTable.astro';
+import ApiTable from "../../../../components/docs/ApiTable.astro";
 
 Guards conditionally render children based on connection state, provider selection, and error conditions. Import from `@arlopass/react/guards`.
 
@@ -38,12 +38,34 @@ Gates render their children when a condition is met and show a fallback otherwis
 
 Renders children when the client is connected. Shows fallbacks for loading, error, and not-installed states.
 
-<ApiTable props={[
-  { name: "fallback", type: "ReactNode", default: "null", description: "Rendered while connecting or when disconnected." },
-  { name: "errorFallback", type: "(props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode", description: "Rendered when connection fails. Receives the error and a retry function." },
-  { name: "notInstalledFallback", type: "ReactNode", description: "Rendered when the Arlopass extension is not installed." },
-  { name: "children", type: "ReactNode", required: true, description: 'Rendered when connected (state is "connected" or "degraded").' }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "fallback",
+      type: "ReactNode",
+      default: "null",
+      description: "Rendered while connecting or when disconnected.",
+    },
+    {
+      name: "errorFallback",
+      type: "(props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+      description:
+        "Rendered when connection fails. Receives the error and a retry function.",
+    },
+    {
+      name: "notInstalledFallback",
+      type: "ReactNode",
+      description: "Rendered when the Arlopass extension is not installed.",
+    },
+    {
+      name: "children",
+      type: "ReactNode",
+      required: true,
+      description:
+        'Rendered when connected (state is "connected" or "degraded").',
+    },
+  ]}
+/>
 
 ```tsx
 <ArlopassConnectionGate
@@ -64,11 +86,28 @@ Renders children when the client is connected. Shows fallbacks for loading, erro
 
 Renders children when a provider/model pair is selected.
 
-<ApiTable props={[
-  { name: "fallback", type: "ReactNode", default: "null", description: "Rendered when no provider is selected." },
-  { name: "loadingFallback", type: "ReactNode", description: "Rendered while providers are being listed. Falls back to fallback if not set." },
-  { name: "children", type: "ReactNode", required: true, description: "Rendered when a provider is selected." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "fallback",
+      type: "ReactNode",
+      default: "null",
+      description: "Rendered when no provider is selected.",
+    },
+    {
+      name: "loadingFallback",
+      type: "ReactNode",
+      description:
+        "Rendered while providers are being listed. Falls back to fallback if not set.",
+    },
+    {
+      name: "children",
+      type: "ReactNode",
+      required: true,
+      description: "Rendered when a provider is selected.",
+    },
+  ]}
+/>
 
 ```tsx
 <ArlopassProviderGate fallback={<ProviderPicker />}>
@@ -80,13 +119,38 @@ Renders children when a provider/model pair is selected.
 
 All-in-one gate that checks connection, provider selection, and error state. Renders children only when everything is ready to chat.
 
-<ApiTable props={[
-  { name: "connectingFallback", type: "ReactNode", default: "null", description: "Rendered while connecting." },
-  { name: "notInstalledFallback", type: "ReactNode", description: "Rendered when the extension is not installed." },
-  { name: "providerFallback", type: "ReactNode", default: "null", description: "Rendered when connected but no provider is selected." },
-  { name: "errorFallback", type: "(props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode", description: "Rendered on connection failure." },
-  { name: "children", type: "ReactNode", required: true, description: "Rendered when connected and a provider is selected." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "connectingFallback",
+      type: "ReactNode",
+      default: "null",
+      description: "Rendered while connecting.",
+    },
+    {
+      name: "notInstalledFallback",
+      type: "ReactNode",
+      description: "Rendered when the extension is not installed.",
+    },
+    {
+      name: "providerFallback",
+      type: "ReactNode",
+      default: "null",
+      description: "Rendered when connected but no provider is selected.",
+    },
+    {
+      name: "errorFallback",
+      type: "(props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+      description: "Rendered on connection failure.",
+    },
+    {
+      name: "children",
+      type: "ReactNode",
+      required: true,
+      description: "Rendered when connected and a provider is selected.",
+    },
+  ]}
+/>
 
 ```tsx
 <ArlopassChatReadyGate
@@ -103,15 +167,52 @@ All-in-one gate that checks connection, provider selection, and error state. Ren
 
 Negative guards render children when a condition is **not** met. They accept `ReactNode` or a render function as children.
 
-<ApiTable props={[
-  { name: "ArlopassNotInstalled", type: "Component", description: "Renders children only when the Arlopass extension is not detected. Children type: ReactNode | (() => ReactNode)" },
-  { name: "ArlopassDisconnected", type: "Component", description: 'Renders children when the client is not connected (any state except "connected" or "degraded"). Children type: ReactNode | (() => ReactNode)' },
-  { name: "ArlopassConnected", type: "Component", description: 'Renders children only when connected ("connected" or "degraded"). Children type: ReactNode | (() => ReactNode)' },
-  { name: "ArlopassProviderNotReady", type: "Component", description: "Renders children when no provider is selected. Children type: ReactNode | (() => ReactNode)" },
-  { name: "ArlopassHasError", type: "Component", description: "Renders children when a connection error is present. Children receive { error, retry } as a render prop. Children type: (props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode" },
-  { name: "ArlopassChatNotReady", type: "Component", description: "Renders children when chat is not ready (not connected or no provider selected). Children type: ReactNode | (() => ReactNode)" },
-  { name: "ArlopassChatReady", type: "Component", description: "Renders children only when chat is ready (connected and provider selected). Children type: ReactNode | (() => ReactNode)" }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "ArlopassNotInstalled",
+      type: "Component",
+      description:
+        "Renders children only when the Arlopass extension is not detected. Children type: ReactNode | (() => ReactNode)",
+    },
+    {
+      name: "ArlopassDisconnected",
+      type: "Component",
+      description:
+        'Renders children when the client is not connected (any state except "connected" or "degraded"). Children type: ReactNode | (() => ReactNode)',
+    },
+    {
+      name: "ArlopassConnected",
+      type: "Component",
+      description:
+        'Renders children only when connected ("connected" or "degraded"). Children type: ReactNode | (() => ReactNode)',
+    },
+    {
+      name: "ArlopassProviderNotReady",
+      type: "Component",
+      description:
+        "Renders children when no provider is selected. Children type: ReactNode | (() => ReactNode)",
+    },
+    {
+      name: "ArlopassHasError",
+      type: "Component",
+      description:
+        "Renders children when a connection error is present. Children receive { error, retry } as a render prop. Children type: (props: { error: ArlopassSDKError; retry: (() => Promise<void>) | null }) => ReactNode",
+    },
+    {
+      name: "ArlopassChatNotReady",
+      type: "Component",
+      description:
+        "Renders children when chat is not ready (not connected or no provider selected). Children type: ReactNode | (() => ReactNode)",
+    },
+    {
+      name: "ArlopassChatReady",
+      type: "Component",
+      description:
+        "Renders children only when chat is ready (connected and provider selected). Children type: ReactNode | (() => ReactNode)",
+    },
+  ]}
+/>
 
 ```tsx
 <ArlopassNotInstalled>
@@ -134,11 +235,28 @@ Negative guards render children when a condition is **not** met. They accept `Re
 
 A React error boundary that catches rendering errors in the child tree. Standard class-component boundary with a render-prop fallback.
 
-<ApiTable props={[
-  { name: "fallback", type: "(props: { error: Error; resetErrorBoundary: () => void }) => ReactNode", required: true, description: "Render prop called when an error is caught. Receives the error and a reset function." },
-  { name: "onError", type: "(error: Error, errorInfo: ErrorInfo) => void", description: "Optional callback for logging or telemetry." },
-  { name: "children", type: "ReactNode", required: true, description: "Child tree to wrap with the error boundary." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "fallback",
+      type: "(props: { error: Error; resetErrorBoundary: () => void }) => ReactNode",
+      required: true,
+      description:
+        "Render prop called when an error is caught. Receives the error and a reset function.",
+    },
+    {
+      name: "onError",
+      type: "(error: Error, errorInfo: ErrorInfo) => void",
+      description: "Optional callback for logging or telemetry.",
+    },
+    {
+      name: "children",
+      type: "ReactNode",
+      required: true,
+      description: "Child tree to wrap with the error boundary.",
+    },
+  ]}
+/>
 
 ```tsx
 <ArlopassErrorBoundary

@@ -31,9 +31,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@arlopass/audit": "0.1.0",
-    "@arlopass/policy": "0.1.0",
-    "@arlopass/protocol": "0.1.0",
-    "@arlopass/telemetry": "0.1.0"
+    "@arlopass/audit": "workspace:*",
+    "@arlopass/policy": "workspace:*",
+    "@arlopass/protocol": "workspace:*",
+    "@arlopass/telemetry": "workspace:*"
   }
 }

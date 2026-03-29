@@ -8,7 +8,7 @@ keywords: ["blocks", "registry", "cli", "chat", "widget", "components"]
 schema: "TechArticle"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 Pre-styled Tailwind blocks you copy into your project with a single command.
 
@@ -26,15 +26,15 @@ npx @arlopass/ui add chat
 
 ### Available blocks
 
-| ID | Name | Description |
-|----|------|-------------|
-| `chat` | Chat | Complete chat interface with avatars, message bubbles, typing indicator, streaming cursor, tool activity, context bar, scroll fade, and auto-scroll |
-| `chatbot` | Chatbot Widget | Floating chatbot bubble with expandable chat panel (depends on chat) |
-| `provider-picker` | Provider Picker | Styled provider and model selection dropdowns |
-| `connection-banner` | Connection Banner | Connection status banner with install prompt |
-| `install-button` | Install Button | Styled button/link to install the Arlopass extension |
-| `extension-required` | Extension Required Gate | Feature-level gate that shows an install prompt when the extension is missing |
-| `app-required` | App Required Gate | Full-app gate that blocks the entire UI with an install page when extension is missing |
+| ID                   | Name                    | Description                                                                                                                                         |
+| -------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `chat`               | Chat                    | Complete chat interface with avatars, message bubbles, typing indicator, streaming cursor, tool activity, context bar, scroll fade, and auto-scroll |
+| `chatbot`            | Chatbot Widget          | Floating chatbot bubble with expandable chat panel (depends on chat)                                                                                |
+| `provider-picker`    | Provider Picker         | Styled provider and model selection dropdowns                                                                                                       |
+| `connection-banner`  | Connection Banner       | Connection status banner with install prompt                                                                                                        |
+| `install-button`     | Install Button          | Styled button/link to install the Arlopass extension                                                                                                |
+| `extension-required` | Extension Required Gate | Feature-level gate that shows an install prompt when the extension is missing                                                                       |
+| `app-required`       | App Required Gate       | Full-app gate that blocks the entire UI with an install page when extension is missing                                                              |
 
 ---
 
@@ -222,7 +222,11 @@ function App() {
 Blocks the entire app when Arlopass is not installed. Use this when your app cannot function at all without the extension.
 
 ```tsx title="App required gate"
-import { ArlopassProvider, ArlopassRequiredGate, ArlopassInstallButton } from "@arlopass/react";
+import {
+  ArlopassProvider,
+  ArlopassRequiredGate,
+  ArlopassInstallButton,
+} from "@arlopass/react";
 
 function App() {
   return (
@@ -247,5 +251,8 @@ function App() {
 ---
 
 <Callout type="info" title="You own the source">
-  After copying, the block source lives in your project. Edit the markup, swap Tailwind for your own design system, add props — it's your code now. The primitives from `@arlopass/react-ui` remain as npm dependencies for behaviour and state management.
+  After copying, the block source lives in your project. Edit the markup, swap
+  Tailwind for your own design system, add props — it's your code now. The
+  primitives from `@arlopass/react-ui` remain as npm dependencies for behaviour
+  and state management.
 </Callout>

@@ -229,6 +229,8 @@ export async function sendVaultMessageViaProxy(
     ) {
         clearVaultLockNotification();
         try { void chrome.action?.setBadgeText?.({ text: "" }); } catch { /* ok */ }
+        // Refresh model lists for all connected providers in the background
+        void refreshAllProviderModels();
     }
 
     // Broadcast provider/app changes to all tabs so web SDKs refresh
@@ -259,6 +261,226 @@ async function broadcastProvidersChanged(): Promise<void> {
             }
         }
     } catch { /* ignore */ }
+}
+
+// ---------------------------------------------------------------------------
+// Background model refresh — re-discover models for all connected providers
+// ---------------------------------------------------------------------------
+
+const DEFAULT_CLOUD_POLICY_VERSION = "policy.unknown";
+const MODEL_REFRESH_TIMEOUT_MS = 12_000;
+
+type VaultProvider = {
+    id: string;
+    name: string;
+    type: string;
+    status: string;
+    models: string[];
+    connectorId?: string;
+    credentialId?: string;
+    metadata?: Record<string, string>;
+};
+
+function parseVaultProviders(raw: unknown): VaultProvider[] {
+    if (!Array.isArray(raw)) return [];
+    const result: VaultProvider[] = [];
+    for (const entry of raw) {
+        if (
+            isRecord(entry) &&
+            typeof entry["id"] === "string" &&
+            typeof entry["type"] === "string"
+        ) {
+            result.push({
+                id: entry["id"] as string,
+                name: (typeof entry["name"] === "string" ? entry["name"] : "") as string,
+                type: entry["type"] as string,
+                status: (typeof entry["status"] === "string" ? entry["status"] : "disconnected") as string,
+                models: Array.isArray(entry["models"])
+                    ? (entry["models"] as unknown[]).filter((m): m is string => typeof m === "string")
+                    : [],
+                ...(typeof entry["connectorId"] === "string" ? { connectorId: entry["connectorId"] } : {}),
+                ...(typeof entry["credentialId"] === "string" ? { credentialId: entry["credentialId"] } : {}),
+                ...(isRecord(entry["metadata"]) ? { metadata: entry["metadata"] as Record<string, string> } : {}),
+            });
+        }
+    }
+    return result;
+}
+
+function parseDiscoveredModelIds(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return [];
+    const ids: string[] = [];
+    for (const entry of raw) {
+        if (typeof entry === "string" && entry.length > 0) {
+            ids.push(entry);
+        } else if (isRecord(entry) && typeof entry["id"] === "string" && (entry["id"] as string).length > 0) {
+            ids.push(entry["id"] as string);
+        }
+    }
+    return ids;
+}
+
+async function discoverCloudModels(
+    provider: VaultProvider,
+): Promise<string[] | null> {
+    const metadata = provider.metadata ?? {};
+    const connectionHandle = (metadata["connectionHandle"] ?? "").trim();
+    const providerId = (metadata["providerId"] ?? "").trim();
+    const methodId = (metadata["methodId"] ?? "").trim();
+    const nativeHostName = (metadata["nativeHostName"] ?? "com.arlopass.bridge").trim();
+    const endpointProfileHash = (metadata["endpointProfileHash"] ?? "").trim();
+
+    if (connectionHandle.length === 0 || providerId.length === 0 || methodId.length === 0) {
+        return null;
+    }
+
+    const extensionId = typeof chrome?.runtime?.id === "string" ? chrome.runtime.id : "";
+    if (extensionId.length === 0) return null;
+
+    const token = await getSessionToken();
+    const resp = await Promise.race([
+        sendViaPort({
+            type: "cloud.models.discover",
+            providerId,
+            methodId,
+            connectionHandle,
+            extensionId,
+            origin: `chrome-extension://${extensionId}`,
+            policyVersion: DEFAULT_CLOUD_POLICY_VERSION,
+            ...(endpointProfileHash.length > 0 ? { endpointProfileHash } : {}),
+            refresh: true,
+            sessionToken: token,
+        }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), MODEL_REFRESH_TIMEOUT_MS)),
+    ]);
+
+    if (!isRecord(resp) || resp["type"] !== "cloud.models.discover") return null;
+
+    const models = parseDiscoveredModelIds(resp["models"]);
+    return models.length > 0 ? models : null;
+}
+
+async function discoverOllamaModels(provider: VaultProvider): Promise<string[] | null> {
+    const metadata = provider.metadata ?? {};
+    const baseUrl = (metadata["baseUrl"] ?? "http://localhost:11434").trim().replace(/\/+$/, "");
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), MODEL_REFRESH_TIMEOUT_MS);
+        const resp = await fetch(`${baseUrl}/api/tags`, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!resp.ok) return null;
+        const payload = (await resp.json()) as unknown;
+        if (!isRecord(payload) || !Array.isArray(payload["models"])) return null;
+        const models = (payload["models"] as unknown[])
+            .map((entry) => (isRecord(entry) && typeof entry["name"] === "string" ? entry["name"] : undefined))
+            .filter((name): name is string => typeof name === "string" && name.length > 0)
+            .slice(0, 40);
+        return models.length > 0 ? models : null;
+    } catch {
+        return null;
+    }
+}
+
+async function discoverCliModels(provider: VaultProvider): Promise<string[] | null> {
+    const metadata = provider.metadata ?? {};
+    const nativeHostName = (metadata["nativeHostName"] ?? "com.arlopass.bridge").trim();
+    const cliType = (metadata["cliType"] ?? "").trim();
+
+    if (cliType.length === 0) return null;
+
+    const token = await getSessionToken();
+    const resp = await Promise.race([
+        sendViaPort({
+            type: "cli.models.list",
+            cliType,
+            nativeHostName,
+            sessionToken: token,
+        }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), MODEL_REFRESH_TIMEOUT_MS)),
+    ]);
+
+    if (!isRecord(resp) || resp["type"] === "error") return null;
+
+    const models = parseDiscoveredModelIds(resp["models"]);
+    return models.length > 0 ? models : null;
+}
+
+/**
+ * Re-discover models for all connected providers after vault unlock.
+ * Runs in the background — failures for individual providers are silently
+ * ignored so one broken provider doesn't block others from refreshing.
+ */
+async function refreshAllProviderModels(): Promise<void> {
+    try {
+        const token = await getSessionToken();
+        const listResp = await sendViaPort({ type: "vault.providers.list", sessionToken: token });
+        if (!isRecord(listResp) || listResp["type"] === "error") return;
+
+        const providers = parseVaultProviders(listResp["providers"]);
+        if (providers.length === 0) return;
+
+        let anyUpdated = false;
+
+        const refreshResults = await Promise.allSettled(
+            providers
+                .filter((p) => p.status === "connected" || p.status === "degraded")
+                .map(async (provider) => {
+                    let discovered: string[] | null = null;
+
+                    if (provider.type === "cloud") {
+                        discovered = await discoverCloudModels(provider);
+                    } else if (provider.type === "local") {
+                        discovered = await discoverOllamaModels(provider);
+                    } else if (provider.type === "cli") {
+                        discovered = await discoverCliModels(provider);
+                    }
+
+                    if (discovered === null) return;
+
+                    // Only update if the model list actually changed
+                    const currentSet = new Set(provider.models);
+                    const discoveredSet = new Set(discovered);
+                    if (
+                        currentSet.size === discoveredSet.size &&
+                        discovered.every((m) => currentSet.has(m))
+                    ) {
+                        return;
+                    }
+
+                    const saveToken = await getSessionToken();
+                    const saveResp = await sendViaPort({
+                        type: "vault.providers.save",
+                        id: provider.id,
+                        name: provider.name,
+                        providerType: provider.type,
+                        ...(provider.connectorId != null ? { connectorId: provider.connectorId } : {}),
+                        ...(provider.credentialId != null ? { credentialId: provider.credentialId } : {}),
+                        metadata: provider.metadata ?? {},
+                        models: discovered,
+                        status: provider.status,
+                        sessionToken: saveToken,
+                    });
+
+                    if (isRecord(saveResp) && saveResp["type"] !== "error") {
+                        anyUpdated = true;
+                    }
+                }),
+        );
+
+        // Log failures for debugging but don't throw
+        for (const result of refreshResults) {
+            if (result.status === "rejected") {
+                console.warn("Arlopass: model refresh failed for a provider:", result.reason);
+            }
+        }
+
+        if (anyUpdated) {
+            void broadcastProvidersChanged();
+        }
+    } catch (error) {
+        console.warn("Arlopass: background model refresh failed:", error);
+    }
 }
 
 /**

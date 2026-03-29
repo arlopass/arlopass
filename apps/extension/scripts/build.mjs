@@ -232,27 +232,12 @@ async function copyProviderIcons() {
   );
   const svgSrcDir = path.join(svgPkgDir, "icons");
 
-  const slugs = [
-    "anthropic",
-    "openai",
-    "ollama",
-    "gemini-color",
-    "azureai-color",
-    "githubcopilot",
-    "opencode",
-    "bedrock-color",
-    "perplexity-color",
-    "claude-color",
-    "claudecode-color",
-    "google-color",
-  ];
-
+  // Copy the entire @lobehub/icons-static-svg icons directory
+  const { readdir } = await import("node:fs/promises");
+  const svgFiles = (await readdir(svgSrcDir)).filter((f) => f.endsWith(".svg"));
   await Promise.all(
-    slugs.map((slug) =>
-      copyFile(
-        path.join(svgSrcDir, `${slug}.svg`),
-        path.join(iconsDir, `${slug}.svg`),
-      ),
+    svgFiles.map((file) =>
+      copyFile(path.join(svgSrcDir, file), path.join(iconsDir, file)),
     ),
   );
 }

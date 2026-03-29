@@ -8,7 +8,7 @@ keywords: ["transport", "protocol", "messages"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 How the SDK communicates with the extension
 
@@ -50,7 +50,7 @@ import { ArlopassProvider } from "@arlopass/react";
   {/* ArlopassProvider checks window.arlopass on mount */}
   {/* If missing → transportAvailable: false */}
   <App />
-</ArlopassProvider>
+</ArlopassProvider>;
 
 // Web SDK — you reference it explicitly
 import { ArlopassClient } from "@arlopass/web-sdk";
@@ -62,7 +62,9 @@ const client = new ArlopassClient({ transport: window.arlopass });
 You might wonder why the SDK doesn't let you construct your own transport — say, a WebSocket to your own backend. The reason is security. The entire Arlopass trust model depends on the extension controlling the communication channel. If arbitrary transports were allowed, any code in the page could bypass the extension's consent flow, credential management, and rate limiting. The injected transport is the extension's guarantee that it mediates every interaction.
 
 <Callout type="warning" title="No arbitrary transports">
-Constructing a custom `ArlopassTransport` in production code bypasses the extension trust boundary. The SDK accepts `window.arlopass` — nothing else. For testing, use the mock transport from `@arlopass/react/testing`.
+  Constructing a custom `ArlopassTransport` in production code bypasses the
+  extension trust boundary. The SDK accepts `window.arlopass` — nothing else.
+  For testing, use the mock transport from `@arlopass/react/testing`.
 </Callout>
 
 ### The envelope protocol
@@ -74,16 +76,18 @@ Every message — request or response — is wrapped in a `CanonicalEnvelope`. T
 // The SDK builds this automatically — you never construct one manually.
 
 const envelope = {
-  protocolVersion: "1.0.0",       // Must match — version mismatch rejects early
-  requestId:       "uuid-1234",   // Unique per request
-  correlationId:   "uuid-5678",   // Links request → response pairs
-  origin:          "https://myapp.com", // From window.location.origin
-  sessionId:       "uuid-abcd",   // Scoped to this connect() session
-  capability:      "chat.stream", // What operation is requested
-  issuedAt:        "2025-03-26T...",  // When the envelope was created
-  expiresAt:       "2025-03-26T...",  // TTL — expired envelopes are rejected
-  nonce:           "random-value",    // Prevents replay attacks
-  payload:         { /* request data */ },
+  protocolVersion: "1.0.0", // Must match — version mismatch rejects early
+  requestId: "uuid-1234", // Unique per request
+  correlationId: "uuid-5678", // Links request → response pairs
+  origin: "https://myapp.com", // From window.location.origin
+  sessionId: "uuid-abcd", // Scoped to this connect() session
+  capability: "chat.stream", // What operation is requested
+  issuedAt: "2025-03-26T...", // When the envelope was created
+  expiresAt: "2025-03-26T...", // TTL — expired envelopes are rejected
+  nonce: "random-value", // Prevents replay attacks
+  payload: {
+    /* request data */
+  },
 };
 ```
 
@@ -133,5 +137,7 @@ await client.connect({ appId: "test-app" });
 ```
 
 <Callout type="tip" title="Related">
-See [How Arlopass Works](/docs/concepts/how-arlopass-works) for the full architecture overview, or [Security Model](/docs/guides/security) for how envelope security protects against attacks.
+  See [How Arlopass Works](/docs/concepts/how-arlopass-works) for the full
+  architecture overview, or [Security Model](/docs/guides/security) for how
+  envelope security protects against attacks.
 </Callout>

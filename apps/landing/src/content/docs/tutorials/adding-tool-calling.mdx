@@ -8,8 +8,8 @@ keywords: ["tools", "function calling", "auto-execute", "tutorial"]
 schema: "HowTo"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
-import StepList from '../../../components/docs/StepList.astro';
+import Callout from "../../../components/docs/Callout.astro";
+import StepList from "../../../components/docs/StepList.astro";
 
 Give the AI access to your app's functions.
 
@@ -18,17 +18,35 @@ Give the AI access to your app's functions.
 A chat app where the AI can call a documentation search function and a calculator. You'll learn both auto-execute mode (tools run automatically) and manual mode (you confirm before executing).
 
 <Callout type="info" title="Prerequisites">
-  This tutorial builds on the [First Chat App](/docs/tutorials/first-chat-app) and [Streaming Responses](/docs/tutorials/streaming-responses) tutorials.
+  This tutorial builds on the [First Chat App](/docs/tutorials/first-chat-app)
+  and [Streaming Responses](/docs/tutorials/streaming-responses) tutorials.
 </Callout>
 
-<StepList steps={[
-  { title: "Define tools", body: "Create ToolDefinition objects with name, description, parameters, and optional handler." },
-  { title: "Pass tools to useConversation", body: "The hook injects tool descriptions so the model knows what's available." },
-  { title: "Auto-execute mode", body: "Tools with a handler run automatically when the model calls them." },
-  { title: "Manual mode", body: "Omit the handler for tools that need user confirmation." },
-  { title: "Show tool activity", body: "Subscribe to tool events and display call details in messages." },
-  { title: "Set maxToolRounds", body: "Prevent infinite tool call loops." },
-]} />
+<StepList
+  steps={[
+    {
+      title: "Define tools",
+      body: "Create ToolDefinition objects with name, description, parameters, and optional handler.",
+    },
+    {
+      title: "Pass tools to useConversation",
+      body: "The hook injects tool descriptions so the model knows what's available.",
+    },
+    {
+      title: "Auto-execute mode",
+      body: "Tools with a handler run automatically when the model calls them.",
+    },
+    {
+      title: "Manual mode",
+      body: "Omit the handler for tools that need user confirmation.",
+    },
+    {
+      title: "Show tool activity",
+      body: "Subscribe to tool events and display call details in messages.",
+    },
+    { title: "Set maxToolRounds", body: "Prevent infinite tool call loops." },
+  ]}
+/>
 
 ### Step 1 — Define tools
 
@@ -88,12 +106,7 @@ Pass the tools array to useConversation. The hook automatically injects tool des
 import { useConversation } from "@arlopass/react";
 
 function Chat() {
-  const {
-    messages,
-    streamingContent,
-    isStreaming,
-    stream,
-  } = useConversation({
+  const { messages, streamingContent, isStreaming, stream } = useConversation({
     systemPrompt: "You can search docs and do math. Use your tools.",
     tools, // pass the tools array
   });
@@ -143,24 +156,23 @@ Omit the handler for tools that need user confirmation. Subscribe to "tool_call"
 import { useConversation } from "@arlopass/react";
 
 function Chat() {
-  const { messages, stream, subscribe, submitToolResult } =
-    useConversation({
-      tools: [
-        {
-          name: "approve_purchase",
-          description: "Submit a purchase for approval",
-          parameters: {
-            type: "object",
-            properties: {
-              item: { type: "string", description: "Item name" },
-              amount: { type: "number", description: "Amount in USD" },
-            },
-            required: ["item", "amount"],
+  const { messages, stream, subscribe, submitToolResult } = useConversation({
+    tools: [
+      {
+        name: "approve_purchase",
+        description: "Submit a purchase for approval",
+        parameters: {
+          type: "object",
+          properties: {
+            item: { type: "string", description: "Item name" },
+            amount: { type: "number", description: "Amount in USD" },
           },
-          // No handler — manual mode
+          required: ["item", "amount"],
         },
-      ],
-    });
+        // No handler — manual mode
+      },
+    ],
+  });
 
   // Listen for tool calls and handle them yourself
   subscribe("tool_call", (event) => {
@@ -177,7 +189,8 @@ function Chat() {
 ```
 
 <Callout type="warning" title="User-facing actions">
-  Use manual mode for tools that have side effects — purchases, deletions, emails. Always confirm with the user first.
+  Use manual mode for tools that have side effects — purchases, deletions,
+  emails. Always confirm with the user first.
 </Callout>
 
 ### Step 5 — Show tool activity
@@ -206,7 +219,10 @@ function Chat() {
         <div key={msg.id}>
           <strong>{msg.role}:</strong> {msg.content}
           {msg.toolCalls?.map((tc) => (
-            <div key={tc.toolCallId} style={{ fontSize: "0.85em", color: "#666" }}>
+            <div
+              key={tc.toolCallId}
+              style={{ fontSize: "0.85em", color: "#666" }}
+            >
               🔧 {tc.name}({JSON.stringify(tc.arguments)})
               {tc.status === "complete" && ` → ${tc.result}`}
             </div>
@@ -289,17 +305,13 @@ const tools: ToolDefinition[] = [
 ];
 
 function Chat() {
-  const {
-    messages,
-    streamingContent,
-    isStreaming,
-    stream,
-    stop,
-  } = useConversation({
-    systemPrompt: "You can search docs and do calculations. Use your tools when appropriate.",
-    tools,
-    maxToolRounds: 3,
-  });
+  const { messages, streamingContent, isStreaming, stream, stop } =
+    useConversation({
+      systemPrompt:
+        "You can search docs and do calculations. Use your tools when appropriate.",
+      tools,
+      maxToolRounds: 3,
+    });
   const [input, setInput] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -315,8 +327,7 @@ function Chat() {
       <div style={{ minHeight: 300, padding: 16 }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ padding: "8px 0" }}>
-            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-            {msg.content}
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
             {msg.toolCalls?.map((tc) => (
               <div
                 key={tc.toolCallId}
@@ -437,5 +448,7 @@ for await (const event of convo.stream("What is 42 * 17?")) {
 ```
 
 <Callout type="tip" title="What's next">
-  Explore the [tool calling guide](/docs/guides/tool-calling) for advanced patterns like tool priming, or learn about [guard components](/docs/guides/guard-components) for production error handling.
+  Explore the [tool calling guide](/docs/guides/tool-calling) for advanced
+  patterns like tool priming, or learn about [guard
+  components](/docs/guides/guard-components) for production error handling.
 </Callout>

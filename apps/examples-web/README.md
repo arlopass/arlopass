@@ -8,10 +8,10 @@ Built with React 18, [Mantine](https://mantine.dev/) 7, and Vite.
 
 ```bash
 # From repo root
-npm run dev:examples
+pnpm run dev:examples
 
 # Or directly
-npm run dev -w @arlopass/examples-web
+pnpm --filter @arlopass/examples-web run dev
 ```
 
 Opens at `http://127.0.0.1:4172`.
@@ -40,6 +40,6 @@ Opens at `http://127.0.0.1:4172`.
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
+| `pnpm run dev` | Start Vite dev server |
+| `pnpm run build` | Production build |
+| `pnpm run preview` | Preview production build |

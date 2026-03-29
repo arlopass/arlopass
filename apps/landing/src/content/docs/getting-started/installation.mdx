@@ -8,7 +8,7 @@ keywords: ["install", "npm", "browser extension", "setup"]
 schema: "HowTo"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 Install the SDKs and get your environment ready.
 
@@ -23,7 +23,7 @@ Install the SDKs and get your environment ready.
 The React SDK gives you hooks, providers, and guard components for building AI-powered React apps.
 
 ```bash title="Terminal"
-npm install @arlopass/react
+pnpm add @arlopass/react
 ```
 
 ### Web SDK
@@ -31,11 +31,12 @@ npm install @arlopass/react
 The Web SDK is framework-agnostic. Use it with vanilla JavaScript, Svelte, Vue, or any other framework.
 
 ```bash title="Terminal"
-npm install @arlopass/web-sdk
+pnpm add @arlopass/web-sdk
 ```
 
 <Callout type="info" title="You don't need both">
-  The React SDK includes `@arlopass/web-sdk` as a dependency — you don't need to install both. Only install the Web SDK directly if you're not using React.
+  The React SDK includes `@arlopass/web-sdk` as a dependency — you don't need to
+  install both. Only install the Web SDK directly if you're not using React.
 </Callout>
 
 ### Browser extension
@@ -63,11 +64,13 @@ console.log("Web SDK loaded ✓");
 The optional components library provides headless React primitives for building chat interfaces.
 
 ```bash title="Terminal"
-npm install @arlopass/react-ui
+pnpm add @arlopass/react-ui
 ```
 
 <Callout type="info" title="Optional">
-  The components library is optional — you can build everything with the React SDK hooks alone. The primitives package adds ready-made compound components that save time on common UI patterns.
+  The components library is optional — you can build everything with the React
+  SDK hooks alone. The primitives package adds ready-made compound components
+  that save time on common UI patterns.
 </Callout>
 
 You can also use the block registry CLI to copy pre-styled Tailwind blocks into your project:
@@ -81,5 +84,7 @@ npx @arlopass/ui add chat
 Both SDKs ship with full TypeScript declarations. No `@types` packages needed — just import and go.
 
 <Callout type="tip" title="Next steps">
-  Ready to write code? Pick a quickstart: [Web SDK](/docs/getting-started/quickstart-web-sdk) or [React SDK](/docs/getting-started/quickstart-react).
+  Ready to write code? Pick a quickstart: [Web
+  SDK](/docs/getting-started/quickstart-web-sdk) or [React
+  SDK](/docs/getting-started/quickstart-react).
 </Callout>

@@ -121,7 +121,7 @@ export const ONBOARDING_PROVIDERS: readonly ProviderEntry[] = [
         connectorId: "cloud-vertex",
         label: "Google Vertex AI (Cloud)",
         shortLabel: "Google Vertex AI",
-        providerKey: "google",
+        providerKey: "vertexai",
         type: "cloud",
         defaultName: "Google Vertex AI",
         secretFieldKey: "apiKey",

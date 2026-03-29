@@ -42,31 +42,31 @@ trap cleanup_watchers EXIT
 
 run_setup() {
   cd "$REPO_ROOT"
-  npm ci
+  pnpm install --frozen-lockfile
 }
 
 ensure_dev_tooling() {
   cd "$REPO_ROOT"
   if ! node -e "require.resolve('typescript/package.json')" >/dev/null 2>&1; then
-    echo "TypeScript dependency missing. Running npm install..."
-    npm install
+    echo "TypeScript dependency missing. Running pnpm install..."
+    pnpm install
   fi
 }
 
 run_validate() {
   cd "$REPO_ROOT"
-  npm run lint
-  npm run typecheck
-  npm run test
+  pnpm run lint
+  pnpm run typecheck
+  pnpm run test
 }
 
 start_watchers() {
   cd "$REPO_ROOT"
-  npm run build -w @arlopass/bridge -- --watch &
+  pnpm --filter @arlopass/bridge run build --watch &
   WATCH_PIDS+=("$!")
   echo "Started bridge watcher (PID: ${WATCH_PIDS[-1]})."
 
-  npm run build -w @arlopass/extension -- --watch &
+  pnpm --filter @arlopass/extension run build --watch &
   WATCH_PIDS+=("$!")
   echo "Started extension watcher (PID: ${WATCH_PIDS[-1]})."
 }
@@ -75,7 +75,7 @@ run_bridge() {
   ensure_dev_tooling
 
   cd "$REPO_ROOT"
-  npm run typecheck -w @arlopass/bridge
+  pnpm --filter @arlopass/bridge run typecheck
   echo "Bridge starting. Load extension from: $REPO_ROOT/apps/extension"
   node --loader "$REPO_ROOT/scripts/dev/ts-js-specifier-loader.mjs" \
     "$REPO_ROOT/apps/bridge/src/main.ts"

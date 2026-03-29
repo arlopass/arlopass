@@ -8,8 +8,8 @@ keywords: ["errors", "retry", "error codes"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
-import ApiTable from '../../../components/docs/ApiTable.astro';
+import Callout from "../../../components/docs/Callout.astro";
+import ApiTable from "../../../components/docs/ApiTable.astro";
 
 You want to handle errors gracefully — retryable timeouts, fatal auth failures, and everything in between.
 
@@ -55,7 +55,9 @@ function Chat() {
   return (
     <div>
       {messages.map((msg) => (
-        <div key={msg.id}>{msg.role}: {msg.content}</div>
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+        </div>
       ))}
       {isStreaming && <div>AI: {streamingContent}</div>}
     </div>
@@ -201,16 +203,51 @@ function App() {
 
 Key error codes and whether they're retryable:
 
-<ApiTable props={[
-  { name: "ARLOPASS_PROTOCOL_TIMEOUT", type: "retryable", description: "Request timed out — transient network issue" },
-  { name: "ARLOPASS_PROTOCOL_TRANSIENT_NETWORK", type: "retryable", description: "Temporary network failure" },
-  { name: "ARLOPASS_PROTOCOL_AUTH_FAILED", type: "fatal", description: "Authentication failed — invalid or expired credentials" },
-  { name: "ARLOPASS_PROTOCOL_PERMISSION_DENIED", type: "fatal", description: "Insufficient permissions for the requested operation" },
-  { name: "ARLOPASS_PROTOCOL_POLICY_VIOLATION", type: "fatal", description: "Request violates a configured policy" },
-  { name: "ARLOPASS_SDK_TRANSPORT_ERROR", type: "varies", description: "Transport-level error — check retryable flag" },
-  { name: "ARLOPASS_SDK_INVALID_STATE_OPERATION", type: "fatal", description: "Operation attempted in wrong state (e.g. chat before connect)" },
-  { name: "ARLOPASS_SDK_PROTOCOL_VIOLATION", type: "fatal", description: "Malformed envelope or protocol mismatch" },
-]} />
+<ApiTable
+  props={[
+    {
+      name: "ARLOPASS_PROTOCOL_TIMEOUT",
+      type: "retryable",
+      description: "Request timed out — transient network issue",
+    },
+    {
+      name: "ARLOPASS_PROTOCOL_TRANSIENT_NETWORK",
+      type: "retryable",
+      description: "Temporary network failure",
+    },
+    {
+      name: "ARLOPASS_PROTOCOL_AUTH_FAILED",
+      type: "fatal",
+      description: "Authentication failed — invalid or expired credentials",
+    },
+    {
+      name: "ARLOPASS_PROTOCOL_PERMISSION_DENIED",
+      type: "fatal",
+      description: "Insufficient permissions for the requested operation",
+    },
+    {
+      name: "ARLOPASS_PROTOCOL_POLICY_VIOLATION",
+      type: "fatal",
+      description: "Request violates a configured policy",
+    },
+    {
+      name: "ARLOPASS_SDK_TRANSPORT_ERROR",
+      type: "varies",
+      description: "Transport-level error — check retryable flag",
+    },
+    {
+      name: "ARLOPASS_SDK_INVALID_STATE_OPERATION",
+      type: "fatal",
+      description:
+        "Operation attempted in wrong state (e.g. chat before connect)",
+    },
+    {
+      name: "ARLOPASS_SDK_PROTOCOL_VIOLATION",
+      type: "fatal",
+      description: "Malformed envelope or protocol mismatch",
+    },
+  ]}
+/>
 
 ### Complete example
 
@@ -252,7 +289,9 @@ function Chat() {
     <div style={{ maxWidth: 600, margin: "0 auto" }}>
       <ArlopassHasError>
         {({ error: connError, retry: connRetry }) => (
-          <div style={{ padding: 8, background: "#fee", border: "1px solid red" }}>
+          <div
+            style={{ padding: 8, background: "#fee", border: "1px solid red" }}
+          >
             <strong>Error:</strong> {connError.message}
             {connError.retryable && connRetry && (
               <button onClick={connRetry} style={{ marginLeft: 8 }}>
@@ -264,7 +303,13 @@ function Chat() {
       </ArlopassHasError>
 
       {error && (
-        <div style={{ padding: 8, background: "#fff3cd", border: "1px solid orange" }}>
+        <div
+          style={{
+            padding: 8,
+            background: "#fff3cd",
+            border: "1px solid orange",
+          }}
+        >
           <strong>Chat error:</strong> {error.message}
           {error.retryable && retry && (
             <button onClick={retry} style={{ marginLeft: 8 }}>
@@ -277,8 +322,7 @@ function Chat() {
       <div style={{ minHeight: 300, padding: 16 }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ padding: "8px 0" }}>
-            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-            {msg.content}
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
           </div>
         ))}
         {isStreaming && streamingContent && (
@@ -300,7 +344,9 @@ function Chat() {
           Send
         </button>
         {isStreaming && (
-          <button type="button" onClick={() => stop()}>Stop</button>
+          <button type="button" onClick={() => stop()}>
+            Stop
+          </button>
         )}
       </form>
     </div>
@@ -343,5 +389,7 @@ export default function App() {
 ```
 
 <Callout type="tip" title="Related">
-  See the [Error Codes reference](/docs/reference/web-sdk/error-codes) for the full list, or the [Guard Components guide](/docs/guides/guard-components) for conditional rendering based on error state.
+  See the [Error Codes reference](/docs/reference/web-sdk/error-codes) for the
+  full list, or the [Guard Components guide](/docs/guides/guard-components) for
+  conditional rendering based on error state.
 </Callout>

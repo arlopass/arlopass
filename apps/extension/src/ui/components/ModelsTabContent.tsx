@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { IconChevronDown } from "@tabler/icons-react";
-import { ProviderAvatar } from "./ProviderAvatar.js";
+import { ModelAvatar } from "./ModelAvatar.js";
 import { MetadataDivider } from "./MetadataDivider.js";
 import { PrimaryButton } from "./PrimaryButton.js";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
@@ -35,6 +35,8 @@ function deriveProviderKey(provider: WalletProvider): string {
     return "gemini";
   if (methodId.startsWith("bedrock.") || nameLower.includes("bedrock"))
     return "bedrock";
+  if (methodId.startsWith("vertex.") || nameLower.includes("vertex"))
+    return "vertexai";
   if (methodId.startsWith("perplexity.") || nameLower.includes("perplexity"))
     return "perplexity";
   if (
@@ -150,7 +152,7 @@ function ModelCard({
         className="flex items-center justify-between w-full px-3 py-2.5 bg-transparent border-none cursor-pointer text-left gap-3"
       >
         <div className="flex items-center gap-2.5 overflow-hidden flex-1 min-w-0">
-          <ProviderAvatar providerKey={model.providerKey} size={24} />
+          <ModelAvatar modelId={model.id} providerKey={model.providerKey} size={24} />
           <div className="flex flex-col gap-0 overflow-hidden min-w-0">
             <span className="text-xs font-semibold text-[var(--ap-text-primary)] truncate">
               {model.name}

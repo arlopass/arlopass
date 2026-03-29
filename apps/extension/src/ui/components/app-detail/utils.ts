@@ -21,6 +21,7 @@ export function deriveProviderKey(provider: WalletProvider): string {
     return "anthropic";
   if (m.startsWith("openai.") || n.includes("openai")) return "openai";
   if (m.startsWith("gemini.") || n.includes("gemini")) return "gemini";
+  if (m.startsWith("vertex.") || n.includes("vertex")) return "vertexai";
   if (m.startsWith("foundry.") || n.includes("microsoft")) return "microsoft";
   if (m.startsWith("bedrock.")) return "bedrock";
   if (m.startsWith("perplexity.")) return "perplexity";

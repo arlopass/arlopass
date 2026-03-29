@@ -1,0 +1,304 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import PageHero from "../components/ui/PageHero.astro";
+import Divider from "../components/Divider.astro";
+
+const pageTitle =
+  "About Arlopass — Open-Source AI Access Management for the Web";
+const pageDesc =
+  "Arlopass is an open-source project building AI access management for the web. We believe users should control which AI models power their apps — and never hand over their API keys.";
+
+const jsonLdAbout = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  name: "About Arlopass",
+  description: pageDesc,
+  url: "https://arlopass.com/about",
+  mainEntity: {
+    "@type": "Organization",
+    name: "Arlopass",
+    url: "https://arlopass.com",
+    description: "Open-source AI access management for the web.",
+    foundingDate: "2025",
+    sameAs: [
+      "https://github.com/arlopass",
+      "https://x.com/arlopass",
+      "https://discord.gg/arlopass",
+    ],
+  },
+};
+
+const principles = [
+  {
+    label: "User-first",
+    title: "The user is in control",
+    description:
+      "Users choose which apps to trust, which models to use, and when to share access. Every AI request requires explicit consent. No silent data flows, no hidden permissions.",
+  },
+  {
+    label: "Zero-trust",
+    title: "Keys never leave the device",
+    description:
+      "API credentials are stored in your OS keychain — not in the browser, not on a server. The web app never touches your keys. HMAC authentication with ephemeral session keys at every trust boundary.",
+  },
+  {
+    label: "Open source",
+    title: "MIT licensed, forever",
+    description:
+      "The protocol, SDK, extension, bridge, and every adapter — all MIT licensed. AI access on the web should be a standard, not a moat. Fork it, extend it, audit it.",
+  },
+  {
+    label: "Privacy",
+    title: "No backend, no tracking",
+    description:
+      "Arlopass has no cloud infrastructure, no user accounts, no analytics, and no telemetry. The extension runs locally. Pair it with Ollama for fully offline, zero-exposure AI.",
+  },
+  {
+    label: "Standards",
+    title: "Compliance-ready by design",
+    description:
+      "Ed25519-signed policy bundles, cryptographic audit trails, and pre-mapped controls for ISO 27001, SOC 2, ISO 42001, and GDPR. Security is architecture, not afterthought.",
+  },
+  {
+    label: "Interop",
+    title: "Any model, any provider",
+    description:
+      "Ollama, Claude, GPT, Gemini, Bedrock, Vertex AI, Perplexity, Microsoft Foundry — and any future provider with an API. One adapter interface, infinite providers.",
+  },
+];
+
+const stats = [
+  { value: "9+", label: "AI providers supported" },
+  { value: "10", label: "Lines to integrate" },
+  { value: "0", label: "Keys on your server" },
+  { value: "MIT", label: "License, forever" },
+];
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDesc}
+  canonicalUrl="https://arlopass.com/about"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLdAbout)} />
+  <Nav />
+  <main>
+    <PageHero
+      label="About"
+      title="AI access should be a right, not a risk"
+      description="Arlopass is an open-source project building the missing layer between web apps and AI providers. We believe users should control which models power their apps — and never hand over their API keys to do it."
+    />
+
+    {/* ── Stats bar ────────────────────────────────────────── */}
+    <div
+      class="grid grid-cols-2 md:grid-cols-4 border border-[var(--ap-border)]"
+    >
+      {
+        stats.map((stat, i) => (
+          <div
+            class={`p-6 sm:p-8 ${i < stats.length - 1 ? "border-b md:border-b-0 md:border-r border-[var(--ap-border)]" : ""}`}
+          >
+            <span class="block text-3xl font-bold text-[var(--ap-text-primary)] font-mono tabular-nums">
+              {stat.value}
+            </span>
+            <span class="block text-sm text-[var(--ap-text-secondary)] mt-1">
+              {stat.label}
+            </span>
+          </div>
+        ))
+      }
+    </div>
+
+    <Divider />
+
+    {/* ── The problem ──────────────────────────────────────── */}
+    <section class="bg-[var(--ap-bg-surface)]" id="problem">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >The problem</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          AI on the web is broken
+        </h2>
+        <p
+          class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          Today, web apps that use AI force a bad choice: paste your API key
+          into an app you don't fully control, or don't use AI at all. According
+          to GitGuardian, over 80% of API key leaks happen through client-side
+          code or misconfigured servers. Keys end up in browser storage, server
+          logs, and third-party analytics.
+        </p>
+        <p
+          class="mt-4 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          Users can't choose their model. Developers bear the full cost and
+          liability of hosting AI. And enterprises have no governance layer for
+          how AI is used in the browser.
+        </p>
+      </div>
+    </section>
+
+    {/* ── The solution ─────────────────────────────────────── */}
+    <section id="solution">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >The solution</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          A browser-native AI access layer
+        </h2>
+        <p
+          class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          Arlopass sits between web apps and AI providers, right in the browser.
+          The user owns the connection. The app gets AI capabilities without
+          touching credentials. The enterprise gets governance without changing
+          application code.
+        </p>
+      </div>
+    </section>
+
+    <Divider />
+
+    {/* ── Principles ───────────────────────────────────────── */}
+    <section class="bg-[var(--ap-bg-surface)]" id="principles">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >Principles</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          What we believe
+        </h2>
+      </div>
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border border-[var(--ap-border)] [&>*]:border-b [&>*]:border-[var(--ap-border)] [&>*:nth-child(odd)]:sm:border-r [&>*]:lg:border-r [&>*:nth-child(3n)]:lg:border-r-0 [&>*:nth-last-child(-n+3)]:lg:border-b-0 [&>*:nth-last-child(-n+2)]:sm:border-b-0 [&>*:nth-last-child(-n+2)]:lg:border-b [&>*:nth-last-child(-n+3)]:lg:border-b-0 [&>*:last-child]:border-b-0"
+      >
+        {
+          principles.map((p) => (
+            <div class="bg-[var(--ap-bg-surface)] hover:bg-[var(--ap-bg-base)] transition-colors ease-in-out duration-300 p-8 sm:p-10">
+              <span class="text-sm font-pixel tracking-[0.08em] text-brand">
+                {p.label}
+              </span>
+              <h3 class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2">
+                {p.title}
+              </h3>
+              <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+                {p.description}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <Divider />
+
+    {/* ── Open source ──────────────────────────────────────── */}
+    <section id="open-source">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >Open source</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          Built in the open
+        </h2>
+        <p
+          class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          Every line of Arlopass is MIT licensed and developed on GitHub. We
+          believe AI access infrastructure should be auditable by anyone and
+          controlled by no single vendor.
+        </p>
+      </div>
+      <div
+        class="grid grid-cols-1 md:grid-cols-3 border border-[var(--ap-border)]"
+      >
+        <div
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Contribute</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold text-[var(--ap-text-primary)] mb-2"
+          >
+            Code & adapters
+          </h3>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-4"
+          >
+            Write new provider adapters, improve the SDK, or fix bugs. Every PR
+            is reviewed within 48 hours.
+          </p>
+          <a
+            href="https://github.com/arlopass"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm font-medium text-brand no-underline hover:text-[var(--ap-text-link-hover)] transition-colors"
+            >View on GitHub →</a
+          >
+        </div>
+        <div
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Discuss</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold text-[var(--ap-text-primary)] mb-2"
+          >
+            Community
+          </h3>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-4"
+          >
+            Join the Discord for real-time discussion, support, and feature
+            brainstorming with the community.
+          </p>
+          <a
+            href="https://discord.gg/arlopass"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm font-medium text-brand no-underline hover:text-[var(--ap-text-link-hover)] transition-colors"
+            >Join Discord →</a
+          >
+        </div>
+        <div
+          class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Learn</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold text-[var(--ap-text-primary)] mb-2"
+          >
+            Documentation
+          </h3>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-4"
+          >
+            Comprehensive docs covering quickstart, SDK reference, adapter
+            development, enterprise deployment, and more.
+          </p>
+          <a
+            href="/docs"
+            class="text-sm font-medium text-brand no-underline hover:text-[var(--ap-text-link-hover)] transition-colors"
+            >Read the docs →</a
+          >
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

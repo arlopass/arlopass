@@ -1,4 +1,5 @@
 import { ProviderAvatar } from "../ProviderAvatar.js";
+import { ModelAvatar } from "../ModelAvatar.js";
 import { PrimaryButton } from "../PrimaryButton.js";
 import type { WalletProvider } from "../../popup-state.js";
 import { deriveProviderKey } from "./utils.js";
@@ -228,7 +229,7 @@ export function EnableModelSubView({
                     </svg>
                   )}
                 </div>
-                <ProviderAvatar providerKey={m.providerKey} size={16} />
+                <ModelAvatar modelId={m.id} providerKey={m.providerKey} size={16} />
                 <span className="text-[10px] font-medium text-[var(--ap-text-primary)] truncate flex-1 min-w-0">
                   {m.name}
                 </span>

@@ -8,8 +8,8 @@ keywords: ["tutorial", "chat app", "streaming", "react"]
 schema: "HowTo"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
-import StepList from '../../../components/docs/StepList.astro';
+import Callout from "../../../components/docs/Callout.astro";
+import StepList from "../../../components/docs/StepList.astro";
 
 Create a complete AI chat interface with React in 15 minutes.
 
@@ -18,18 +18,43 @@ Create a complete AI chat interface with React in 15 minutes.
 A fully functional chat UI with message history, real-time streaming responses, a text input, and a stop button — all powered by any AI provider through the Arlopass extension.
 
 <Callout type="info" title="Prerequisites">
-  Make sure you've installed the React SDK and the Arlopass browser extension. See the [React Quickstart](/docs/getting-started/quickstart-react) if you haven't done that yet.
+  Make sure you've installed the React SDK and the Arlopass browser extension.
+  See the [React Quickstart](/docs/getting-started/quickstart-react) if you
+  haven't done that yet.
 </Callout>
 
-<StepList steps={[
-  { title: "Set up the provider", body: "Wrap your app in ArlopassProvider to connect to the browser extension." },
-  { title: "Add the chat ready gate", body: "ChatReadyGate renders fallback UIs for connecting, missing-provider, and error states." },
-  { title: "Create the chat component", body: "The useConversation hook manages messages, streaming, and tool calls." },
-  { title: "Render messages", body: "Map over the messages array to display the conversation." },
-  { title: "Add streaming indicator", body: "Show the AI's partial response as it types in real time." },
-  { title: "Add input form", body: "Create a controlled input and call stream() on submit." },
-  { title: "Add stop button", body: "Call stop() to abort the current stream." },
-]} />
+<StepList
+  steps={[
+    {
+      title: "Set up the provider",
+      body: "Wrap your app in ArlopassProvider to connect to the browser extension.",
+    },
+    {
+      title: "Add the chat ready gate",
+      body: "ChatReadyGate renders fallback UIs for connecting, missing-provider, and error states.",
+    },
+    {
+      title: "Create the chat component",
+      body: "The useConversation hook manages messages, streaming, and tool calls.",
+    },
+    {
+      title: "Render messages",
+      body: "Map over the messages array to display the conversation.",
+    },
+    {
+      title: "Add streaming indicator",
+      body: "Show the AI's partial response as it types in real time.",
+    },
+    {
+      title: "Add input form",
+      body: "Create a controlled input and call stream() on submit.",
+    },
+    {
+      title: "Add stop button",
+      body: "Call stop() to abort the current stream.",
+    },
+  ]}
+/>
 
 ### Step 1 — Set up the provider
 
@@ -40,7 +65,11 @@ import { ArlopassProvider } from "@arlopass/react";
 
 function App() {
   return (
-    <ArlopassProvider appId="my-chat-app" defaultProvider="ollama" defaultModel="llama3">
+    <ArlopassProvider
+      appId="my-chat-app"
+      defaultProvider="ollama"
+      defaultModel="llama3"
+    >
       <ChatApp />
     </ArlopassProvider>
   );
@@ -75,15 +104,10 @@ The useConversation hook manages messages, streaming, and tool calls. Pass a sys
 import { useConversation } from "@arlopass/react";
 
 function Chat() {
-  const {
-    messages,
-    streamingContent,
-    isStreaming,
-    stream,
-    stop,
-  } = useConversation({
-    systemPrompt: "You are a helpful assistant. Be concise.",
-  });
+  const { messages, streamingContent, isStreaming, stream, stop } =
+    useConversation({
+      systemPrompt: "You are a helpful assistant. Be concise.",
+    });
 
   // We'll build the UI in the next steps
   return <div>Chat component</div>;
@@ -95,12 +119,13 @@ function Chat() {
 Map over the messages array. Each message has an id, role ("user" or "assistant"), and content string.
 
 ```tsx title="Chat.tsx (JSX)"
-{messages.map((msg) => (
-  <div key={msg.id} style={{ padding: "8px 0" }}>
-    <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-    {msg.content}
-  </div>
-))}
+{
+  messages.map((msg) => (
+    <div key={msg.id} style={{ padding: "8px 0" }}>
+      <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
+    </div>
+  ));
+}
 ```
 
 ### Step 5 — Add streaming indicator
@@ -108,11 +133,13 @@ Map over the messages array. Each message has an id, role ("user" or "assistant"
 While isStreaming is true, streamingContent holds the partial response text. Render it below your message list so the user sees the AI typing in real time.
 
 ```tsx title="Chat.tsx (JSX)"
-{isStreaming && streamingContent && (
-  <div style={{ padding: "8px 0", opacity: 0.7 }}>
-    <strong>AI:</strong> {streamingContent}
-  </div>
-)}
+{
+  isStreaming && streamingContent && (
+    <div style={{ padding: "8px 0", opacity: 0.7 }}>
+      <strong>AI:</strong> {streamingContent}
+    </div>
+  );
+}
 ```
 
 ### Step 6 — Add input form
@@ -141,7 +168,7 @@ async function handleSubmit(e: React.FormEvent) {
   <button type="submit" disabled={isStreaming || !input.trim()}>
     Send
   </button>
-</form>
+</form>;
 ```
 
 ### Step 7 — Add stop button
@@ -149,11 +176,9 @@ async function handleSubmit(e: React.FormEvent) {
 Call stop() to abort the current stream. The partial response is kept in the messages array.
 
 ```tsx title="Chat.tsx (JSX)"
-{isStreaming && (
-  <button onClick={() => stop()}>
-    Stop generating
-  </button>
-)}
+{
+  isStreaming && <button onClick={() => stop()}>Stop generating</button>;
+}
 ```
 
 ### Complete example
@@ -169,15 +194,10 @@ import {
 } from "@arlopass/react";
 
 function Chat() {
-  const {
-    messages,
-    streamingContent,
-    isStreaming,
-    stream,
-    stop,
-  } = useConversation({
-    systemPrompt: "You are a helpful assistant. Be concise.",
-  });
+  const { messages, streamingContent, isStreaming, stream, stop } =
+    useConversation({
+      systemPrompt: "You are a helpful assistant. Be concise.",
+    });
   const [input, setInput] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -193,8 +213,7 @@ function Chat() {
       <div style={{ minHeight: 300, padding: 16 }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ padding: "8px 0" }}>
-            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-            {msg.content}
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
           </div>
         ))}
         {isStreaming && streamingContent && (
@@ -255,7 +274,9 @@ function Chat() {
   return (
     <div>
       {messages.map((msg) => (
-        <div key={msg.id}>{msg.role}: {msg.content}</div>
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+        </div>
       ))}
       {isStreaming && <div>AI: {streamingContent}</div>}
       <button onClick={() => stream("Hello!")}>Send</button>
@@ -286,5 +307,8 @@ for await (const event of convo.stream("Hello!")) {
 ```
 
 <Callout type="tip" title="What's next">
-  Learn how to [customise streaming behaviour](/docs/tutorials/streaming-responses), build a [provider selection UI](/docs/tutorials/provider-selection), or [add tool calling](/docs/tutorials/adding-tool-calling).
+  Learn how to [customise streaming
+  behaviour](/docs/tutorials/streaming-responses), build a [provider selection
+  UI](/docs/tutorials/provider-selection), or [add tool
+  calling](/docs/tutorials/adding-tool-calling).
 </Callout>

@@ -75,18 +75,18 @@ The Arlopass extension injects a transport at `window.arlopass`. The web app nev
 
 ## Getting Started
 
-Requires [Node.js 20+](https://nodejs.org/download/) and [Chrome](https://www.google.com/chrome/) (or Chromium).
+Requires [Node.js 20+](https://nodejs.org/download/), [pnpm](https://pnpm.io/installation), and [Chrome](https://www.google.com/chrome/) (or Chromium).
 
 ```bash
 git clone https://github.com/arlopass/arlopass.git
 cd arlopass
-npm ci
+pnpm install
 ```
 
 Verify the build:
 
 ```bash
-npm run lint && npm run typecheck && npm run test && npm run build
+pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build
 ```
 
 ### Dev Environment
@@ -102,18 +102,18 @@ npm run lint && npm run typecheck && npm run test && npm run build
 This installs dependencies, starts build watchers, launches the bridge, and registers the native messaging host.
 
 > [!TIP]
-> NPM aliases: `npm run dev:full`, `npm run dev:setup`, `npm run dev:validate`, `npm run dev:watch`, `npm run dev:bridge`.
+> Aliases: `pnpm run dev:full`, `pnpm run dev:setup`, `pnpm run dev:validate`, `pnpm run dev:watch`, `pnpm run dev:bridge`.
 
 ### Load the Extension
 
-1. Build: `npm run build -w @arlopass/extension`
+1. Build: `pnpm --filter @arlopass/extension run build`
 2. Open `chrome://extensions`, enable **Developer mode**
 3. Click **Load unpacked**, select `apps/extension`
 
 ### Examples App
 
 ```bash
-npm run dev:examples
+pnpm run dev:examples
 ```
 
 Opens at `http://127.0.0.1:4172` — demonstrates connect/disconnect, provider selection, chat, streaming, and error handling.
@@ -226,45 +226,45 @@ This monorepo is organized into three workspace groups:
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev:full` | Full dev environment (deps + watchers + bridge) |
-| `npm run dev:setup` | Install dependencies |
-| `npm run dev:validate` | Run lint + typecheck + tests |
-| `npm run dev:watch` | Watch builds for bridge + extension |
-| `npm run dev:bridge` | Build and run the bridge |
-| `npm run dev:examples` | Start the examples web app |
-| `npm run dev:register-native-host` | Register Chrome native messaging host |
-| `npm test` | Run all tests with Vitest |
-| `npm run build` | Build all workspaces |
-| `npm run lint` | Lint all workspaces |
-| `npm run typecheck` | Type-check all workspaces |
+| `pnpm run dev:full` | Full dev environment (deps + watchers + bridge) |
+| `pnpm run dev:setup` | Install dependencies |
+| `pnpm run dev:validate` | Run lint + typecheck + tests |
+| `pnpm run dev:watch` | Watch builds for bridge + extension |
+| `pnpm run dev:bridge` | Build and run the bridge |
+| `pnpm run dev:examples` | Start the examples web app |
+| `pnpm run dev:register-native-host` | Register Chrome native messaging host |
+| `pnpm test` | Run all tests with Vitest |
+| `pnpm run build` | Build all workspaces |
+| `pnpm run lint` | Lint all workspaces |
+| `pnpm run typecheck` | Type-check all workspaces |
 
 ### Running Tests
 
 ```bash
 # All tests
-npm test
+pnpm test
 
 # Specific workspace
-npm run test -w @arlopass/web-sdk
+pnpm --filter @arlopass/web-sdk run test
 
 # Watch mode
-npx vitest --workspace vitest.workspace.ts
+pnpm exec vitest --workspace vitest.workspace.ts
 
 # Reliability suites
-npm run test -- ./ops/tests/chaos
-npm run test -- ./ops/tests/release-gates
-npm run test -- ./ops/tests/soak
-npm run test -- ./ops/tests/version-skew
+pnpm run test -- ./ops/tests/chaos
+pnpm run test -- ./ops/tests/release-gates
+pnpm run test -- ./ops/tests/soak
+pnpm run test -- ./ops/tests/version-skew
 ```
 
 ### Building for Production
 
 ```bash
-npm ci
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+pnpm install --frozen-lockfile
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
 ```
 
 > [!IMPORTANT]
@@ -275,7 +275,7 @@ npm run build
 For the extension to communicate with the local bridge, register the native messaging host:
 
 ```bash
-npm run dev:register-native-host
+pnpm run dev:register-native-host
 ```
 
 Or manually create a `com.arlopass.bridge.json` manifest pointing to your bridge executable and register it in the Chrome NativeMessagingHosts registry key.
@@ -297,7 +297,7 @@ Or manually create a `com.arlopass.bridge.json` manifest pointing to your bridge
 
 | Problem | Solution |
 |---------|---------|
-| Extension can't connect to bridge | Verify `com.arlopass.bridge` native host is registered. Run `npm run dev:register-native-host` and reload the extension. |
+| Extension can't connect to bridge | Verify `com.arlopass.bridge` native host is registered. Run `pnpm run dev:register-native-host` and reload the extension. |
 | `auth.invalid` during handshake | Extension and bridge may have stale pairing state — delete `%LOCALAPPDATA%\Arlopass\bridge\state` and re-pair. |
 | Popup shows no providers | Seed demo providers via the extension options page or service worker console. See the [usage guide](RUNNING_AND_USAGE_GUIDE.md#7-how-to-use-current-extension-wallet-ui). |
 | `window.arlopass` is undefined | Reload the unpacked extension, refresh the target tab, and verify the extension has site access for that origin. |

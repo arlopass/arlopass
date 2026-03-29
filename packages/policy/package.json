@@ -35,6 +35,6 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@arlopass/protocol": "0.1.0"
+    "@arlopass/protocol": "workspace:*"
   }
 }

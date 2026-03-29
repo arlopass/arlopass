@@ -8,7 +8,7 @@ keywords: ["conversation", "context window", "pinning"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 You want to manage conversation history with automatic context window truncation.
 
@@ -42,7 +42,9 @@ function Chat() {
       <p>Tokens used: {tokenCount} / 8192</p>
       <p>Messages in context window: {contextWindow.length}</p>
       {messages.map((msg) => (
-        <div key={msg.id}>{msg.role}: {msg.content}</div>
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+        </div>
       ))}
       {isStreaming && <div>AI: {streamingContent}</div>}
     </div>
@@ -112,9 +114,7 @@ function Chat() {
           </button>
         </div>
       ))}
-      <button onClick={handleSendPinned}>
-        Send pinned message
-      </button>
+      <button onClick={handleSendPinned}>Send pinned message</button>
     </div>
   );
 }
@@ -201,8 +201,7 @@ function ChatWithTokenDisplay() {
 
       {pct > 80 && (
         <p style={{ color: "orange" }}>
-          Context window is {pct}% full. Older messages will be
-          evicted soon.
+          Context window is {pct}% full. Older messages will be evicted soon.
         </p>
       )}
 
@@ -253,7 +252,11 @@ A full chat UI with token monitoring, pinning, summarization, and clear:
 
 ```tsx title="App.tsx"
 import { useState } from "react";
-import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
+import {
+  ArlopassProvider,
+  ChatReadyGate,
+  useConversation,
+} from "@arlopass/react";
 
 function Chat() {
   const {
@@ -286,7 +289,9 @@ function Chat() {
   return (
     <div style={{ maxWidth: 600, margin: "0 auto" }}>
       <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
-        <span>Tokens: {tokenCount} / 8192 ({usage}%)</span>
+        <span>
+          Tokens: {tokenCount} / 8192 ({usage}%)
+        </span>
         <span>Context: {contextWindow.length} msgs</span>
         <button onClick={clearMessages} disabled={isStreaming}>
           Clear
@@ -296,8 +301,7 @@ function Chat() {
       <div style={{ minHeight: 300, padding: 16 }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ padding: "8px 0" }}>
-            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-            {msg.content}
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
             <button
               onClick={() => pinMessage(msg.id, !msg.pinned)}
               style={{ marginLeft: 8, fontSize: 12 }}
@@ -325,7 +329,9 @@ function Chat() {
           Send
         </button>
         {isStreaming && (
-          <button type="button" onClick={() => stop()}>Stop</button>
+          <button type="button" onClick={() => stop()}>
+            Stop
+          </button>
         )}
       </form>
     </div>
@@ -348,5 +354,7 @@ export default function App() {
 ```
 
 <Callout type="tip" title="Related">
-  See the [Hooks API reference](/docs/reference/react-sdk/hooks) for all `useConversation` options, or the [ConversationManager reference](/docs/reference/web-sdk/conversation-manager) for the web SDK API.
+  See the [Hooks API reference](/docs/reference/react-sdk/hooks) for all
+  `useConversation` options, or the [ConversationManager
+  reference](/docs/reference/web-sdk/conversation-manager) for the web SDK API.
 </Callout>

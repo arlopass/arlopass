@@ -1,0 +1,52 @@
+---
+/**
+ * Reusable page hero section matching the landing page aesthetic.
+ * Used by all secondary pages (install, about, changelog, roadmap, contact).
+ *
+ * Props:
+ *   label       – font-pixel terracotta text above the title
+ *   title       – main heading (h1)
+ *   description – body text below heading
+ *   centered    – center-align everything (default: false)
+ */
+interface Props {
+  label: string;
+  title: string;
+  description?: string;
+  centered?: boolean;
+}
+
+const { label, title, description, centered = false } = Astro.props;
+---
+
+<section
+  class:list={[
+    "pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16",
+    centered && "text-center",
+  ]}
+>
+  <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+    {label}
+  </span>
+  <h1
+    class:list={[
+      "mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]",
+      centered && "mx-auto",
+    ]}
+  >
+    {title}
+  </h1>
+  {
+    description && (
+      <p
+        class:list={[
+          "mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]",
+          centered && "mx-auto",
+        ]}
+      >
+        {description}
+      </p>
+    )
+  }
+  <slot />
+</section>

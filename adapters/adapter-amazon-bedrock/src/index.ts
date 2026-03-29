@@ -1,3 +1,5 @@
+import { createHmac, createHash } from "node:crypto";
+
 import {
   type AdapterManifest,
   type BeginConnectInput,
@@ -14,7 +16,7 @@ import {
   type ValidateCredentialRefInput,
   type ValidationResult,
 } from "@arlopass/adapter-runtime";
-import { type ProtocolCapability, AuthError, TransientNetworkError } from "@arlopass/protocol";
+import { type ProtocolCapability, AuthError, PermissionError, ProviderUnavailableError, TimeoutError, TransientNetworkError } from "@arlopass/protocol";
 
 export const BEDROCK_CONNECTION_METHOD_IDS = {
   API_KEY: "bedrock.api_key",
@@ -38,22 +40,22 @@ export const BEDROCK_CONNECTION_METHODS: readonly ConnectionMethodDescriptor[] =
     id: BEDROCK_CONNECTION_METHOD_IDS.API_KEY,
     authFlow: "api-key",
     displayName: "Amazon Bedrock (API Key)",
-    requiredFields: ["region", "modelAccessPolicy", "apiKey"],
-    optionalFields: [],
+    requiredFields: ["region", "apiKey"],
+    optionalFields: ["modelAccessPolicy"],
   },
   {
     id: BEDROCK_CONNECTION_METHOD_IDS.AWS_ACCESS_KEY,
     authFlow: "aws-signature-v4",
     displayName: "Amazon Bedrock (AWS Access Key)",
-    requiredFields: ["region", "modelAccessPolicy", "accessKeyId", "secretAccessKey"],
-    optionalFields: ["roleArn", "sessionToken"],
+    requiredFields: ["region", "accessKeyId", "secretAccessKey"],
+    optionalFields: ["modelAccessPolicy", "roleArn", "sessionToken"],
   },
   {
     id: BEDROCK_CONNECTION_METHOD_IDS.ASSUME_ROLE,
     authFlow: "aws-assume-role",
     displayName: "Amazon Bedrock (Assume Role)",
-    requiredFields: ["region", "modelAccessPolicy", "roleArn"],
-    optionalFields: ["externalId"],
+    requiredFields: ["region", "roleArn"],
+    optionalFields: ["modelAccessPolicy", "externalId"],
     metadata: {
       maxAssumeRoleHopDepth: 1,
       assumeRoleMode: "single-hop",
@@ -89,6 +91,7 @@ export const AMAZON_BEDROCK_MANIFEST: AdapterManifest = {
 };
 
 const BEDROCK_DEFAULT_MODEL = "anthropic.claude-3-5-sonnet-20241022-v2:0";
+const BEDROCK_DEFAULT_TIMEOUT_MS = 60_000;
 
 const BEDROCK_MODEL_CATALOG_BY_REGION: Readonly<Record<string, readonly string[]>> = Object.freeze({
   "us-east-1": Object.freeze([
@@ -110,10 +113,21 @@ const ALLOWED_DISCOVERY_STATUSES: readonly BedrockDiscoveryStatus[] = Object.fre
   "unavailable",
 ]);
 
-type BedrockSession = Readonly<{
-  model: string;
-  messages: Array<Readonly<{ role: "user" | "assistant"; content: string }>>;
+type BedrockAuthConfig = Readonly<{
+  methodId: BedrockConnectionMethodId;
+  apiKey?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  sessionToken?: string;
 }>;
+
+type BedrockSession = {
+  model: string;
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+  auth: BedrockAuthConfig;
+  region: string;
+  timeoutMs: number;
+};
 
 type StoredCredentialRef = Readonly<{
   providerId: string;
@@ -121,7 +135,13 @@ type StoredCredentialRef = Readonly<{
   endpointProfile: Readonly<Record<string, unknown>>;
   credentialDigest: string;
   maxAssumeRoleHopDepth: 1;
+  auth: BedrockAuthConfig;
 }>;
+
+type ConverseMessage = { role: "user" | "assistant"; content: Array<{ text: string }> };
+type ConverseResponse = { output?: { message?: { content?: Array<{ text?: string }> } } };
+type ConverseStreamEvent = { contentBlockDelta?: { delta?: { text?: string } } };
+type BedrockErrorBody = { message?: string; Message?: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -201,7 +221,7 @@ function resolveEndpointProfile(
   input: Readonly<Record<string, unknown>>,
 ): Readonly<Record<string, unknown>> {
   const region = requireInputString(input, "region");
-  const modelAccessPolicy = requireInputString(input, "modelAccessPolicy");
+  const modelAccessPolicy = normalizeNonEmptyString(input["modelAccessPolicy"]) ?? "allow-all";
   const roleArn =
     methodId === BEDROCK_CONNECTION_METHOD_IDS.ASSUME_ROLE
       ? requireInputString(input, "roleArn")
@@ -272,9 +292,184 @@ function normalizeDiscoveryStatus(index: number, modelCount: number): BedrockDis
   return "healthy";
 }
 
+function resolveBedrockAuth(
+  methodId: BedrockConnectionMethodId,
+  input: Readonly<Record<string, unknown>>,
+): BedrockAuthConfig {
+  if (methodId === BEDROCK_CONNECTION_METHOD_IDS.API_KEY) {
+    const apiKey = normalizeNonEmptyString(input["apiKey"]);
+    if (apiKey === undefined) {
+      throw new AuthError('Connection method "bedrock.api_key" requires input.apiKey.');
+    }
+    return { methodId, apiKey };
+  }
+  if (methodId === BEDROCK_CONNECTION_METHOD_IDS.AWS_ACCESS_KEY) {
+    const accessKeyId = normalizeNonEmptyString(input["accessKeyId"]);
+    const secretAccessKey = normalizeNonEmptyString(input["secretAccessKey"]);
+    if (accessKeyId === undefined || secretAccessKey === undefined) {
+      throw new AuthError('Connection method "bedrock.aws_access_key" requires accessKeyId and secretAccessKey.');
+    }
+    const sessionToken = normalizeNonEmptyString(input["sessionToken"]);
+    return { methodId, accessKeyId, secretAccessKey, sessionToken };
+  }
+  // Assume Role: store method ID for connection tracking; live calls will fail with a clear error at session creation
+  return { methodId };
+}
+
+function toConverseMessages(
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+): ConverseMessage[] {
+  return messages.map((m) => ({
+    role: m.role,
+    content: [{ text: m.content }],
+  }));
+}
+
+// AWS Signature V4 helpers
+function hmacSha256(key: Buffer | string, data: string): Buffer {
+  return createHmac("sha256", key).update(data, "utf8").digest();
+}
+
+function sha256Hex(data: string): string {
+  return createHash("sha256").update(data, "utf8").digest("hex");
+}
+
+function getSignatureKey(secretKey: string, dateStamp: string, region: string, service: string): Buffer {
+  const kDate = hmacSha256(`AWS4${secretKey}`, dateStamp);
+  const kRegion = hmacSha256(kDate, region);
+  const kService = hmacSha256(kRegion, service);
+  return hmacSha256(kService, "aws4_request");
+}
+
+function signAwsRequest(options: {
+  method: string;
+  url: string;
+  body: string;
+  region: string;
+  service: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  sessionToken?: string;
+}): Record<string, string> {
+  const parsedUrl = new URL(options.url);
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const dateStamp = amzDate.slice(0, 8);
+  const host = parsedUrl.host;
+  const canonicalUri = parsedUrl.pathname;
+  const canonicalQueryString = parsedUrl.search ? parsedUrl.search.slice(1) : "";
+  const payloadHash = sha256Hex(options.body);
+
+  const signedHeadersList = ["content-type", "host", "x-amz-date"];
+  if (options.sessionToken) signedHeadersList.push("x-amz-security-token");
+  signedHeadersList.sort();
+  const signedHeaders = signedHeadersList.join(";");
+
+  const headerEntries: Record<string, string> = {
+    "content-type": "application/json",
+    "host": host,
+    "x-amz-date": amzDate,
+  };
+  if (options.sessionToken) {
+    headerEntries["x-amz-security-token"] = options.sessionToken;
+  }
+
+  const canonicalHeaders = signedHeadersList
+    .map((h) => `${h}:${headerEntries[h]}\n`)
+    .join("");
+
+  const canonicalRequest = [
+    options.method,
+    canonicalUri,
+    canonicalQueryString,
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join("\n");
+
+  const credentialScope = `${dateStamp}/${options.region}/${options.service}/aws4_request`;
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    sha256Hex(canonicalRequest),
+  ].join("\n");
+
+  const signingKey = getSignatureKey(options.secretAccessKey, dateStamp, options.region, options.service);
+  const signature = createHmac("sha256", signingKey).update(stringToSign, "utf8").digest("hex");
+
+  const authHeader = `AWS4-HMAC-SHA256 Credential=${options.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    "x-amz-date": amzDate,
+    "x-amz-content-sha256": payloadHash,
+    "Authorization": authHeader,
+  };
+  if (options.sessionToken) {
+    headers["x-amz-security-token"] = options.sessionToken;
+  }
+  return headers;
+}
+
+function buildBedrockHeaders(
+  auth: BedrockAuthConfig,
+  url: string,
+  body: string,
+  region: string,
+): Record<string, string> {
+  if (auth.methodId === BEDROCK_CONNECTION_METHOD_IDS.API_KEY && auth.apiKey) {
+    return {
+      "content-type": "application/json",
+      "Authorization": `Bearer ${auth.apiKey}`,
+    };
+  }
+  if (auth.methodId === BEDROCK_CONNECTION_METHOD_IDS.AWS_ACCESS_KEY && auth.accessKeyId && auth.secretAccessKey) {
+    return signAwsRequest({
+      method: "POST",
+      url,
+      body,
+      region,
+      service: "bedrock",
+      accessKeyId: auth.accessKeyId,
+      secretAccessKey: auth.secretAccessKey,
+      sessionToken: auth.sessionToken,
+    });
+  }
+  return { "content-type": "application/json" };
+}
+
+function mapNetworkError(error: unknown): never {
+  const err = error instanceof Error ? error : new Error(String(error));
+  const code = (err as NodeJS.ErrnoException).code;
+  if (code === "ECONNREFUSED" || code === "ENOTFOUND" || code === "ECONNRESET") {
+    throw new ProviderUnavailableError(`Bedrock API is not reachable: ${err.message}`, { cause: err });
+  }
+  if (code === "ETIMEDOUT") {
+    throw new TimeoutError(`Bedrock API request timed out: ${err.message}`, { cause: err });
+  }
+  throw new TransientNetworkError(`Bedrock API network error: ${err.message}`, { cause: err });
+}
+
+async function mapHttpError(response: Response): Promise<never> {
+  let errorBody: BedrockErrorBody = {};
+  try { errorBody = (await response.json()) as BedrockErrorBody; } catch { /* ignore */ }
+  const message = errorBody.message ?? errorBody.Message ?? response.statusText;
+  if (response.status === 401 || response.status === 403) {
+    throw new AuthError(`Bedrock API authentication failed: ${message}`);
+  }
+  if (response.status === 429) {
+    throw new TransientNetworkError(`Bedrock API rate limit exceeded: ${message}`);
+  }
+  if (response.status >= 500) {
+    throw new ProviderUnavailableError(`Bedrock API server error ${response.status}: ${message}`);
+  }
+  throw new TransientNetworkError(`Bedrock API request failed with HTTP ${response.status}: ${message}`);
+}
+
 export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
   readonly manifest: AdapterManifest = AMAZON_BEDROCK_MANIFEST;
-  readonly requiredEndpointProfileFields = ["region", "modelAccessPolicy"] as const;
+  readonly requiredEndpointProfileFields = ["region"] as const;
   lastDiscoveryRegions: readonly BedrockDiscoveryRegionStatus[] = Object.freeze([]);
 
   readonly #sessions = new Map<string, BedrockSession>();
@@ -309,8 +504,8 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
       return {
         providerId,
         methodId,
-        requiredFields: ["region", "modelAccessPolicy", "apiKey"],
-        optionalFields: [],
+        requiredFields: ["region", "apiKey"],
+        optionalFields: ["modelAccessPolicy"],
       };
     }
 
@@ -318,16 +513,16 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
       return {
         providerId,
         methodId,
-        requiredFields: ["region", "modelAccessPolicy", "accessKeyId", "secretAccessKey"],
-        optionalFields: ["sessionToken"],
+        requiredFields: ["region", "accessKeyId", "secretAccessKey"],
+        optionalFields: ["modelAccessPolicy", "sessionToken"],
       };
     }
 
     return {
       providerId,
       methodId,
-      requiredFields: ["region", "modelAccessPolicy", "roleArn"],
-      optionalFields: ["externalId"],
+      requiredFields: ["region", "roleArn"],
+      optionalFields: ["modelAccessPolicy", "externalId"],
       metadata: {
         maxAssumeRoleHopDepth: 1,
         assumeRoleMode: "single-hop",
@@ -345,6 +540,7 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
     const payload = requireInputRecord(input.input);
     const endpointProfile = resolveEndpointProfile(methodId, payload);
     const credentialDigest = resolveCredentialDigest(methodId, payload);
+    const auth = resolveBedrockAuth(methodId, payload);
     const credentialRef = `credref.${providerId}.${methodId}.${++this.#credentialCounter}`;
 
     this.#credentialRefs.set(credentialRef, {
@@ -353,6 +549,7 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
       endpointProfile,
       credentialDigest,
       maxAssumeRoleHopDepth: 1,
+      auth,
     });
 
     return {
@@ -429,6 +626,10 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
   }
 
   async discoverModels(ctx: CloudConnectionContext): Promise<readonly ModelDescriptor[]> {
+    const contextRecord = ctx as Readonly<Record<string, unknown>>;
+    const statelessInput = isRecord(contextRecord["connectionInput"])
+      ? contextRecord["connectionInput"]
+      : undefined;
     const validation = await this.validateCredentialRef({
       providerId: ctx.providerId,
       methodId: ctx.methodId,
@@ -436,7 +637,11 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
       endpointProfile: ctx.endpointProfile,
       correlationId: ctx.correlationId,
     });
-    if (!validation.ok) {
+    const canUseStatelessInput =
+      statelessInput !== undefined &&
+      (validation.reason === "credential_ref_not_found" ||
+        validation.reason === "credential_ref_missing");
+    if (!validation.ok && !canUseStatelessInput) {
       throw new AuthError(
         `Cannot discover models for invalid credential reference: ${validation.reason ?? "invalid_ref"}.`,
       );
@@ -518,9 +723,44 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
     const requestedModel = normalizeNonEmptyString(options?.["model"]);
     const model = requestedModel ?? BEDROCK_DEFAULT_MODEL;
     const sessionId = `bedrock-session-${++this.#sessionCounter}`;
+
+    const methodId = resolveMethodId(options?.["methodId"]);
+    const connectionInput = isRecord(options?.["connectionInput"])
+      ? options["connectionInput"]
+      : undefined;
+    const credentialRefKey = normalizeNonEmptyString(options?.["credentialRef"]);
+
+    let auth: BedrockAuthConfig;
+    let region = "us-east-1";
+
+    if (connectionInput !== undefined && methodId !== undefined) {
+      auth = resolveBedrockAuth(methodId, connectionInput);
+      region = normalizeNonEmptyString(connectionInput["region"]) ?? "us-east-1";
+    } else if (credentialRefKey !== undefined) {
+      const storedRef = this.#credentialRefs.get(credentialRefKey);
+      if (storedRef === undefined) {
+        throw new AuthError("Cannot create session: credential reference not found.");
+      }
+      auth = storedRef.auth;
+      region = (normalizeNonEmptyString(storedRef.endpointProfile["region"]) as string) ?? "us-east-1";
+    } else {
+      throw new AuthError(
+        "Cannot create session: no credentials provided (supply connectionInput or credentialRef).",
+      );
+    }
+
+    if (auth.methodId === BEDROCK_CONNECTION_METHOD_IDS.ASSUME_ROLE) {
+      throw new AuthError(
+        "Amazon Bedrock Assume Role is not yet supported for live chat. Use API Key or AWS Access Key.",
+      );
+    }
+
     this.#sessions.set(sessionId, {
       model,
       messages: [],
+      auth,
+      region,
+      timeoutMs: BEDROCK_DEFAULT_TIMEOUT_MS,
     });
     return sessionId;
   }
@@ -532,9 +772,32 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
     }
 
     session.messages.push({ role: "user", content: message });
-    const response = `[bedrock:${session.model}] ${message}`;
-    session.messages.push({ role: "assistant", content: response });
-    return response;
+
+    const url = `https://bedrock-runtime.${session.region}.amazonaws.com/model/${encodeURIComponent(session.model)}/converse`;
+    const body = JSON.stringify({
+      messages: toConverseMessages(session.messages),
+    });
+    const headers = buildBedrockHeaders(session.auth, url, body, session.region);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers,
+        body,
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+
+    const data = (await response.json()) as ConverseResponse;
+    const text = data.output?.message?.content?.map((c) => c.text ?? "").join("") ?? "";
+    session.messages.push({ role: "assistant", content: text });
+    return text;
   }
 
   async streamMessage(
@@ -542,11 +805,61 @@ export class AmazonBedrockAdapter implements CloudAdapterContractV2 {
     message: string,
     onChunk: (chunk: string) => void,
   ): Promise<void> {
-    const response = await this.sendMessage(sessionId, message);
-    for (const token of response.split(" ")) {
-      const chunk = token.length > 0 ? `${token} ` : "";
-      if (chunk.length > 0) onChunk(chunk);
+    const session = this.#sessions.get(sessionId);
+    if (session === undefined) {
+      throw new TransientNetworkError(`Session "${sessionId}" not found.`);
     }
+    session.messages.push({ role: "user", content: message });
+
+    const url = `https://bedrock-runtime.${session.region}.amazonaws.com/model/${encodeURIComponent(session.model)}/converse-stream`;
+    const body = JSON.stringify({
+      messages: toConverseMessages(session.messages),
+    });
+    const headers = buildBedrockHeaders(session.auth, url, body, session.region);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers,
+        body,
+        signal: AbortSignal.timeout(session.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      mapNetworkError(error);
+    }
+    if (!response.ok) {
+      await mapHttpError(response);
+    }
+    if (response.body === null) {
+      throw new ProviderUnavailableError("Bedrock API response body is null.");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = "";
+
+    try {
+      let streaming = true;
+      while (streaming) {
+        const { done, value } = await reader.read();
+        if (done) { streaming = false; break; }
+        const text = decoder.decode(value, { stream: true });
+        for (const line of text.split("\n")) {
+          const trimmed = line.trim();
+          if (trimmed.length === 0) continue;
+          // Bedrock streams events as JSON lines or event-stream format
+          try {
+            const event = JSON.parse(trimmed) as ConverseStreamEvent;
+            const delta = event.contentBlockDelta?.delta?.text;
+            if (delta) { onChunk(delta); fullContent += delta; }
+          } catch { /* skip non-JSON lines */ }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    session.messages.push({ role: "assistant", content: fullContent });
   }
 
   async healthCheck(): Promise<boolean> {

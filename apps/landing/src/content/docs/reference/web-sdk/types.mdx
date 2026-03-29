@@ -87,7 +87,12 @@ type ChatOperationOptions = Readonly<{
 
 ```tsx
 type ChatStreamEvent =
-  | Readonly<{ type: "chunk"; delta: string; index: number; correlationId: string }>
+  | Readonly<{
+      type: "chunk";
+      delta: string;
+      index: number;
+      correlationId: string;
+    }>
   | Readonly<{ type: "done"; correlationId: string }>;
 ```
 
@@ -104,11 +109,11 @@ type ChatSendResult = Readonly<{
 
 ```tsx
 type ContextWindowInfo = Readonly<{
-  maxTokens: number;           // Context window size for the model
-  usedTokens: number;          // Estimated tokens in the context window
+  maxTokens: number; // Context window size for the model
+  usedTokens: number; // Estimated tokens in the context window
   reservedOutputTokens: number; // Tokens reserved for model response
-  remainingTokens: number;     // Tokens still available for input
-  usageRatio: number;          // 0–1 fraction of input budget used
+  remainingTokens: number; // Tokens still available for input
+  usageRatio: number; // 0–1 fraction of input budget used
 }>;
 ```
 
@@ -205,8 +210,12 @@ import type { ArlopassTransport } from "@arlopass/web-sdk";
 
 ```tsx
 interface ArlopassTransport {
-  request<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportResponse<TRes>>;
-  stream<TReq, TRes>(request: TransportRequest<TReq>): Promise<TransportStream<TRes>>;
+  request<TReq, TRes>(
+    request: TransportRequest<TReq>,
+  ): Promise<TransportResponse<TRes>>;
+  stream<TReq, TRes>(
+    request: TransportRequest<TReq>,
+  ): Promise<TransportStream<TRes>>;
   disconnect?(sessionId: string): Promise<void>;
 }
 ```
@@ -232,7 +241,9 @@ type TransportResponse<TPayload = unknown> = Readonly<{
 #### TransportStream
 
 ```tsx
-type TransportStream<TPayload = unknown> = AsyncIterable<TransportResponse<TPayload>>;
+type TransportStream<TPayload = unknown> = AsyncIterable<
+  TransportResponse<TPayload>
+>;
 ```
 
 ---
@@ -276,7 +287,11 @@ type ChatStreamPayload = ChatSendPayload;
 #### ChatStreamChunkPayload / ChatStreamDonePayload
 
 ```tsx
-type ChatStreamChunkPayload = Readonly<{ type: "chunk"; delta: string; index: number }>;
+type ChatStreamChunkPayload = Readonly<{
+  type: "chunk";
+  delta: string;
+  index: number;
+}>;
 ```
 
 ```tsx
@@ -307,11 +322,16 @@ import type {
 ```tsx
 type ToolParameterSchema = Readonly<{
   type: "object";
-  properties?: Readonly<Record<string, Readonly<{
-    type: string;
-    description?: string;
-    enum?: readonly string[];
-  }>>>;
+  properties?: Readonly<
+    Record<
+      string,
+      Readonly<{
+        type: string;
+        description?: string;
+        enum?: readonly string[];
+      }>
+    >
+  >;
   required?: readonly string[];
 }>;
 ```
@@ -374,13 +394,19 @@ type ToolResultEvent = Readonly<{
 #### ToolPrimingStartEvent
 
 ```tsx
-type ToolPrimingStartEvent = Readonly<{ type: "tool_priming_start"; message: string }>;
+type ToolPrimingStartEvent = Readonly<{
+  type: "tool_priming_start";
+  message: string;
+}>;
 ```
 
 #### ToolPrimingMatchEvent
 
 ```tsx
-type ToolPrimingMatchEvent = Readonly<{ type: "tool_priming_match"; tools: readonly string[] }>;
+type ToolPrimingMatchEvent = Readonly<{
+  type: "tool_priming_match";
+  tools: readonly string[];
+}>;
 ```
 
 #### ToolPrimingEndEvent

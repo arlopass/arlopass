@@ -19,10 +19,10 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@arlopass/audit": "file:../../packages/audit",
-    "@arlopass/policy": "file:../../packages/policy",
-    "@arlopass/protocol": "file:../../packages/protocol",
-    "@arlopass/web-sdk": "file:../../packages/web-sdk",
+    "@arlopass/audit": "workspace:*",
+    "@arlopass/policy": "workspace:*",
+    "@arlopass/protocol": "workspace:*",
+    "@arlopass/web-sdk": "workspace:*",
     "@lobehub/icons-static-svg": "^1.82.0",
     "@mantine/core": "^8.3.18",
     "@mantine/hooks": "^8.3.18",

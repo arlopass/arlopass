@@ -8,7 +8,7 @@ keywords: ["streaming", "text", "component", "primitive"]
 schema: "TechArticle"
 ---
 
-import ApiTable from '../../../components/docs/ApiTable.astro';
+import ApiTable from "../../../components/docs/ApiTable.astro";
 
 Streaming text renderer with typing cursor.
 
@@ -20,11 +20,28 @@ import { StreamingText } from "@arlopass/react-ui";
 
 ### Props
 
-<ApiTable props={[
-  { name: "content", type: "string", required: true, description: "The text content to display." },
-  { name: "isStreaming", type: "boolean", required: true, description: "Whether the text is currently being streamed." },
-  { name: "cursor", type: "string", default: '"▌"', description: "Cursor character shown while streaming." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "content",
+      type: "string",
+      required: true,
+      description: "The text content to display.",
+    },
+    {
+      name: "isStreaming",
+      type: "boolean",
+      required: true,
+      description: "Whether the text is currently being streamed.",
+    },
+    {
+      name: "cursor",
+      type: "string",
+      default: '"▌"',
+      description: "Cursor character shown while streaming.",
+    },
+  ]}
+/>
 
 ---
 
@@ -35,11 +52,7 @@ import { StreamingText } from "@arlopass/react-ui";
 
 function StreamingDemo({ content, isStreaming }) {
   return (
-    <StreamingText
-      content={content}
-      isStreaming={isStreaming}
-      cursor="▌"
-    />
+    <StreamingText content={content} isStreaming={isStreaming} cursor="▌" />
   );
 }
 ```
@@ -66,16 +79,23 @@ import { Chat, StreamingText } from "@arlopass/react-ui";
   </Chat.Messages>
   <Chat.Input />
   <Chat.SendButton>Send</Chat.SendButton>
-</Chat.Root>
+</Chat.Root>;
 ```
 
 ---
 
 ### Data attributes
 
-<ApiTable props={[
-  { name: "data-state", type: '"streaming" | "idle"', default: '"idle"', description: "Reflects whether text is currently being streamed." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "data-state",
+      type: '"streaming" | "idle"',
+      default: '"idle"',
+      description: "Reflects whether text is currently being streamed.",
+    },
+  ]}
+/>
 
 ### Styling
 
@@ -92,8 +112,13 @@ The component renders a `<span>` element. The cursor character is appended as a 
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 [data-state="idle"] {

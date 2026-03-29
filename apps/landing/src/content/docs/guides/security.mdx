@@ -8,7 +8,7 @@ keywords: ["security", "vault", "encryption", "zero-trust"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 You want to understand how Arlopass protects credentials and ensures safe AI access.
 
@@ -312,9 +312,11 @@ Every app that connects to the extension is identified by an `appId` — a rever
 // http://localhost:5173    → "localhost"           (dev origin — no prefix required)
 
 // React SDK — auto-derived, no appId needed:
-<ArlopassProvider appSuffix="chat">   {/* → "com.myapp.chat" on myapp.com */}
+<ArlopassProvider appSuffix="chat">
+  {" "}
+  {/* → "com.myapp.chat" on myapp.com */}
   <App />
-</ArlopassProvider>
+</ArlopassProvider>;
 
 // Web SDK — auto-derived:
 const client = new ArlopassClient({ transport: window.arlopass });
@@ -360,7 +362,7 @@ You can pass optional metadata — name, description, and icon — that the exte
   appIcon="https://myapp.com/icon.png"
 >
   <App />
-</ArlopassProvider>
+</ArlopassProvider>;
 
 // Web SDK:
 await client.connect({
@@ -406,9 +408,18 @@ function App() {
 ```
 
 <Callout type="info" title="Summary">
-Arlopass's security is layered: injected transport (no arbitrary connections), origin enforcement (no cross-origin access), app identity validation (reverse-domain appId matching), credential isolation (SDK never sees keys), vault-based storage (AES-256-GCM encrypted at rest on the native bridge), zero-knowledge design (web apps and the extension popup never hold secrets), envelope security (replay/expiry protection), and safe rendering defaults (no XSS vectors). Your app inherits all of this by using the SDK hooks.
+  Arlopass's security is layered: injected transport (no arbitrary connections),
+  origin enforcement (no cross-origin access), app identity validation
+  (reverse-domain appId matching), credential isolation (SDK never sees keys),
+  vault-based storage (AES-256-GCM encrypted at rest on the native bridge),
+  zero-knowledge design (web apps and the extension popup never hold secrets),
+  envelope security (replay/expiry protection), and safe rendering defaults (no
+  XSS vectors). Your app inherits all of this by using the SDK hooks.
 </Callout>
 
 <Callout type="tip" title="Related">
-See [Transport Model](/docs/concepts/transport-model) for how the extension-to-SDK bridge works, or [Error Handling](/docs/guides/error-handling) for handling security-related errors like auth failures.
+  See [Transport Model](/docs/concepts/transport-model) for how the
+  extension-to-SDK bridge works, or [Error
+  Handling](/docs/guides/error-handling) for handling security-related errors
+  like auth failures.
 </Callout>

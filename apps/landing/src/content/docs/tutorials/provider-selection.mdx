@@ -8,8 +8,8 @@ keywords: ["providers", "models", "selection", "dropdown", "tutorial"]
 schema: "HowTo"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
-import StepList from '../../../components/docs/StepList.astro';
+import Callout from "../../../components/docs/Callout.astro";
+import StepList from "../../../components/docs/StepList.astro";
 
 Let users choose their AI provider and model.
 
@@ -18,21 +18,45 @@ Let users choose their AI provider and model.
 A pair of dropdown selectors that let the user pick from available AI providers and models. The chat component stays blocked until a provider is selected.
 
 <Callout type="info" title="Providers come from the vault">
-  When you call `listProviders()`, the extension reads from the encrypted vault on the bridge. Adding and removing providers happens through the extension popup, which writes to the vault. The SDK never has direct access to credentials — it only sees provider names and available models.
+  When you call `listProviders()`, the extension reads from the encrypted vault
+  on the bridge. Adding and removing providers happens through the extension
+  popup, which writes to the vault. The SDK never has direct access to
+  credentials — it only sees provider names and available models.
 </Callout>
 
 <Callout type="info" title="Prerequisites">
-  This tutorial builds on the [First Chat App](/docs/tutorials/first-chat-app) tutorial. You should be familiar with ArlopassProvider and ChatReadyGate.
+  This tutorial builds on the [First Chat App](/docs/tutorials/first-chat-app)
+  tutorial. You should be familiar with ArlopassProvider and ChatReadyGate.
 </Callout>
 
-<StepList steps={[
-  { title: "Use useProviders", body: "The hook gives you the list of providers, the selected provider/model, and a selectProvider function." },
-  { title: "Wait for connection", body: "Use useConnection to check whether the extension is connected before rendering." },
-  { title: "Render provider dropdown", body: "Map the providers array to select options." },
-  { title: "Render model dropdown", body: "List the selected provider's models." },
-  { title: "Handle selection", body: "Call selectProvider with providerId and modelId." },
-  { title: "Show ChatReadyGate", body: "Block the chat until a provider is active." },
-]} />
+<StepList
+  steps={[
+    {
+      title: "Use useProviders",
+      body: "The hook gives you the list of providers, the selected provider/model, and a selectProvider function.",
+    },
+    {
+      title: "Wait for connection",
+      body: "Use useConnection to check whether the extension is connected before rendering.",
+    },
+    {
+      title: "Render provider dropdown",
+      body: "Map the providers array to select options.",
+    },
+    {
+      title: "Render model dropdown",
+      body: "List the selected provider's models.",
+    },
+    {
+      title: "Handle selection",
+      body: "Call selectProvider with providerId and modelId.",
+    },
+    {
+      title: "Show ChatReadyGate",
+      body: "Block the chat until a provider is active.",
+    },
+  ]}
+/>
 
 ### Step 1 — Use useProviders
 
@@ -43,11 +67,11 @@ import { useProviders } from "@arlopass/react";
 
 function ProviderPicker() {
   const {
-    providers,         // list of available providers
-    selectedProvider,  // { providerId, modelId } or null
+    providers, // list of available providers
+    selectedProvider, // { providerId, modelId } or null
     isLoading,
     error,
-    selectProvider,    // call to switch provider + model
+    selectProvider, // call to switch provider + model
   } = useProviders();
 
   // We'll build the UI in the next steps
@@ -244,7 +268,9 @@ function ProviderPicker() {
       >
         <option value="">Select provider...</option>
         {providers.map((p) => (
-          <option key={p.id} value={p.id}>{p.name}</option>
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
         ))}
       </select>
 
@@ -262,7 +288,9 @@ function ProviderPicker() {
       >
         <option value="">Select model...</option>
         {models.map((m) => (
-          <option key={m.id} value={m.id}>{m.name}</option>
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
         ))}
       </select>
     </div>
@@ -270,8 +298,7 @@ function ProviderPicker() {
 }
 
 function Chat() {
-  const { messages, stream, streamingContent, isStreaming } =
-    useConversation();
+  const { messages, stream, streamingContent, isStreaming } = useConversation();
   const [input, setInput] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -363,5 +390,7 @@ await client.selectProvider({
 ```
 
 <Callout type="tip" title="What's next">
-  Now that users can pick a provider, learn how to [add tool calling](/docs/tutorials/adding-tool-calling) or explore the [guard components guide](/docs/guides/guard-components).
+  Now that users can pick a provider, learn how to [add tool
+  calling](/docs/tutorials/adding-tool-calling) or explore the [guard components
+  guide](/docs/guides/guard-components).
 </Callout>

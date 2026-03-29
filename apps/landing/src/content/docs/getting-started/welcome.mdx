@@ -4,11 +4,12 @@ description: "Arlopass is an open-source AI wallet that lets web apps use a user
 category: "Getting Started"
 order: 1
 lastUpdated: 2026-03-29
-keywords: ["arlopass", "ai wallet", "browser extension", "sdk", "getting started"]
+keywords:
+  ["arlopass", "ai wallet", "browser extension", "sdk", "getting started"]
 schema: "TechArticle"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 Arlopass lets users bring their own AI provider to any web app. Instead of locking into a single model or forcing users to trust you with API keys, your app connects to whatever provider the user already has — through a browser extension that acts as a universal AI wallet.
 
@@ -22,10 +23,10 @@ The architecture has three layers:
 
 ## Key features
 
-| Feature | Description |
-|---------|-------------|
-| **Provider Agnostic** | Connect to OpenAI, Anthropic, Google, Ollama, or any provider your users choose. One API, every model. |
-| **Secure by Default** | API keys never touch your servers. The browser extension manages credentials, so you ship zero secrets. |
+| Feature                | Description                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Provider Agnostic**  | Connect to OpenAI, Anthropic, Google, Ollama, or any provider your users choose. One API, every model.     |
+| **Secure by Default**  | API keys never touch your servers. The browser extension manages credentials, so you ship zero secrets.    |
 | **Developer Friendly** | Full TypeScript support, React hooks, streaming out of the box, and guard components for common UI states. |
 
 ## Choose your path
@@ -35,5 +36,6 @@ The architecture has three layers:
 **React SDK** — Hooks, providers, and guard components. The fastest way to add AI to a React app. [Get started with the React SDK →](/docs/getting-started/quickstart-react)
 
 <Callout type="tip" title="New to Arlopass?">
-  Start with the Installation guide to set up the extension and SDK, then follow the quickstart for your framework.
+  Start with the Installation guide to set up the extension and SDK, then follow
+  the quickstart for your framework.
 </Callout>

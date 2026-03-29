@@ -53,8 +53,8 @@ function Ensure-DevTooling {
   Invoke-InRepo {
     $typescriptPackage = Join-Path $repoRoot "node_modules\typescript\package.json"
     if (-not (Test-Path -LiteralPath $typescriptPackage)) {
-      Write-Host "TypeScript dependency missing. Running npm install..." -ForegroundColor Yellow
-      Invoke-Native -FilePath "npm" -Arguments @("install") -FailureMessage "npm install failed while installing dependencies"
+      Write-Host "TypeScript dependency missing. Running pnpm install..." -ForegroundColor Yellow
+      Invoke-Native -FilePath "pnpm" -Arguments @("install") -FailureMessage "pnpm install failed while installing dependencies"
     }
   }
 }
@@ -163,8 +163,8 @@ function Stop-ProcessTree {
 function Start-DevWatchers {
   $escapedRepoRoot = $repoRoot.Path.Replace("'", "''")
 
-  $bridgeWatchCommand = "Set-Location '$escapedRepoRoot'; npm run build -w @arlopass/bridge -- --watch"
-  $extensionWatchCommand = "Set-Location '$escapedRepoRoot'; npm run build -w @arlopass/extension -- --watch"
+  $bridgeWatchCommand = "Set-Location '$escapedRepoRoot'; pnpm --filter @arlopass/bridge run build --watch"
+  $extensionWatchCommand = "Set-Location '$escapedRepoRoot'; pnpm --filter @arlopass/extension run build --watch"
 
   $bridgeWatcher = Start-WatcherWindow -Name "bridge" -CommandText $bridgeWatchCommand
   $extensionWatcher = Start-WatcherWindow -Name "extension" -CommandText $extensionWatchCommand
@@ -204,26 +204,26 @@ function Invoke-Setup {
     $hasNodeModules = Test-Path -LiteralPath $nodeModulesPath
 
     if ($PreferIncrementalInstall.IsPresent -and $hasNodeModules) {
-      Write-Host "Detected existing node_modules. Running npm install for incremental dependency sync..." -ForegroundColor Cyan
-      Invoke-Native -FilePath "npm" -Arguments @("install") -FailureMessage "npm install failed while syncing dependencies"
+      Write-Host "Detected existing node_modules. Running pnpm install for incremental dependency sync..." -ForegroundColor Cyan
+      Invoke-Native -FilePath "pnpm" -Arguments @("install") -FailureMessage "pnpm install failed while syncing dependencies"
       return
     }
 
     try {
-      Invoke-Native -FilePath "npm" -Arguments @("ci") -FailureMessage "npm ci failed"
+      Invoke-Native -FilePath "pnpm" -Arguments @("install", "--frozen-lockfile") -FailureMessage "pnpm install --frozen-lockfile failed"
     }
     catch {
-      Write-Host "npm ci failed (commonly due Windows file locks). Retrying with npm install..." -ForegroundColor Yellow
-      Invoke-Native -FilePath "npm" -Arguments @("install") -FailureMessage "npm install failed after npm ci failure"
+      Write-Host "pnpm install --frozen-lockfile failed (commonly due Windows file locks). Retrying with pnpm install..." -ForegroundColor Yellow
+      Invoke-Native -FilePath "pnpm" -Arguments @("install") -FailureMessage "pnpm install failed after frozen-lockfile failure"
     }
   }
 }
 
 function Invoke-Validate {
   Invoke-InRepo {
-    Invoke-Native -FilePath "npm" -Arguments @("run", "lint") -FailureMessage "npm run lint failed"
-    Invoke-Native -FilePath "npm" -Arguments @("run", "typecheck") -FailureMessage "npm run typecheck failed"
-    Invoke-Native -FilePath "npm" -Arguments @("run", "test") -FailureMessage "npm run test failed"
+    Invoke-Native -FilePath "pnpm" -Arguments @("run", "lint") -FailureMessage "pnpm run lint failed"
+    Invoke-Native -FilePath "pnpm" -Arguments @("run", "typecheck") -FailureMessage "pnpm run typecheck failed"
+    Invoke-Native -FilePath "pnpm" -Arguments @("run", "test") -FailureMessage "pnpm run test failed"
   }
 }
 
@@ -232,8 +232,8 @@ function Invoke-Bridge {
 
   Invoke-InRepo {
     Invoke-Native `
-      -FilePath "npm" `
-      -Arguments @("run", "typecheck", "-w", "@arlopass/bridge") `
+      -FilePath "pnpm" `
+      -Arguments @("--filter", "@arlopass/bridge", "run", "typecheck") `
       -FailureMessage "Bridge typecheck failed"
     Write-Host "Bridge starting. Load extension from: $repoRoot\apps\extension" -ForegroundColor Cyan
     Invoke-Native `

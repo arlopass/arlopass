@@ -118,9 +118,6 @@ export function validateBedrockConnectorInput(
   if (normalizeText(config["region"], DEFAULT_REGION).length === 0) {
     return { ok: false, message: "Region is required." };
   }
-  if (normalizeText(config["modelAccessPolicy"]).length === 0) {
-    return { ok: false, message: "Model access policy is required." };
-  }
 
   if (methodId === "bedrock.assume_role") {
     if (normalizeText(config["roleArn"]).length === 0) {
@@ -168,7 +165,7 @@ export function sanitizeBedrockConnectorMetadata(
     nativeHostName,
     connectionHandle,
     region: normalizeText(config["region"], DEFAULT_REGION),
-    modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
+    modelAccessPolicy: normalizeText(config["modelAccessPolicy"]) || "allow-all",
   };
   const roleArn = normalizeText(config["roleArn"]);
   if (roleArn.length > 0) {
@@ -207,19 +204,19 @@ async function completeViaBridge(
     methodId === "bedrock.api_key"
       ? {
         region: normalizeText(config["region"], DEFAULT_REGION),
-        modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
+        modelAccessPolicy: normalizeText(config["modelAccessPolicy"]) || "allow-all",
         apiKey: normalizeText(config["apiKey"]),
       }
       : methodId === "bedrock.assume_role"
         ? {
           region: normalizeText(config["region"], DEFAULT_REGION),
-          modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
+          modelAccessPolicy: normalizeText(config["modelAccessPolicy"]) || "allow-all",
           roleArn: normalizeText(config["roleArn"]),
           externalId: normalizeText(config["externalId"]),
         }
         : {
           region: normalizeText(config["region"], DEFAULT_REGION),
-          modelAccessPolicy: normalizeText(config["modelAccessPolicy"]),
+          modelAccessPolicy: normalizeText(config["modelAccessPolicy"]) || "allow-all",
           roleArn: normalizeText(config["roleArn"]),
           accessKeyId: normalizeText(config["accessKeyId"]),
           secretAccessKey: normalizeText(config["secretAccessKey"]),
@@ -329,7 +326,8 @@ export function createCloudBedrockConnector(
         key: "modelAccessPolicy",
         label: "Model Access Policy",
         type: "text",
-        required: true,
+        required: false,
+        defaultValue: "allow-all",
         maxLength: 200,
       },
       {

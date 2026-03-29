@@ -11,9 +11,9 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@arlopass/react": "file:../../packages/react-sdk",
-    "@arlopass/react-ui": "file:../../packages/react-ui",
-    "@arlopass/web-sdk": "file:../../packages/web-sdk",
+    "@arlopass/react": "workspace:*",
+    "@arlopass/react-ui": "workspace:*",
+    "@arlopass/web-sdk": "workspace:*",
     "@mantine/core": "^8.3.18",
     "@mantine/hooks": "^8.3.18",
     "@mantine/notifications": "^8.3.18",
@@ -26,8 +26,8 @@
     "dompurify": "^3.3.3",
     "geist": "^1.7.0",
     "marked": "^17.0.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "shiki": "^4.0.2",
     "tailwindcss": "^4.2.2"
   },

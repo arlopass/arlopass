@@ -22,7 +22,7 @@ function deriveProviderKeyFromConnectorId(connectorId: string): string {
   if (connectorId.includes("foundry")) return "microsoft";
   if (connectorId.includes("bedrock")) return "bedrock";
   if (connectorId.includes("perplexity")) return "perplexity";
-  if (connectorId.includes("vertex")) return "google";
+  if (connectorId.includes("vertex")) return "vertexai";
   if (connectorId.includes("ollama")) return "ollama";
   if (connectorId.includes("cli")) return "githubcopilot";
   return "openai";

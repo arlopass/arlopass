@@ -8,8 +8,8 @@ keywords: ["streaming", "real-time", "tokens", "tutorial"]
 schema: "HowTo"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
-import StepList from '../../../components/docs/StepList.astro';
+import Callout from "../../../components/docs/Callout.astro";
+import StepList from "../../../components/docs/StepList.astro";
 
 Add real-time streaming to see AI responses as they're generated.
 
@@ -18,16 +18,34 @@ Add real-time streaming to see AI responses as they're generated.
 A chat interface that shows AI responses word-by-word as they arrive, with a streaming indicator and the ability to stop generation mid-stream.
 
 <Callout type="info" title="Prerequisites">
-  This tutorial builds on the [First Chat App](/docs/tutorials/first-chat-app) tutorial. Complete that first if you haven't already.
+  This tutorial builds on the [First Chat App](/docs/tutorials/first-chat-app)
+  tutorial. Complete that first if you haven't already.
 </Callout>
 
-<StepList steps={[
-  { title: "Use stream() instead of send()", body: "stream() delivers tokens in real time, while send() waits for the complete response." },
-  { title: "Show streamingContent", body: "Render the partial text so the user sees the AI typing in real time." },
-  { title: "Track streaming state", body: "Use isStreaming to disable inputs and show loading indicators." },
-  { title: "Add a stop button", body: "Call stop() to abort the current stream." },
-  { title: "Handle the onDelta callback", body: "Subscribe to stream events for custom token processing." },
-]} />
+<StepList
+  steps={[
+    {
+      title: "Use stream() instead of send()",
+      body: "stream() delivers tokens in real time, while send() waits for the complete response.",
+    },
+    {
+      title: "Show streamingContent",
+      body: "Render the partial text so the user sees the AI typing in real time.",
+    },
+    {
+      title: "Track streaming state",
+      body: "Use isStreaming to disable inputs and show loading indicators.",
+    },
+    {
+      title: "Add a stop button",
+      body: "Call stop() to abort the current stream.",
+    },
+    {
+      title: "Handle the onDelta callback",
+      body: "Subscribe to stream events for custom token processing.",
+    },
+  ]}
+/>
 
 ### Step 1 — Use stream() instead of send()
 
@@ -112,11 +130,7 @@ function ChatControls() {
 
   return (
     <div>
-      {isStreaming && (
-        <button onClick={() => stop()}>
-          ⏹ Stop generating
-        </button>
-      )}
+      {isStreaming && <button onClick={() => stop()}>⏹ Stop generating</button>}
     </div>
   );
 }
@@ -167,15 +181,10 @@ import {
 } from "@arlopass/react";
 
 function Chat() {
-  const {
-    messages,
-    streamingContent,
-    isStreaming,
-    stream,
-    stop,
-  } = useConversation({
-    systemPrompt: "You are a helpful assistant.",
-  });
+  const { messages, streamingContent, isStreaming, stream, stop } =
+    useConversation({
+      systemPrompt: "You are a helpful assistant.",
+    });
   const [input, setInput] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -191,8 +200,7 @@ function Chat() {
       <div style={{ minHeight: 300, padding: 16 }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ padding: "8px 0" }}>
-            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-            {msg.content}
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
           </div>
         ))}
         {isStreaming && streamingContent && (
@@ -278,5 +286,6 @@ for await (const event of convo.stream("Explain React hooks")) {
 ```
 
 <Callout type="tip" title="What's next">
-  Build a [provider selection UI](/docs/tutorials/provider-selection) or add [tool calling](/docs/tutorials/adding-tool-calling) to your chat.
+  Build a [provider selection UI](/docs/tutorials/provider-selection) or add
+  [tool calling](/docs/tutorials/adding-tool-calling) to your chat.
 </Callout>

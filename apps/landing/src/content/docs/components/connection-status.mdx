@@ -8,7 +8,7 @@ keywords: ["connection", "status", "component"]
 schema: "TechArticle"
 ---
 
-import ApiTable from '../../../components/docs/ApiTable.astro';
+import ApiTable from "../../../components/docs/ApiTable.astro";
 
 Connection state display.
 
@@ -20,11 +20,27 @@ import { ConnectionStatus } from "@arlopass/react-ui";
 
 ### Props
 
-<ApiTable props={[
-  { name: "state", type: "ClientState", description: 'Connection state override. When omitted, reads from the nearest ArlopassProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".' },
-  { name: "sessionId", type: "string", description: "Session ID override. When omitted, reads from ArlopassProvider." },
-  { name: "children", type: "ReactNode", description: "Custom content. Defaults to rendering the state string." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "state",
+      type: "ClientState",
+      description:
+        'Connection state override. When omitted, reads from the nearest ArlopassProvider via useConnection. One of: "disconnected", "connecting", "connected", "degraded", "reconnecting", "failed".',
+    },
+    {
+      name: "sessionId",
+      type: "string",
+      description:
+        "Session ID override. When omitted, reads from ArlopassProvider.",
+    },
+    {
+      name: "children",
+      type: "ReactNode",
+      description: "Custom content. Defaults to rendering the state string.",
+    },
+  ]}
+/>
 
 ---
 
@@ -65,9 +81,15 @@ function CustomStatus({ state }) {
 
 ### Data attributes
 
-<ApiTable props={[
-  { name: "data-state", type: '"disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed"', description: "Set on the root div. Mirrors the current connection state." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "data-state",
+      type: '"disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed"',
+      description: "Set on the root div. Mirrors the current connection state.",
+    },
+  ]}
+/>
 
 ### Styling
 
@@ -95,7 +117,12 @@ The component renders a plain `<div>` with a `data-state` attribute. Use CSS sel
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 ```

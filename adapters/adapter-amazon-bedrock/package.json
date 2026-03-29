@@ -28,7 +28,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@arlopass/adapter-runtime": "0.1.0",
-    "@arlopass/protocol": "0.1.0"
+    "@arlopass/adapter-runtime": "workspace:*",
+    "@arlopass/protocol": "workspace:*"
   }
 }

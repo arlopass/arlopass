@@ -1,0 +1,779 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Divider from "../components/Divider.astro";
+import { fetchTrustCenterData } from "../data/probo";
+import type { TrustCenterControl, TrustCenterMeasure } from "../data/probo";
+
+const data = await fetchTrustCenterData();
+
+// ── Derived data ──────────────────────────────────────────────────────
+
+// Group controls by framework
+const controlsByFramework = new Map<string, TrustCenterControl[]>();
+if (data) {
+  for (const ctrl of data.controls) {
+    const list = controlsByFramework.get(ctrl.frameworkName) ?? [];
+    list.push(ctrl);
+    controlsByFramework.set(ctrl.frameworkName, list);
+  }
+}
+
+// Group controls by category (cross-framework, deduped by control id)
+const controlsByCategory = new Map<string, TrustCenterControl[]>();
+if (data) {
+  const seen = new Set<string>();
+  for (const ctrl of data.controls) {
+    if (seen.has(ctrl.id)) continue;
+    seen.add(ctrl.id);
+    const list = controlsByCategory.get(ctrl.category) ?? [];
+    list.push(ctrl);
+    controlsByCategory.set(ctrl.category, list);
+  }
+}
+// Sort categories by count desc
+const sortedCategories = Array.from(controlsByCategory.entries()).sort(
+  (a, b) => b[1].length - a[1].length,
+);
+
+// Group measures by category
+const measuresByCategory = new Map<string, TrustCenterMeasure[]>();
+if (data) {
+  for (const m of data.measures) {
+    const list = measuresByCategory.get(m.category) ?? [];
+    list.push(m);
+    measuresByCategory.set(m.category, list);
+  }
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────
+
+// Deduplicated controls for overall stats
+const uniqueControls = new Map<string, TrustCenterControl>();
+if (data) {
+  for (const ctrl of data.controls) {
+    if (!uniqueControls.has(ctrl.id)) uniqueControls.set(ctrl.id, ctrl);
+  }
+}
+const allUniqueControls = Array.from(uniqueControls.values());
+const totalControls = allUniqueControls.length;
+const implementedControls = allUniqueControls.filter(
+  (c) => c.implemented === "IMPLEMENTED",
+).length;
+const controlPassPct =
+  totalControls > 0
+    ? Math.round((implementedControls / totalControls) * 100)
+    : 0;
+
+// Requirements met = measures implemented
+const totalMeasures = data?.measures.length ?? 0;
+const implementedMeasures =
+  data?.measures.filter((m) => m.state === "IMPLEMENTED").length ?? 0;
+
+// Overall compliance = average framework compliance
+const frameworkPcts: number[] = [];
+if (data) {
+  for (const [, ctrls] of controlsByFramework) {
+    const impl = ctrls.filter((c) => c.implemented === "IMPLEMENTED").length;
+    frameworkPcts.push(
+      ctrls.length > 0 ? Math.round((impl / ctrls.length) * 100) : 0,
+    );
+  }
+}
+const overallCompliancePct =
+  frameworkPcts.length > 0
+    ? Math.round(
+        frameworkPcts.reduce((a, b) => a + b, 0) / frameworkPcts.length,
+      )
+    : 0;
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function stateLabel(s: string): string {
+  return s
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
+
+function controlBlockColor(state: string): string {
+  switch (state) {
+    case "IMPLEMENTED":
+      return "bg-success";
+    default:
+      return "bg-[var(--ap-bg-elevated)]";
+  }
+}
+
+function measureBlockColor(state: string): string {
+  switch (state) {
+    case "IMPLEMENTED":
+      return "bg-success";
+    case "IN_PROGRESS":
+      return "bg-brand";
+    case "NOT_STARTED":
+      return "bg-[var(--ap-bg-elevated)]";
+    case "NOT_APPLICABLE":
+      return "bg-[var(--ap-text-tertiary)]";
+    default:
+      return "bg-[var(--ap-bg-elevated)]";
+  }
+}
+
+function docTypeLabel(t: string): string {
+  return t.charAt(0) + t.slice(1).toLowerCase();
+}
+
+// Donut chart
+const donutSize = 130;
+const donutStroke = 13;
+const donutRadius = (donutSize - donutStroke) / 2;
+const donutCircumference = 2 * Math.PI * donutRadius;
+const donutPassOffset =
+  donutCircumference - (controlPassPct / 100) * donutCircumference;
+---
+
+<Layout
+  title="Trust Center — Arlopass"
+  description="Arlopass compliance and security posture. Explore our ISO 27001, ISO 42001, SOC 2, and GDPR frameworks, controls, measures, and policy documents."
+  canonicalUrl="https://arlopass.com/trust-center"
+>
+  <Nav />
+  <main>
+    {/* ── Hero ──────────────────────────────────────────────────── */}
+    <section class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+      <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+        Trust Center
+      </span>
+      <h1
+        class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+      >
+        Compliance program
+      </h1>
+      <p
+        class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+      >
+        Transparency is a core value. This page is generated at build time from
+        our compliance management system — what you see is always current.
+      </p>
+      {
+        data && (
+          <p class="mt-2 text-xs text-[var(--ap-text-tertiary)]">
+            Last synced {formatDate(data.fetchedAt)}
+          </p>
+        )
+      }
+    </section>
+
+    {
+      !data ? (
+        <section class="py-24 text-center px-4 border-t border-[var(--ap-border)]">
+          <p class="text-[var(--ap-text-secondary)]">
+            Trust center data is not available right now. Please check back
+            later.
+          </p>
+        </section>
+      ) : (
+        <>
+          {/* ═══════════════════════════════════════════════════════
+            Header stats bar — passing controls, compliance, reqs
+            ═══════════════════════════════════════════════════════ */}
+          <div class="grid grid-cols-1 sm:grid-cols-3 border border-[var(--ap-border)]">
+            <div class="p-6 sm:p-8 border-b sm:border-b-0 sm:border-r border-[var(--ap-border)]">
+              <span class="block text-xs font-medium uppercase tracking-widest text-[var(--ap-text-tertiary)] mb-2">
+                Passing controls
+              </span>
+              <span class="text-3xl font-bold text-[var(--ap-text-primary)] tabular-nums">
+                {controlPassPct}%
+              </span>
+              <span class="text-sm font-normal text-[var(--ap-text-tertiary)] ml-1">
+                — {implementedControls}/{totalControls}
+              </span>
+            </div>
+            <div class="p-6 sm:p-8 border-b sm:border-b-0 sm:border-r border-[var(--ap-border)]">
+              <span class="block text-xs font-medium uppercase tracking-widest text-[var(--ap-text-tertiary)] mb-2">
+                Overall compliance
+              </span>
+              <span class="text-3xl font-bold text-[var(--ap-text-primary)] tabular-nums">
+                {overallCompliancePct}%
+              </span>
+              <span class="text-sm font-normal text-[var(--ap-text-tertiary)] ml-1">
+                across {data.frameworks.length} frameworks
+              </span>
+            </div>
+            <div class="p-6 sm:p-8">
+              <span class="block text-xs font-medium uppercase tracking-widest text-[var(--ap-text-tertiary)] mb-2">
+                Requirements met
+              </span>
+              <span class="text-3xl font-bold text-[var(--ap-text-primary)] tabular-nums">
+                {implementedMeasures}
+                <span class="text-base font-normal text-[var(--ap-text-tertiary)]">
+                  /{totalMeasures}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {/* ═══════════════════════════════════════════════════════
+            3 cards: Framework Progress | Controls Assignment | Controls Pass %
+            ═══════════════════════════════════════════════════════ */}
+          <section
+            class="bg-[var(--ap-bg-surface)]"
+            id="frameworks"
+            aria-labelledby="fw-heading"
+          >
+            <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+              <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+                Frameworks
+              </span>
+              <h2
+                id="fw-heading"
+                class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+              >
+                Framework overview
+              </h2>
+              <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+                We are working towards ISO 27001, ISO 42001, SOC 2 and GDPR
+                compliance.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 border border-[var(--ap-border)]">
+              {/* Card 1 — Framework Progress */}
+              <div class="border-b lg:border-b-0 lg:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)]">
+                <div class="p-6 sm:p-8 border-b border-[var(--ap-border)]">
+                  <h3 class="text-sm font-semibold text-[var(--ap-text-primary)]">
+                    Framework Progress
+                  </h3>
+                </div>
+                {data.frameworks.map((fw, i) => {
+                  const fwCtrls = controlsByFramework.get(fw.name) ?? [];
+                  const fwImpl = fwCtrls.filter(
+                    (c) => c.implemented === "IMPLEMENTED",
+                  ).length;
+                  const pct =
+                    fwCtrls.length > 0
+                      ? Math.round((fwImpl / fwCtrls.length) * 100)
+                      : 0;
+                  return (
+                    <div
+                      class={`px-6 sm:px-8 py-4 flex items-center justify-between ${i < data.frameworks.length - 1 ? "border-b border-[var(--ap-border)]" : ""} hover:bg-[var(--ap-bg-surface)] transition-colors duration-300`}
+                    >
+                      <span class="text-sm text-[var(--ap-text-primary)] font-medium truncate mr-4">
+                        {fw.name}
+                      </span>
+                      <div class="flex items-center gap-3 shrink-0">
+                        <span class="text-xs font-mono text-[var(--ap-text-secondary)] tabular-nums w-12 text-right">
+                          {fwImpl}/{fwCtrls.length}
+                        </span>
+                        <div class="w-20 h-1.5 rounded-full bg-[var(--ap-bg-elevated)] overflow-hidden">
+                          <div
+                            class="h-full rounded-full bg-success"
+                            style={`width: ${pct}%`}
+                          />
+                        </div>
+                        <span class="text-xs font-mono text-success tabular-nums w-8 text-right">
+                          {pct}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Card 2 — Controls Assignment */}
+              <div class="border-b lg:border-b-0 lg:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] flex flex-col">
+                <div class="p-6 sm:p-8 border-b border-[var(--ap-border)]">
+                  <h3 class="text-sm font-semibold text-[var(--ap-text-primary)]">
+                    Controls Assigned
+                  </h3>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center p-6 sm:p-8">
+                  <span class="text-5xl font-bold text-[var(--ap-text-primary)] tabular-nums">
+                    100%
+                  </span>
+                  <span class="mt-2 text-sm text-[var(--ap-text-secondary)]">
+                    {totalControls} controls assigned
+                  </span>
+                  <div class="mt-6 w-full max-w-[220px]">
+                    <div class="flex flex-wrap gap-[3px]">
+                      {allUniqueControls.slice(0, 40).map((ctrl) => (
+                        <div
+                          class="w-[18px] h-5 rounded-[2px] bg-[#3b82f6]"
+                          title={`${ctrl.name} — Assigned`}
+                        />
+                      ))}
+                      {totalControls > 40 && (
+                        <div
+                          class="w-[18px] h-5 rounded-[2px] bg-[#3b82f6] opacity-60"
+                          title={`+${totalControls - 40} more`}
+                        />
+                      )}
+                    </div>
+                    <div class="flex items-center gap-4 mt-3 text-xs text-[var(--ap-text-tertiary)]">
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-sm bg-[#3b82f6]" />
+                        Assigned
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-sm bg-[var(--ap-bg-elevated)]" />
+                        Unassigned
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3 — Controls Pass % with donut */}
+              <div class="bg-[var(--ap-bg-card)] flex flex-col">
+                <div class="p-6 sm:p-8 border-b border-[var(--ap-border)]">
+                  <h3 class="text-sm font-semibold text-[var(--ap-text-primary)]">
+                    {controlPassPct}% of Controls Pass
+                  </h3>
+                </div>
+                <div class="flex-1 flex items-center p-6 sm:p-8 gap-6">
+                  {/* Legend */}
+                  <div class="flex flex-col gap-2.5 text-xs shrink-0">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-sm bg-success" />
+                      <span class="text-[var(--ap-text-secondary)]">
+                        Passing
+                      </span>
+                      <span class="ml-auto font-mono text-[var(--ap-text-primary)] tabular-nums pl-3">
+                        {implementedControls}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-sm bg-[var(--ap-bg-elevated)]" />
+                      <span class="text-[var(--ap-text-secondary)]">
+                        Pending
+                      </span>
+                      <span class="ml-auto font-mono text-[var(--ap-text-primary)] tabular-nums pl-3">
+                        {totalControls - implementedControls}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Donut */}
+                  <div class="relative ml-auto">
+                    <svg
+                      width={donutSize}
+                      height={donutSize}
+                      viewBox={`0 0 ${donutSize} ${donutSize}`}
+                      class="transform -rotate-90"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        cx={donutSize / 2}
+                        cy={donutSize / 2}
+                        r={donutRadius}
+                        fill="none"
+                        stroke="var(--ap-bg-elevated)"
+                        stroke-width={donutStroke}
+                      />
+                      <circle
+                        cx={donutSize / 2}
+                        cy={donutSize / 2}
+                        r={donutRadius}
+                        fill="none"
+                        stroke="#4d7c0f"
+                        stroke-width={donutStroke}
+                        stroke-dasharray={donutCircumference}
+                        stroke-dashoffset={donutPassOffset}
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                      <span class="text-xl font-bold text-[var(--ap-text-primary)] tabular-nums">
+                        {totalControls}
+                      </span>
+                      <span class="text-[10px] uppercase tracking-widest text-[var(--ap-text-tertiary)]">
+                        Controls
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <Divider />
+
+          {/* ═══════════════════════════════════════════════════════
+            Control categories — block grid cards
+            ═══════════════════════════════════════════════════════ */}
+          <section id="controls" aria-labelledby="controls-heading">
+            <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+              <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+                Controls
+              </span>
+              <h2
+                id="controls-heading"
+                class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+              >
+                Control categories
+              </h2>
+              <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+                Security and compliance controls organized by domain, shown as a
+                visual status grid.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border border-[var(--ap-border)] [&>*]:border-b [&>*]:border-[var(--ap-border)] [&>*]:sm:border-r [&>*:nth-child(2n)]:sm:border-r-0 [&>*]:lg:border-r [&>*:nth-child(3n)]:lg:border-r-0 [&>*:nth-child(2n)]:lg:border-r [&>*:last-child]:border-b-0 [&>*:nth-last-child(-n+3)]:lg:border-b-0 [&>*:nth-last-child(-n+2)]:sm:border-b-0 [&>*:nth-last-child(-n+2)]:lg:border-b [&>*:nth-last-child(-n+3)]:lg:border-b-0">
+              {sortedCategories.map(([catName, ctrls]) => {
+                const impl = ctrls.filter(
+                  (c) => c.implemented === "IMPLEMENTED",
+                ).length;
+                return (
+                  <div class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-6 sm:p-8">
+                    <h3 class="text-sm font-semibold text-[var(--ap-text-primary)] leading-tight mb-4">
+                      {catName}
+                    </h3>
+                    {/* Block grid */}
+                    <div class="flex flex-wrap gap-1 mb-4">
+                      {ctrls.map((ctrl) => (
+                        <span
+                          class={`w-3 h-3 rounded-sm ${controlBlockColor(ctrl.implemented)}`}
+                          title={`${ctrl.sectionTitle} ${ctrl.name} — ${stateLabel(ctrl.implemented)}`}
+                        />
+                      ))}
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-[var(--ap-text-tertiary)]">
+                      <span class="tabular-nums">
+                        <span class="text-[var(--ap-text-secondary)] font-medium">
+                          {impl}
+                        </span>
+                        /{ctrls.length} controls passing
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <Divider />
+
+          {/* ═══════════════════════════════════════════════════════
+            Measures
+            ═══════════════════════════════════════════════════════ */}
+          {data.measures.length > 0 && (
+            <section
+              class="bg-[var(--ap-bg-surface)]"
+              id="measures"
+              aria-labelledby="measures-heading"
+            >
+              <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+                <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+                  Requirements
+                </span>
+                <h2
+                  id="measures-heading"
+                  class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+                >
+                  Security measures
+                </h2>
+                <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+                  Concrete security measures we implement to meet our control
+                  objectives.
+                </p>
+              </div>
+
+              {/* Legend */}
+              <div class="px-4 md:px-6 lg:px-8 mb-6 flex flex-wrap items-center gap-4 text-xs text-[var(--ap-text-secondary)]">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-success" />
+                  Implemented
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-brand" />
+                  In progress
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-[var(--ap-bg-elevated)]" />
+                  Not started
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border border-[var(--ap-border)] [&>*]:border-b [&>*]:border-[var(--ap-border)] [&>*]:sm:border-r [&>*:nth-child(2n)]:sm:border-r-0 [&>*]:lg:border-r [&>*:nth-child(3n)]:lg:border-r-0 [&>*:nth-child(2n)]:lg:border-r [&>*:last-child]:border-b-0 [&>*:nth-last-child(-n+3)]:lg:border-b-0 [&>*:nth-last-child(-n+2)]:sm:border-b-0 [&>*:nth-last-child(-n+2)]:lg:border-b [&>*:nth-last-child(-n+3)]:lg:border-b-0">
+                {Array.from(measuresByCategory.entries()).map(
+                  ([cat, measures]) => {
+                    const catImpl = measures.filter(
+                      (m) => m.state === "IMPLEMENTED",
+                    ).length;
+                    return (
+                      <div class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-6 sm:p-8">
+                        <h3 class="text-sm font-semibold text-[var(--ap-text-primary)] leading-tight mb-3">
+                          {cat}
+                        </h3>
+                        <div class="flex flex-wrap gap-1 mb-4">
+                          {measures.map((m) => (
+                            <span
+                              class={`w-3 h-3 rounded-sm ${measureBlockColor(m.state)}`}
+                              title={`${m.name} — ${stateLabel(m.state)}`}
+                            />
+                          ))}
+                        </div>
+                        <div class="text-xs text-[var(--ap-text-tertiary)] tabular-nums">
+                          <span class="text-[var(--ap-text-secondary)] font-medium">
+                            {catImpl}
+                          </span>
+                          /{measures.length} implemented
+                        </div>
+                      </div>
+                    );
+                  },
+                )}
+              </div>
+            </section>
+          )}
+
+          <Divider />
+
+          {/* ═══════════════════════════════════════════════════════
+            Documents
+            ═══════════════════════════════════════════════════════ */}
+          {data.documents.length > 0 && (
+            <section id="documents" aria-labelledby="docs-heading">
+              <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+                <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+                  Policies
+                </span>
+                <h2
+                  id="docs-heading"
+                  class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+                >
+                  Published policy documents
+                </h2>
+                <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+                  The policies and procedures that govern our security program.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 border border-[var(--ap-border)]">
+                {data.documents.map((doc, i) => (
+                  <div
+                    class={`flex items-start gap-4 p-6 sm:p-8 bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 ${
+                      i < data.documents.length - 1
+                        ? "border-b border-[var(--ap-border)]"
+                        : ""
+                    } ${i % 2 === 0 ? "md:border-r border-[var(--ap-border)]" : ""}`}
+                  >
+                    <div class="shrink-0 w-9 h-9 rounded-md bg-[var(--ap-brand-subtle)] flex items-center justify-center">
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        class="text-brand"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="text-sm font-semibold text-[var(--ap-text-primary)]">
+                        {doc.title}
+                      </div>
+                      <div class="flex items-center gap-2 mt-1.5">
+                        <span class="text-xs font-pixel tracking-[0.05em] text-brand">
+                          {docTypeLabel(doc.documentType)}
+                        </span>
+                        {doc.currentPublishedVersion && (
+                          <span class="text-xs font-mono text-[var(--ap-text-tertiary)]">
+                            v{doc.currentPublishedVersion}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════
+            Audits
+            ═══════════════════════════════════════════════════════ */}
+          {data.audits.length > 0 && (
+            <section
+              class="bg-[var(--ap-bg-surface)]"
+              id="audits"
+              aria-labelledby="audits-heading"
+            >
+              <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+                <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+                  Audits
+                </span>
+                <h2
+                  id="audits-heading"
+                  class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+                >
+                  Audits & certifications
+                </h2>
+                <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+                  External and internal audits validating our compliance
+                  posture.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 border border-[var(--ap-border)]">
+                {data.audits.map((audit, i) => (
+                  <div
+                    class={`p-6 sm:p-8 bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 ${
+                      i < data.audits.length - 1
+                        ? "border-b border-[var(--ap-border)]"
+                        : ""
+                    } ${i % 2 === 0 ? "md:border-r border-[var(--ap-border)]" : ""}`}
+                  >
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 class="text-sm font-semibold text-[var(--ap-text-primary)]">
+                          {audit.name ?? audit.frameworkName ?? "Audit"}
+                        </h3>
+                        {audit.frameworkName && audit.name && (
+                          <span class="text-xs text-[var(--ap-text-tertiary)]">
+                            {audit.frameworkName}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        class={`shrink-0 ml-3 text-xs font-mono px-2 py-0.5 rounded ${
+                          audit.state === "COMPLETED"
+                            ? "bg-[var(--ap-success-subtle)] text-success"
+                            : audit.state === "IN_PROGRESS"
+                              ? "bg-[var(--ap-brand-subtle)] text-brand"
+                              : "bg-[var(--ap-bg-elevated)] text-[var(--ap-text-tertiary)]"
+                        }`}
+                      >
+                        {stateLabel(audit.state)}
+                      </span>
+                    </div>
+                    <div class="text-xs text-[var(--ap-text-tertiary)]">
+                      {audit.validFrom && (
+                        <>Valid from {formatDate(audit.validFrom)}</>
+                      )}
+                      {audit.validUntil && (
+                        <> to {formatDate(audit.validUntil)}</>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <Divider />
+
+          {/* ═══════════════════════════════════════════════════════
+            Vendors (sub-processors)
+            ═══════════════════════════════════════════════════════ */}
+          {data.vendors.length > 0 && (
+            <section id="vendors" aria-labelledby="vendors-heading">
+              <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+                <span class="block text-sm font-pixel tracking-[0.08em] text-brand">
+                  Sub-processors
+                </span>
+                <h2
+                  id="vendors-heading"
+                  class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+                >
+                  Third-party vendors
+                </h2>
+                <p class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]">
+                  Services that process data on our behalf.
+                </p>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table
+                  class="w-full min-w-[600px] border-collapse text-sm border border-[var(--ap-border)]"
+                  role="table"
+                >
+                  <thead>
+                    <tr>
+                      <th class="py-3.5 px-5 text-left text-xs font-medium text-[var(--ap-text-tertiary)] font-pixel tracking-wider border-b border-r border-[var(--ap-border)] bg-[var(--ap-bg-surface)] whitespace-nowrap">
+                        Vendor
+                      </th>
+                      <th class="py-3.5 px-5 text-left text-xs font-medium text-[var(--ap-text-tertiary)] font-pixel tracking-wider border-b border-r border-[var(--ap-border)] bg-[var(--ap-bg-surface)] whitespace-nowrap">
+                        Category
+                      </th>
+                      <th class="py-3.5 px-5 text-left text-xs font-medium text-[var(--ap-text-tertiary)] font-pixel tracking-wider border-b border-[var(--ap-border)] bg-[var(--ap-bg-surface)]">
+                        Description
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.vendors.map((v) => (
+                      <tr class="border-b border-[var(--ap-border)] last:border-b-0 hover:bg-[var(--ap-bg-surface)] transition-colors">
+                        <td class="py-3 px-5 border-r border-[var(--ap-border)] text-[var(--ap-text-primary)] font-medium whitespace-nowrap">
+                          {v.websiteUrl ? (
+                            <a
+                              href={v.websiteUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="text-[var(--ap-text-link)] no-underline hover:text-[var(--ap-text-link-hover)] transition-colors"
+                            >
+                              {v.name}
+                            </a>
+                          ) : (
+                            v.name
+                          )}
+                        </td>
+                        <td class="py-3 px-5 border-r border-[var(--ap-border)] text-[var(--ap-text-secondary)] font-mono text-xs whitespace-nowrap">
+                          {stateLabel(v.category)}
+                        </td>
+                        <td class="py-3 px-5 text-[var(--ap-text-secondary)] max-w-xs truncate">
+                          {v.description ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {/* ═══════════════════════════════════════════════════════
+            Contact CTA
+            ═══════════════════════════════════════════════════════ */}
+          <section class="border-t border-[var(--ap-border)]">
+            <div class="py-20 md:py-24 px-6 md:px-10 text-center">
+              <span class="block text-sm font-pixel tracking-[0.08em] text-brand mb-3">
+                Questions?
+              </span>
+              <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-tight text-[var(--ap-text-primary)] mb-3">
+                Need more information?
+              </h2>
+              <p class="text-sm text-[var(--ap-text-secondary)] max-w-md mx-auto mb-8">
+                Request access to detailed audit reports or get answers to
+                specific compliance questions from our security team.
+              </p>
+              <a
+                href="mailto:security@arlopass.com"
+                class="inline-flex text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-2.5 px-6 rounded-lg no-underline whitespace-nowrap hover:opacity-90 transition-opacity"
+              >
+                Contact security team
+              </a>
+            </div>
+          </section>
+        </>
+      )
+    }
+  </main>
+  <Footer />
+</Layout>

@@ -1,0 +1,223 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import PageHero from "../components/ui/PageHero.astro";
+import Divider from "../components/Divider.astro";
+
+const pageTitle = "Contact Arlopass — Get in Touch About AI Access Management";
+const pageDesc =
+  "Reach the Arlopass team for security questions, enterprise inquiries, partnership opportunities, or community support. We're here to help.";
+
+const jsonLdContact = {
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  name: "Contact Arlopass",
+  description: pageDesc,
+  url: "https://arlopass.com/contact",
+  mainEntity: {
+    "@type": "Organization",
+    name: "Arlopass",
+    url: "https://arlopass.com",
+    email: "hello@arlopass.com",
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "security",
+        email: "security@arlopass.com",
+      },
+      {
+        "@type": "ContactPoint",
+        contactType: "sales",
+        email: "enterprise@arlopass.com",
+      },
+    ],
+  },
+};
+
+const channels = [
+  {
+    label: "Security",
+    title: "Security & compliance",
+    description:
+      "Report vulnerabilities, request access to audit reports, or ask about our compliance program. Expect a response within 24 hours.",
+    email: "security@arlopass.com",
+    cta: "Email security team",
+  },
+  {
+    label: "Enterprise",
+    title: "Enterprise inquiries",
+    description:
+      "Governance, policy bundles, MDM deployment, SCIM provisioning, or custom compliance requirements. Let's talk.",
+    email: "enterprise@arlopass.com",
+    cta: "Contact enterprise team",
+  },
+  {
+    label: "Community",
+    title: "Community & support",
+    description:
+      "Get help with installation, SDK integration, adapter development, or general questions. The fastest response is on Discord.",
+    href: "https://discord.gg/arlopass",
+    cta: "Join Discord",
+    external: true,
+  },
+  {
+    label: "General",
+    title: "General inquiries",
+    description:
+      "Partnerships, press, speaking, sponsorship, or anything else. We'd love to hear from you.",
+    email: "hello@arlopass.com",
+    cta: "Send an email",
+  },
+];
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDesc}
+  canonicalUrl="https://arlopass.com/contact"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLdContact)} />
+  <Nav />
+  <main>
+    <PageHero
+      label="Contact"
+      title="Get in touch"
+      description="Whether it's a security concern, enterprise question, or just a hello — we're here. Choose the right channel below and we'll get back to you promptly."
+    />
+
+    {/* ── Contact channels ─────────────────────────────────── */}
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 border border-[var(--ap-border)]"
+    >
+      {
+        channels.map((ch, i) => (
+          <div
+            class={`bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 ${
+              i < channels.length - 1
+                ? "border-b border-[var(--ap-border)]"
+                : ""
+            } ${i % 2 === 0 ? "sm:border-r border-[var(--ap-border)]" : ""}`}
+          >
+            <span class="text-sm font-pixel tracking-[0.08em] text-brand">
+              {ch.label}
+            </span>
+            <h3 class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2">
+              {ch.title}
+            </h3>
+            <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-6">
+              {ch.description}
+            </p>
+            <a
+              href={ch.email ? `mailto:${ch.email}` : ch.href}
+              target={ch.external ? "_blank" : undefined}
+              rel={ch.external ? "noopener noreferrer" : undefined}
+              class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border-strong)] py-2 px-4 rounded-lg no-underline hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] transition-all"
+            >
+              {ch.cta}
+              {ch.external && (
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              )}
+            </a>
+            {ch.email && (
+              <span class="block mt-3 text-xs font-mono text-[var(--ap-text-tertiary)]">
+                {ch.email}
+              </span>
+            )}
+          </div>
+        ))
+      }
+    </div>
+
+    <Divider />
+
+    {/* ── Quick links ──────────────────────────────────────── */}
+    <section class="bg-[var(--ap-bg-surface)]">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >Resources</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          Find what you need
+        </h2>
+        <p
+          class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          Before reaching out, you might find your answer here.
+        </p>
+      </div>
+      <div
+        class="grid grid-cols-1 md:grid-cols-3 border border-[var(--ap-border)]"
+      >
+        <a
+          href="/docs"
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 no-underline block"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Docs</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2"
+          >
+            Documentation
+          </h3>
+          <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+            Guides, SDK reference, adapter development, and deployment
+            instructions.
+          </p>
+        </a>
+        <a
+          href="https://github.com/arlopass/arlopass/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 no-underline block"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Issues</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2"
+          >
+            Bug reports
+          </h3>
+          <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+            Found a bug? Search existing issues or file a new one on GitHub.
+          </p>
+        </a>
+        <a
+          href="/trust-center"
+          class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 no-underline block"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Compliance</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2"
+          >
+            Trust center
+          </h3>
+          <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+            Our compliance program, framework progress, controls, and policies.
+          </p>
+        </a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

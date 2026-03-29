@@ -8,23 +8,37 @@ keywords: ["quickstart", "react", "hooks", "getting started"]
 schema: "HowTo"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
-import StepList from '../../../components/docs/StepList.astro';
+import Callout from "../../../components/docs/Callout.astro";
+import StepList from "../../../components/docs/StepList.astro";
 
 Build your first AI-powered React component in 5 minutes.
 
-<StepList steps={[
-  { title: "Install the React SDK", body: "Install the package from npm." },
-  { title: "Wrap your app in ArlopassProvider", body: "The provider connects to the browser extension and manages the AI client lifecycle." },
-  { title: "Add ChatReadyGate", body: "The gate handles loading, missing-provider, and error states so your chat component only renders when ready." },
-  { title: "Use the useConversation hook", body: "The hook gives you the message list, a streaming send function, and status flags." },
-  { title: "Build the UI", body: "Wire up an input and a message list. The hook handles the rest." },
-]} />
+<StepList
+  steps={[
+    { title: "Install the React SDK", body: "Install the package from npm." },
+    {
+      title: "Wrap your app in ArlopassProvider",
+      body: "The provider connects to the browser extension and manages the AI client lifecycle.",
+    },
+    {
+      title: "Add ChatReadyGate",
+      body: "The gate handles loading, missing-provider, and error states so your chat component only renders when ready.",
+    },
+    {
+      title: "Use the useConversation hook",
+      body: "The hook gives you the message list, a streaming send function, and status flags.",
+    },
+    {
+      title: "Build the UI",
+      body: "Wire up an input and a message list. The hook handles the rest.",
+    },
+  ]}
+/>
 
 ### Step 1 — Install the React SDK
 
 ```bash title="Terminal"
-npm install @arlopass/react
+pnpm add @arlopass/react
 ```
 
 ### Step 2 — Wrap your app in ArlopassProvider
@@ -131,7 +145,10 @@ function Chat() {
 ```
 
 <Callout type="info" title="Your keys stay in the vault">
-  When you add a provider through the extension, your API keys are encrypted and stored on the bridge using AES-256-GCM. The SDK never sees your credentials — the bridge attaches them to requests server-side. See the [Security Model](/docs/concepts/security-model) for details.
+  When you add a provider through the extension, your API keys are encrypted and
+  stored on the bridge using AES-256-GCM. The SDK never sees your credentials —
+  the bridge attaches them to requests server-side. See the [Security
+  Model](/docs/concepts/security-model) for details.
 </Callout>
 
 ### Complete example
@@ -140,7 +157,11 @@ Here's a full working chat component you can drop into any React app:
 
 ```tsx title="App.tsx"
 import { useState } from "react";
-import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
+import {
+  ArlopassProvider,
+  ChatReadyGate,
+  useConversation,
+} from "@arlopass/react";
 
 function Chat() {
   const { messages, stream, isStreaming } = useConversation();
@@ -232,5 +253,7 @@ const response = await client.chat.send({
 ```
 
 <Callout type="info" title="Next steps">
-  Explore [building a full chat app](/docs/tutorials/first-chat-app), [guard components](/docs/guides/guard-components), and [tool calling](/docs/guides/tool-calling).
+  Explore [building a full chat app](/docs/tutorials/first-chat-app), [guard
+  components](/docs/guides/guard-components), and [tool
+  calling](/docs/guides/tool-calling).
 </Callout>

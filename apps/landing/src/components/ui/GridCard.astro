@@ -1,0 +1,38 @@
+---
+/**
+ * Reusable bordered card grid item. Matches the landing page pattern
+ * of border-separated cards with hover states (Features, Privacy, HowItWorks).
+ *
+ * Props:
+ *   label  – optional font-pixel terracotta label
+ *   title  – card heading (h3)
+ *   href   – optional link target (makes the whole card a link)
+ */
+interface Props {
+  label?: string;
+  title: string;
+  href?: string;
+}
+
+const { label, title, href } = Astro.props;
+const Tag = href ? "a" : "div";
+---
+
+<Tag
+  class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 block no-underline"
+  href={href}
+>
+  {
+    label && (
+      <span class="text-sm font-pixel tracking-[0.08em] text-brand">
+        {label}
+      </span>
+    )
+  }
+  <h3
+    class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-2"
+  >
+    {title}
+  </h3>
+  <slot />
+</Tag>

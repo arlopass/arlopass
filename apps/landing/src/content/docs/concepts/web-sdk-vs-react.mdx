@@ -8,7 +8,7 @@ keywords: ["comparison", "web sdk", "react sdk"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 When to use each — or both
 
@@ -18,15 +18,15 @@ Arlopass ships two SDKs. The Web SDK (`@arlopass/web-sdk`) is the core — a fra
 
 ### Side-by-side comparison
 
-| Dimension | Web SDK | React SDK |
-|-----------|---------|-----------|
-| **Setup** | Create client, pass transport, manage lifecycle manually | Wrap in `<ArlopassProvider>`, hooks handle lifecycle |
-| **State management** | Manual — poll getters or build your own reactive layer | Automatic — ClientStore + useSyncExternalStore |
-| **Error handling** | try/catch around every operation | ArlopassErrorBoundary + error state in hooks |
-| **Streaming** | for-await-of loop, manual DOM updates | Hook returns streaming content, RAF-batched re-renders |
-| **Testing** | Mock the ArlopassTransport interface directly | createMockTransport + render with ArlopassProvider |
-| **Bundle size** | Smaller — no React dependency | Includes web-sdk + React integration layer |
-| **Framework** | Any — vanilla JS, Vue, Svelte, Angular | React 18+ only |
+| Dimension            | Web SDK                                                  | React SDK                                              |
+| -------------------- | -------------------------------------------------------- | ------------------------------------------------------ |
+| **Setup**            | Create client, pass transport, manage lifecycle manually | Wrap in `<ArlopassProvider>`, hooks handle lifecycle   |
+| **State management** | Manual — poll getters or build your own reactive layer   | Automatic — ClientStore + useSyncExternalStore         |
+| **Error handling**   | try/catch around every operation                         | ArlopassErrorBoundary + error state in hooks           |
+| **Streaming**        | for-await-of loop, manual DOM updates                    | Hook returns streaming content, RAF-batched re-renders |
+| **Testing**          | Mock the ArlopassTransport interface directly            | createMockTransport + render with ArlopassProvider     |
+| **Bundle size**      | Smaller — no React dependency                            | Includes web-sdk + React integration layer             |
+| **Framework**        | Any — vanilla JS, Vue, Svelte, Angular                   | React 18+ only                                         |
 
 ### When to use the Web SDK
 
@@ -54,7 +54,12 @@ await client.disconnect();
 Use the React SDK when you're building a React application and want managed state, automatic re-renders, streaming optimization, error boundaries, and a hooks-based API. It handles the hard parts — state synchronization, concurrent rendering safety, and streaming batching — so you can focus on your UI.
 
 ```tsx title="React SDK usage"
-import { ArlopassProvider, useConnection, useProviders, useChat } from "@arlopass/react";
+import {
+  ArlopassProvider,
+  useConnection,
+  useProviders,
+  useChat,
+} from "@arlopass/react";
 
 function App() {
   return (
@@ -90,7 +95,10 @@ Every React SDK hook replaces a specific Web SDK pattern. If you're familiar wit
 ```
 
 <Callout type="info" title="useClient() — the escape hatch">
-The React SDK re-exports all Web SDK types. If you need the raw `ArlopassClient` for an operation not covered by hooks, call `useClient()`. You lose automatic state sync for that operation, but you get full control. Use it sparingly.
+  The React SDK re-exports all Web SDK types. If you need the raw
+  `ArlopassClient` for an operation not covered by hooks, call `useClient()`.
+  You lose automatic state sync for that operation, but you get full control.
+  Use it sparingly.
 </Callout>
 
 ```tsx title="Escape hatch"
@@ -135,5 +143,7 @@ import type { ProviderDescriptor, ClientState } from "@arlopass/react";
 ```
 
 <Callout type="tip" title="Related">
-See [State Management](/docs/concepts/state-management) for how the React SDK stays in sync with the client, or [Hooks Reference](/docs/reference/react/hooks) for the complete hook API.
+  See [State Management](/docs/concepts/state-management) for how the React SDK
+  stays in sync with the client, or [Hooks
+  Reference](/docs/reference/react/hooks) for the complete hook API.
 </Callout>

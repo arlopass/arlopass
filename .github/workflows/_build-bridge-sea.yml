@@ -42,19 +42,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Build all packages
-        run: npm run build
+        run: pnpm run build
 
       - name: Bundle bridge into single CJS file
         run: |
-          npx esbuild apps/bridge/dist/main.js \
+          pnpm exec esbuild apps/bridge/dist/main.js \
             --bundle \
             --platform=node \
             --target=node20 \
@@ -80,7 +81,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           cp "$(which node)" "${{ matrix.binary }}"
-          npx postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob \
+          pnpm exec postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob \
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
       - name: Create SEA binary (Windows)
@@ -88,7 +89,7 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item (Get-Command node).Source -Destination "${{ matrix.binary }}"
-          npx postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob `
+          pnpm exec postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob `
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
       - name: Post-process (macOS ad-hoc re-sign)

@@ -26,7 +26,7 @@ The Arlopass Wallet extension provides the user-facing consent layer between web
 ## Building
 
 ```bash
-npm run build -w @arlopass/extension
+pnpm --filter @arlopass/extension run build
 ```
 
 Uses esbuild for fast bundling. Output goes to `dist/`.

@@ -27,11 +27,11 @@ import { attachContextDebugOnFailure } from "../../helpers/debug-on-failure";
  *
  * Prerequisites:
  *   1. `TEST_LIVE_INTEGRATION_ENABLED=true` in `e2e/.env.e2e`
- *   2. Bridge must be running (`npm run dev:bridge`)
+ *   2. Bridge must be running (`pnpm run dev:bridge`)
  *   3. At least one `TEST_<PROVIDER>_ENABLED=true` with valid credentials
  *   4. The "live-setup" connectivity check must pass
  *
- * Run: npm run test:e2e:live
+ * Run: pnpm run test:e2e:live
  */
 
 const CONNECTORS = [

@@ -26,7 +26,7 @@ await client.disconnect();
 The Arlopass extension injects a transport at `window.arlopass`. Install with:
 
 ```bash
-npm install @arlopass/web-sdk
+pnpm add @arlopass/web-sdk
 ```
 
 ## Streaming

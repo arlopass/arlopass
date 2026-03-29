@@ -23,7 +23,7 @@ Arlopass is split into focused workspaces:
 ## 2) Prerequisites
 
 - **Node.js 20+** (CI uses Node 20).
-- **npm** (workspaces are configured in root `package.json`).
+- **[pnpm](https://pnpm.io/installation)** (workspaces are configured in `pnpm-workspace.yaml`).
 - **Google Chrome/Chromium** for extension testing.
 - Optional providers:
   - Ollama (local) for `@arlopass/adapter-ollama`
@@ -37,16 +37,16 @@ Arlopass is split into focused workspaces:
 From repo root:
 
 ```powershell
-npm ci
+pnpm install
 ```
 
 Sanity check everything:
 
 ```powershell
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
 ```
 
 ### 3.1 Cross-platform dev runner scripts
@@ -58,7 +58,7 @@ The repository now includes ready-to-use development runner scripts:
 
 Supported modes for both scripts:
 
-- `setup` — install dependencies (`npm ci`)
+- `setup` — install dependencies (`pnpm install --frozen-lockfile`)
 - `validate` — run `lint`, `typecheck`, `test`
 - `watch` — watch builds for bridge + extension
 - `bridge` — build and run the bridge
@@ -68,15 +68,15 @@ PowerShell `full` mode also auto-registers the native messaging host for Chrome/
 using the extension manifest key. You can run that step explicitly with:
 
 ```powershell
-npm run dev:register-native-host
+pnpm run dev:register-native-host
 ```
 
 In PowerShell `watch` / `full` mode, pressing `Ctrl+C` in the main runner now
 stops watcher process trees and closes watcher terminals automatically.
-In PowerShell `full` mode, dependency sync is incremental (`npm install`) when
+In PowerShell `full` mode, dependency sync is incremental (`pnpm install`) when
 `node_modules` already exists, which avoids common Windows lock churn during
 restart loops. If a clean install path still hits transient `EPERM` locks
-(`npm ci`), the script falls back to `npm install`.
+(`pnpm install --frozen-lockfile`), the script falls back to `pnpm install`.
 
 PowerShell examples:
 
@@ -94,17 +94,17 @@ Bash examples:
 ./scripts/dev/run-dev.sh full
 ```
 
-NPM aliases are also available:
+pnpm aliases are also available:
 
 ```powershell
-npm run dev:setup
-npm run dev:validate
-npm run dev:watch
-npm run dev:bridge
-npm run dev:full
-npm run dev:register-native-host
-npm run dev:examples
-npm run build:examples
+pnpm run dev:setup
+pnpm run dev:validate
+pnpm run dev:watch
+pnpm run dev:bridge
+pnpm run dev:full
+pnpm run dev:register-native-host
+pnpm run dev:examples
+pnpm run build:examples
 ```
 
 ---
@@ -116,28 +116,28 @@ npm run build:examples
 Run all tests once:
 
 ```powershell
-npm run test
+pnpm run test
 ```
 
 Run a specific workspace:
 
 ```powershell
-npm run test -w @arlopass/web-sdk
-npm run test -w @arlopass/bridge
-npm run test -w @arlopass/extension
+pnpm --filter @arlopass/web-sdk run test
+pnpm --filter @arlopass/bridge run test
+pnpm --filter @arlopass/extension run test
 ```
 
 Watch mode (root):
 
 ```powershell
-npx vitest --workspace vitest.workspace.ts
+pnpm exec vitest --workspace vitest.workspace.ts
 ```
 
 Watch mode (workspace build):
 
 ```powershell
-npm run build -w @arlopass/bridge -- --watch
-npm run build -w @arlopass/extension -- --watch
+pnpm --filter @arlopass/bridge run build --watch
+pnpm --filter @arlopass/extension run build --watch
 ```
 
 ### 4.2 Run the bridge locally
@@ -145,7 +145,7 @@ npm run build -w @arlopass/extension -- --watch
 Build bridge:
 
 ```powershell
-npm run typecheck -w @arlopass/bridge
+pnpm --filter @arlopass/bridge run typecheck
 ```
 
 The bridge generates its own signing key on first run and persists it to `%LOCALAPPDATA%\Arlopass\bridge\state\bridge-state.json`. No shared secret or manual configuration is needed.
@@ -161,7 +161,7 @@ node --loader .\scripts\dev\ts-js-specifier-loader.mjs .\apps\bridge\src\main.ts
 Build extension:
 
 ```powershell
-npm run build -w @arlopass/extension
+pnpm --filter @arlopass/extension run build
 ```
 
 Then:
@@ -178,13 +178,13 @@ After TS changes, rebuild (or keep `--watch`) and click **Reload** on the extens
 The repository now includes a Mantine-based examples app:
 
 - Workspace: `apps\examples-web`
-- Start command: `npm run dev:examples`
-- Build command: `npm run build:examples`
+- Start command: `pnpm run dev:examples`
+- Build command: `pnpm run build:examples`
 
 Run it:
 
 ```powershell
-npm run dev:examples
+pnpm run dev:examples
 ```
 
 Open the printed local URL (default `http://127.0.0.1:4172`).
@@ -211,11 +211,11 @@ The repo is currently source-first (TypeScript + dist outputs), so production ro
 ### 5.1 CI/release gate (recommended)
 
 ```powershell
-npm ci
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+pnpm install --frozen-lockfile
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
 ```
 
 Reliability workflow reference: `.github\workflows\reliability-gates.yml`.
@@ -505,10 +505,10 @@ const adapter = new LocalCliBridgeAdapter({
 Targeted reliability suites:
 
 ```powershell
-npm run test -- .\ops\tests\chaos
-npm run test -- .\ops\tests\release-gates
-npm run test -- .\ops\tests\version-skew
-npm run test -- .\ops\tests\soak
+pnpm run test -- .\ops\tests\chaos
+pnpm run test -- .\ops\tests\release-gates
+pnpm run test -- .\ops\tests\version-skew
+pnpm run test -- .\ops\tests\soak
 ```
 
 Operational docs:
@@ -537,7 +537,7 @@ Operational docs:
 - Verify manifest `name` is exactly `com.arlopass.bridge`.
 - Verify extension ID is present in `allowed_origins`.
 - Verify the extension has an active pairing handle for the selected bridge host.
-- Run `npm run dev:register-native-host`, then reload the extension.
+- Run `pnpm run dev:register-native-host`, then reload the extension.
 
 ### `auth.invalid` during handshake
 
@@ -551,7 +551,7 @@ Operational docs:
 
 - Bridge now falls back to workspace adapter source entries when package `dist` artifacts are absent.
 - If warnings persist after pull/reload, run:
-  `npm run build -w @arlopass/adapter-openai && npm run build -w @arlopass/adapter-perplexity && npm run build -w @arlopass/adapter-gemini`
+  `pnpm --filter @arlopass/adapter-openai run build && pnpm --filter @arlopass/adapter-perplexity run build && pnpm --filter @arlopass/adapter-gemini run build`
 
 ### Popup shows no providers
 
@@ -563,10 +563,10 @@ Operational docs:
 Run in order and fix first failing stage:
 
 ```powershell
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
 ```
 
 ---

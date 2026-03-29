@@ -1,0 +1,416 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import PageHero from "../components/ui/PageHero.astro";
+import CopyCommand from "../components/ui/CopyCommand.astro";
+import Divider from "../components/Divider.astro";
+
+const pageTitle =
+  "Install Arlopass — Browser Extension & Bridge for AI Access Management";
+const pageDesc =
+  "Install the Arlopass browser extension for Chrome, Edge, or Firefox and download the native bridge for macOS, Linux, or Windows. Free, open source, under 60 seconds.";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Arlopass",
+  applicationCategory: "BrowserApplication",
+  operatingSystem: "Windows, macOS, Linux",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  downloadUrl: "https://chrome.google.com/webstore",
+  softwareVersion: "1.0",
+  description: pageDesc,
+};
+
+const howToSchema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How to install Arlopass",
+  description:
+    "Install the Arlopass browser extension and native bridge in under 60 seconds.",
+  totalTime: "PT1M",
+  step: [
+    {
+      "@type": "HowToStep",
+      position: 1,
+      name: "Install the browser extension",
+      text: "Add Arlopass from the Chrome Web Store, Edge Add-ons, or Firefox Add-ons.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 2,
+      name: "Install the native bridge",
+      text: "Run the one-line installer for your OS or download the binary directly.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 3,
+      name: "Connect your providers",
+      text: "Open the extension, add your AI provider API keys, and start using AI on your terms.",
+    },
+  ],
+};
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDesc}
+  canonicalUrl="https://arlopass.com/install"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(howToSchema)} />
+  <Nav />
+  <main>
+    <PageHero
+      label="Get started"
+      title="Install Arlopass"
+      description="Two components, under 60 seconds. Install the browser extension to manage AI access, then add the native bridge for local models and advanced features."
+    />
+
+    {/* ── Step 1: Browser Extension ────────────────────────── */}
+    <section class="bg-[var(--ap-bg-surface)]" id="extension">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >Step 1</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          Browser extension
+        </h2>
+        <p
+          class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          The extension lives in your browser and manages connections between
+          web apps and your AI providers. Install it from your browser's
+          official store.
+        </p>
+      </div>
+
+      <div
+        class="grid grid-cols-1 md:grid-cols-3 border border-[var(--ap-border)]"
+      >
+        {/* Chrome */}
+        <div
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="1.5"
+                class="text-[var(--ap-text-tertiary)]"></circle>
+              <circle
+                cx="12"
+                cy="12"
+                r="4"
+                fill="currentColor"
+                class="text-brand"></circle>
+            </svg>
+            <span class="text-base font-semibold text-[var(--ap-text-primary)]"
+              >Google Chrome</span
+            >
+          </div>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-6"
+          >
+            Install from the Chrome Web Store. Works with Chrome, Brave, Arc,
+            and all Chromium-based browsers.
+          </p>
+          <a
+            href="https://chrome.google.com/webstore"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-2.5 px-5 rounded-lg no-underline hover:opacity-85 transition-opacity"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+              ></path><polyline points="7 10 12 15 17 10"></polyline><line
+                x1="12"
+                y1="15"
+                x2="12"
+                y2="3"></line></svg
+            >
+            Add to Chrome
+          </a>
+        </div>
+
+        {/* Edge */}
+        <div
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="1.5"
+                class="text-[var(--ap-text-tertiary)]"></circle>
+              <path
+                d="M8 12h8"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                class="text-[#0078d4]"></path>
+            </svg>
+            <span class="text-base font-semibold text-[var(--ap-text-primary)]"
+              >Microsoft Edge</span
+            >
+          </div>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-6"
+          >
+            Install from the Edge Add-ons store. Full compatibility with the
+            Chromium extension API.
+          </p>
+          <a
+            href="https://microsoftedge.microsoft.com/addons"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border-strong)] py-2.5 px-5 rounded-lg no-underline hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] transition-all"
+          >
+            Add to Edge
+          </a>
+        </div>
+
+        {/* Firefox */}
+        <div
+          class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="1.5"
+                class="text-[var(--ap-text-tertiary)]"></circle>
+              <path
+                d="M9 8c1.5-1 4.5-1 6 0"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                class="text-[#ff7139]"></path>
+            </svg>
+            <span class="text-base font-semibold text-[var(--ap-text-primary)]"
+              >Firefox</span
+            >
+          </div>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-6"
+          >
+            Install from Firefox Add-ons. Uses the WebExtension API with native
+            messaging support.
+          </p>
+          <a
+            href="https://addons.mozilla.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-text-primary)] bg-transparent border border-[var(--ap-border-strong)] py-2.5 px-5 rounded-lg no-underline hover:border-[var(--ap-text-tertiary)] hover:bg-[var(--ap-bg-surface)] transition-all"
+          >
+            Add to Firefox
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <Divider />
+
+    {/* ── Step 2: Native Bridge ────────────────────────────── */}
+    <section id="bridge">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >Step 2</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          Native bridge
+        </h2>
+        <p
+          class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          The bridge runs on your machine and securely routes requests between
+          the extension and your AI providers. It enables local model support
+          (Ollama), HMAC authentication, and enterprise policy enforcement.
+        </p>
+      </div>
+
+      <div
+        class="grid grid-cols-1 lg:grid-cols-2 border border-[var(--ap-border)]"
+      >
+        {/* macOS / Linux */}
+        <div
+          class="border-b lg:border-b-0 lg:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] p-8 sm:p-10"
+        >
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >macOS & Linux</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-4"
+          >
+            One‑line installer
+          </h3>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-6"
+          >
+            Downloads the latest release from GitHub, verifies the SHA-256
+            checksum, installs to <code class="text-xs">~/.local/bin</code>, and
+            registers the native messaging host for Chrome, Edge, and Firefox.
+          </p>
+          <CopyCommand
+            command="curl -fsSL https://arlopass.com/install.sh | sh"
+            label="Terminal"
+          />
+          <div class="mt-4">
+            <CopyCommand
+              command="curl -fsSL https://arlopass.com/install.sh | sh -s -- --uninstall"
+              label="Uninstall"
+            />
+          </div>
+        </div>
+
+        {/* Windows */}
+        <div class="bg-[var(--ap-bg-card)] p-8 sm:p-10">
+          <span class="text-sm font-pixel tracking-[0.08em] text-brand"
+            >Windows</span
+          >
+          <h3
+            class="mt-2 text-lg font-semibold tracking-tight text-[var(--ap-text-primary)] mb-4"
+          >
+            PowerShell installer
+          </h3>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-6"
+          >
+            Downloads the latest release, verifies SHA-256, installs to <code
+              class="text-xs">%LOCALAPPDATA%\Arlopass\bin</code
+            >, and sets up native messaging host registry entries.
+          </p>
+          <CopyCommand
+            command="irm https://arlopass.com/install.ps1 | iex"
+            label="PowerShell"
+          />
+          <div class="mt-4">
+            <CopyCommand
+              command="irm https://arlopass.com/install.ps1 | iex -Uninstall"
+              label="Uninstall"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <Divider />
+
+    {/* ── What's next ──────────────────────────────────────── */}
+    <section class="bg-[var(--ap-bg-surface)]">
+      <div class="pt-24 px-4 md:px-6 lg:px-8 mb-10 sm:mb-16">
+        <span class="block text-sm font-pixel tracking-[0.08em] text-brand"
+          >Next steps</span
+        >
+        <h2
+          class="mt-2 max-w-3xl text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-tight text-balance text-[var(--ap-text-primary)]"
+        >
+          You're all set
+        </h2>
+        <p
+          class="mt-3 max-w-3xl text-base leading-relaxed text-[var(--ap-text-secondary)]"
+        >
+          Open the Arlopass extension, connect your first AI provider, and start
+          using AI on your terms.
+        </p>
+      </div>
+
+      <div
+        class="grid grid-cols-1 md:grid-cols-3 border border-[var(--ap-border)]"
+      >
+        <div
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <span class="text-xs font-semibold text-brand font-mono">01</span>
+          <h3
+            class="mt-2 text-lg font-semibold text-[var(--ap-text-primary)] mb-2"
+          >
+            Connect a provider
+          </h3>
+          <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+            Add your Ollama, Claude, GPT, Gemini, or Bedrock credentials. Keys
+            stay in your OS keychain.
+          </p>
+        </div>
+        <div
+          class="border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <span class="text-xs font-semibold text-brand font-mono">02</span>
+          <h3
+            class="mt-2 text-lg font-semibold text-[var(--ap-text-primary)] mb-2"
+          >
+            Visit an Arlopass app
+          </h3>
+          <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed">
+            When a web app requests AI, you'll see a clear prompt. Pick your
+            model, approve, and go.
+          </p>
+        </div>
+        <div
+          class="bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
+        >
+          <span class="text-xs font-semibold text-brand font-mono">03</span>
+          <h3
+            class="mt-2 text-lg font-semibold text-[var(--ap-text-primary)] mb-2"
+          >
+            Read the quickstart
+          </h3>
+          <p
+            class="text-sm text-[var(--ap-text-secondary)] leading-relaxed mb-4"
+          >
+            Developers: integrate Arlopass into your app in about 10 lines of
+            TypeScript.
+          </p>
+          <a
+            href="/docs/getting-started/quickstart-web-sdk"
+            class="text-sm font-medium text-brand no-underline hover:text-[var(--ap-text-link-hover)] transition-colors"
+          >
+            Read the quickstart →
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>

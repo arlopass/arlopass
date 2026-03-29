@@ -48,7 +48,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       expect.arrayContaining(["bedrock.api_key", "bedrock.aws_access_key", "bedrock.assume_role"]),
     );
     expect(adapter.requiredEndpointProfileFields).toEqual(
-      expect.arrayContaining(["region", "modelAccessPolicy"]),
+      expect.arrayContaining(["region"]),
     );
   });
 
@@ -59,7 +59,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       methodId: "bedrock.api_key",
     });
     expect(begin["requiredFields"]).toEqual(
-      expect.arrayContaining(["region", "modelAccessPolicy", "apiKey"]),
+      expect.arrayContaining(["region", "apiKey"]),
     );
 
     const complete = await adapter.completeConnect({
@@ -92,7 +92,7 @@ describe("AmazonBedrockAdapter – cloud contract v2", () => {
       methodId: "bedrock.aws_access_key",
     });
     expect(begin["requiredFields"]).toEqual(
-      expect.arrayContaining(["region", "modelAccessPolicy", "accessKeyId", "secretAccessKey"]),
+      expect.arrayContaining(["region", "accessKeyId", "secretAccessKey"]),
     );
 
     const complete = await adapter.completeConnect({

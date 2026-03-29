@@ -1,34 +1,38 @@
 ---
 interface Props {
-  type?: 'info' | 'warning' | 'success' | 'tip';
+  type?: "info" | "warning" | "success" | "tip";
   title?: string;
 }
 
-const { type = 'info', title } = Astro.props;
+const { type = "info", title } = Astro.props;
 
 const borderColor: Record<string, string> = {
-  info: 'border-brand',
-  warning: 'border-warning',
-  success: 'border-success',
-  tip: 'border-[var(--ap-border-strong)]',
+  info: "border-brand",
+  warning: "border-warning",
+  success: "border-success",
+  tip: "border-[var(--ap-border-strong)]",
 };
 
 const iconColor: Record<string, string> = {
-  info: 'text-brand',
-  warning: 'text-amber',
-  success: 'text-success',
-  tip: 'text-[var(--ap-text-tertiary)]',
+  info: "text-brand",
+  warning: "text-amber",
+  success: "text-success",
+  tip: "text-[var(--ap-text-tertiary)]",
 };
 
 const icons: Record<string, string> = {
-  info: 'M12 16v-4m0-4h.01M22 12a10 10 0 11-20 0 10 10 0 0120 0z',
-  warning: 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',
-  success: 'M9 12l2 2 4-4m6 2a10 10 0 11-20 0 10 10 0 0120 0z',
-  tip: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
+  info: "M12 16v-4m0-4h.01M22 12a10 10 0 11-20 0 10 10 0 0120 0z",
+  warning:
+    "M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z",
+  success: "M9 12l2 2 4-4m6 2a10 10 0 11-20 0 10 10 0 0120 0z",
+  tip: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
 };
 ---
 
-<aside role="note" class={`rounded-md bg-[var(--ap-bg-card)] border-l-2 ${borderColor[type]} p-4 my-6`}>
+<aside
+  role="note"
+  class={`rounded-md bg-[var(--ap-bg-card)] border-l-2 ${borderColor[type]} p-4 my-6`}
+>
   <div class="flex items-start gap-3">
     <svg
       class={`shrink-0 mt-0.5 ${iconColor[type]}`}
@@ -44,8 +48,16 @@ const icons: Record<string, string> = {
       <path d={icons[type]}></path>
     </svg>
     <div>
-      {title && <p class="font-semibold text-sm text-[var(--ap-text-primary)] mb-1">{title}</p>}
-      <div class="text-sm text-[var(--ap-text-body)] [&>p]:mb-2 [&>p:last-child]:mb-0">
+      {
+        title && (
+          <p class="font-semibold text-sm text-[var(--ap-text-primary)] mb-1">
+            {title}
+          </p>
+        )
+      }
+      <div
+        class="text-sm text-[var(--ap-text-body)] [&>p]:mb-2 [&>p:last-child]:mb-0"
+      >
         <slot />
       </div>
     </div>

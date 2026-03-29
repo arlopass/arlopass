@@ -31,7 +31,7 @@ The bridge is the authoritative enforcement point for the Arlopass security mode
 
 ```bash
 # Using the dev runner (recommended)
-npm run dev:bridge
+pnpm run dev:bridge
 
 # Or manually
 node --loader ./scripts/dev/ts-js-specifier-loader.mjs ./apps/bridge/src/main.ts
@@ -51,7 +51,7 @@ The bridge generates its own signing key automatically on first run and persists
 The bridge must be registered as a Chrome native messaging host:
 
 ```bash
-npm run dev:register-native-host
+pnpm run dev:register-native-host
 ```
 
 This creates the `com.arlopass.bridge` host manifest and registers it in the Chrome NativeMessagingHosts registry.

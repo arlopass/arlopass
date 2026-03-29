@@ -5,49 +5,64 @@ interface Props {
   filename?: string;
 }
 
-const { code, lang = 'typescript', filename } = Astro.props;
+const { code, lang = "typescript", filename } = Astro.props;
 ---
 
 <div class="rounded-lg overflow-hidden border border-[var(--ap-border)] my-6">
-  <div class="flex items-center h-10 gap-6 px-4 py-2 bg-[var(--ap-bg-surface)] border-b border-[var(--ap-border)] shrink-0">
+  <div
+    class="flex items-center h-10 gap-6 px-4 py-2 bg-[var(--ap-bg-surface)] border-b border-[var(--ap-border)] shrink-0"
+  >
     <div class="flex gap-1.5">
       <div class="h-3 w-3 rounded-full bg-red-500"></div>
       <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
       <div class="h-3 w-3 rounded-full bg-green-500"></div>
     </div>
-    {filename && (
-      <span class="text-[11px] text-stone-500 font-mono">{filename}</span>
-    )}
+    {
+      filename && (
+        <span class="text-[11px] text-stone-500 font-mono">{filename}</span>
+      )
+    }
     <button
       class="ml-auto text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
       data-copy-code
       aria-label="Copy code"
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+        ></path>
       </svg>
     </button>
   </div>
   <pre
     class="p-5 overflow-x-auto font-mono text-sm leading-[1.7] text-stone-300 bg-[var(--ap-bg-code)] m-0"
     style="tab-size: 2"
-    data-lang={lang}
-  ><code set:html={code} /></pre>
+    data-lang={lang}><code set:html={code} /></pre>
 </div>
 
 <script>
-  document.querySelectorAll('[data-copy-code]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const pre = btn.closest('div')?.parentElement?.querySelector('pre');
+  document.querySelectorAll("[data-copy-code]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pre = btn.closest("div")?.parentElement?.querySelector("pre");
       if (!pre) return;
-      const text = pre.textContent || '';
+      const text = pre.textContent || "";
       navigator.clipboard.writeText(text).then(() => {
-        const svg = btn.querySelector('svg');
+        const svg = btn.querySelector("svg");
         if (svg) {
           const original = svg.innerHTML;
           svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
-          setTimeout(() => { svg.innerHTML = original; }, 2000);
+          setTimeout(() => {
+            svg.innerHTML = original;
+          }, 2000);
         }
       });
     });

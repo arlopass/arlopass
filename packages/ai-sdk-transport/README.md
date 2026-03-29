@@ -5,7 +5,7 @@ Use Vercel AI SDK's `useChat` with the Arlopass browser extension. No API route,
 ## Install
 
 ```bash
-npm install @arlopass/ai-sdk-transport ai @arlopass/web-sdk
+pnpm add @arlopass/ai-sdk-transport ai @arlopass/web-sdk
 ```
 
 > [!IMPORTANT]

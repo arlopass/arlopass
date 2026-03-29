@@ -8,7 +8,7 @@ keywords: ["message", "component", "primitive"]
 schema: "TechArticle"
 ---
 
-import ApiTable from '../../../components/docs/ApiTable.astro';
+import ApiTable from "../../../components/docs/ApiTable.astro";
 
 Standalone message display component.
 
@@ -20,23 +20,34 @@ import { Message } from "@arlopass/react-ui";
 
 ### Parts
 
-| Name | Element | Purpose |
-|------|---------|---------|
-| `Message.Root` | div | Outermost wrapper. Provides message context to children. |
-| `Message.Content` | div | Renders the text/markdown content of the message. |
-| `Message.Role` | span | Displays the message role (user, assistant, system). |
-| `Message.Timestamp` | time | Renders the message timestamp. |
-| `Message.Status` | span | Shows message delivery status (pending, sent, error). |
-| `Message.ToolCalls` | div | Slot for rendering tool-call information within the message. |
+| Name                | Element | Purpose                                                      |
+| ------------------- | ------- | ------------------------------------------------------------ |
+| `Message.Root`      | div     | Outermost wrapper. Provides message context to children.     |
+| `Message.Content`   | div     | Renders the text/markdown content of the message.            |
+| `Message.Role`      | span    | Displays the message role (user, assistant, system).         |
+| `Message.Timestamp` | time    | Renders the message timestamp.                               |
+| `Message.Status`    | span    | Shows message delivery status (pending, sent, error).        |
+| `Message.ToolCalls` | div     | Slot for rendering tool-call information within the message. |
 
 ---
 
 ### Message.Root props
 
-<ApiTable props={[
-  { name: "message", type: "TrackedChatMessage", required: true, description: "The message object to display." },
-  { name: "children", type: "ReactNode", description: "Sub-components to render inside the message." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "message",
+      type: "TrackedChatMessage",
+      required: true,
+      description: "The message object to display.",
+    },
+    {
+      name: "children",
+      type: "ReactNode",
+      description: "Sub-components to render inside the message.",
+    },
+  ]}
+/>
 
 ---
 
@@ -82,17 +93,27 @@ import { Chat, Message } from "@arlopass/react-ui";
   </Chat.Messages>
   <Chat.Input />
   <Chat.SendButton>Send</Chat.SendButton>
-</Chat.Root>
+</Chat.Root>;
 ```
 
 ---
 
 ### Data attributes
 
-<ApiTable props={[
-  { name: "data-role", type: '"user" | "assistant" | "system"', description: "Set on Message.Root. The message role." },
-  { name: "data-status", type: '"pending" | "sent" | "error"', description: "Set on Message.Root. Delivery status of the message." }
-]} />
+<ApiTable
+  props={[
+    {
+      name: "data-role",
+      type: '"user" | "assistant" | "system"',
+      description: "Set on Message.Root. The message role.",
+    },
+    {
+      name: "data-status",
+      type: '"pending" | "sent" | "error"',
+      description: "Set on Message.Root. Delivery status of the message.",
+    },
+  ]}
+/>
 
 ### Styling
 

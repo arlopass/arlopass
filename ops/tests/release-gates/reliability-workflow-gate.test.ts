@@ -44,7 +44,7 @@ describe("Release gate: reliability workflow conformance", () => {
       "adapter-conformance-tests",
     );
 
-    expect(adapterConformanceJobLines).toContain("        run: npm run test -- ops/tests/release-gates");
+    expect(adapterConformanceJobLines).toContain("        run: pnpm run test -- ops/tests/release-gates");
   });
 
   it("requires adapter conformance before reliability gate can pass", () => {

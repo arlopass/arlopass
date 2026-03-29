@@ -18,7 +18,7 @@ try {
   ts = require("typescript");
 } catch (error) {
   const message =
-    "Missing dependency: typescript. Run `npm ci` at repository root before starting the bridge/dev scripts.";
+    "Missing dependency: typescript. Run `pnpm install` at repository root before starting the bridge/dev scripts.";
   throw new Error(
     error instanceof Error ? `${message} (${error.message})` : message,
   );

@@ -8,7 +8,7 @@ keywords: ["state", "store", "sync"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 How the React SDK stays in sync with the ArlopassClient
 
@@ -23,8 +23,8 @@ import { ArlopassClient } from "@arlopass/web-sdk";
 const client = new ArlopassClient({ transport: window.arlopass });
 await client.connect({ appId: "my-app" });
 
-client.state;            // "connected" — a plain getter
-client.sessionId;        // "uuid-1234" — a plain getter
+client.state; // "connected" — a plain getter
+client.sessionId; // "uuid-1234" — a plain getter
 client.selectedProvider; // null — a plain getter
 
 // React components won't re-render when these change.
@@ -51,7 +51,9 @@ class ClientStore {
   }
 
   // React's useSyncExternalStore calls these two:
-  getSnapshot(): ClientSnapshot { return this.#snapshot; }
+  getSnapshot(): ClientSnapshot {
+    return this.#snapshot;
+  }
   subscribe(listener: () => void): () => void {
     return this.#subscriptions.subscribe(listener);
   }
@@ -108,7 +110,11 @@ function useStoreSelector<T>(selector: (snap: ClientSnapshot) => T): T {
 ```
 
 <Callout type="info" title="Why not useState?">
-If you used `useState` + `useEffect` to sync external state, you'd have a render with stale data before the effect fires. With concurrent rendering, you could get tearing — different parts of the tree reading different snapshots. And state changes from outside React (extension crashes, transport drops) wouldn't trigger updates at all. `useSyncExternalStore` solves all of these.
+  If you used `useState` + `useEffect` to sync external state, you'd have a
+  render with stale data before the effect fires. With concurrent rendering, you
+  could get tearing — different parts of the tree reading different snapshots.
+  And state changes from outside React (extension crashes, transport drops)
+  wouldn't trigger updates at all. `useSyncExternalStore` solves all of these.
 </Callout>
 
 ### Snapshot identity
@@ -123,7 +129,7 @@ function snapshotsEqual(a: ClientSnapshot, b: ClientSnapshot): boolean {
     a.state === b.state &&
     a.sessionId === b.sessionId &&
     a.selectedProvider === b.selectedProvider &&
-    a.providers === b.providers &&  // referential equality — same array
+    a.providers === b.providers && // referential equality — same array
     a.error === b.error
   );
 }
@@ -187,5 +193,7 @@ During streaming, tokens can arrive hundreds of times per second. Re-rendering o
 ```
 
 <Callout type="tip" title="Related">
-See [Web SDK vs React SDK](/docs/concepts/web-sdk-vs-react) for when to use each SDK, or [Hooks Reference](/docs/reference/react/hooks) for the full list of available hooks and their return types.
+  See [Web SDK vs React SDK](/docs/concepts/web-sdk-vs-react) for when to use
+  each SDK, or [Hooks Reference](/docs/reference/react/hooks) for the full list
+  of available hooks and their return types.
 </Callout>

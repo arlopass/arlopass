@@ -82,17 +82,63 @@ type SubscriptionEvent =
 
 ```tsx
 type ChatSubscribe = {
-  (event: "response", messageId: MessageId, handler: (msg: TrackedChatMessage) => void): () => void;
+  (
+    event: "response",
+    messageId: MessageId,
+    handler: (msg: TrackedChatMessage) => void,
+  ): () => void;
   (event: "response", handler: (msg: TrackedChatMessage) => void): () => void;
-  (event: "stream", messageId: MessageId, handler: (delta: string, accumulated: string) => void): () => void;
-  (event: "error", handler: (error: ArlopassSDKError, messageId: MessageId | null) => void): () => void;
-  (event: "error", messageId: MessageId, handler: (error: ArlopassSDKError) => void): () => void;
-  (event: "tool_call", handler: (toolCallId: string, name: string, args: Record<string, unknown>, messageId: MessageId) => void): () => void;
-  (event: "tool_call", messageId: MessageId, handler: (toolCallId: string, name: string, args: Record<string, unknown>) => void): () => void;
-  (event: "tool_result", handler: (toolCallId: string, name: string, result: string, messageId: MessageId) => void): () => void;
-  (event: "tool_result", messageId: MessageId, handler: (toolCallId: string, name: string, result: string) => void): () => void;
+  (
+    event: "stream",
+    messageId: MessageId,
+    handler: (delta: string, accumulated: string) => void,
+  ): () => void;
+  (
+    event: "error",
+    handler: (error: ArlopassSDKError, messageId: MessageId | null) => void,
+  ): () => void;
+  (
+    event: "error",
+    messageId: MessageId,
+    handler: (error: ArlopassSDKError) => void,
+  ): () => void;
+  (
+    event: "tool_call",
+    handler: (
+      toolCallId: string,
+      name: string,
+      args: Record<string, unknown>,
+      messageId: MessageId,
+    ) => void,
+  ): () => void;
+  (
+    event: "tool_call",
+    messageId: MessageId,
+    handler: (
+      toolCallId: string,
+      name: string,
+      args: Record<string, unknown>,
+    ) => void,
+  ): () => void;
+  (
+    event: "tool_result",
+    handler: (
+      toolCallId: string,
+      name: string,
+      result: string,
+      messageId: MessageId,
+    ) => void,
+  ): () => void;
+  (
+    event: "tool_result",
+    messageId: MessageId,
+    handler: (toolCallId: string, name: string, result: string) => void,
+  ): () => void;
   (event: "tool_priming_start", handler: (message: string) => void): () => void;
-  (event: "tool_priming_match", handler: (tools: readonly string[]) => void): () => void;
+  (
+    event: "tool_priming_match",
+    handler: (tools: readonly string[]) => void,
+  ): () => void;
   (event: "tool_priming_end", handler: () => void): () => void;
 };
 ```
@@ -103,11 +149,26 @@ Overloaded subscribe function returned by `useConversation`. Supports targeted s
 
 ```tsx
 type ChatSubscribeNoTools = {
-  (event: "response", messageId: MessageId, handler: (msg: TrackedChatMessage) => void): () => void;
+  (
+    event: "response",
+    messageId: MessageId,
+    handler: (msg: TrackedChatMessage) => void,
+  ): () => void;
   (event: "response", handler: (msg: TrackedChatMessage) => void): () => void;
-  (event: "stream", messageId: MessageId, handler: (delta: string, accumulated: string) => void): () => void;
-  (event: "error", handler: (error: ArlopassSDKError, messageId: MessageId | null) => void): () => void;
-  (event: "error", messageId: MessageId, handler: (error: ArlopassSDKError) => void): () => void;
+  (
+    event: "stream",
+    messageId: MessageId,
+    handler: (delta: string, accumulated: string) => void,
+  ): () => void;
+  (
+    event: "error",
+    handler: (error: ArlopassSDKError, messageId: MessageId | null) => void,
+  ): () => void;
+  (
+    event: "error",
+    messageId: MessageId,
+    handler: (error: ArlopassSDKError) => void,
+  ): () => void;
 };
 ```
 
@@ -190,7 +251,13 @@ type ChatRole = "system" | "user" | "assistant";
 #### ClientState
 
 ```tsx
-type ClientState = "disconnected" | "connecting" | "connected" | "degraded" | "reconnecting" | "failed";
+type ClientState =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "degraded"
+  | "reconnecting"
+  | "failed";
 ```
 
 #### ProviderDescriptor

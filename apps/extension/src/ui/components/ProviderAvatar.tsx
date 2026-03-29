@@ -15,6 +15,25 @@ const slugMap: Record<string, string> = {
   claude: "claude-color",
   claudecode: "claudecode-color",
   google: "google-color",
+  vertexai: "vertexai-color",
+  deepseek: "deepseek-color",
+  mistral: "mistral-color",
+  meta: "meta-color",
+  cohere: "cohere-color",
+  groq: "groq",
+  together: "together-color",
+  fireworks: "fireworks-color",
+  replicate: "replicate",
+  huggingface: "huggingface-color",
+  nvidia: "nvidia-color",
+  lmstudio: "lmstudio",
+  xai: "xai",
+  ai21: "ai21",
+  cerebras: "cerebras-color",
+  sambanova: "sambanova-color",
+  cloudflare: "cloudflare-color",
+  openrouter: "openrouter",
+  deepinfra: "deepinfra-color",
 };
 
 /**
@@ -27,6 +46,12 @@ const needsInvert = new Set([
   "githubcopilot",
   "opencode",
   "ollama",
+  "groq",
+  "replicate",
+  "lmstudio",
+  "xai",
+  "ai21",
+  "openrouter",
 ]);
 
 export type ProviderAvatarProps = {

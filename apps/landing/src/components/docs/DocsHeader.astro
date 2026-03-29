@@ -76,7 +76,18 @@
       class="flex items-center justify-center w-8 h-8 rounded-md bg-transparent border border-[var(--ap-border)] text-[var(--ap-text-tertiary)] hover:text-brand hover:border-brand transition-all cursor-pointer"
       aria-label="Toggle AI chat"
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+        ></path></svg
+      >
     </button>
 
     {/* Theme toggle */}
@@ -184,9 +195,9 @@
   });
 
   // Chat toggle
-  const chatToggle = document.getElementById('docs-chat-toggle');
-  chatToggle?.addEventListener('click', () => {
-    document.dispatchEvent(new CustomEvent('toggle-chat'));
+  const chatToggle = document.getElementById("docs-chat-toggle");
+  chatToggle?.addEventListener("click", () => {
+    document.dispatchEvent(new CustomEvent("toggle-chat"));
   });
 
   // Sidebar toggle (mobile)

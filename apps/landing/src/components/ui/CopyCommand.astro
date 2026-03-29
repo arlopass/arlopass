@@ -1,0 +1,87 @@
+---
+/**
+ * Copy-to-clipboard terminal command block.
+ * Shows a command in a code block with a copy button.
+ */
+interface Props {
+  command: string;
+  label?: string;
+}
+
+const { command, label } = Astro.props;
+const id = `cmd-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div class="group relative">
+  {
+    label && (
+      <span class="block text-xs text-[var(--ap-text-tertiary)] mb-1.5">
+        {label}
+      </span>
+    )
+  }
+  <div
+    class="flex items-center gap-2 bg-[var(--ap-bg-code)] rounded-lg border border-[var(--ap-border)] overflow-hidden"
+  >
+    <code
+      id={id}
+      class="flex-1 block text-sm font-mono text-[var(--ap-text-body)] px-4 py-3 overflow-x-auto whitespace-nowrap"
+    >
+      {command}
+    </code>
+    <button
+      class="shrink-0 flex items-center justify-center w-10 h-10 text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-primary)] transition-colors cursor-pointer bg-transparent border-none"
+      aria-label="Copy command"
+      data-copy-target={id}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="copy-icon"
+      >
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+      </svg>
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="check-icon hidden text-success"
+      >
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll("[data-copy-target]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const targetId = btn.getAttribute("data-copy-target");
+      const el = targetId ? document.getElementById(targetId) : null;
+      if (!el) return;
+      await navigator.clipboard.writeText(el.textContent?.trim() ?? "");
+      const copyIcon = btn.querySelector(".copy-icon") as HTMLElement;
+      const checkIcon = btn.querySelector(".check-icon") as HTMLElement;
+      if (copyIcon && checkIcon) {
+        copyIcon.classList.add("hidden");
+        checkIcon.classList.remove("hidden");
+        setTimeout(() => {
+          copyIcon.classList.remove("hidden");
+          checkIcon.classList.add("hidden");
+        }, 2000);
+      }
+    });
+  });
+</script>

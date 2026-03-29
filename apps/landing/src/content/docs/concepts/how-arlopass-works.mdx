@@ -8,7 +8,7 @@ keywords: ["architecture", "extension", "bridge", "vault"]
 schema: "Article"
 ---
 
-import Callout from '../../../components/docs/Callout.astro';
+import Callout from "../../../components/docs/Callout.astro";
 
 Understanding the architecture — extension, SDK, bridge, and adapters
 
@@ -23,7 +23,8 @@ Arlopass works like MetaMask does for Ethereum. MetaMask sits between your web a
 Arlopass does the same for AI. The browser extension holds API credentials, mediates every request, and the web application never sees a single key. Your app talks to the SDK. The SDK talks to the extension. The extension talks to providers.
 
 <Callout type="info" title="Key insight">
-The extension is the trust boundary. Everything on the web app side is untrusted. Everything on the extension side is controlled by the user.
+  The extension is the trust boundary. Everything on the web app side is
+  untrusted. Everything on the extension side is controlled by the user.
 </Callout>
 
 ### Architecture layers
@@ -113,5 +114,8 @@ If the connection degrades (e.g., the bridge goes down), the state machine trans
 On first use, the user sets up the vault with a master password or OS keychain integration. The bridge creates the encrypted vault file and all subsequent credential storage flows through it. On subsequent browser opens, the vault is already unlocked for the duration of the bridge process — or prompts once for the master password if the bridge was restarted.
 
 <Callout type="tip" title="Related">
-See [Transport Model](/docs/concepts/transport-model) for how the SDK-to-extension communication works, or [Security Model](/docs/guides/security) for a deep dive into credential isolation and envelope security.
+  See [Transport Model](/docs/concepts/transport-model) for how the
+  SDK-to-extension communication works, or [Security
+  Model](/docs/guides/security) for a deep dive into credential isolation and
+  envelope security.
 </Callout>

@@ -1,5 +1,5 @@
 ---
-import type { NavItem } from '../../data/docs-nav';
+import type { NavItem } from "../../data/docs-nav";
 
 interface Props {
   prev: NavItem | null;
@@ -9,23 +9,32 @@ interface Props {
 const { prev, next } = Astro.props;
 ---
 
-{(prev || next) && (
-  <nav class="border-t border-[var(--ap-border)] mt-16 pt-8 flex justify-between" aria-label="Page navigation">
-    {prev ? (
-      <a
-        href={`/docs/${prev.slug}`}
-        class="text-sm text-[var(--ap-text-link)] hover:text-[var(--ap-text-link-hover)] transition-colors no-underline"
-      >
-        ← {prev.label}
-      </a>
-    ) : <span />}
-    {next ? (
-      <a
-        href={`/docs/${next.slug}`}
-        class="text-sm text-[var(--ap-text-link)] hover:text-[var(--ap-text-link-hover)] transition-colors no-underline"
-      >
-        {next.label} →
-      </a>
-    ) : <span />}
-  </nav>
-)}
+{
+  (prev || next) && (
+    <nav
+      class="border-t border-[var(--ap-border)] mt-16 pt-8 flex justify-between"
+      aria-label="Page navigation"
+    >
+      {prev ? (
+        <a
+          href={`/docs/${prev.slug}`}
+          class="text-sm text-[var(--ap-text-link)] hover:text-[var(--ap-text-link-hover)] transition-colors no-underline"
+        >
+          ← {prev.label}
+        </a>
+      ) : (
+        <span />
+      )}
+      {next ? (
+        <a
+          href={`/docs/${next.slug}`}
+          class="text-sm text-[var(--ap-text-link)] hover:text-[var(--ap-text-link-hover)] transition-colors no-underline"
+        >
+          {next.label} →
+        </a>
+      ) : (
+        <span />
+      )}
+    </nav>
+  )
+}
