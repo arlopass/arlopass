@@ -50,6 +50,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm run build
+
       - name: Run chaos test suite
         run: pnpm run test -- ops/tests/chaos
         env:
@@ -86,6 +89,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm run build
+
       - name: Run version-skew compatibility matrix
         run: pnpm run test -- ops/tests/version-skew
 
@@ -110,6 +116,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm run build
 
       - name: Run adapter conformance release gates
         run: pnpm run test -- ops/tests/release-gates
@@ -138,6 +147,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm run build
 
       - name: Run soak test suite
         run: pnpm run test -- ops/tests/soak
