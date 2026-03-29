@@ -10,6 +10,7 @@ import { AddProviderWizard } from "./ui/components/onboarding/AddProviderWizard.
 import { useVault } from "./ui/hooks/useVault.js";
 import { VaultGate } from "./ui/components/VaultGate.js";
 import { VaultProvider } from "./ui/hooks/VaultContext.js";
+import { useColorScheme } from "./ui/hooks/useColorScheme.js";
 
 type OnboardingRoute = "bridge-install" | "add-provider-onboarding" | null;
 
@@ -149,8 +150,9 @@ if (route !== null) {
 
   function OptionsOnboardingApp() {
     const vault = useVault();
+    const colorScheme = useColorScheme();
     return (
-      <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
+      <MantineProvider theme={arlopassTheme} forceColorScheme={colorScheme}>
         <VaultGate
           status={vault.status}
           onSetup={vault.setup}

@@ -18,7 +18,8 @@ function deriveProviderKey(provider: WalletProvider): string {
     return "anthropic";
   if (m.startsWith("openai.") || nameLower.includes("openai")) return "openai";
   if (m.startsWith("gemini.") || nameLower.includes("gemini")) return "gemini";
-  if (m.startsWith("vertex.") || nameLower.includes("vertex")) return "vertexai";
+  if (m.startsWith("vertex.") || nameLower.includes("vertex"))
+    return "vertexai";
   if (m.startsWith("foundry.") || nameLower.includes("microsoft"))
     return "microsoft";
   if (m.startsWith("bedrock.")) return "bedrock";
@@ -149,7 +150,11 @@ export function SelectModelsStep({
                       </svg>
                     )}
                   </div>
-                  <ModelAvatar modelId={model.id} providerKey={model.providerKey} size={16} />
+                  <ModelAvatar
+                    modelId={model.id}
+                    providerKey={model.providerKey}
+                    size={16}
+                  />
                   <span className="text-[10px] font-medium text-[var(--ap-text-primary)] truncate flex-1 min-w-0 text-left">
                     {model.name}
                   </span>

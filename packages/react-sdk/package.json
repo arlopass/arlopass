@@ -1,53 +1,53 @@
 {
-  "name": "@arlopass/react",
-  "version": "0.1.0",
-  "license": "MIT",
-  "type": "module",
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/AltClick/arlopass.git",
-    "directory": "packages/react-sdk"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+    "name": "@arlopass/react",
+    "version": "0.1.0",
+    "license": "MIT",
+    "type": "module",
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
     },
-    "./guards": {
-      "types": "./dist/guards/index.d.ts",
-      "import": "./dist/guards/index.js"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/AltClick/arlopass.git",
+        "directory": "packages/react-sdk"
     },
-    "./testing": {
-      "types": "./dist/testing/index.d.ts",
-      "import": "./dist/testing/index.js"
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./guards": {
+            "types": "./dist/guards/index.d.ts",
+            "import": "./dist/guards/index.js"
+        },
+        "./testing": {
+            "types": "./dist/testing/index.d.ts",
+            "import": "./dist/testing/index.js"
+        }
+    },
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "lint": "eslint \"src/**/*.{ts,tsx}\"",
+        "test": "vitest run --passWithNoTests"
+    },
+    "peerDependencies": {
+        "react": "^18.0.0 || ^19.0.0"
+    },
+    "dependencies": {
+        "@arlopass/web-sdk": "workspace:*"
+    },
+    "devDependencies": {
+        "@testing-library/react": "^16.1.0",
+        "@types/react": "^19.0.0",
+        "jsdom": "^25.0.0",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4"
     }
-  },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "test": "vitest run --passWithNoTests"
-  },
-  "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
-  },
-  "dependencies": {
-    "@arlopass/web-sdk": "workspace:*"
-  },
-  "devDependencies": {
-    "@testing-library/react": "^16.1.0",
-    "@types/react": "^19.0.0",
-    "jsdom": "^25.0.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  }
 }

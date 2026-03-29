@@ -1155,6 +1155,8 @@ function loadOrGenerateSigningKey(env: NodeJS.ProcessEnv): Buffer {
  * performing a handshake — there is no shared secret.
  */
 async function main(): Promise<void> {
+  process.title = "Arlopass Bridge";
+
   const signingKey = loadOrGenerateSigningKey(process.env);
   const cloudFeatureFlags = createCloudFeatureFlagsFromEnv(process.env);
   const authenticatedOriginPolicy =

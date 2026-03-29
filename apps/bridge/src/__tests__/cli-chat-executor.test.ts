@@ -465,7 +465,6 @@ describe("CopilotCliChatExecutor", () => {
         sessionId: "sess.cli.002",
       }),
     );
-    const calls = (spawnFn as unknown as { mock: { calls: Array<[string, string[]]> } }).mock.calls;
     expect(argsContain(spawnFn, "--continue", 1)).toBe(true);
     expect(argsContain(spawnFn, "--continue", 2)).toBe(false);
     expect(result.content).toBe("fallback");

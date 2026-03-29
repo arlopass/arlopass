@@ -53,6 +53,36 @@ jobs:
       - name: Build all packages
         run: pnpm run build
 
+      - name: Generate icon assets
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "win" ]; then
+            # Windows: generate .ico using ImageMagick (pre-installed on windows-latest)
+            cd apps/bridge/assets
+            for size in 16 24 32 48 64 128 256; do
+              magick -background none -density 300 icon.svg -resize "${size}x${size}" "icon-${size}.png"
+            done
+            magick icon-16.png icon-24.png icon-32.png icon-48.png icon-64.png icon-128.png icon-256.png icon.ico
+          elif [ "${{ matrix.os }}" = "macos" ]; then
+            # macOS: generate .icns using rsvg-convert + iconutil
+            cd apps/bridge/assets
+            brew install --quiet librsvg
+            ICONSET=$(mktemp -d)/icon.iconset
+            mkdir -p "${ICONSET}"
+            for size in 16 32 64 128 256; do
+              rsvg-convert -w "$size" -h "$size" icon.svg > "${ICONSET}/tmp-${size}.png"
+            done
+            cp "${ICONSET}/tmp-16.png"  "${ICONSET}/icon_16x16.png"
+            cp "${ICONSET}/tmp-32.png"  "${ICONSET}/icon_16x16@2x.png"
+            cp "${ICONSET}/tmp-32.png"  "${ICONSET}/icon_32x32.png"
+            cp "${ICONSET}/tmp-64.png"  "${ICONSET}/icon_32x32@2x.png"
+            cp "${ICONSET}/tmp-128.png" "${ICONSET}/icon_128x128.png"
+            cp "${ICONSET}/tmp-256.png" "${ICONSET}/icon_128x128@2x.png"
+            cp "${ICONSET}/tmp-256.png" "${ICONSET}/icon_256x256.png"
+            cp "${ICONSET}/tmp-256.png" "${ICONSET}/icon_256x256@2x.png"
+            iconutil -c icns "${ICONSET}" -o icon.icns
+          fi
+
       - name: Bundle bridge into single CJS file
         run: |
           pnpm exec esbuild apps/bridge/dist/main.js \
@@ -92,11 +122,26 @@ jobs:
           pnpm exec postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob `
             --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
+      - name: Stamp Windows executable metadata
+        if: matrix.os == 'win'
+        shell: pwsh
+        run: |
+          npx --yes @electron/rcedit "${{ matrix.binary }}" `
+            --set-icon "apps/bridge/assets/icon.ico" `
+            --set-version-string "FileDescription" "Arlopass Bridge" `
+            --set-version-string "ProductName" "Arlopass Bridge" `
+            --set-version-string "CompanyName" "AltClick" `
+            --set-version-string "LegalCopyright" "Copyright (c) AltClick. MIT License." `
+            --set-version-string "OriginalFilename" "arlopass-bridge.exe" `
+            --set-version-string "InternalName" "arlopass-bridge" `
+            --set-file-version "${{ inputs.version }}.0" `
+            --set-product-version "${{ inputs.version }}"
+
       - name: Post-process (macOS ad-hoc re-sign)
         if: matrix.os == 'macos'
         run: |
           codesign --remove-signature "${{ matrix.binary }}"
-          codesign -s - "${{ matrix.binary }}"
+          codesign -s - -i com.arlopass.bridge "${{ matrix.binary }}"
 
       - name: Post-process (Linux chmod)
         if: matrix.os == 'linux'

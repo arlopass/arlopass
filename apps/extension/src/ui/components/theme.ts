@@ -37,39 +37,39 @@ export const arlopassTheme: MantineThemeOverride = createTheme({
 /**
  * Arlopass design tokens for the extension popup.
  *
- * Dark mode with warm stone tones, following the Arlopass design system.
- * All components reference these tokens — change here to cascade everywhere.
+ * References CSS custom properties so colors adapt to light/dark mode
+ * automatically via prefers-color-scheme media query in app.css.
  */
 export const tokens = {
     color: {
         // Text
-        textPrimary: "#FAFAF9",      // Warm white — headings, emphasis
-        textBody: "#D6D3D1",         // Warm stone — body text
-        textSecondary: "#A8A29E",    // Muted stone — labels, metadata
-        textTertiary: "#78716C",     // Dim stone — disabled, decorative
+        textPrimary: "var(--ap-text-primary)",
+        textBody: "var(--ap-text-body)",
+        textSecondary: "var(--ap-text-secondary)",
+        textTertiary: "var(--ap-text-tertiary)",
 
         // Surfaces
-        bgBase: "#1C1917",           // Deep brown-black — popup body
-        bgSurface: "#292524",        // Stone dark — cards, container
-        bgElevated: "#3D3835",       // Stone mid — hover, modals, dropdowns
-        bgCode: "#1A1412",           // Espresso — code blocks
+        bgBase: "var(--ap-bg-base)",
+        bgSurface: "var(--ap-bg-surface)",
+        bgElevated: "var(--ap-bg-elevated)",
+        bgCode: "var(--ap-bg-code)",
 
         // Borders
-        border: "#44403C",           // Warm border — dividers
-        borderStrong: "#57534E",     // Stronger — active states
+        border: "var(--ap-border)",
+        borderStrong: "var(--ap-border-strong)",
 
         // Brand
-        brand: "#DB4D12",            // Terracotta — primary accent
-        brandHover: "#9A3412",       // Terracotta dark — hover
-        brandSubtle: "#2C1A0E",      // Terracotta at 8% on dark
+        brand: "#DB4D12",
+        brandHover: "#9A3412",
+        brandSubtle: "var(--ap-brand-subtle)",
 
         // Semantic
-        success: "#4D7C0F",          // Sage green — connected, approved
-        successSubtle: "#1A2E05",    // Sage on dark
-        warning: "#CA8A04",          // Gold — caution
-        warningSubtle: "#2E2204",    // Gold on dark
-        danger: "#B91C1C",           // Crimson — error, denied
-        dangerSubtle: "#2E0505",     // Crimson on dark
+        success: "#4D7C0F",
+        successSubtle: "var(--ap-success-subtle)",
+        warning: "#CA8A04",
+        warningSubtle: "var(--ap-warning-subtle, #2E2204)",
+        danger: "#B91C1C",
+        dangerSubtle: "var(--ap-danger-subtle, #2E0505)",
 
         // Buttons (primary uses brand terracotta)
         btnPrimaryBg: "#DB4D12",

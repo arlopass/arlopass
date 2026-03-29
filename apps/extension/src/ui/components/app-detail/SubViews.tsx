@@ -229,7 +229,11 @@ export function EnableModelSubView({
                     </svg>
                   )}
                 </div>
-                <ModelAvatar modelId={m.id} providerKey={m.providerKey} size={16} />
+                <ModelAvatar
+                  modelId={m.id}
+                  providerKey={m.providerKey}
+                  size={16}
+                />
                 <span className="text-[10px] font-medium text-[var(--ap-text-primary)] truncate flex-1 min-w-0">
                   {m.name}
                 </span>

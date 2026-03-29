@@ -1,6 +1,5 @@
 // apps/bridge/src/vault/vault-keychain.ts
 import { execFile } from "node:child_process";
-import { randomBytes } from "node:crypto";
 import process from "node:process";
 
 export type KeychainAdapter = {
@@ -58,22 +57,6 @@ function windowsAdapter(): KeychainAdapter {
         async getKey(): Promise<Buffer | null> {
             try {
                 // Use cmdkey to check existence, then PowerShell to read the password
-                const psScript = `
-                    $cred = Get-StoredCredential -Target '${target}' -ErrorAction SilentlyContinue
-                    if ($cred) { $cred.GetNetworkCredential().Password } else { '' }
-                `.trim();
-                // Fallback: use CredRead via .NET interop
-                const script = `
-                    Add-Type -AssemblyName System.Runtime.InteropServices
-                    $sig = '[DllImport("advapi32.dll", SetLastError=true, CharSet=CharSet.Unicode)] public static extern bool CredRead(string target, int type, int reserved, out IntPtr cred);'
-                    $sigDel = '[DllImport("advapi32.dll")] public static extern void CredFree(IntPtr cred);'
-                    $Advapi = Add-Type -MemberDefinition "$sig $sigDel" -Name Advapi32 -Namespace Win32 -PassThru
-                    $ptr = [IntPtr]::Zero
-                    if ($Advapi::CredRead('${target}', 1, 0, [ref]$ptr)) {
-                        $cred = [System.Runtime.InteropServices.Marshal]::PtrToStructure($ptr, [Type][System.Runtime.InteropServices.ComTypes.CREDENTIAL_W_PLACEHOLDER])
-                        # Just read raw bytes via credential blob
-                    }
-                `.trim();
                 // Simpler approach: store as base64 in a generic credential via cmdkey
                 const stdout = await exec("powershell.exe", [
                     "-NoProfile", "-NonInteractive", "-Command",

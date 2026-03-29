@@ -19,6 +19,7 @@ import { arlopassTheme } from "./ui/components/theme.js";
 import { useVault } from "./ui/hooks/useVault.js";
 import { VaultGate } from "./ui/components/VaultGate.js";
 import { VaultProvider } from "./ui/hooks/VaultContext.js";
+import { useColorScheme } from "./ui/hooks/useColorScheme.js";
 import { useWalletProviders } from "./ui/hooks/useWalletProviders.js";
 import { useActiveTabApp } from "./ui/hooks/useActiveTabApp.js";
 import {
@@ -85,9 +86,10 @@ async function restoreView(): Promise<PersistedViewState | null> {
 
 function App() {
   const vault = useVault();
+  const colorScheme = useColorScheme();
 
   return (
-    <MantineProvider theme={arlopassTheme} forceColorScheme="dark">
+    <MantineProvider theme={arlopassTheme} forceColorScheme={colorScheme}>
       <VaultGate
         status={vault.status}
         onSetup={vault.setup}

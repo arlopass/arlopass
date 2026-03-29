@@ -26,7 +26,11 @@ export function AppModelCard({
         className="flex items-center justify-between w-full px-3 py-2.5 bg-transparent border-none cursor-pointer text-left gap-3"
       >
         <div className="flex items-center gap-2.5 overflow-hidden flex-1 min-w-0">
-          <ModelAvatar modelId={modelId} providerKey={model.providerKey} size={24} />
+          <ModelAvatar
+            modelId={modelId}
+            providerKey={model.providerKey}
+            size={24}
+          />
           <div className="flex flex-col gap-0 overflow-hidden min-w-0">
             <span className="text-xs font-semibold text-[var(--ap-text-primary)] leading-normal truncate">
               {model.name}

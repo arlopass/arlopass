@@ -110,11 +110,11 @@ function tagColor(tag: string): string {
     case "Platform":
       return "bg-[var(--ap-brand-subtle)] text-brand";
     case "SDK":
-      return "bg-blue-50 text-[#2563eb] dark:bg-blue-950 dark:text-blue-400";
+      return "bg-[var(--ap-brand-subtle)] text-brand";
     case "Enterprise":
-      return "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-400";
+      return "bg-[var(--ap-bg-elevated)] text-[var(--ap-text-secondary)]";
     case "Ecosystem":
-      return "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400";
+      return "bg-[var(--ap-bg-elevated)] text-[var(--ap-text-secondary)]";
     default:
       return "bg-[var(--ap-bg-elevated)] text-[var(--ap-text-secondary)]";
   }
@@ -157,7 +157,7 @@ function tagColor(tag: string): string {
         {
           now.map((item, i) => (
             <div
-              class={`bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 ${i < now.length - 1 ? "border-b border-[var(--ap-border)]" : ""} ${i % 2 === 0 ? "sm:border-r border-[var(--ap-border)]" : ""}`}
+              class={`bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 ${i % 2 === 0 ? "sm:border-r border-[var(--ap-border)]" : ""} ${i < now.length - 2 || (now.length % 2 !== 0 && i < now.length - 1) ? "border-b border-[var(--ap-border)]" : ""}`}
             >
               <div class="flex items-center gap-2 mb-2">
                 <span class="w-2 h-2 rounded-full bg-success shrink-0" />
@@ -253,7 +253,7 @@ function tagColor(tag: string): string {
         {
           later.map((item, i) => (
             <div
-              class={`bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 ${i < later.length - 1 ? "border-b border-[var(--ap-border)]" : ""} ${i % 2 === 0 ? "sm:border-r border-[var(--ap-border)]" : ""}`}
+              class={`bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10 ${i % 2 === 0 ? "sm:border-r border-[var(--ap-border)]" : ""} ${i < later.length - 2 || (later.length % 2 !== 0 && i < later.length - 1) ? "border-b border-[var(--ap-border)]" : ""}`}
             >
               <div class="flex items-center gap-2 mb-2">
                 <span class="w-2 h-2 rounded-full bg-[var(--ap-text-tertiary)] shrink-0" />
