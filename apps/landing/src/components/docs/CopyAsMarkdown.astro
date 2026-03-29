@@ -1,0 +1,40 @@
+---
+interface Props {
+  rawContent: string;
+}
+
+const { rawContent } = Astro.props;
+---
+
+<button
+  class="inline-flex items-center gap-1.5 text-xs text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-secondary)] transition-colors border border-[var(--ap-border)] rounded px-2 py-1 cursor-pointer bg-transparent"
+  data-copy-md
+  aria-label="Copy page as Markdown"
+>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+  <span data-copy-label>Copy as Markdown</span>
+</button>
+
+<template data-md-source>{rawContent}</template>
+
+<script>
+  document.querySelectorAll('[data-copy-md]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tmpl = btn.parentElement?.querySelector('[data-md-source]') ??
+                   btn.closest('[data-md-source]') ??
+                   document.querySelector('[data-md-source]');
+      const md = tmpl?.textContent || '';
+      navigator.clipboard.writeText(md).then(() => {
+        const label = btn.querySelector('[data-copy-label]');
+        if (label) {
+          const original = label.textContent;
+          label.textContent = 'Copied!';
+          setTimeout(() => { label.textContent = original; }, 2000);
+        }
+      });
+    });
+  });
+</script>
