@@ -1,0 +1,15 @@
+---
+title: "Streaming"
+description: "Real-time streaming demo — watch AI responses arrive chunk by chunk."
+category: "Interactive"
+order: 5
+lastUpdated: 2026-03-29
+keywords: ["streaming", "real-time", "demo"]
+schema: "WebApplication"
+interactive: true
+---
+
+import { StreamingDemo } from '../../../components/islands/interactive/index';
+import '@mantine/core/styles.css';
+
+<StreamingDemo client:only="react" />
