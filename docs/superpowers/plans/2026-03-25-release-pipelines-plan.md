@@ -47,12 +47,12 @@ With:
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/arlopass.git",
+    "url": "https://github.com/arlopass/arlopass.git",
     "directory": "packages/protocol"
   },
-  "homepage": "https://github.com/AltClick/arlopass/tree/main/packages/protocol#readme",
+  "homepage": "https://github.com/arlopass/arlopass/tree/main/packages/protocol#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/arlopass/issues"
+    "url": "https://github.com/arlopass/arlopass/issues"
   },
 ```
 
@@ -189,12 +189,12 @@ Remove `"private": true`. Add publish fields and `bin`:
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/arlopass.git",
+    "url": "https://github.com/arlopass/arlopass.git",
     "directory": "apps/bridge"
   },
-  "homepage": "https://github.com/AltClick/arlopass/tree/main/apps/bridge#readme",
+  "homepage": "https://github.com/arlopass/arlopass/tree/main/apps/bridge#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/arlopass/issues"
+    "url": "https://github.com/arlopass/arlopass/issues"
   },
 ```
 
@@ -1700,7 +1700,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$REPO = "AltClick/arlopass"
+$REPO = "Arlopass/arlopass"
 $INSTALL_DIR = Join-Path $env:LOCALAPPDATA "Arlopass\bin"
 $BINARY_NAME = "arlopass-bridge.exe"
 $NATIVE_HOST_NAME = "com.arlopass.bridge"
@@ -1852,7 +1852,7 @@ if ($Uninstall) {
 # Uninstall: curl -fsSL https://arlopassai.com/install.sh | sh -s -- --uninstall
 set -euo pipefail
 
-REPO="AltClick/arlopass"
+REPO="Arlopass/arlopass"
 INSTALL_DIR="${HOME}/.local/bin"
 BINARY_NAME="arlopass-bridge"
 NATIVE_HOST_NAME="com.arlopass.bridge"

@@ -81,4 +81,4 @@ The transport detects the Arlopass browser extension (`window.arlopass`), auto-c
 ## Links
 
 - [Arlopass website](https://arlopass.com)
-- [GitHub](https://github.com/AltClick/arlopass-web/tree/main/packages/ai-sdk-transport)
+- [GitHub](https://github.com/arlopass/arlopass-web/tree/main/packages/ai-sdk-transport)

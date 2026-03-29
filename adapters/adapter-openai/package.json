@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/arlopass.git",
+    "url": "https://github.com/arlopass/arlopass.git",
     "directory": "adapters/adapter-openai"
   },
-  "homepage": "https://github.com/AltClick/arlopass/tree/main/adapters/adapter-openai#readme",
+  "homepage": "https://github.com/arlopass/arlopass/tree/main/adapters/adapter-openai#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/arlopass/issues"
+    "url": "https://github.com/arlopass/arlopass/issues"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

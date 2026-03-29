@@ -167,7 +167,7 @@ Use `navigator.platform` / `navigator.userAgent` to detect Windows, macOS, Linux
 
 **① Download**
 - Button: "Download Arlopass Bridge for Windows" with file size
-- URL: `https://github.com/AltClick/arlopass/releases/latest/download/arlopass-bridge-win-x64.exe`
+- URL: `https://github.com/arlopass/arlopass/releases/latest/download/arlopass-bridge-win-x64.exe`
 - Label below: "arlopass-bridge-win-x64.exe · ~12 MB"
 
 **② Run the installer**

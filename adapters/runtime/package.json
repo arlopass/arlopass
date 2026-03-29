@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/arlopass.git",
+    "url": "https://github.com/arlopass/arlopass.git",
     "directory": "adapters/runtime"
   },
-  "homepage": "https://github.com/AltClick/arlopass/tree/main/adapters/runtime#readme",
+  "homepage": "https://github.com/arlopass/arlopass/tree/main/adapters/runtime#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/arlopass/issues"
+    "url": "https://github.com/arlopass/arlopass/issues"
   },
   "exports": {
     ".": {

@@ -31,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/arlopass-web.git",
+    "url": "https://github.com/arlopass/arlopass-web.git",
     "directory": "packages/ai-sdk-transport"
   },
   "exports": {

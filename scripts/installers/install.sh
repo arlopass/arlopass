@@ -7,7 +7,7 @@
 #   ARLOPASS_CHROME_EXT_ID=... ARLOPASS_EDGE_EXT_ID=... ARLOPASS_FIREFOX_EXT_ID=... sh install.sh
 set -eu
 
-REPO="AltClick/arlopass"
+REPO="Arlopass/arlopass"
 INSTALL_DIR="${HOME}/.local/bin"
 BINARY_NAME="arlopass-bridge"
 NATIVE_HOST_NAME="com.arlopass.bridge"

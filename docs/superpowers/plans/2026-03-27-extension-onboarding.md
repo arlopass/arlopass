@@ -156,7 +156,7 @@ Full-page component for the options page. Content from spec Section 5:
 - Expandable troubleshooting section
 - "← Back" link to return to popup
 
-Download URL: `https://github.com/AltClick/arlopass/releases/latest/download/arlopass-bridge-{os}-{arch}{ext}`
+Download URL: `https://github.com/arlopass/arlopass/releases/latest/download/arlopass-bridge-{os}-{arch}{ext}`
 
 - [ ] **Step 3: Commit**
 

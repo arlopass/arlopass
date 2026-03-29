@@ -1,11 +1,11 @@
 # Global fallback
-* @AltClick
+* @Arlopass
 
 # Core packages
-/packages/ @AltClick
-/adapters/ @AltClick
-/apps/bridge/ @AltClick
-/apps/extension/ @AltClick
-/apps/examples-web/ @AltClick
-/apps/landing/ @AltClick
-/ops/ @AltClick
+/packages/ @Arlopass
+/adapters/ @Arlopass
+/apps/bridge/ @Arlopass
+/apps/extension/ @Arlopass
+/apps/examples-web/ @Arlopass
+/apps/landing/ @Arlopass
+/ops/ @Arlopass

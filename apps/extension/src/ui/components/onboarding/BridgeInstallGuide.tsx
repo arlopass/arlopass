@@ -49,7 +49,7 @@ const OS_LABELS: Record<OS, string> = {
 };
 
 const DOWNLOAD_URL =
-  "https://github.com/AltClick/arlopass/releases/latest/download/arlopass-bridge-win-x64.exe";
+  "https://github.com/arlopass/arlopass/releases/latest/download/arlopass-bridge-win-x64.exe";
 const INSTALL_COMMAND = "curl -fsSL https://arlopassai.com/install.sh | sh";
 
 function WindowsInstructions() {

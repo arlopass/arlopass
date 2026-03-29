@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltClick/arlopass.git",
+    "url": "https://github.com/arlopass/arlopass.git",
     "directory": "apps/bridge"
   },
-  "homepage": "https://github.com/AltClick/arlopass/tree/main/apps/bridge#readme",
+  "homepage": "https://github.com/arlopass/arlopass/tree/main/apps/bridge#readme",
   "bugs": {
-    "url": "https://github.com/AltClick/arlopass/issues"
+    "url": "https://github.com/arlopass/arlopass/issues"
   },
   "bin": {
     "arlopass-bridge": "./dist/main.js"

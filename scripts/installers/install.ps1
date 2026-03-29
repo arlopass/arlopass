@@ -25,7 +25,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$REPO = "AltClick/arlopass"
+$REPO = "Arlopass/arlopass"
 $INSTALL_DIR = Join-Path $env:LOCALAPPDATA "Arlopass\bin"
 $BINARY_NAME = "arlopass-bridge.exe"
 $NATIVE_HOST_NAME = "com.arlopass.bridge"

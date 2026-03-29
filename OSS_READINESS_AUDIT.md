@@ -82,11 +82,11 @@ The root `package.json` declares `"private": true` (correct for monorepo root) b
 
 `packages/ai-sdk-transport/package.json` points to:
 ```json
-"url": "https://github.com/AltClick/arlopass-web.git"
+"url": "https://github.com/arlopass/arlopass-web.git"
 ```
 Should be:
 ```json
-"url": "https://github.com/AltClick/arlopass.git"
+"url": "https://github.com/arlopass/arlopass.git"
 ```
 This breaks npm package page links and GitHub integration.
 
