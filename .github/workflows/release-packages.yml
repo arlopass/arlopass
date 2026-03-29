@@ -47,10 +47,31 @@ jobs:
       - name: Confirm production release gate
         run: echo "Production environment gate passed"
 
+  changelog:
+    name: Verify changelog entry
+    needs: parse-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure version exists in CHANGELOG
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.parse-tag.outputs.version }}"
+          if ! grep -qE "^## \[${VERSION//./\\.}\]" CHANGELOG.md; then
+            echo "::error::Missing CHANGELOG.md section for version ${VERSION}"
+            exit 1
+          fi
+
   ci-gate:
     name: CI Gate
+    needs:
+      - changelog
+      - parse-tag
     uses: ./.github/workflows/_ci-gate.yml
 
+    with:
+      scope: ${{ needs.parse-tag.outputs.scope }}
   build:
     name: Build
     needs: [parse-tag, ci-gate]
@@ -66,6 +87,7 @@ jobs:
       scope: ${{ needs.parse-tag.outputs.scope }}
       version: ${{ needs.parse-tag.outputs.version }}
       dry-run: ${{ github.event.inputs.dry_run == 'true' || false }}
+      auth-mode: trusted
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     permissions:

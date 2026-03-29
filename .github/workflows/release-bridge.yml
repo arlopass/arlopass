@@ -47,6 +47,8 @@ jobs:
     name: CI Gate
     uses: ./.github/workflows/_ci-gate.yml
 
+    with:
+      scope: bridge
   build-sea:
     name: Build SEA Binaries
     needs: [parse-tag, ci-gate]
@@ -109,6 +111,7 @@ jobs:
     with:
       scope: bridge
       version: ${{ needs.parse-tag.outputs.version }}
+      auth-mode: trusted
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     permissions:

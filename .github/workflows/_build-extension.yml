@@ -16,6 +16,7 @@ jobs:
     name: Build extension (${{ matrix.target }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         target: [chromium, firefox]
     steps:
@@ -29,8 +30,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build all workspace dependencies
-        run: pnpm run build
+      - name: Build extension and required dependencies
+        run: pnpm -r --filter "@arlopass/extension..." --if-present run build
 
       - name: Patch manifest version
         run: |
@@ -59,9 +60,12 @@ jobs:
           fi
           # CSP validation
           CSP=$(jq -r '.content_security_policy.extension_pages // empty' "${DIST}/manifest.json")
-          if echo "${CSP}" | grep -qE "unsafe-eval|unsafe-inline"; then
-            echo "::error::CSP contains unsafe directives: ${CSP}"
+          if echo "${CSP}" | grep -qE "unsafe-eval|script-src[^;]*unsafe-inline"; then
+            echo "::error::CSP contains unsafe script directives: ${CSP}"
             exit 1
+          fi
+          if echo "${CSP}" | grep -qE "style-src[^;]*unsafe-inline"; then
+            echo "::warning::CSP allows style-src 'unsafe-inline' for current Mantine runtime compatibility"
           fi
           # Version check
           MANIFEST_VER=$(jq -r '.version' "${DIST}/manifest.json")

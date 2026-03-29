@@ -8,13 +8,66 @@ on:
         required: false
         default: "22"
         type: string
+      scope:
+        description: "Validation scope: all, core, bridge, extension, or adapter-*"
+        required: false
+        default: "all"
+        type: string
 
 permissions:
   contents: read
 
 jobs:
+  resolve-scope:
+    name: Resolve scope
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.scope.outputs.mode }}
+      targets: ${{ steps.scope.outputs.targets }}
+    steps:
+      - name: Compute validation targets
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCOPE="${{ inputs.scope }}"
+
+          if [ "$SCOPE" = "all" ]; then
+            echo "mode=all" >> "$GITHUB_OUTPUT"
+            echo "targets=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$SCOPE" = "core" ]; then
+            echo "mode=scoped" >> "$GITHUB_OUTPUT"
+            echo "targets=@arlopass/protocol,@arlopass/audit,@arlopass/telemetry,@arlopass/policy,@arlopass/adapter-runtime,@arlopass/adapter-tooling,@arlopass/web-sdk" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$SCOPE" = "bridge" ]; then
+            echo "mode=scoped" >> "$GITHUB_OUTPUT"
+            echo "targets=@arlopass/bridge" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$SCOPE" = "extension" ]; then
+            echo "mode=scoped" >> "$GITHUB_OUTPUT"
+            echo "targets=@arlopass/extension" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$SCOPE" =~ ^adapter- ]]; then
+            echo "mode=scoped" >> "$GITHUB_OUTPUT"
+            echo "targets=@arlopass/${SCOPE}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "::error::Unsupported CI scope: $SCOPE"
+          exit 1
+
   lint:
     name: Lint
+    needs: resolve-scope
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,10 +77,22 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint
+      - name: Run lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.resolve-scope.outputs.mode }}" = "all" ]; then
+            pnpm run lint
+          else
+            IFS=',' read -ra targets <<< "${{ needs.resolve-scope.outputs.targets }}"
+            for target in "${targets[@]}"; do
+              pnpm -r --filter "${target}..." --if-present run lint
+            done
+          fi
 
   typecheck:
     name: TypeScript type-check
+    needs: resolve-scope
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,11 +102,24 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-      - run: pnpm run typecheck
+      - name: Run build + typecheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.resolve-scope.outputs.mode }}" = "all" ]; then
+            pnpm run build
+            pnpm run typecheck
+          else
+            IFS=',' read -ra targets <<< "${{ needs.resolve-scope.outputs.targets }}"
+            for target in "${targets[@]}"; do
+              pnpm -r --filter "${target}..." --if-present run build
+              pnpm -r --filter "${target}..." --if-present run typecheck
+            done
+          fi
 
   test:
     name: Test
+    needs: resolve-scope
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,11 +129,24 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-      - run: pnpm run test
+      - name: Run build + tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.resolve-scope.outputs.mode }}" = "all" ]; then
+            pnpm run build
+            pnpm run test
+          else
+            IFS=',' read -ra targets <<< "${{ needs.resolve-scope.outputs.targets }}"
+            for target in "${targets[@]}"; do
+              pnpm -r --filter "${target}..." --if-present run build
+              pnpm -r --filter "${target}..." --if-present run test
+            done
+          fi
 
   build-verify:
     name: Build verification
+    needs: resolve-scope
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,4 +156,15 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+      - name: Run build verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.resolve-scope.outputs.mode }}" = "all" ]; then
+            pnpm run build
+          else
+            IFS=',' read -ra targets <<< "${{ needs.resolve-scope.outputs.targets }}"
+            for target in "${targets[@]}"; do
+              pnpm -r --filter "${target}..." --if-present run build
+            done
+          fi

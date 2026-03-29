@@ -31,8 +31,32 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build all packages
-        run: pnpm run build
+      - name: Build scoped release targets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          declare -a targets=()
+          if [ "${{ inputs.scope }}" = "core" ]; then
+            targets=(
+              "@arlopass/protocol"
+              "@arlopass/audit"
+              "@arlopass/telemetry"
+              "@arlopass/policy"
+              "@arlopass/adapter-runtime"
+              "@arlopass/adapter-tooling"
+              "@arlopass/web-sdk"
+            )
+          elif [ "${{ inputs.scope }}" = "bridge" ]; then
+            targets=("@arlopass/bridge")
+          else
+            targets=("@arlopass/${{ inputs.scope }}")
+          fi
+
+          for target in "${targets[@]}"; do
+            echo "Building scope: ${target} and dependencies"
+            pnpm -r --filter "${target}..." --if-present run build
+          done
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

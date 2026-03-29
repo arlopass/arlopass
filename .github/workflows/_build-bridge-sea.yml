@@ -50,8 +50,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build all packages
-        run: pnpm run build
+      - name: Build bridge and required dependencies
+        run: pnpm -r --filter "@arlopass/bridge..." --if-present run build
 
       - name: Generate icon assets
         shell: bash

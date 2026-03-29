@@ -45,6 +45,8 @@ jobs:
     name: CI Gate
     uses: ./.github/workflows/_ci-gate.yml
 
+    with:
+      scope: extension
   build:
     name: Build Extension
     needs: [parse-tag, ci-gate]

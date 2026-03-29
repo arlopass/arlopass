@@ -16,6 +16,11 @@ on:
         required: false
         default: false
         type: boolean
+      auth-mode:
+        description: "npm auth mode: trusted (OIDC) or token"
+        required: false
+        default: "trusted"
+        type: string
     secrets:
       NPM_TOKEN:
         required: false
@@ -59,7 +64,7 @@ jobs:
 
       - name: Publish packages in order
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
           PUBLISHED=()
@@ -69,10 +74,20 @@ jobs:
             PKG_NAME=$(node -p "require('./${dir}/package.json').name")
             PKG_VERSION="${{ inputs.version }}"
 
-            if [ -n "${NODE_AUTH_TOKEN:-}" ]; then
+            AUTH_MODE="${{ inputs.auth-mode }}"
+            if [ "${AUTH_MODE}" = "token" ]; then
+              if [ -z "${NPM_TOKEN:-}" ]; then
+                echo "::error::auth-mode=token but NPM_TOKEN is not set"
+                exit 1
+              fi
+              export NODE_AUTH_TOKEN="${NPM_TOKEN}"
               echo "AUTH mode: npm token"
-            else
+            elif [ "${AUTH_MODE}" = "trusted" ]; then
+              unset NODE_AUTH_TOKEN
               echo "AUTH mode: OIDC trusted publishing"
+            else
+              echo "::error::Unsupported auth-mode: ${AUTH_MODE}"
+              exit 1
             fi
 
             # Force publish version to match the release tag version without committing changes.
