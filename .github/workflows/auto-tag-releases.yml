@@ -1,0 +1,176 @@
+name: Auto Tag Releases
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "package.json"
+      - "adapters/**/package.json"
+      - "apps/extension/manifest.json"
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    name: Detect version bumps
+    runs-on: ubuntu-latest
+    outputs:
+      core_bumped: ${{ steps.detect.outputs.core_bumped }}
+      core_version: ${{ steps.detect.outputs.core_version }}
+      extension_bumped: ${{ steps.detect.outputs.extension_bumped }}
+      extension_version: ${{ steps.detect.outputs.extension_version }}
+      adapters_json: ${{ steps.detect.outputs.adapters_json }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect bumped versions
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          bumped_versions=""
+
+          current_core="$(node -p "require('./package.json').version")"
+          core_bumped="false"
+          core_files=(
+            "package.json"
+            "packages/protocol/package.json"
+            "packages/audit/package.json"
+            "packages/telemetry/package.json"
+            "packages/policy/package.json"
+            "packages/web-sdk/package.json"
+            "adapters/runtime/package.json"
+            "adapters/tooling/package.json"
+          )
+
+          for file in "${core_files[@]}"; do
+            current="$(node -p "require('./${file}').version" 2>/dev/null || true)"
+            previous="$(git show "HEAD~1:${file}" 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || true)"
+            if [[ -n "${previous}" && -n "${current}" && "${current}" != "${previous}" ]]; then
+              core_bumped="true"
+              bumped_versions+="${current_core}"$'\n'
+              break
+            fi
+          done
+
+          echo "core_bumped=${core_bumped}" >> "$GITHUB_OUTPUT"
+          echo "core_version=${current_core}" >> "$GITHUB_OUTPUT"
+
+          current_extension="$(node -p "require('./apps/extension/manifest.json').version")"
+          previous_extension="$(git show HEAD~1:apps/extension/manifest.json 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || true)"
+          if [[ -n "${previous_extension}" && "${current_extension}" != "${previous_extension}" ]]; then
+            echo "extension_bumped=true" >> "$GITHUB_OUTPUT"
+            bumped_versions+="${current_extension}"$'\n'
+          else
+            echo "extension_bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "extension_version=${current_extension}" >> "$GITHUB_OUTPUT"
+
+          adapters='[]'
+          for file in adapters/adapter-*/package.json; do
+            [[ -f "$file" ]] || continue
+            name="${file#adapters/adapter-}"
+            name="${name%/package.json}"
+            current="$(node -p "require('./${file}').version")"
+            previous="$(git show "HEAD~1:${file}" 2>/dev/null | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || true)"
+            if [[ -n "${previous}" && "${current}" != "${previous}" ]]; then
+              adapters="$(node -e "const a=JSON.parse(process.argv[1]); a.push({name: process.argv[2], version: process.argv[3]}); process.stdout.write(JSON.stringify(a));" "$adapters" "$name" "$current")"
+              bumped_versions+="${current}"$'\n'
+            fi
+          done
+
+          if [[ -n "${bumped_versions}" ]]; then
+            missing_versions=""
+            while IFS= read -r version; do
+              [[ -n "${version}" ]] || continue
+              if ! grep -Eq "^## \[${version//./\\.}\](\s+-\s+.*)?$" CHANGELOG.md; then
+                missing_versions+="${version}"$'\n'
+              fi
+            done < <(printf "%s" "${bumped_versions}" | sort -u)
+
+            if [[ -n "${missing_versions}" ]]; then
+              echo "::error::Missing CHANGELOG.md sections for bumped version(s):"
+              while IFS= read -r version; do
+                [[ -n "${version}" ]] || continue
+                echo "::error:: - ${version}"
+              done < <(printf "%s" "${missing_versions}" | sort -u)
+              echo "::error::Add headings like: ## [x.y.z] to CHANGELOG.md before merge to main."
+              exit 1
+            fi
+          fi
+
+          echo "adapters_json=${adapters}" >> "$GITHUB_OUTPUT"
+
+  tag-core:
+    name: Tag core release
+    needs: detect
+    if: needs.detect.outputs.core_bumped == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push core tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="core/v${{ needs.detect.outputs.core_version }}"
+          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q "${tag}$"; then
+            echo "Tag ${tag} already exists, skipping"
+            exit 0
+          fi
+          git tag "${tag}" "${GITHUB_SHA}"
+          git push origin "${tag}"
+
+  tag-extension:
+    name: Tag extension release
+    needs: detect
+    if: needs.detect.outputs.extension_bumped == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push extension tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="extension/v${{ needs.detect.outputs.extension_version }}"
+          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q "${tag}$"; then
+            echo "Tag ${tag} already exists, skipping"
+            exit 0
+          fi
+          git tag "${tag}" "${GITHUB_SHA}"
+          git push origin "${tag}"
+
+  tag-adapters:
+    name: Tag adapter releases
+    needs: detect
+    if: needs.detect.outputs.adapters_json != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        adapter: ${{ fromJson(needs.detect.outputs.adapters_json) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push adapter tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="adapter/${{ matrix.adapter.name }}/v${{ matrix.adapter.version }}"
+          if git ls-remote --tags origin "refs/tags/${tag}" | grep -q "${tag}$"; then
+            echo "Tag ${tag} already exists, skipping"
+            exit 0
+          fi
+          git tag "${tag}" "${GITHUB_SHA}"
+          git push origin "${tag}"

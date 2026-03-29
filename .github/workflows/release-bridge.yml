@@ -35,6 +35,14 @@ jobs:
             exit 1
           fi
 
+  production-gate:
+    name: Production Gate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Confirm production release gate
+        run: echo "Production environment gate passed"
+
   ci-gate:
     name: CI Gate
     uses: ./.github/workflows/_ci-gate.yml
@@ -67,7 +75,7 @@ jobs:
 
   sign:
     name: Sign & Attest
-    needs: collect-binaries
+    needs: [collect-binaries, production-gate]
     uses: ./.github/workflows/_sign-attest.yml
     with:
       artifact-name: bridge-binaries
@@ -77,7 +85,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: [parse-tag, sign]
+    needs: [parse-tag, sign, production-gate]
     uses: ./.github/workflows/_create-github-release.yml
     with:
       tag: ${{ needs.parse-tag.outputs.tag }}
@@ -95,7 +103,7 @@ jobs:
 
   publish-npm:
     name: Publish to npm
-    needs: [parse-tag, build-packages]
+    needs: [parse-tag, build-packages, production-gate]
     if: ${{ github.event.inputs.dry_run != 'true' }}
     uses: ./.github/workflows/_publish-npm.yml
     with:
@@ -109,7 +117,7 @@ jobs:
 
   upload-installers:
     name: Upload Installers
-    needs: [parse-tag, release]
+    needs: [parse-tag, release, production-gate]
     uses: ./.github/workflows/_generate-installers.yml
     with:
       tag: ${{ needs.parse-tag.outputs.tag }}

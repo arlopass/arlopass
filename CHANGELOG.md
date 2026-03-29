@@ -6,6 +6,8 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-03-29
+
 ### Added
 - Open source governance baseline files (`LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`)
 - GitHub issue/PR templates and Dependabot configuration
@@ -15,7 +17,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Root and package metadata for clearer OSS publishing and maintenance
 - `.gitignore` now excludes nested `.env` files across the monorepo
 
-## [0.1.0] - 2026-03-29
+## [0.0.1] - 2026-03-29
 
 ### Added
 - Initial monorepo structure for Arlopass packages, adapters, apps, and operations tooling
