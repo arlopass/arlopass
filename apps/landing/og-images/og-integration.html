@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Arlopass Integration — OG Image</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #fafaf9;
+    --bg-surface: #ffffff;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text-primary: #1c1917;
+    --text-body: #292524;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --brand: #DB4D12;
+    --brand-hover: #9a3412;
+    --brand-subtle: #fff7ed;
+    --success: #4d7c0f;
+    --mosaic-overlay: rgba(255, 247, 237, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-ring: rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  /* ── Canvas ── */
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    overflow: hidden;
+  }
+
+  /* ── Top stripe divider (spans full width) ── */
+  .top-stripe-bar {
+    display: flex;
+    align-items: stretch;
+    height: 20px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .top-stripe-bar .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Top mosaic band (like BentoGrid preview zone) ── */
+  .mosaic-band {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .mosaic-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--mosaic-overlay);
+  }
+
+  /* ── Glass panel floating on mosaic (like BentoGrid glass treatment) ── */
+  .glass-panel {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-ring);
+    border-radius: 16px 16px 0 0;
+    padding: 6px 6px 0 6px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.06);
+  }
+  .glass-inner {
+    background: var(--bg-base);
+    border-radius: 13px 13px 0 0;
+    padding: 28px 48px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  /* ── Icon boxes inside glass ── */
+  .logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+  }
+  .logo-box svg,
+  .logo-box img { width: 44px; height: 44px; }
+
+  /*
+   * ╔══════════════════════════════════════════════╗
+   * ║  EDIT: Replace partner-logo <img> src with    ║
+   * ║  the actual partner icon file.                 ║
+   * ╚══════════════════════════════════════════════╝
+   */
+  .partner-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+  }
+  .partner-box img { width: 44px; height: 44px; }
+
+  .connector {
+    display: flex;
+    align-items: center;
+  }
+  .connector-line {
+    width: 20px;
+    height: 1px;
+    background: var(--border-strong);
+  }
+  .connector-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand);
+    flex-shrink: 0;
+  }
+
+  /* ── Content zone (below mosaic, bg-surface like BentoGrid text zone) ── */
+  .content-zone {
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px 56px 16px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+
+  .headline {
+    font-size: 44px;
+    font-weight: 720;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    color: var(--text-primary);
+  }
+
+  .subline {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    max-width: 480px;
+  }
+
+  /* ── Stripe divider (between content and footer) ── */
+  .stripe-bar {
+    display: flex;
+    align-items: stretch;
+    height: 20px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Bottom bar (spans full width, hard border) ── */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 56px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+    z-index: 2;
+  }
+  .bottom-url {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 450;
+    color: var(--text-tertiary);
+  }
+  .bottom-right {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Brand accent on bottom edge ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe divider -->
+  <div class="top-stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Mosaic band (like BentoGrid preview zone) -->
+  <div class="mosaic-band">
+    <canvas class="mosaic-canvas" data-mosaic-src="../public/img/bg2.webp"></canvas>
+    <div class="mosaic-overlay"></div>
+
+    <!-- Glass panel with icon pair, floating on mosaic -->
+    <div class="glass-panel">
+      <div class="glass-inner">
+        <!-- Arlopass icon -->
+        <div class="logo-box">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M64.2735 0C72.959 0 80 7.04099 80 15.7265V64.2735C80 72.959 72.959 80 64.2735 80H15.7265C7.04099 80 1.37671e-07 72.959 0 64.2735V15.7265C0 7.04099 7.04099 1.37662e-07 15.7265 0H64.2735ZM56.7521 9.57265C49.1995 9.57265 43.0769 15.6953 43.0769 23.2479C43.0769 30.8005 49.1995 36.9231 56.7521 36.9231C64.3048 36.9231 70.4274 30.8005 70.4274 23.2479C70.4274 15.6953 64.3048 9.57265 56.7521 9.57265Z" fill="#DB4D12"/>
+          </svg>
+        </div>
+
+        <div class="connector">
+          <div class="connector-line"></div>
+          <div class="connector-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </div>
+          <div class="connector-line"></div>
+        </div>
+
+        <!--
+          ╔══════════════════════════════════════════════╗
+          ║  EDIT: Replace src with partner icon file    ║
+          ╚══════════════════════════════════════════════╝
+        -->
+        <div class="partner-box">
+          <img src="../public/ArlopassIcon.svg" alt="Partner" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content zone (like BentoGrid text zone) -->
+  <div class="content-zone">
+    <span class="pixel-label">New Integration</span>
+    <!--
+      ╔══════════════════════════════════════════════╗
+      ║  EDIT: Replace headline and subline          ║
+      ╚══════════════════════════════════════════════╝
+    -->
+    <h1 class="headline">Arlopass + Partner Name</h1>
+    <p class="subline">
+      Seamless AI model routing for Partner Name users — zero API keys exposed, full user control.
+    </p>
+  </div>
+
+  <!-- Stripe divider -->
+  <div class="stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Bottom bar with hard border -->
+  <div class="bottom-bar">
+    <span class="bottom-url">arlopass.com</span>
+    <span class="bottom-right">Free &middot; Open Source &middot; MIT Licensed</span>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+<script src="mosaic.js"></script>
+</body>
+</html>

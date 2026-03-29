@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { PasswordInput } from "@mantine/core";
 import { IconChevronDown, IconKey, IconShieldLock } from "@tabler/icons-react";
 import { ProviderAvatar } from "./ProviderAvatar.js";
-import { PrimaryButton } from "./PrimaryButton.js";
 import { useVaultContext } from "../hooks/VaultContext.js";
 import { staggerDelay } from "./animation-utils.js";
 
@@ -26,21 +25,6 @@ function deriveProviderKeyFromConnectorId(connectorId: string): string {
   if (connectorId.includes("ollama")) return "ollama";
   if (connectorId.includes("cli")) return "githubcopilot";
   return "openai";
-}
-
-function formatAge(timestamp: string): string {
-  const diffMs = Date.now() - new Date(timestamp).getTime();
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1) return "Last refreshed just now";
-  if (mins < 60) return `Last refreshed ${String(mins)}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `Last refreshed ${String(hours)}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `Last refreshed ${String(days)}d ago`;
-  if (days < 30)
-    return `Last refreshed ${String(Math.floor(days / 7))} week${Math.floor(days / 7) > 1 ? "s" : ""} ago`;
-  const months = Math.floor(days / 30);
-  return `Last refreshed ${String(months)} month${months > 1 ? "s" : ""} ago`;
 }
 
 function formatSavedAge(timestamp: string): string {
@@ -131,7 +115,6 @@ export function VaultTabContent() {
           </div>
         )}
       </div>
-      <PrimaryButton>Manage credentials</PrimaryButton>
     </>
   );
 }

@@ -1,16 +1,16 @@
 import { test, expect } from "@playwright/test";
-import { ExamplesAppPage } from "../../pages/examples-app.page";
+import { HarnessPage } from "../../pages/e2e-harness.page";
 import { attachDebugOnFailure } from "../../helpers/debug-on-failure";
 
 test.describe("Web App – Connection Lifecycle", () => {
-    let app: ExamplesAppPage;
+    let app: HarnessPage;
 
     test.beforeEach(async ({ page }) => {
-        app = new ExamplesAppPage(page);
+        app = new HarnessPage(page);
         await app.goto();
     });
 
-    test.afterEach(async ({ }, testInfo) => {
+    test.afterEach(async (_unused, testInfo) => {
         await attachDebugOnFailure(app?.page, testInfo);
     });
 
@@ -21,7 +21,7 @@ test.describe("Web App – Connection Lifecycle", () => {
     });
 
     test("shows DISCONNECTED badge on load", async () => {
-        await expect(app.page.getByText("DISCONNECTED")).toBeVisible();
+        await expect(app.page.getByText("DISCONNECTED", { exact: true })).toBeVisible();
     });
 
     test("shows extension not detected alert (no extension loaded)", async () => {
@@ -53,7 +53,7 @@ test.describe("Web App – Connection Lifecycle", () => {
         await app.connect();
         await app.waitForFeedback("Connected");
 
-        await expect(app.page.getByText("CONNECTED")).toBeVisible();
+        await expect(app.page.getByText("CONNECTED", { exact: true })).toBeVisible();
     });
 
     test("shows session ID after connecting", async () => {
@@ -75,7 +75,7 @@ test.describe("Web App – Connection Lifecycle", () => {
         await app.disconnect();
         await app.waitForFeedback("Disconnected");
 
-        await expect(app.page.getByText("DISCONNECTED")).toBeVisible();
+        await expect(app.page.getByText("DISCONNECTED", { exact: true })).toBeVisible();
     });
 
     // ── Auto mode falls back to mock ──
@@ -87,7 +87,7 @@ test.describe("Web App – Connection Lifecycle", () => {
 
         // Should show fallback warning
         await expect(
-            app.page.getByText(/demo|mock|fallback/i),
+            app.page.getByText(/demo|mock|fallback/i).first(),
         ).toBeVisible();
     });
 
@@ -97,6 +97,6 @@ test.describe("Web App – Connection Lifecycle", () => {
         await app.selectTransportProfile("Injected");
         await app.connect();
 
-        await expect(app.page.getByText(/failed|error|unavailable/i)).toBeVisible({ timeout: 10_000 });
+        await expect(app.page.getByText(/failed|error|unavailable/i).first()).toBeVisible({ timeout: 10_000 });
     });
 });

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { IconChevronDown } from "@tabler/icons-react";
 import { ModelAvatar } from "./ModelAvatar.js";
 import { MetadataDivider } from "./MetadataDivider.js";
-import { PrimaryButton } from "./PrimaryButton.js";
 import { useTokenUsage } from "../hooks/useTokenUsage.js";
 import type { WalletProvider } from "../popup-state.js";
 import { staggerDelay } from "./animation-utils.js";
@@ -119,7 +118,6 @@ export function ModelsTabContent({ providers }: ModelsTabContentProps) {
           </div>
         )}
       </div>
-      <PrimaryButton>Manage models</PrimaryButton>
     </>
   );
 }

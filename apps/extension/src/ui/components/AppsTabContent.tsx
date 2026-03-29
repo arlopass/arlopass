@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { IconChevronDown } from "@tabler/icons-react";
 import { MetadataDivider } from "./MetadataDivider.js";
-import { PrimaryButton } from "./PrimaryButton.js";
 import {
   loadApps,
   removeApp,
@@ -83,7 +82,6 @@ export function AppsTabContent() {
           </div>
         )}
       </div>
-      <PrimaryButton>Manage apps</PrimaryButton>
     </>
   );
 }

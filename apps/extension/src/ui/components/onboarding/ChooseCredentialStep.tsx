@@ -147,13 +147,13 @@ export function ChooseCredentialStep({
         <Button
           variant="default"
           radius={tokens.radius.button}
-          fz="md"
+          fz="sm"
           fw={500}
           onClick={onCreateNew}
           styles={{
             root: {
               height: "auto",
-              padding: `${tokens.spacing.buttonPaddingY}px 0`,
+              padding: "8px 0",
               background: tokens.color.bgSurface,
               borderColor: tokens.color.bgSurface,
               color: tokens.color.textPrimary,
@@ -164,7 +164,7 @@ export function ChooseCredentialStep({
         </Button>
         <Button
           radius={tokens.radius.button}
-          fz="md"
+          fz="sm"
           fw={500}
           color={tokens.color.btnPrimaryBg}
           disabled={selectedCredentialId === null}
@@ -172,7 +172,7 @@ export function ChooseCredentialStep({
           styles={{
             root: {
               height: "auto",
-              padding: `${tokens.spacing.buttonPaddingY}px 0`,
+              padding: "8px 0",
               "&:disabled": { backgroundColor: "#c0c0c0", color: "#f3f3f3" },
             },
           }}
@@ -206,7 +206,7 @@ function CredentialCard({
         gap: tokens.spacing.iconTextGap,
         width: "100%",
         padding: tokens.spacing.cardPadding,
-        background: tokens.color.bgSurface,
+        background: tokens.color.bgElevated,
         border: selected ? "2px solid #2f70ff" : `2px solid transparent`,
         borderRadius: tokens.radius.card,
         cursor: "pointer",

@@ -6,6 +6,6 @@
 /adapters/ @Arlopass
 /apps/bridge/ @Arlopass
 /apps/extension/ @Arlopass
-/apps/examples-web/ @Arlopass
+/apps/e2e-harness/ @Arlopass
 /apps/landing/ @Arlopass
 /ops/ @Arlopass

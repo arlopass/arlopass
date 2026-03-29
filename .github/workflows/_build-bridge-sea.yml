@@ -25,11 +25,13 @@ jobs:
             binary: arlopass-bridge-win-x64.exe
           - os: macos
             arch: x64
-            runner: macos-13
+            runner: macos-latest
+            node_arch: x64
             binary: arlopass-bridge-macos-x64
           - os: macos
             arch: arm64
             runner: macos-latest
+            node_arch: arm64
             binary: arlopass-bridge-macos-arm64
           - os: linux
             arch: x64
@@ -43,10 +45,20 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        if: matrix.os != 'macos'
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: pnpm
+
+      - name: Setup Node.js (macOS arch-specific)
+        if: matrix.os == 'macos'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          architecture: ${{ matrix.node_arch }}
 
       - run: pnpm install --frozen-lockfile
 

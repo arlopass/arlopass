@@ -90,7 +90,7 @@ export default defineConfig({
     ],
 
     webServer: {
-        command: "pnpm run build:examples && pnpm --filter @arlopass/examples-web run preview",
+        command: "pnpm --filter @arlopass/e2e-harness run build && pnpm --filter @arlopass/e2e-harness run preview",
         url: "http://localhost:4173",
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,

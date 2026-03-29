@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { ExamplesAppPage } from "../../pages/examples-app.page";
+import { HarnessPage } from "../../pages/e2e-harness.page";
 import { attachDebugOnFailure } from "../../helpers/debug-on-failure";
 
 test.describe("Web App – Chat Scenarios", () => {
-    let app: ExamplesAppPage;
+    let app: HarnessPage;
 
     test.beforeEach(async ({ page }) => {
-        app = new ExamplesAppPage(page);
+        app = new HarnessPage(page);
         await app.goto();
 
         // Full connect + provider selection via mock
@@ -19,7 +19,7 @@ test.describe("Web App – Chat Scenarios", () => {
         await app.waitForFeedback("Provider selected");
     });
 
-    test.afterEach(async ({ }, testInfo) => {
+    test.afterEach(async (_unused, testInfo) => {
         await attachDebugOnFailure(app?.page, testInfo);
     });
 
@@ -31,7 +31,7 @@ test.describe("Web App – Chat Scenarios", () => {
         await app.waitForFeedback("Chat response received");
 
         // Transcript should show user message
-        await expect(app.page.getByText("Hello, world!")).toBeVisible();
+        await expect(app.page.getByText("Hello, world!", { exact: true })).toBeVisible();
 
         // Should have at least 2 messages (user + assistant)
         const userBadges = app.page.locator('[class*="Badge"]').filter({ hasText: "user" });
@@ -78,7 +78,7 @@ test.describe("Web App – Chat Scenarios", () => {
         await app.sendChat();
 
         // Should show an error about empty prompt
-        await expect(app.page.getByText(/empty|non-empty/i)).toBeVisible({ timeout: 5_000 });
+        await expect(app.page.getByText(/empty|non-empty/i).first()).toBeVisible({ timeout: 5_000 });
     });
 
     // ── Clear ──

@@ -1,5 +1,5 @@
 import { test, expect } from "../../fixtures/test";
-import { ExamplesAppPage } from "../../pages/examples-app.page";
+import { HarnessPage } from "../../pages/e2e-harness.page";
 import { waitForArlopassTransport } from "../../helpers/wait.helper";
 import { isLiveIntegrationEnabled } from "../../helpers/env-credentials";
 import { attachContextDebugOnFailure } from "../../helpers/debug-on-failure";
@@ -28,11 +28,11 @@ test.describe("Live Connectivity Setup @live", () => {
         const hasTransport = await waitForArlopassTransport(page, 10_000);
         expect(hasTransport).toBe(true);
 
-        const app = new ExamplesAppPage(page);
+        const app = new HarnessPage(page);
         await app.selectTransportProfile("Injected");
         await app.connect();
 
         await app.waitForFeedback("Connected");
-        await expect(page.getByText("CONNECTED")).toBeVisible();
+        await expect(page.getByText("CONNECTED", { exact: true })).toBeVisible();
     });
 });

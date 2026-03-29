@@ -1,7 +1,7 @@
 import { test, expect } from "../../fixtures/test";
 import { ExtensionPopupPage } from "../../pages/extension-popup.page";
 import { ExtensionOptionsPage } from "../../pages/extension-options.page";
-import { ExamplesAppPage } from "../../pages/examples-app.page";
+import { HarnessPage } from "../../pages/e2e-harness.page";
 import { clearWalletStorage } from "../../helpers/storage.helper";
 import { attachContextDebugOnFailure } from "../../helpers/debug-on-failure";
 
@@ -49,7 +49,7 @@ test.describe("Full Happy Path", () => {
         await webPage.goto(BASE_URL);
         await webPage.waitForLoadState("networkidle");
 
-        const app = new ExamplesAppPage(webPage);
+        const app = new HarnessPage(webPage);
         await app.selectTransportProfile("Mock");
         await app.connect();
         await app.waitForFeedback("Connected");
@@ -81,11 +81,11 @@ test.describe("Full Happy Path", () => {
         await webPage.goto(BASE_URL);
         await webPage.waitForLoadState("networkidle");
 
-        const app = new ExamplesAppPage(webPage);
+        const app = new HarnessPage(webPage);
         await app.selectTransportProfile("Mock");
         await app.runHappyPath();
         await app.waitForFeedback("Chat response received");
 
-        await expect(webPage.getByText("CONNECTED")).toBeVisible();
+        await expect(webPage.getByText("CONNECTED", { exact: true })).toBeVisible();
     });
 });

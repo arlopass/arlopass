@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { ExamplesAppPage } from "../../pages/examples-app.page";
+import { HarnessPage } from "../../pages/e2e-harness.page";
 import { attachDebugOnFailure } from "../../helpers/debug-on-failure";
 
 test.describe("Web App – Provider Scenarios", () => {
-    let app: ExamplesAppPage;
+    let app: HarnessPage;
 
     test.beforeEach(async ({ page }) => {
-        app = new ExamplesAppPage(page);
+        app = new HarnessPage(page);
         await app.goto();
 
         // Connect with mock transport before each test
@@ -15,7 +15,7 @@ test.describe("Web App – Provider Scenarios", () => {
         await app.waitForFeedback("Connected");
     });
 
-    test.afterEach(async ({ }, testInfo) => {
+    test.afterEach(async (_unused, testInfo) => {
         await attachDebugOnFailure(app?.page, testInfo);
     });
 

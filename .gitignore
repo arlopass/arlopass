@@ -18,3 +18,5 @@ compliance/.env
 compliance/compose
 .vscode/mcp.json
 **/.env
+docs/superpowers/
+docs/brand-brief.md

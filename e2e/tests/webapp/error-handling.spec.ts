@@ -1,16 +1,16 @@
 import { test, expect } from "@playwright/test";
-import { ExamplesAppPage } from "../../pages/examples-app.page";
+import { HarnessPage } from "../../pages/e2e-harness.page";
 import { attachDebugOnFailure } from "../../helpers/debug-on-failure";
 
 test.describe("Web App – Error Handling", () => {
-    let app: ExamplesAppPage;
+    let app: HarnessPage;
 
     test.beforeEach(async ({ page }) => {
-        app = new ExamplesAppPage(page);
+        app = new HarnessPage(page);
         await app.goto();
     });
 
-    test.afterEach(async ({ }, testInfo) => {
+    test.afterEach(async (_unused, testInfo) => {
         await attachDebugOnFailure(app?.page, testInfo);
     });
 
@@ -21,7 +21,7 @@ test.describe("Web App – Error Handling", () => {
         await app.connect();
 
         // Should display error feedback
-        await expect(app.page.getByText(/failed/i)).toBeVisible({ timeout: 15_000 });
+        await expect(app.page.getByText(/failed/i).first()).toBeVisible({ timeout: 15_000 });
     });
 
     test("failure transport logs error details", async () => {
@@ -29,7 +29,7 @@ test.describe("Web App – Error Handling", () => {
         await app.connect();
 
         // Wait for error to appear in log
-        await expect(app.page.getByText(/failed/i)).toBeVisible({ timeout: 15_000 });
+        await expect(app.page.getByText(/failed/i).first()).toBeVisible({ timeout: 15_000 });
 
         // Event log should have error entry
         const errorLogs = app.page.locator('[class*="Badge"]').filter({ hasText: "error" });
@@ -43,7 +43,7 @@ test.describe("Web App – Error Handling", () => {
         await app.connect();
 
         // Should fail with timeout (the app sets 1.5s timeout for slow mode)
-        await expect(app.page.getByText(/failed|timeout/i)).toBeVisible({ timeout: 20_000 });
+        await expect(app.page.getByText(/failed|timeout/i).first()).toBeVisible({ timeout: 20_000 });
     });
 
     // ── Operations without connection ──
@@ -53,7 +53,7 @@ test.describe("Web App – Error Handling", () => {
         await app.selectTransportProfile("Mock");
         await app.listProviders();
 
-        await expect(app.page.getByText(/failed|Connect first/i)).toBeVisible({ timeout: 5_000 });
+        await expect(app.page.getByText(/failed|Connect first/i).first()).toBeVisible({ timeout: 5_000 });
     });
 
     test("chat.send without connection shows error", async () => {
@@ -61,7 +61,7 @@ test.describe("Web App – Error Handling", () => {
         await app.fillPrompt("test");
         await app.sendChat();
 
-        await expect(app.page.getByText(/failed|Connect first/i)).toBeVisible({ timeout: 5_000 });
+        await expect(app.page.getByText(/failed|Connect first/i).first()).toBeVisible({ timeout: 5_000 });
     });
 
     // ── Happy path scenario ──
@@ -74,7 +74,7 @@ test.describe("Web App – Error Handling", () => {
         await app.waitForFeedback("Chat response received");
 
         // Should show connected state
-        await expect(app.page.getByText("CONNECTED")).toBeVisible();
+        await expect(app.page.getByText("CONNECTED", { exact: true })).toBeVisible();
 
         // Should have chat messages in transcript
         const assistantBadges = app.page.locator('[class*="Badge"]').filter({ hasText: "assistant" });
@@ -87,13 +87,13 @@ test.describe("Web App – Error Handling", () => {
         await app.scenarioCatalogTab.click();
 
         // Should show scenario descriptions
-        await expect(app.page.getByText(/SDK Happy Path|Streaming/i)).toBeVisible();
+        await expect(app.page.getByText(/SDK Happy Path|Streaming/i).first()).toBeVisible();
     });
 
     test("integration snippet tab renders code sample", async () => {
         await app.snippetTab.click();
 
         // Should show code content
-        await expect(app.page.locator("code, pre")).toBeVisible();
+        await expect(app.page.locator("pre").first()).toBeVisible();
     });
 });

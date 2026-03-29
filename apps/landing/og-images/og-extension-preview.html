@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Arlopass Extension Preview — OG Image</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #fafaf9;
+    --bg-surface: #ffffff;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text-primary: #1c1917;
+    --text-body: #292524;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --brand: #DB4D12;
+    --brand-hover: #9a3412;
+    --brand-subtle: #fff7ed;
+    --success: #4d7c0f;
+    --mosaic-overlay: rgba(255, 247, 237, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-ring: rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  /* ── Canvas: stripe on top, two columns below ── */
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Top stripe divider (spans full width) ── */
+  .stripe-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 20px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Left panel (text, bg-surface like HowItWorks text zone) ── */
+  .left-panel {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 56px;
+    gap: 28px;
+  }
+
+  .logo { height: 38px; width: fit-content; }
+
+  .text-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+
+  .headline {
+    font-size: 38px;
+    font-weight: 750;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    color: var(--text-primary);
+  }
+
+  .subline {
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    max-width: 380px;
+  }
+
+  /* ── Feature checklist ── */
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+  .feature {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--text-body);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .feature:last-child { border-bottom: none; }
+  .feature:hover { background: var(--bg-base); }
+  .feature-check {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--brand-subtle);
+    border: 1px solid rgba(219, 77, 18, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .feature-check svg {
+    width: 9px; height: 9px;
+    color: var(--brand);
+  }
+
+  /* ── Right panel (mosaic + glass-framed screenshot) ── */
+  .right-panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-base);
+  }
+  .mosaic-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--mosaic-overlay);
+  }
+
+  /* ── Glass panel (same as BentoGrid preview glass treatment) ── */
+  .glass-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-ring);
+    border-radius: 20px;
+    padding: 4px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  }
+
+  .device-inner {
+    background: var(--bg-base);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Browser chrome bar ── */
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .browser-dots {
+    display: flex;
+    gap: 4px;
+  }
+  .browser-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border-strong);
+  }
+  .browser-url {
+    flex: 1;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9px;
+    color: var(--text-tertiary);
+    background: var(--bg-base);
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .browser-ext-icon {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── Screenshot slot ── */
+  .screenshot-area {
+    width: 340px;
+    height: 440px;
+    background: var(--bg-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /*
+   * ╔══════════════════════════════════════════════╗
+   * ║  INSERT SCREENSHOT HERE                      ║
+   * ║  Replace the placeholder with:               ║
+   * ║  <img src="path/to/popup.png"                ║
+   * ║       class="screenshot-img" />              ║
+   * ╚══════════════════════════════════════════════╝
+   */
+  .screenshot-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+  }
+
+  .screenshot-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    text-align: center;
+  }
+  .screenshot-placeholder svg {
+    width: 24px; height: 24px;
+    opacity: 0.3;
+  }
+
+  /* ── Bottom bar (spans full width, hard border) ── */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 56px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+    z-index: 2;
+  }
+  .bottom-url {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 450;
+    color: var(--text-tertiary);
+  }
+  .bottom-right {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Brand accent on bottom edge ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe divider -->
+  <div class="stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Left panel: text content (like HowItWorks text zone) -->
+  <div class="left-panel">
+    <img class="logo" src="../public/ArlopassLogo-Light.svg" alt="Arlopass" />
+
+    <div class="text-block">
+      <span class="pixel-label">Browser Extension</span>
+      <h1 class="headline">Your AI, always<br/>one click away.</h1>
+      <p class="subline">
+        Approve AI requests, pick your model, and manage providers — all from the browser toolbar.
+      </p>
+    </div>
+
+    <!-- Feature list with bordered rows (like Features grid cells) -->
+    <div class="features">
+      <div class="feature">
+        <div class="feature-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        Approve or deny each AI request
+      </div>
+      <div class="feature">
+        <div class="feature-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        Pick models from your own providers
+      </div>
+      <div class="feature">
+        <div class="feature-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        API keys never leave your device
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel: mosaic + glass-framed screenshot -->
+  <div class="right-panel">
+    <canvas class="mosaic-canvas" data-mosaic-src="../public/img/bg3.webp"></canvas>
+    <div class="mosaic-overlay"></div>
+
+    <!-- Glass frame (same pattern as BentoGrid preview panels) -->
+    <div class="glass-frame">
+      <div class="device-inner">
+        <div class="browser-bar">
+          <div class="browser-dots">
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+          </div>
+          <div class="browser-url">example.com</div>
+          <svg class="browser-ext-icon" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M64.2735 0C72.959 0 80 7.04099 80 15.7265V64.2735C80 72.959 72.959 80 64.2735 80H15.7265C7.04099 80 1.37671e-07 72.959 0 64.2735V15.7265C0 7.04099 7.04099 1.37662e-07 15.7265 0H64.2735ZM56.7521 9.57265C49.1995 9.57265 43.0769 15.6953 43.0769 23.2479C43.0769 30.8005 49.1995 36.9231 56.7521 36.9231C64.3048 36.9231 70.4274 30.8005 70.4274 23.2479C70.4274 15.6953 64.3048 9.57265 56.7521 9.57265Z" fill="#DB4D12"/>
+          </svg>
+        </div>
+        <div class="screenshot-area">
+          <div class="screenshot-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            Insert extension popup<br/>screenshot here
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar with hard border -->
+  <div class="bottom-bar">
+    <span class="bottom-url">arlopass.com</span>
+    <span class="bottom-right">Free &middot; Open Source &middot; MIT Licensed</span>
+  </div>
+  <div class="accent-line"></div>
+</div>
+<script src="mosaic.js"></script>
+</body>
+</html>

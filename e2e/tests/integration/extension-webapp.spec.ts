@@ -1,5 +1,5 @@
 import { test, expect } from "../../fixtures/test";
-import { ExamplesAppPage } from "../../pages/examples-app.page";
+import { HarnessPage } from "../../pages/e2e-harness.page";
 import { waitForArlopassTransport } from "../../helpers/wait.helper";
 import { attachContextDebugOnFailure } from "../../helpers/debug-on-failure";
 
@@ -8,7 +8,7 @@ import { attachContextDebugOnFailure } from "../../helpers/debug-on-failure";
  * examples web app, testing the full extension ↔ webapp pipeline.
  *
  * These use the extension fixture (persistent context with extension loaded)
- * and point at the locally-served examples-web app.
+ * and point at the locally-served E2E harness app.
  */
 test.describe("Extension ↔ Web App Integration", () => {
     const BASE_URL = "http://localhost:4173";
@@ -49,7 +49,7 @@ test.describe("Extension ↔ Web App Integration", () => {
         await page.goto(BASE_URL);
         await page.waitForLoadState("networkidle");
 
-        const app = new ExamplesAppPage(page);
+        const app = new HarnessPage(page);
 
         // Select injected mode — should work since extension is loaded
         await app.selectTransportProfile("Injected");

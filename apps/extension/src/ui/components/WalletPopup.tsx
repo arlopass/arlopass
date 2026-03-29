@@ -116,7 +116,7 @@ export function WalletPopup({
                 <PrimaryButton onClick={onManageProviders}>
                   {providers.length === 0
                     ? "Connect provider"
-                    : "Manage providers"}
+                    : "Add providers"}
                 </PrimaryButton>
               </>
             )}

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Arlopass — OG Image</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #fafaf9;
+    --bg-surface: #ffffff;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text-primary: #1c1917;
+    --text-body: #292524;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --brand: #DB4D12;
+    --brand-hover: #9a3412;
+    --brand-subtle: #fff7ed;
+    --success: #4d7c0f;
+    --mosaic-overlay: rgba(255, 247, 237, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-ring: rgba(0, 0, 0, 0.05);
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  /* ── Canvas ── */
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Top stripe divider (spans full width) ── */
+  .stripe-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 20px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Left panel (text content) ── */
+  .left-panel {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px 56px;
+  }
+
+  .logo { height: 38px; width: fit-content; }
+
+  .hero { display: flex; flex-direction: column; gap: 16px; }
+
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+
+  .headline {
+    font-size: 52px;
+    font-weight: 780;
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+
+  .subline {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    max-width: 440px;
+  }
+
+  /* ── Stats row ── */
+  .stats {
+    display: flex;
+    align-items: center;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0 24px;
+    border-left: 1px solid var(--border);
+  }
+  .stat:first-child {
+    padding-left: 0;
+    border-left: none;
+  }
+  .stat-value {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Right panel (mosaic) ── */
+  .right-panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-base);
+  }
+  .mosaic-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--mosaic-overlay);
+  }
+
+  /* ── Glass preview panel (like BentoGrid glass treatment) ── */
+  .glass-preview {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-ring);
+    border-radius: 20px;
+    padding: 4px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+  }
+  .preview-inner {
+    background: var(--bg-base);
+    border-radius: 16px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 320px;
+  }
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .preview-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--success);
+    font-weight: 500;
+  }
+  .preview-status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+  .provider-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .provider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .provider-row:last-child { border-bottom: none; }
+  .provider-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .provider-icon img {
+    width: 16px; height: 16px;
+  }
+  .provider-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .provider-name {
+    font-size: 13px;
+    font-weight: 550;
+    color: var(--text-primary);
+  }
+  .provider-model {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+  .provider-check {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--brand-subtle);
+    border: 1px solid rgba(219, 77, 18, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .provider-check svg {
+    width: 9px; height: 9px;
+    color: var(--brand);
+  }
+
+  /* ── Bottom bar (spans full width, hard border) ── */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 56px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+    z-index: 2;
+  }
+  .bottom-url {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 450;
+    color: var(--text-tertiary);
+  }
+  .bottom-right {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Brand accent on bottom edge ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe divider -->
+  <div class="stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Left panel: text content -->
+  <div class="left-panel">
+    <img class="logo" src="../public/ArlopassLogo-Light.svg" alt="Arlopass" />
+
+    <div class="hero">
+      <span class="pixel-label">Your AI. Your pass.</span>
+      <h1 class="headline">Your AI, your models,<br/>your <em>rules</em>.</h1>
+      <p class="subline">
+        The open-source browser extension that lets web apps use your AI providers — without ever seeing your API keys.
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value">10 lines</span>
+        <span class="stat-label">to integrate</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">0 keys</span>
+        <span class="stat-label">on your server</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">Any model</span>
+        <span class="stat-label">user's choice</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel: mosaic background with provider preview -->
+  <div class="right-panel">
+    <canvas class="mosaic-canvas" data-mosaic-src="../public/img/hero_bg.webp"></canvas>
+    <div class="mosaic-overlay"></div>
+
+    <!-- Glass-framed provider panel -->
+    <div class="glass-preview">
+      <div class="preview-inner">
+        <div class="preview-header">
+          <span class="preview-title">Choose your model</span>
+          <span class="preview-status"><span class="preview-status-dot"></span>Connected</span>
+        </div>
+        <div class="provider-list">
+          <div class="provider-row">
+            <div class="provider-icon"><img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/claude-color.svg" alt="" /></div>
+            <div class="provider-info">
+              <span class="provider-name">Claude</span>
+              <span class="provider-model">claude-sonnet-4</span>
+            </div>
+            <div class="provider-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          </div>
+          <div class="provider-row">
+            <div class="provider-icon"><img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/openai.svg" alt="" /></div>
+            <div class="provider-info">
+              <span class="provider-name">GPT</span>
+              <span class="provider-model">gpt-4o</span>
+            </div>
+            <div class="provider-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          </div>
+          <div class="provider-row">
+            <div class="provider-icon"><img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini-color.svg" alt="" /></div>
+            <div class="provider-info">
+              <span class="provider-name">Gemini</span>
+              <span class="provider-model">gemini-2.5-pro</span>
+            </div>
+            <div class="provider-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          </div>
+          <div class="provider-row">
+            <div class="provider-icon"><img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/ollama.svg" alt="" /></div>
+            <div class="provider-info">
+              <span class="provider-name">Ollama</span>
+              <span class="provider-model">llama-3.3 · Local</span>
+            </div>
+            <div class="provider-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar with hard border -->
+  <div class="bottom-bar">
+    <span class="bottom-url">arlopass.com</span>
+    <span class="bottom-right">Free &middot; Open Source &middot; MIT Licensed</span>
+  </div>
+  <div class="accent-line"></div>
+</div>
+<script src="mosaic.js"></script>
+</body>
+</html>
