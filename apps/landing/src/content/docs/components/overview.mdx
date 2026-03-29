@@ -1,0 +1,112 @@
+---
+title: "Overview"
+description: "Overview of the Arlopass UI component primitives — Chat, Message, StreamingText, ProviderPicker, and more."
+category: "Components Library"
+order: 1
+lastUpdated: 2026-03-29
+keywords: ["components", "primitives", "ui", "library"]
+schema: "TechArticle"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+
+## Components Library
+
+Headless primitives and copy-paste blocks for building AI chat interfaces
+
+Arlopass ships two complementary layers for UI development:
+
+| Package | What it is | Install |
+|---------|-----------|---------|
+| `@arlopass/react-ui` | Headless compound components — no styles, full control | `npm install` |
+| `@arlopass/ui` | Styled Tailwind blocks — copy into your project via CLI | `npx @arlopass/ui add` |
+
+### Install
+
+```bash title="Terminal"
+npm install @arlopass/react-ui
+```
+
+### Quick example
+
+A fully functional uncontrolled chat in under 20 lines. The `Chat.Root` manages conversation state internally — just drop it in and go.
+
+```tsx title="Uncontrolled chat"
+import { Chat, StreamingText, Message } from "@arlopass/react-ui";
+
+function MyChat() {
+  return (
+    <Chat.Root systemPrompt="You are a helpful assistant.">
+      <Chat.Messages>
+        {(messages, streamingContent) => (
+          <>
+            {messages.map((msg) => (
+              <Chat.Message key={msg.id} message={msg}>
+                <Message.Root>
+                  <Message.Content />
+                </Message.Root>
+              </Chat.Message>
+            ))}
+            {streamingContent && <StreamingText content={streamingContent} />}
+          </>
+        )}
+      </Chat.Messages>
+      <Chat.Input placeholder="Type a message…" />
+      <Chat.SendButton>Send</Chat.SendButton>
+    </Chat.Root>
+  );
+}
+```
+
+<Callout type="info" title="Architecture: Primitives + Blocks">
+**Primitives** (`@arlopass/react-ui`) are installed from npm and are unstyled. They handle behaviour, accessibility, and state — you supply the markup and CSS.
+
+**Blocks** (`@arlopass/ui`) are pre-styled compositions built on the primitives. The CLI copies the source directly into your project — you own the code and can customise freely. See [Block registry](/docs/components/registry).
+</Callout>
+
+### Primitives
+
+All primitives are exported from `@arlopass/react-ui`. Each is a compound component with dot-notation sub-components (e.g. `Chat.Root`, `Chat.Messages`).
+
+| Component | Description |
+|-----------|-------------|
+| [Chat](/docs/components/chat) | Compound component for a full chat interface — manages conversation state, message rendering, input, send/stop buttons, and streaming. |
+| [Message](/docs/components/message) | Renders a single message with role-aware layout, markdown content, and tool-call display slots. |
+| [StreamingText](/docs/components/streaming-text) | Renders in-progress assistant output with token-by-token display. |
+| [ProviderPicker](/docs/components/provider-picker) | Compound component for selecting an AI provider and model from the user's configured list. |
+| [ToolActivity](/docs/components/tool-activity) | Displays tool-call invocations and their results inline within a message. |
+| [ConnectionStatus](/docs/components/connection-status) | Renders content conditionally based on the Arlopass extension connection state (connected / disconnected / not installed). |
+
+### Data attributes
+
+Primitives expose semantic `data-*` attributes on their rendered DOM elements so you can style states with plain CSS — no JavaScript required.
+
+| Attribute | Purpose | Example values |
+|-----------|---------|----------------|
+| `data-role` | Message author role | `user`, `assistant`, `system` |
+| `data-state` | Component state | `idle`, `streaming`, `error` |
+| `data-status` | Connection status | `connected`, `disconnected`, `not-installed` |
+
+```css title="CSS styling example"
+/* Style user messages differently using data attributes */
+[data-role="user"] {
+  background: #2563eb;
+  color: white;
+}
+
+[data-role="assistant"] {
+  background: #f4f4f5;
+}
+
+[data-state="streaming"] {
+  opacity: 0.8;
+}
+
+[data-status="connected"] {
+  color: #22c55e;
+}
+```
+
+<Callout type="tip" title="Next steps">
+Explore individual primitives: [Chat](/docs/components/chat), [Message](/docs/components/message), [StreamingText](/docs/components/streaming-text), [ProviderPicker](/docs/components/provider-picker), [ToolActivity](/docs/components/tool-activity), [ConnectionStatus](/docs/components/connection-status). Or jump to the [Block registry](/docs/components/registry) for pre-styled components you can copy into your project.
+</Callout>
