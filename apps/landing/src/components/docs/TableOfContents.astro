@@ -1,0 +1,64 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+{tocHeadings.length > 0 && (
+  <nav class="sticky top-20" aria-label="Table of contents">
+    <p class="text-xs font-pixel tracking-[0.08em] text-[var(--ap-text-tertiary)] uppercase mb-3">
+      On this page
+    </p>
+    <ul class="list-none space-y-1.5">
+      {tocHeadings.map((h) => (
+        <li>
+          <a
+            href={`#${h.slug}`}
+            class:list={[
+              'block text-sm no-underline transition-colors hover:text-[var(--ap-text-secondary)]',
+              h.depth === 3 ? 'pl-3 text-[var(--ap-text-tertiary)]' : 'text-[var(--ap-text-tertiary)]',
+            ]}
+            data-toc-link={h.slug}
+          >
+            {h.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<script>
+  // Scroll-spy: highlight active heading
+  const tocLinks = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
+  if (tocLinks.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            tocLinks.forEach((link) => {
+              const isActive = link.dataset.tocLink === entry.target.id;
+              link.classList.toggle('text-brand', isActive);
+              link.classList.toggle('font-medium', isActive);
+              if (!isActive) {
+                link.classList.add('text-[var(--ap-text-tertiary)]');
+              } else {
+                link.classList.remove('text-[var(--ap-text-tertiary)]');
+              }
+            });
+          }
+        }
+      },
+      { rootMargin: '0px 0px -80% 0px', threshold: 0 }
+    );
+
+    document.querySelectorAll('h2[id], h3[id]').forEach((heading) => {
+      observer.observe(heading);
+    });
+  }
+</script>
