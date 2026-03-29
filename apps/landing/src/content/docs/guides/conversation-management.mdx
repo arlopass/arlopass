@@ -1,0 +1,352 @@
+---
+title: "Conversation management"
+description: "Manage context windows, pin messages, auto-summarize, and monitor token usage."
+category: "How-to Guides"
+order: 1
+lastUpdated: 2026-03-29
+keywords: ["conversation", "context window", "pinning"]
+schema: "Article"
+---
+
+import Callout from '../../../components/docs/Callout.astro';
+
+You want to manage conversation history with automatic context window truncation.
+
+### Create a managed conversation
+
+The `useConversation` hook wraps a `ConversationManager` from the web SDK. Pass `maxTokens` to set the context window size — the manager automatically evicts the oldest unpinned messages when the window fills up.
+
+#### React SDK
+
+```tsx title="Chat.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const {
+    messages,
+    streamingContent,
+    isStreaming,
+    tokenCount,
+    contextWindow,
+    stream,
+    stop,
+    clearMessages,
+    pinMessage,
+  } = useConversation({
+    systemPrompt: "You are a helpful assistant.",
+    maxTokens: 8192,
+  });
+
+  return (
+    <div>
+      <p>Tokens used: {tokenCount} / 8192</p>
+      <p>Messages in context window: {contextWindow.length}</p>
+      {messages.map((msg) => (
+        <div key={msg.id}>{msg.role}: {msg.content}</div>
+      ))}
+      {isStreaming && <div>AI: {streamingContent}</div>}
+    </div>
+  );
+}
+```
+
+#### Web SDK
+
+```ts title="main.ts"
+import { ArlopassClient, ConversationManager } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({ transport: window.arlopass });
+await client.connect({ appId: "my-app" });
+
+const convo = new ConversationManager({
+  client,
+  systemPrompt: "You are a helpful assistant.",
+  maxTokens: 8192,
+});
+
+// Send a message and stream the response
+for await (const event of convo.stream("Hello!")) {
+  if (event.type === "delta") {
+    process.stdout.write(event.content);
+  }
+}
+
+console.log("Tokens used:", convo.getTokenCount());
+console.log("Context window:", convo.getContextWindow());
+```
+
+### Pin messages that should never be evicted
+
+Pinned messages survive context window truncation. Use them for critical user facts, instructions, or system context that the AI must always see. Pin on send with `{ pinned: true }` or toggle later with `pinMessage()`.
+
+```tsx title="PinnedMessages.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, pinMessage } = useConversation({
+    systemPrompt: "You are a helpful assistant.",
+    maxTokens: 4096,
+  });
+
+  async function handleSendPinned() {
+    // Send a message and pin it so it's never evicted
+    const msgId = await stream("My name is Alice. Remember this.", {
+      pinned: true,
+    });
+    // You can also pin/unpin after the fact:
+    // pinMessage(msgId, true);
+  }
+
+  async function handleUnpin(messageId: string) {
+    pinMessage(messageId, false);
+  }
+
+  return (
+    <div>
+      {messages.map((msg) => (
+        <div key={msg.id}>
+          {msg.role}: {msg.content}
+          {msg.pinned && <span> 📌</span>}
+          <button onClick={() => pinMessage(msg.id, !msg.pinned)}>
+            {msg.pinned ? "Unpin" : "Pin"}
+          </button>
+        </div>
+      ))}
+      <button onClick={handleSendPinned}>
+        Send pinned message
+      </button>
+    </div>
+  );
+}
+```
+
+### Auto-summarize evicted messages
+
+When `summarize: true` is set, evicted messages aren't just dropped — they're replaced with a summary that preserves key facts and context. This keeps the AI aware of earlier conversation even after truncation.
+
+#### React SDK
+
+```tsx title="React SDK"
+const { messages, tokenCount } = useConversation({
+  systemPrompt: "You are a helpful assistant.",
+  maxTokens: 4096,
+  summarize: true, // auto-summarize evicted messages
+});
+
+// When the context window fills up, older unpinned messages
+// are evicted and replaced with a summary message.
+// The summary preserves key facts, decisions, and context.
+```
+
+#### Web SDK
+
+```ts title="Web SDK"
+const convo = new ConversationManager({
+  client,
+  systemPrompt: "You are a helpful assistant.",
+  maxTokens: 4096,
+  summarize: true,
+  summarizationPrompt: "Summarize preserving key facts and decisions.",
+});
+
+// Evicted messages are summarized automatically.
+// The summary is added as a system-level message in the context.
+```
+
+### Monitor token usage
+
+The `contextInfo` object gives a complete snapshot of context window usage: `usedTokens`, `maxTokens`, `remainingTokens`, and a `usageRatio` (0–1) that's perfect for progress bars. On the web SDK, call `convo.getContextInfo()` for the same data.
+
+```tsx title="TokenMonitoring.tsx"
+import { useConversation } from "@arlopass/react";
+
+function ChatWithTokenDisplay() {
+  const {
+    messages,
+    stream,
+    contextInfo,
+    contextWindow,
+    isStreaming,
+    streamingContent,
+  } = useConversation({
+    systemPrompt: "You are a helpful assistant.",
+    maxTokens: 8192,
+  });
+
+  const pct = Math.round(contextInfo.usageRatio * 100);
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+        <span>
+          Tokens: {contextInfo.usedTokens} / {contextInfo.maxTokens} ({pct}%)
+        </span>
+        <span>{contextInfo.remainingTokens} remaining</span>
+        <span>Context messages: {contextWindow.length}</span>
+        <span>Total messages: {messages.length}</span>
+      </div>
+
+      {/* Simple progress bar */}
+      <div style={{ height: 4, background: "#eee", borderRadius: 2 }}>
+        <div
+          style={{
+            width: pct + "%",
+            height: "100%",
+            background: pct > 80 ? "orange" : "#2563eb",
+            borderRadius: 2,
+            transition: "width 200ms",
+          }}
+        />
+      </div>
+
+      {pct > 80 && (
+        <p style={{ color: "orange" }}>
+          Context window is {pct}% full. Older messages will be
+          evicted soon.
+        </p>
+      )}
+
+      {messages.map((msg) => (
+        <div key={msg.id}>
+          <strong>{msg.role}:</strong> {msg.content}
+        </div>
+      ))}
+      {isStreaming && <div>AI: {streamingContent}</div>}
+    </div>
+  );
+}
+```
+
+### Clear conversation
+
+Call `clearMessages()` to reset the conversation. On the web SDK, use `convo.clear()`. The system prompt is preserved.
+
+```tsx title="ClearConversation.tsx"
+import { useConversation } from "@arlopass/react";
+
+function Chat() {
+  const { messages, stream, clearMessages, isStreaming } = useConversation({
+    systemPrompt: "You are a helpful assistant.",
+  });
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <button onClick={clearMessages} disabled={isStreaming}>
+          New conversation
+        </button>
+      </div>
+
+      {messages.map((msg) => (
+        <div key={msg.id}>
+          <strong>{msg.role}:</strong> {msg.content}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Complete example
+
+A full chat UI with token monitoring, pinning, summarization, and clear:
+
+```tsx title="App.tsx"
+import { useState } from "react";
+import { ArlopassProvider, ChatReadyGate, useConversation } from "@arlopass/react";
+
+function Chat() {
+  const {
+    messages,
+    streamingContent,
+    isStreaming,
+    tokenCount,
+    contextWindow,
+    stream,
+    stop,
+    clearMessages,
+    pinMessage,
+  } = useConversation({
+    systemPrompt: "You are a helpful assistant.",
+    maxTokens: 8192,
+    summarize: true,
+  });
+  const [input, setInput] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isStreaming) return;
+    const text = input;
+    setInput("");
+    await stream(text);
+  }
+
+  const usage = Math.round((tokenCount / 8192) * 100);
+
+  return (
+    <div style={{ maxWidth: 600, margin: "0 auto" }}>
+      <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
+        <span>Tokens: {tokenCount} / 8192 ({usage}%)</span>
+        <span>Context: {contextWindow.length} msgs</span>
+        <button onClick={clearMessages} disabled={isStreaming}>
+          Clear
+        </button>
+      </div>
+
+      <div style={{ minHeight: 300, padding: 16 }}>
+        {messages.map((msg) => (
+          <div key={msg.id} style={{ padding: "8px 0" }}>
+            <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
+            {msg.content}
+            <button
+              onClick={() => pinMessage(msg.id, !msg.pinned)}
+              style={{ marginLeft: 8, fontSize: 12 }}
+            >
+              {msg.pinned ? "Unpin" : "Pin"}
+            </button>
+          </div>
+        ))}
+        {isStreaming && streamingContent && (
+          <div style={{ padding: "8px 0", opacity: 0.7 }}>
+            <strong>AI:</strong> {streamingContent}
+          </div>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          disabled={isStreaming}
+          style={{ flex: 1, padding: 8 }}
+        />
+        <button type="submit" disabled={isStreaming || !input.trim()}>
+          Send
+        </button>
+        {isStreaming && (
+          <button type="button" onClick={() => stop()}>Stop</button>
+        )}
+      </form>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ArlopassProvider appId="managed-chat">
+      <ChatReadyGate
+        connecting={<p>Connecting...</p>}
+        noProvider={<p>Select a provider in the Arlopass extension.</p>}
+        error={(err) => <p>Error: {err.message}</p>}
+      >
+        <Chat />
+      </ChatReadyGate>
+    </ArlopassProvider>
+  );
+}
+```
+
+<Callout type="tip" title="Related">
+  See the [Hooks API reference](/docs/reference/react-sdk/hooks) for all `useConversation` options, or the [ConversationManager reference](/docs/reference/web-sdk/conversation-manager) for the web SDK API.
+</Callout>
