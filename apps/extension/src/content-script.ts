@@ -683,4 +683,27 @@ chrome.runtime.onMessage.addListener((message: unknown) => {
       event: "providers-changed",
     }, "*");
   }
+
+  // When an app is disconnected from the extension, tear down all active
+  // stream ports for this tab so the web page cannot continue using AI.
+  if (
+    isRecord(message) &&
+    message["channel"] === "arlopass.app.disconnected"
+  ) {
+    for (const [requestId, port] of activeStreamPorts) {
+      try {
+        port.disconnect();
+      } catch {
+        // Best effort cleanup.
+      }
+      activeStreamPorts.delete(requestId);
+    }
+
+    // Notify page so the SDK can surface the disconnection.
+    window.postMessage({
+      channel: CONTENT_TO_PAGE_CHANNEL,
+      source: "arlopass-content-script",
+      event: "app-disconnected",
+    }, "*");
+  }
 });

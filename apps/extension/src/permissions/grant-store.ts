@@ -368,6 +368,20 @@ export class GrantStore {
     return revoked;
   }
 
+  revokeGrantsByOrigin(origin: string, reason: GrantRevocationReason = "user"): readonly Grant[] {
+    const normalized = normalizeOrigin(origin);
+    const now = this.#now();
+    const revoked: Grant[] = [];
+
+    for (const grant of this.#grantsById.values()) {
+      if (grant.origin === normalized) {
+        revoked.push(this.#revokeGrantById(grant.id, reason, now));
+      }
+    }
+
+    return revoked;
+  }
+
   #createGrantId(): string {
     const candidate = `grant.${this.#randomId()}`.trim();
     if (candidate.length < 6) {

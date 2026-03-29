@@ -73,7 +73,11 @@ export function AppsTabContent() {
                 key={app.id}
                 app={app}
                 index={i}
-                onRemove={(origin) => void removeApp(origin, sendVaultMessage)}
+                onRemove={(origin) => {
+                  void removeApp(origin, sendVaultMessage).then(() => {
+                    setApps((prev) => prev.filter((a) => a.origin !== origin));
+                  });
+                }}
               />
             ))}
           </div>

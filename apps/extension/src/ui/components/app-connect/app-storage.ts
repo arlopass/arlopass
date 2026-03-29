@@ -185,5 +185,23 @@ export async function removeApp(origin: string, sendVaultMessage: SendVaultMessa
     const app = await loadAppByOrigin(origin, sendVaultMessage);
     if (app) {
         await sendVaultMessage({ type: "vault.apps.delete", appId: app.id });
+
+        // Notify content scripts in tabs matching this origin so active
+        // streams are torn down and the page SDK learns immediately.
+        try {
+            const tabs = await chrome.tabs.query({ url: `${origin}/*` });
+            for (const tab of tabs) {
+                if (tab.id !== undefined) {
+                    chrome.tabs.sendMessage(tab.id, {
+                        channel: "arlopass.app.disconnected",
+                        origin,
+                    }).catch(() => {
+                        // Tab may not have the content script; ignore.
+                    });
+                }
+            }
+        } catch {
+            // Tabs API may be unavailable in some contexts; non-fatal.
+        }
     }
 }
