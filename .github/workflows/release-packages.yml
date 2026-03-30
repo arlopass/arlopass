@@ -100,9 +100,6 @@ jobs:
       scope: ${{ needs.parse-tag.outputs.scope }}
       version: ${{ needs.parse-tag.outputs.version }}
       dry-run: ${{ github.event.inputs.dry_run == 'true' || false }}
-      auth-mode: token
-    secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     permissions:
       contents: read
       id-token: write
