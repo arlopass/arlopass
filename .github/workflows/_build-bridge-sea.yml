@@ -132,6 +132,7 @@ jobs:
       - name: Stamp Windows executable metadata
         if: matrix.os == 'win'
         shell: pwsh
+        timeout-minutes: 3
         run: |
           $rceditDir = Join-Path $env:RUNNER_TEMP "rcedit"
           $binaryAbs = Resolve-Path "${{ matrix.binary }}"
@@ -142,6 +143,7 @@ jobs:
           npm install rcedit
           node -e "
             const { rcedit } = require('rcedit');
+            const timeout = setTimeout(() => { console.error('rcedit timed out after 60s'); process.exit(1); }, 60000);
             rcedit('$($binaryAbs -replace '\\','/')', {
               icon: '$($iconAbs -replace '\\','/')',
               'file-version': '${{ inputs.version }}.0',
@@ -154,8 +156,8 @@ jobs:
                 OriginalFilename: 'arlopass-bridge.exe',
                 InternalName: 'arlopass-bridge'
               }
-            }).then(() => console.log('rcedit: metadata stamped'))
-              .catch(e => { console.error(e); process.exit(1); });
+            }).then(() => { clearTimeout(timeout); console.log('rcedit: metadata stamped'); })
+              .catch(e => { clearTimeout(timeout); console.error(e); process.exit(1); });
           "
           Pop-Location
 
