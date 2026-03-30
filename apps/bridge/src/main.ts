@@ -31,6 +31,14 @@ import { SessionKeyRegistry } from "./session/session-key-registry.js";
 import { CloudObservability } from "./telemetry/cloud-observability.js";
 import { VaultStore } from "./vault/vault-store.js";
 import { launchSystemTray } from "./system-tray.js";
+import {
+  checkForUpdate,
+  checkForStagedUpdate,
+  applyUpdate,
+  downloadAndStageUpdate,
+  getCurrentVersion,
+  clearStagedUpdate,
+} from "./updater.js";
 
 type CloudAdapterContractV2Like = Readonly<{
   manifest: Readonly<{
@@ -130,6 +138,35 @@ const WORKSPACE_ADAPTER_SOURCE_ENTRY_BY_PROVIDER_ID: Readonly<Record<string, str
   });
 
 const registeredCloudAdapterPackages = new Map<string, string>();
+
+/**
+ * Static adapter import map.  esbuild follows literal `import()` strings
+ * at bundle time, so every adapter is included in the SEA binary.
+ * Dynamic `import(variable)` cannot be resolved at bundle time and would
+ * cause "Cannot find package" errors in the single-executable build.
+ */
+async function importAdapterPackageStatic(
+  packageName: string,
+): Promise<unknown> {
+  switch (packageName) {
+    case "@arlopass/adapter-claude-subscription":
+      return import("@arlopass/adapter-claude-subscription");
+    case "@arlopass/adapter-microsoft-foundry":
+      return import("@arlopass/adapter-microsoft-foundry");
+    case "@arlopass/adapter-google-vertex-ai":
+      return import("@arlopass/adapter-google-vertex-ai");
+    case "@arlopass/adapter-amazon-bedrock":
+      return import("@arlopass/adapter-amazon-bedrock");
+    case "@arlopass/adapter-openai":
+      return import("@arlopass/adapter-openai");
+    case "@arlopass/adapter-perplexity":
+      return import("@arlopass/adapter-perplexity");
+    case "@arlopass/adapter-gemini":
+      return import("@arlopass/adapter-gemini");
+    default:
+      throw new Error(`Unknown adapter package: "${packageName}"`);
+  }
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -905,7 +942,7 @@ export async function resolveCloudAdapter(
 
   const moduleNamespaceUnknown = (await (async () => {
     try {
-      return (await import(packageName)) as unknown;
+      return (await importAdapterPackageStatic(packageName)) as unknown;
     } catch (error) {
       if (
         workspaceSourceUrl === undefined ||
@@ -1161,7 +1198,36 @@ function loadOrGenerateSigningKey(env: NodeJS.ProcessEnv): Buffer {
  */
 async function main(): Promise<void> {
   process.title = "Arlopass Bridge";
+
+  process.stderr.write(
+    `[arlopass-bridge] version ${getCurrentVersion()}\n`,
+  );
+
   launchSystemTray();
+
+  // Background update check — non-blocking, best-effort.
+  checkForUpdate()
+    .then(async (info) => {
+      if (info === undefined) return;
+      process.stderr.write(
+        `[arlopass-bridge] update available: v${info.latestVersion} (current: v${info.currentVersion})\n`,
+      );
+      const result = await downloadAndStageUpdate(info);
+      if (result.staged) {
+        process.stderr.write(
+          `[arlopass-bridge] update v${result.version ?? "?"} staged — will apply on next restart\n`,
+        );
+      } else {
+        process.stderr.write(
+          `[arlopass-bridge] update staging failed: ${result.error ?? "unknown"}\n`,
+        );
+      }
+    })
+    .catch((error) => {
+      process.stderr.write(
+        `[arlopass-bridge] update check failed: ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+    });
 
   const signingKey = loadOrGenerateSigningKey(process.env);
   const cloudFeatureFlags = createCloudFeatureFlagsFromEnv(process.env);
@@ -1315,6 +1381,16 @@ async function main(): Promise<void> {
   });
 
   await host.run();
+
+  // After the native host exits, apply any staged update.
+  const staged = checkForStagedUpdate();
+  if (staged?.staged && staged.swapScript) {
+    process.stderr.write(
+      `[arlopass-bridge] applying staged update v${staged.version ?? "?"}\n`,
+    );
+    applyUpdate(staged.swapScript);
+    clearStagedUpdate();
+  }
 }
 
 if (process.env["VITEST"] !== "true") {

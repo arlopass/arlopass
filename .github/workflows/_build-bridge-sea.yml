@@ -97,7 +97,7 @@ jobs:
 
       - name: Bundle bridge into single CJS file
         run: |
-          pnpm exec esbuild apps/bridge/dist/main.js --bundle --platform=node --target=node20 --format=cjs --outfile=apps/bridge/dist/bridge-bundle.cjs
+          pnpm exec esbuild apps/bridge/dist/main.js --bundle --platform=node --target=node20 --format=cjs --outfile=apps/bridge/dist/bridge-bundle.cjs --define:ARLOPASS_BRIDGE_VERSION=\"${{ inputs.version }}\"
 
       - name: Create SEA config
         shell: bash

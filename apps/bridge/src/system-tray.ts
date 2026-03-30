@@ -32,9 +32,10 @@ function ensureDir(dir: string): void {
 // Windows — PowerShell + WinForms NotifyIcon
 // ---------------------------------------------------------------------------
 
-function buildWindowsTrayScript(bridgePid: number, bridgeExePath: string, icoPath: string | undefined): string {
+function buildWindowsTrayScript(bridgePid: number, bridgeExePath: string, icoPath: string | undefined, updateDir: string): string {
   const escapedExe = bridgeExePath.replace(/'/g, "''");
   const escapedIco = icoPath?.replace(/'/g, "''");
+  const escapedUpdateDir = updateDir.replace(/'/g, "''");
 
   const iconBlock = escapedIco !== undefined
     ? `
@@ -58,6 +59,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $bridgePid = ${String(bridgePid)}
+$updateDir = '${escapedUpdateDir}'
 
 $notifyIcon = New-Object System.Windows.Forms.NotifyIcon
 ${iconBlock}
@@ -65,6 +67,25 @@ $notifyIcon.Text = 'Arlopass Bridge'
 $notifyIcon.Visible = $true
 
 $menu = New-Object System.Windows.Forms.ContextMenuStrip
+
+$updateItem = New-Object System.Windows.Forms.ToolStripMenuItem('Check for Updates...')
+$updateItem.Enabled = $false
+$updateItem.Visible = $false
+$updateSep = New-Object System.Windows.Forms.ToolStripSeparator
+$updateSep.Visible = $false
+$updateItem.Add_Click({
+  $metaPath = Join-Path $updateDir 'update.json'
+  if (Test-Path $metaPath) {
+    $meta = Get-Content $metaPath -Raw | ConvertFrom-Json
+    $swapScript = $meta.swapScript
+    if ($swapScript -and (Test-Path $swapScript)) {
+      try { Stop-Process -Id $bridgePid -Force -ErrorAction SilentlyContinue } catch {}
+      Start-Process powershell.exe -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-WindowStyle','Hidden','-File',$swapScript -WindowStyle Hidden
+      $notifyIcon.Visible = $false
+      [System.Windows.Forms.Application]::Exit()
+    }
+  }
+})
 
 $restartItem = New-Object System.Windows.Forms.ToolStripMenuItem('Restart Bridge')
 $restartItem.Add_Click({
@@ -82,6 +103,8 @@ $quitItem.Add_Click({
   [System.Windows.Forms.Application]::Exit()
 })
 
+[void]$menu.Items.Add($updateItem)
+[void]$menu.Items.Add($updateSep)
 [void]$menu.Items.Add($restartItem)
 [void]$menu.Items.Add($separator)
 [void]$menu.Items.Add($quitItem)
@@ -95,6 +118,22 @@ $timer.Add_Tick({
   if (-not $proc) {
     $notifyIcon.Visible = $false
     [System.Windows.Forms.Application]::Exit()
+  }
+
+  # Check for staged update
+  $metaPath = Join-Path $updateDir 'update.json'
+  if ((Test-Path $metaPath) -and (-not $updateItem.Visible)) {
+    try {
+      $meta = Get-Content $metaPath -Raw | ConvertFrom-Json
+      $v = $meta.version
+      if ($v) {
+        $updateItem.Text = "Update to v$v && Restart"
+        $updateItem.Enabled = $true
+        $updateItem.Visible = $true
+        $updateSep.Visible = $true
+        $notifyIcon.ShowBalloonTip(5000, 'Arlopass Bridge', "Update v$v available", [System.Windows.Forms.ToolTipIcon]::Info)
+      }
+    } catch {}
   }
 })
 $timer.Start()
@@ -118,18 +157,45 @@ function resolveIcoPath(): string | undefined {
   return undefined;
 }
 
+function resolveUpdateDir(): string {
+  if (process.platform === "win32") {
+    const localAppData = process.env["LOCALAPPDATA"];
+    if (localAppData) {
+      return join(localAppData, "Arlopass", "bridge", "update");
+    }
+  }
+  if (process.platform === "darwin") {
+    const home = process.env["HOME"];
+    if (home) {
+      return join(home, "Library", "Application Support", "Arlopass", "update");
+    }
+  }
+  const home = process.env["HOME"] ?? "/tmp";
+  return join(home, ".arlopass", "update");
+}
+
 function launchWindowsTray(): void {
   const dir = trayScriptDir();
   ensureDir(dir);
   const icoPath = resolveIcoPath();
+  const updateDir = resolveUpdateDir();
   const scriptPath = join(dir, "tray.ps1");
-  writeFileSync(scriptPath, buildWindowsTrayScript(process.pid, process.execPath, icoPath), "utf8");
+  writeFileSync(scriptPath, buildWindowsTrayScript(process.pid, process.execPath, icoPath, updateDir), "utf8");
+
+  const logPath = join(dir, "tray-launch.log");
 
   // Start-Process creates a fully independent process that survives Node exit.
-  execSync(
-    `powershell.exe -NoProfile -Command "Start-Process powershell.exe -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-WindowStyle','Hidden','-File','${scriptPath.replace(/'/g, "''")}' -WindowStyle Hidden"`,
-    { stdio: "ignore" },
-  );
+  // Wrap in try/catch and log to diagnose failures when launched by Chrome.
+  try {
+    execSync(
+      `powershell.exe -NoProfile -Command "Start-Process powershell.exe -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-WindowStyle','Hidden','-File','${scriptPath.replace(/'/g, "''")}' -WindowStyle Hidden"`,
+      { stdio: "ignore", timeout: 10_000 },
+    );
+    writeFileSync(logPath, `[${new Date().toISOString()}] tray launched OK pid=${String(process.pid)} exe=${process.execPath}\n`, "utf8");
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    writeFileSync(logPath, `[${new Date().toISOString()}] tray launch FAILED: ${msg}\n`, "utf8");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -354,9 +420,10 @@ export function launchSystemTray(): void {
         launchLinuxTray();
         break;
     }
-  } catch {
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
     process.stderr.write(
-      "[arlopass-bridge] warning: failed to launch system tray icon\n",
+      `[arlopass-bridge] warning: failed to launch system tray icon: ${msg}\n`,
     );
   }
 }
