@@ -134,32 +134,20 @@ jobs:
         shell: pwsh
         timeout-minutes: 3
         run: |
-          $rceditDir = Join-Path $env:RUNNER_TEMP "rcedit"
-          $binaryAbs = Resolve-Path "${{ matrix.binary }}"
-          $iconAbs = Resolve-Path "apps/bridge/assets/icon.ico"
-          New-Item -ItemType Directory -Path $rceditDir -Force | Out-Null
-          Push-Location $rceditDir
-          npm init -y 2>&1 | Out-Null
-          npm install rcedit
-          node -e "
-            const { rcedit } = require('rcedit');
-            const timeout = setTimeout(() => { console.error('rcedit timed out after 60s'); process.exit(1); }, 60000);
-            rcedit('$($binaryAbs -replace '\\','/')', {
-              icon: '$($iconAbs -replace '\\','/')',
-              'file-version': '${{ inputs.version }}.0',
-              'product-version': '${{ inputs.version }}',
-              'version-string': {
-                FileDescription: 'Arlopass Bridge',
-                ProductName: 'Arlopass Bridge',
-                CompanyName: 'Arlopass',
-                LegalCopyright: 'Copyright (c) Arlopass. MIT License.',
-                OriginalFilename: 'arlopass-bridge.exe',
-                InternalName: 'arlopass-bridge'
-              }
-            }).then(() => { clearTimeout(timeout); console.log('rcedit: metadata stamped'); })
-              .catch(e => { clearTimeout(timeout); console.error(e); process.exit(1); });
-          "
-          Pop-Location
+          $rceditUrl = "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe"
+          $rceditExe = Join-Path $env:RUNNER_TEMP "rcedit-x64.exe"
+          Invoke-WebRequest -Uri $rceditUrl -OutFile $rceditExe -UseBasicParsing
+          & $rceditExe "${{ matrix.binary }}" `
+            --set-icon "apps/bridge/assets/icon.ico" `
+            --set-version-string "FileDescription" "Arlopass Bridge" `
+            --set-version-string "ProductName" "Arlopass Bridge" `
+            --set-version-string "CompanyName" "Arlopass" `
+            --set-version-string "LegalCopyright" "Copyright (c) Arlopass. MIT License." `
+            --set-version-string "OriginalFilename" "arlopass-bridge.exe" `
+            --set-version-string "InternalName" "arlopass-bridge" `
+            --set-file-version "${{ inputs.version }}.0" `
+            --set-product-version "${{ inputs.version }}"
+          Write-Host "rcedit: metadata stamped"
 
       - name: Post-process (macOS ad-hoc re-sign)
         if: matrix.os == 'macos'
