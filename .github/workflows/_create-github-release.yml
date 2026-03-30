@@ -24,7 +24,7 @@ jobs:
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    environment: github-releases
+    environment: production
     steps:
       - uses: actions/checkout@v4
         with:

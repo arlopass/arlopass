@@ -134,15 +134,16 @@ jobs:
         shell: pwsh
         run: |
           $rceditDir = Join-Path $env:RUNNER_TEMP "rcedit"
+          $binaryAbs = Resolve-Path "${{ matrix.binary }}"
+          $iconAbs = Resolve-Path "apps/bridge/assets/icon.ico"
           New-Item -ItemType Directory -Path $rceditDir -Force | Out-Null
           Push-Location $rceditDir
           npm init -y 2>&1 | Out-Null
           npm install rcedit
-          Pop-Location
           node -e "
-            const rcedit = require('$($rceditDir -replace '\\','/')/node_modules/rcedit');
-            rcedit('${{ matrix.binary }}', {
-              icon: 'apps/bridge/assets/icon.ico',
+            const rcedit = require('rcedit');
+            rcedit('$($binaryAbs -replace '\\','/')', {
+              icon: '$($iconAbs -replace '\\','/')',
               'file-version': '${{ inputs.version }}.0',
               'product-version': '${{ inputs.version }}',
               'version-string': {
@@ -156,6 +157,7 @@ jobs:
             }).then(() => console.log('rcedit: metadata stamped'))
               .catch(e => { console.error(e); process.exit(1); });
           "
+          Pop-Location
 
       - name: Post-process (macOS ad-hoc re-sign)
         if: matrix.os == 'macos'

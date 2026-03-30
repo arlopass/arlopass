@@ -17,7 +17,7 @@ jobs:
   deploy:
     name: Edge Add-ons
     runs-on: ubuntu-latest
-    environment: edge-add-ons
+    environment: production
     steps:
       - name: Download Chromium extension zip
         uses: actions/download-artifact@v4
