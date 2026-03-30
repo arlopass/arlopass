@@ -126,13 +126,6 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item (Get-Command node).Source -Destination "${{ matrix.binary }}"
-          npx --yes postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob `
-            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
-
-      - name: Exclude workspace from Windows Defender
-        if: matrix.os == 'win'
-        shell: pwsh
-        run: Add-MpPreference -ExclusionPath "${{ github.workspace }}"
 
       - name: Stamp Windows executable metadata
         if: matrix.os == 'win'
@@ -153,6 +146,13 @@ jobs:
             --set-file-version "${{ inputs.version }}.0" `
             --set-product-version "${{ inputs.version }}"
           Write-Host "rcedit: metadata stamped"
+
+      - name: Inject SEA blob (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          npx --yes postject "${{ matrix.binary }}" NODE_SEA_BLOB apps/bridge/sea-prep.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
 
       - name: Post-process (macOS ad-hoc re-sign)
         if: matrix.os == 'macos'
