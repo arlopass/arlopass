@@ -15,6 +15,7 @@
     "dev:watch": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode watch",
     "dev:bridge": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode bridge",
     "dev:full": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode full",
+    "dev:full:tray": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\run-dev.ps1 -Mode full -Tray",
     "dev:register-native-host": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\dev\\register-native-host.ps1",
     "dev:e2e-harness": "pnpm --filter @arlopass/e2e-harness dev",
     "build:e2e-harness": "pnpm --filter @arlopass/e2e-harness build",

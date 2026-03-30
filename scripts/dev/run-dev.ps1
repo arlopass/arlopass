@@ -4,7 +4,8 @@ param(
   [string]$Mode = "full",
   [switch]$SkipInstall,
   [string]$ExtensionId,
-  [switch]$SkipNativeHostRegistration
+  [switch]$SkipNativeHostRegistration,
+  [switch]$Tray
 )
 
 Set-StrictMode -Version Latest
@@ -236,6 +237,9 @@ function Invoke-Bridge {
       -Arguments @("--filter", "@arlopass/bridge", "run", "typecheck") `
       -FailureMessage "Bridge typecheck failed"
     Write-Host "Bridge starting. Load extension from: $repoRoot\apps\extension" -ForegroundColor Cyan
+    if (-not $Tray.IsPresent) {
+      $env:NODE_ENV = "development"
+    }
     Invoke-Native `
       -FilePath "node" `
       -Arguments @("--loader", "./scripts/dev/ts-js-specifier-loader.mjs", "./apps/bridge/src/main.ts") `

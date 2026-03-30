@@ -30,6 +30,7 @@ import { RequestVerifier } from "./session/request-verifier.js";
 import { SessionKeyRegistry } from "./session/session-key-registry.js";
 import { CloudObservability } from "./telemetry/cloud-observability.js";
 import { VaultStore } from "./vault/vault-store.js";
+import { launchSystemTray } from "./system-tray.js";
 
 type CloudAdapterContractV2Like = Readonly<{
   manifest: Readonly<{
@@ -1160,6 +1161,7 @@ function loadOrGenerateSigningKey(env: NodeJS.ProcessEnv): Buffer {
  */
 async function main(): Promise<void> {
   process.title = "Arlopass Bridge";
+  launchSystemTray();
 
   const signingKey = loadOrGenerateSigningKey(process.env);
   const cloudFeatureFlags = createCloudFeatureFlagsFromEnv(process.env);

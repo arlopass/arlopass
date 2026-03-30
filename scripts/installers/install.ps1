@@ -190,6 +190,20 @@ function Install-Bridge {
         # Register native messaging hosts
         Register-NativeHosts -BinaryPath (Join-Path $INSTALL_DIR $BINARY_NAME) -ManifestDir $INSTALL_DIR
 
+        # Register in Windows "Installed apps" (Add/Remove Programs)
+        $uninstallReg = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ArlopassBridge"
+        New-Item -Path $uninstallReg -Force | Out-Null
+        $installedBinary = Join-Path $INSTALL_DIR $BINARY_NAME
+        $uninstallCmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command `"& { Invoke-Expression ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/$REPO/bridge/$version/scripts/installers/install.ps1')) } -Uninstall`""
+        Set-ItemProperty -Path $uninstallReg -Name 'DisplayName'     -Value 'Arlopass Bridge'
+        Set-ItemProperty -Path $uninstallReg -Name 'DisplayVersion'  -Value ($version -replace '^v', '')
+        Set-ItemProperty -Path $uninstallReg -Name 'Publisher'       -Value 'Arlopass'
+        Set-ItemProperty -Path $uninstallReg -Name 'DisplayIcon'     -Value $installedBinary
+        Set-ItemProperty -Path $uninstallReg -Name 'UninstallString' -Value $uninstallCmd
+        Set-ItemProperty -Path $uninstallReg -Name 'InstallLocation' -Value $INSTALL_DIR
+        Set-ItemProperty -Path $uninstallReg -Name 'NoModify'        -Value 1 -Type DWord
+        Set-ItemProperty -Path $uninstallReg -Name 'NoRepair'        -Value 1 -Type DWord
+
         Write-Host ""
         Write-Host "Arlopass Bridge $version installed successfully!" -ForegroundColor Green
         Write-Host "  Binary: $(Join-Path $INSTALL_DIR $BINARY_NAME)"
@@ -217,7 +231,8 @@ function Uninstall-Bridge {
     $regPaths = @(
         "HKCU:\Software\Google\Chrome\NativeMessagingHosts\$NATIVE_HOST_NAME",
         "HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\$NATIVE_HOST_NAME",
-        "HKCU:\Software\Mozilla\NativeMessagingHosts\$NATIVE_HOST_NAME"
+        "HKCU:\Software\Mozilla\NativeMessagingHosts\$NATIVE_HOST_NAME",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ArlopassBridge"
     )
     foreach ($regPath in $regPaths) {
         if (Test-Path $regPath) { Remove-Item $regPath -Force }

@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 import PageHero from "../components/ui/PageHero.astro";
 import CopyCommand from "../components/ui/CopyCommand.astro";
 import Divider from "../components/Divider.astro";
+import BridgeDownloads from "../components/islands/BridgeDownloads.tsx";
 
 const pageTitle =
   "Install Arlopass — Browser Extension & Bridge for AI Access Management";
@@ -69,18 +70,34 @@ const howToSchema = {
     />
 
     {/* ── Extension detected banner ──────────────────────── */}
-    <div
-      id="ext-detected"
-      class="hidden border-b border-[var(--ap-border)]"
-    >
+    <div id="ext-detected" class="hidden border-b border-[var(--ap-border)]">
       <div class="flex items-center gap-4 px-4 md:px-6 lg:px-8 py-5">
-        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)]">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-success"><polyline points="20 6 9 17 4 12" /></svg>
+        <span
+          class="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--ap-bg-surface)] border border-[var(--ap-border)]"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="text-success"
+            ><polyline points="20 6 9 17 4 12"></polyline></svg
+          >
         </span>
         <div>
-          <span class="text-sm font-medium text-[var(--ap-text-primary)]">Extension installed</span>
+          <span class="text-sm font-medium text-[var(--ap-text-primary)]"
+            >Extension installed</span
+          >
           <span class="text-xs text-[var(--ap-text-tertiary)] block mt-0.5">
-            You're all set. <a href="#bridge" class="text-brand no-underline hover:text-[var(--ap-text-link-hover)] transition-colors">Skip to the native bridge →</a>
+            You're all set. <a
+              href="#bridge"
+              class="text-brand no-underline hover:text-[var(--ap-text-link-hover)] transition-colors"
+              >Skip to the native bridge →</a
+            >
           </span>
         </div>
       </div>
@@ -115,7 +132,13 @@ const howToSchema = {
           class="flex flex-col border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
         >
           <div class="flex items-center gap-3 mb-4">
-            <img src="/img/chrome.svg" alt="" width="32" height="32" aria-hidden="true" />
+            <img
+              src="/img/chrome.svg"
+              alt=""
+              width="32"
+              height="32"
+              aria-hidden="true"
+            />
             <span class="text-base font-semibold text-[var(--ap-text-primary)]"
               >Google Chrome</span
             >
@@ -130,7 +153,23 @@ const howToSchema = {
             data-store-coming-soon
             class="inline-flex items-center gap-2 text-sm font-medium text-[var(--ap-cta-text)] bg-[var(--ap-cta-bg)] py-2.5 px-5 rounded-lg border-none cursor-pointer hover:opacity-85 transition-opacity"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"
+              ></path><polyline points="7 10 12 15 17 10"></polyline><line
+                x1="12"
+                y1="15"
+                x2="12"
+                y2="3"></line></svg
+            >
             Add to Chrome
           </button>
         </div>
@@ -140,7 +179,13 @@ const howToSchema = {
           class="flex flex-col border-b md:border-b-0 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
         >
           <div class="flex items-center gap-3 mb-4">
-            <img src="/img/edge.svg" alt="" width="32" height="32" aria-hidden="true" />
+            <img
+              src="/img/edge.svg"
+              alt=""
+              width="32"
+              height="32"
+              aria-hidden="true"
+            />
             <span class="text-base font-semibold text-[var(--ap-text-primary)]"
               >Microsoft Edge</span
             >
@@ -164,7 +209,13 @@ const howToSchema = {
           class="flex flex-col bg-[var(--ap-bg-card)] hover:bg-[var(--ap-bg-surface)] transition-colors duration-300 p-8 sm:p-10"
         >
           <div class="flex items-center gap-3 mb-4">
-            <img src="/img/firefox.svg" alt="" width="32" height="32" aria-hidden="true" />
+            <img
+              src="/img/firefox.svg"
+              alt=""
+              width="32"
+              height="32"
+              aria-hidden="true"
+            />
             <span class="text-base font-semibold text-[var(--ap-text-primary)]"
               >Firefox</span
             >
@@ -207,6 +258,10 @@ const howToSchema = {
         </p>
       </div>
 
+      <Divider />
+      <BridgeDownloads client:load />
+
+      {/* ── Step 3: Connect providers ────────────────────────── */}
       <div
         class="grid grid-cols-1 lg:grid-cols-2 border border-[var(--ap-border)]"
       >
