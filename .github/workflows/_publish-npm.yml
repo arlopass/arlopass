@@ -62,6 +62,15 @@ jobs:
             echo "dirs=adapters/${{ inputs.scope }}" >> "$GITHUB_OUTPUT"
           fi
 
+      # Set versions on ALL packages first so pnpm can resolve workspace:*
+      # cross-references correctly during publish.
+      - name: Set package versions
+        run: |
+          set -euo pipefail
+          for dir in ${{ steps.packages.outputs.dirs }}; do
+            (cd "${dir}" && npm pkg set version="${{ inputs.version }}" >/dev/null)
+          done
+
       - name: Publish packages in order
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -69,30 +78,28 @@ jobs:
           set -euo pipefail
           PUBLISHED=()
           SKIPPED=()
-          PUBLISH_FLAGS="--provenance --access public"
+          # --no-git-checks: working tree is dirty from version bumps above.
+          PUBLISH_FLAGS="--provenance --access public --no-git-checks"
+
+          AUTH_MODE="${{ inputs.auth-mode }}"
+          if [ "${AUTH_MODE}" = "token" ]; then
+            if [ -z "${NPM_TOKEN:-}" ]; then
+              echo "::error::auth-mode=token but NPM_TOKEN is not set"
+              exit 1
+            fi
+            export NODE_AUTH_TOKEN="${NPM_TOKEN}"
+            echo "AUTH mode: npm token"
+          elif [ "${AUTH_MODE}" = "trusted" ]; then
+            unset NODE_AUTH_TOKEN
+            echo "AUTH mode: OIDC trusted publishing"
+          else
+            echo "::error::Unsupported auth-mode: ${AUTH_MODE}"
+            exit 1
+          fi
 
           for dir in ${{ steps.packages.outputs.dirs }}; do
             PKG_NAME=$(node -p "require('./${dir}/package.json').name")
             PKG_VERSION="${{ inputs.version }}"
-
-            AUTH_MODE="${{ inputs.auth-mode }}"
-            if [ "${AUTH_MODE}" = "token" ]; then
-              if [ -z "${NPM_TOKEN:-}" ]; then
-                echo "::error::auth-mode=token but NPM_TOKEN is not set"
-                exit 1
-              fi
-              export NODE_AUTH_TOKEN="${NPM_TOKEN}"
-              echo "AUTH mode: npm token"
-            elif [ "${AUTH_MODE}" = "trusted" ]; then
-              unset NODE_AUTH_TOKEN
-              echo "AUTH mode: OIDC trusted publishing"
-            else
-              echo "::error::Unsupported auth-mode: ${AUTH_MODE}"
-              exit 1
-            fi
-
-            # Force publish version to match the release tag version without committing changes.
-            (cd "${dir}" && npm pkg set version="${PKG_VERSION}" >/dev/null)
 
             # Strip compiled test artifacts from dist to keep release tarballs clean.
             if [ -d "${dir}/dist" ]; then
@@ -118,16 +125,17 @@ jobs:
 
             # Dry-run first (catch packaging issues)
             echo "🔍 Dry-run: ${PKG_NAME}@${PKG_VERSION}"
-            (cd "${dir}" && npm publish --dry-run)
+            (cd "${dir}" && pnpm publish --dry-run --no-git-checks)
 
             if [ "${{ inputs.dry-run }}" = "true" ]; then
               echo "🏃 Dry-run mode — skipping real publish for ${PKG_NAME}"
               continue
             fi
 
-            # Real publish with SLSA provenance
+            # Real publish with SLSA provenance.
+            # pnpm publish resolves workspace:* → concrete versions automatically.
             echo "📦 Publishing: ${PKG_NAME}@${PKG_VERSION}"
-            (cd "${dir}" && npm publish ${PUBLISH_FLAGS})
+            (cd "${dir}" && pnpm publish ${PUBLISH_FLAGS})
             PUBLISHED+=("${PKG_NAME}")
           done
 
