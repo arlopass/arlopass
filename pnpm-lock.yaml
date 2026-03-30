@@ -142,6 +142,30 @@ importers:
 
   apps/bridge:
     dependencies:
+      '@arlopass/adapter-amazon-bedrock':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-amazon-bedrock
+      '@arlopass/adapter-claude-subscription':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-claude-subscription
+      '@arlopass/adapter-gemini':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-gemini
+      '@arlopass/adapter-google-vertex-ai':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-google-vertex-ai
+      '@arlopass/adapter-microsoft-foundry':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-microsoft-foundry
+      '@arlopass/adapter-ollama':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-ollama
+      '@arlopass/adapter-openai':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-openai
+      '@arlopass/adapter-perplexity':
+        specifier: workspace:*
+        version: link:../../adapters/adapter-perplexity
       '@arlopass/audit':
         specifier: workspace:*
         version: link:../../packages/audit

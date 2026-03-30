@@ -31,6 +31,14 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@arlopass/adapter-amazon-bedrock": "workspace:*",
+    "@arlopass/adapter-claude-subscription": "workspace:*",
+    "@arlopass/adapter-gemini": "workspace:*",
+    "@arlopass/adapter-google-vertex-ai": "workspace:*",
+    "@arlopass/adapter-microsoft-foundry": "workspace:*",
+    "@arlopass/adapter-ollama": "workspace:*",
+    "@arlopass/adapter-openai": "workspace:*",
+    "@arlopass/adapter-perplexity": "workspace:*",
     "@arlopass/audit": "workspace:*",
     "@arlopass/policy": "workspace:*",
     "@arlopass/protocol": "workspace:*",
