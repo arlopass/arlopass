@@ -41,7 +41,7 @@ function App() {
           <div>
             <h2>Extension Required</h2>
             <p>Install the Arlopass browser extension to use this app.</p>
-            <a href="https://arlopass.ai/install">Install Extension</a>
+            <a href="https://arlopass.com/install">Install Extension</a>
           </div>
         }
         errorFallback={({ error, retry }) => (
@@ -99,7 +99,7 @@ function App() {
       notInstalledFallback={
         <div>
           <p>Arlopass extension not detected.</p>
-          <a href="https://arlopass.ai/install">Install</a>
+          <a href="https://arlopass.com/install">Install</a>
         </div>
       }
       providerFallback={<p>Please select a provider.</p>}
@@ -138,7 +138,7 @@ function AppHeader() {
 
       {/* Show install prompt when extension is missing */}
       <ArlopassNotInstalled>
-        <a href="https://arlopass.ai/install">Install Arlopass</a>
+        <a href="https://arlopass.com/install">Install Arlopass</a>
       </ArlopassNotInstalled>
 
       {/* Show reconnect button when disconnected */}

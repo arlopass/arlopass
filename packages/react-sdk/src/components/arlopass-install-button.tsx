@@ -2,7 +2,7 @@
 
 import type { ReactNode, CSSProperties, MouseEvent } from "react";
 
-const DEFAULT_INSTALL_URL = "https://arlopass.ai/install";
+const DEFAULT_INSTALL_URL = "https://arlopass.com/install";
 
 export type ArlopassInstallButtonProps = Readonly<{
   /** URL to the extension store page. */

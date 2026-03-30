@@ -531,19 +531,24 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
       {!isConnected && !isConnecting && (
         <div className="chat-connect-empty">
           <div className="chat-connect-icon">
-            <img src="/ArlopassIcon.svg" alt="Arlopass" width="28" height="28" />
+            <img
+              src="/ArlopassIcon.svg"
+              alt="Arlopass"
+              width="28"
+              height="28"
+            />
           </div>
-          <span className="chat-connect-title">Arlopass Extension Required</span>
+          <span className="chat-connect-title">
+            Arlopass Extension Required
+          </span>
           <span className="chat-connect-subtitle">
-            Install the browser extension to chat with any AI model — your keys, your choice.
+            Install the browser extension to chat with any AI model — your keys,
+            your choice.
           </span>
           {connError !== null && (
             <span className="chat-connect-error">{connError.message}</span>
           )}
-          <a
-            href="/docs/getting-started/install"
-            className="chat-connect-install-btn"
-          >
+          <a href="/install" className="chat-connect-install-btn">
             <IconDownload size={14} />
             Install Extension
           </a>
@@ -558,53 +563,129 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
 
       {/* ── Chat messages area ──────────────────────────────────── */}
       {(isConnected || isConnecting) && (
-      <div className="chat-messages-wrapper">
-        {/* Scroll fade gradient */}
-        <div className="chat-fade-top" style={{ opacity: showFade ? 1 : 0 }} />
+        <div className="chat-messages-wrapper">
+          {/* Scroll fade gradient */}
+          <div
+            className="chat-fade-top"
+            style={{ opacity: showFade ? 1 : 0 }}
+          />
 
-        <div
-          className="chat-messages"
-          ref={(node) => {
-            (
-              chatAreaRef as React.MutableRefObject<HTMLDivElement | null>
-            ).current = node;
-            (
-              scrollRef as React.MutableRefObject<HTMLDivElement | null>
-            ).current = node;
-          }}
-        >
-          {/* Empty state */}
-          {trackedMessages.length === 0 && !streamingContent && (
-            <div className="chat-empty">
-              {isConnected
-                ? "Ask anything about Arlopass."
-                : "Connect to start chatting."}
-            </div>
-          )}
+          <div
+            className="chat-messages"
+            ref={(node) => {
+              (
+                chatAreaRef as React.MutableRefObject<HTMLDivElement | null>
+              ).current = node;
+              (
+                scrollRef as React.MutableRefObject<HTMLDivElement | null>
+              ).current = node;
+            }}
+          >
+            {/* Empty state */}
+            {trackedMessages.length === 0 && !streamingContent && (
+              <div className="chat-empty">
+                {isConnected
+                  ? "Ask anything about Arlopass."
+                  : "Connect to start chatting."}
+              </div>
+            )}
 
-          {/* Messages */}
-          {trackedMessages.map((m) => {
-            if (
-              m.role === "assistant" &&
-              m.content.trim().length === 0 &&
-              (m.usedTools === undefined || m.usedTools.length === 0)
-            )
-              return null;
+            {/* Messages */}
+            {trackedMessages.map((m) => {
+              if (
+                m.role === "assistant" &&
+                m.content.trim().length === 0 &&
+                (m.usedTools === undefined || m.usedTools.length === 0)
+              )
+                return null;
 
-            return (
-              <div
-                key={m.id}
-                className={`chat-msg${streamedMsgIdsRef.current.has(m.id) ? "" : " chat-msg-enter"}`}
-              >
-                {/* Avatar */}
+              return (
                 <div
-                  className={
-                    m.role === "user" ? "chat-avatar-user" : "chat-avatar-ai"
-                  }
+                  key={m.id}
+                  className={`chat-msg${streamedMsgIdsRef.current.has(m.id) ? "" : " chat-msg-enter"}`}
                 >
-                  {m.role === "user" ? (
-                    <IconUser size={10} color="var(--ap-text-tertiary)" />
-                  ) : (
+                  {/* Avatar */}
+                  <div
+                    className={
+                      m.role === "user" ? "chat-avatar-user" : "chat-avatar-ai"
+                    }
+                  >
+                    {m.role === "user" ? (
+                      <IconUser size={10} color="var(--ap-text-tertiary)" />
+                    ) : (
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="var(--ap-text-tertiary)"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                        <path d="M2 17l10 5 10-5" />
+                        <path d="M2 12l10 5 10-5" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Bubble */}
+                  <div>
+                    <div
+                      className={
+                        m.role === "user"
+                          ? "chat-bubble-user"
+                          : "chat-bubble-ai"
+                      }
+                    >
+                      {m.role === "assistant" ? (
+                        <Markdown
+                          content={m.content}
+                          className="chat-markdown"
+                        />
+                      ) : (
+                        <span>{m.content}</span>
+                      )}
+                    </div>
+                    {/* Provider & model attribution */}
+                    {m.role === "assistant" &&
+                      (() => {
+                        const meta = msgMetaRef.current.get(m.id);
+                        if (!meta) return null;
+                        const label = [
+                          meta.model ? fmtModel(meta.model) : null,
+                          meta.provider,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ");
+                        if (!label) return null;
+                        return <div className="chat-msg-meta">{label}</div>;
+                      })()}
+                    {/* Tool pills */}
+                    {m.role === "assistant" &&
+                      m.usedTools !== undefined &&
+                      m.usedTools.length > 0 && (
+                        <div className="chat-tool-pills">
+                          <IconTool size={9} color="var(--ap-text-tertiary)" />
+                          {m.usedTools.map((t) => (
+                            <span key={t} className="chat-tool-pill">
+                              {t.replace(/_/g, " ")}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Typing indicator */}
+            {isStreaming &&
+              streamingContent.trim().length === 0 &&
+              toolActivity.phase === "idle" && (
+                <div className="chat-msg chat-msg-enter">
+                  <div className="chat-avatar-ai">
                     <svg
                       width="11"
                       height="11"
@@ -619,58 +700,26 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
                       <path d="M2 17l10 5 10-5" />
                       <path d="M2 12l10 5 10-5" />
                     </svg>
-                  )}
-                </div>
-
-                {/* Bubble */}
-                <div>
-                  <div
-                    className={
-                      m.role === "user" ? "chat-bubble-user" : "chat-bubble-ai"
-                    }
-                  >
-                    {m.role === "assistant" ? (
-                      <Markdown content={m.content} className="chat-markdown" />
-                    ) : (
-                      <span>{m.content}</span>
-                    )}
                   </div>
-                  {/* Provider & model attribution */}
-                  {m.role === "assistant" &&
-                    (() => {
-                      const meta = msgMetaRef.current.get(m.id);
-                      if (!meta) return null;
-                      const label = [
-                        meta.model ? fmtModel(meta.model) : null,
-                        meta.provider,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ");
-                      if (!label) return null;
-                      return <div className="chat-msg-meta">{label}</div>;
-                    })()}
-                  {/* Tool pills */}
-                  {m.role === "assistant" &&
-                    m.usedTools !== undefined &&
-                    m.usedTools.length > 0 && (
-                      <div className="chat-tool-pills">
-                        <IconTool size={9} color="var(--ap-text-tertiary)" />
-                        {m.usedTools.map((t) => (
-                          <span key={t} className="chat-tool-pill">
-                            {t.replace(/_/g, " ")}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  <div className="chat-bubble-ai chat-typing-dots">
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="chat-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              )}
 
-          {/* Typing indicator */}
-          {isStreaming &&
-            streamingContent.trim().length === 0 &&
-            toolActivity.phase === "idle" && (
+            {/* Tool activity indicators */}
+            {isStreaming && toolActivity.phase !== "idle" && (
               <div className="chat-msg chat-msg-enter">
                 <div className="chat-avatar-ai">
                   <svg
@@ -688,346 +737,318 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
                     <path d="M2 12l10 5 10-5" />
                   </svg>
                 </div>
-                <div className="chat-bubble-ai chat-typing-dots">
-                  <span
-                    className="chat-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="chat-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="chat-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
+                <div className="chat-bubble-ai">
+                  {toolActivity.phase === "priming" && (
+                    <div className="chat-tool-activity">
+                      <IconSearch size={11} color="var(--ap-brand)" />
+                      <span
+                        style={{
+                          color: "var(--ap-text-secondary)",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Looking for tools…
+                      </span>
+                      <span
+                        className="chat-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="chat-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="chat-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
+                  )}
+                  {toolActivity.phase === "matched" && (
+                    <div className="chat-tool-activity">
+                      <IconTool size={11} color="var(--ap-text-tertiary)" />
+                      <span
+                        style={{
+                          color: "var(--ap-text-secondary)",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Found:
+                      </span>
+                      {toolActivity.tools.map((t) => (
+                        <span key={t} className="chat-tool-pill">
+                          {t.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {toolActivity.phase === "executing" && (
+                    <div className="chat-tool-activity">
+                      <span
+                        className="chat-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="chat-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="chat-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                      <span className="chat-tool-pill chat-tool-pill-brand">
+                        {toolActivity.name.replace(/_/g, " ")}
+                      </span>
+                      {toolDetail && (
+                        <span
+                          style={{
+                            color: "var(--ap-text-tertiary)",
+                            maxWidth: 120,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {toolDetail}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {toolActivity.phase === "result" && (
+                    <div className="chat-tool-activity">
+                      <span style={{ color: "var(--ap-text-tertiary)" }}>
+                        ✓
+                      </span>
+                      <span className="chat-tool-pill">
+                        {toolActivity.name.replace(/_/g, " ")}
+                      </span>
+                      <span style={{ color: "var(--ap-text-tertiary)" }}>
+                        done
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-          {/* Tool activity indicators */}
-          {isStreaming && toolActivity.phase !== "idle" && (
-            <div className="chat-msg chat-msg-enter">
-              <div className="chat-avatar-ai">
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--ap-text-tertiary)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
+            {/* Streaming content bubble */}
+            {isStreaming && streamingContent.trim().length > 0 && (
+              <div className="chat-msg chat-msg-enter">
+                <div className="chat-avatar-ai">
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--ap-text-tertiary)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                  </svg>
+                </div>
+                <div className="chat-bubble-ai">
+                  <Markdown
+                    content={streamingContent}
+                    className="chat-markdown"
+                  />
+                  <span className="chat-stream-cursor" />
+                </div>
               </div>
-              <div className="chat-bubble-ai">
-                {toolActivity.phase === "priming" && (
-                  <div className="chat-tool-activity">
-                    <IconSearch size={11} color="var(--ap-brand)" />
-                    <span
-                      style={{
-                        color: "var(--ap-text-secondary)",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Looking for tools…
-                    </span>
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
-                )}
-                {toolActivity.phase === "matched" && (
-                  <div className="chat-tool-activity">
-                    <IconTool size={11} color="var(--ap-text-tertiary)" />
-                    <span
-                      style={{
-                        color: "var(--ap-text-secondary)",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Found:
-                    </span>
-                    {toolActivity.tools.map((t) => (
-                      <span key={t} className="chat-tool-pill">
-                        {t.replace(/_/g, " ")}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {toolActivity.phase === "executing" && (
-                  <div className="chat-tool-activity">
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                    <span className="chat-tool-pill chat-tool-pill-brand">
-                      {toolActivity.name.replace(/_/g, " ")}
-                    </span>
-                    {toolDetail && (
-                      <span
-                        style={{
-                          color: "var(--ap-text-tertiary)",
-                          maxWidth: 120,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {toolDetail}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {toolActivity.phase === "result" && (
-                  <div className="chat-tool-activity">
-                    <span style={{ color: "var(--ap-text-tertiary)" }}>✓</span>
-                    <span className="chat-tool-pill">
-                      {toolActivity.name.replace(/_/g, " ")}
-                    </span>
-                    <span style={{ color: "var(--ap-text-tertiary)" }}>
-                      done
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Streaming content bubble */}
-          {isStreaming && streamingContent.trim().length > 0 && (
-            <div className="chat-msg chat-msg-enter">
-              <div className="chat-avatar-ai">
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--ap-text-tertiary)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <div className="chat-bubble-ai">
-                <Markdown
-                  content={streamingContent}
-                  className="chat-markdown"
-                />
-                <span className="chat-stream-cursor" />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
       )}
 
       {/* ── Input area ──────────────────────────────────────────── */}
       {(isConnected || isConnecting) && (
-      <div className="chat-input-area">
-        {/* Provider/model selectors */}
-        {isConnected && providers.length > 0 && (
-          <div className="chat-selectors">
-            <Menu shadow="sm" position="top-start" withinPortal>
-              <Menu.Target>
-                <UnstyledButton
+        <div className="chat-input-area">
+          {/* Provider/model selectors */}
+          {isConnected && providers.length > 0 && (
+            <div className="chat-selectors">
+              <Menu shadow="sm" position="top-start" withinPortal>
+                <Menu.Target>
+                  <UnstyledButton
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      background: "var(--ap-bg-elevated)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Text fz={10} fw={500} c="var(--ap-text-secondary)">
+                      {selProvider?.providerName ?? "Provider"}
+                    </Text>
+                    <IconChevronDown
+                      size={10}
+                      color="var(--ap-text-tertiary)"
+                    />
+                  </UnstyledButton>
+                </Menu.Target>
+                <Menu.Dropdown
                   style={{
-                    padding: "2px 8px",
-                    borderRadius: 4,
                     background: "var(--ap-bg-elevated)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
+                    border: "1px solid var(--ap-border)",
                   }}
                 >
-                  <Text fz={10} fw={500} c="var(--ap-text-secondary)">
-                    {selProvider?.providerName ?? "Provider"}
-                  </Text>
-                  <IconChevronDown size={10} color="var(--ap-text-tertiary)" />
-                </UnstyledButton>
-              </Menu.Target>
-              <Menu.Dropdown
-                style={{
-                  background: "var(--ap-bg-elevated)",
-                  border: "1px solid var(--ap-border)",
-                }}
-              >
-                {providers.map((p) => (
-                  <Menu.Item
-                    key={p.providerId}
-                    onClick={() => void handleProviderChange(p.providerId)}
-                    fw={p.providerId === selProv ? 600 : 400}
-                    fz={11}
-                    style={{ color: "var(--ap-text-body)" }}
-                  >
-                    {p.providerName}
-                  </Menu.Item>
-                ))}
-              </Menu.Dropdown>
-            </Menu>
+                  {providers.map((p) => (
+                    <Menu.Item
+                      key={p.providerId}
+                      onClick={() => void handleProviderChange(p.providerId)}
+                      fw={p.providerId === selProv ? 600 : 400}
+                      fz={11}
+                      style={{ color: "var(--ap-text-body)" }}
+                    >
+                      {p.providerName}
+                    </Menu.Item>
+                  ))}
+                </Menu.Dropdown>
+              </Menu>
 
-            <ModelDropdown
-              models={selProvider?.models ?? []}
-              selected={selModel}
-              onSelect={(m) => void handleModelChange(m)}
-            />
+              <ModelDropdown
+                models={selProvider?.models ?? []}
+                selected={selModel}
+                onSelect={(m) => void handleModelChange(m)}
+              />
 
-            {contextInfo.maxTokens > 0 && <ContextBar info={contextInfo} />}
-          </div>
-        )}
+              {contextInfo.maxTokens > 0 && <ContextBar info={contextInfo} />}
+            </div>
+          )}
 
-        <div className="chat-input-row">
-          <Textarea
-            placeholder="Ask about Arlopass..."
-            value={chatIn}
-            onChange={(e) => setChatIn(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void handleSend();
-                return;
-              }
-              const history = inputHistoryRef.current;
-              if (history.length === 0) return;
-              if (e.key === "ArrowUp") {
-                const el = e.currentTarget;
-                if (el.selectionStart !== 0 || el.selectionEnd !== 0) return;
-                e.preventDefault();
-                if (historyIndexRef.current === -1) {
-                  draftRef.current = chatIn;
-                  historyIndexRef.current = history.length - 1;
-                } else if (historyIndexRef.current > 0) {
-                  historyIndexRef.current -= 1;
+          <div className="chat-input-row">
+            <Textarea
+              placeholder="Ask about Arlopass..."
+              value={chatIn}
+              onChange={(e) => setChatIn(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                  return;
                 }
-                setChatIn(history[historyIndexRef.current] ?? "");
-              }
-              if (e.key === "ArrowDown") {
-                if (historyIndexRef.current === -1) return;
-                e.preventDefault();
-                if (historyIndexRef.current < history.length - 1) {
-                  historyIndexRef.current += 1;
+                const history = inputHistoryRef.current;
+                if (history.length === 0) return;
+                if (e.key === "ArrowUp") {
+                  const el = e.currentTarget;
+                  if (el.selectionStart !== 0 || el.selectionEnd !== 0) return;
+                  e.preventDefault();
+                  if (historyIndexRef.current === -1) {
+                    draftRef.current = chatIn;
+                    historyIndexRef.current = history.length - 1;
+                  } else if (historyIndexRef.current > 0) {
+                    historyIndexRef.current -= 1;
+                  }
                   setChatIn(history[historyIndexRef.current] ?? "");
-                } else {
-                  historyIndexRef.current = -1;
-                  setChatIn(draftRef.current);
                 }
-              }
-            }}
-            minRows={1}
-            maxRows={4}
-            autosize
-            size="sm"
-            disabled={!isConnected}
-            styles={{
-              root: { flex: 1 },
-              input: {
-                fontSize: 12,
-                background: "var(--ap-bg-base)",
-                border: "1px solid var(--ap-border)",
-                color: "var(--ap-text-body)",
-                borderRadius: 8,
-                padding: "7px 10px",
-                lineHeight: 1.4,
-                "&:focus": { borderColor: "var(--ap-brand)" },
-              },
-            }}
-          />
-          <ActionIcon
-            size={32}
-            variant="filled"
-            onClick={() => void handleSend()}
-            disabled={isStreaming || !chatIn.trim() || !isConnected}
-            styles={{
-              root: {
-                background: "var(--ap-brand)",
-                border: "none",
-                borderRadius: 8,
-                color: "var(--mantine-color-brand-filled)",
-                "&:hover": { background: "var(--ap-brand-hover)" },
-                "&[data-disabled]": {
-                  background: "var(--ap-bg-elevated)",
-                  color: "var(--ap-text-tertiary)",
-                  opacity: 1,
+                if (e.key === "ArrowDown") {
+                  if (historyIndexRef.current === -1) return;
+                  e.preventDefault();
+                  if (historyIndexRef.current < history.length - 1) {
+                    historyIndexRef.current += 1;
+                    setChatIn(history[historyIndexRef.current] ?? "");
+                  } else {
+                    historyIndexRef.current = -1;
+                    setChatIn(draftRef.current);
+                  }
+                }
+              }}
+              minRows={1}
+              maxRows={4}
+              autosize
+              size="sm"
+              disabled={!isConnected}
+              styles={{
+                root: { flex: 1 },
+                input: {
+                  fontSize: 12,
+                  background: "var(--ap-bg-base)",
+                  border: "1px solid var(--ap-border)",
+                  color: "var(--ap-text-body)",
+                  borderRadius: 8,
+                  padding: "7px 10px",
+                  lineHeight: 1.4,
+                  "&:focus": { borderColor: "var(--ap-brand)" },
                 },
-              },
-            }}
-          >
-            <IconSend size={14} />
-          </ActionIcon>
+              }}
+            />
+            <ActionIcon
+              size={32}
+              variant="filled"
+              onClick={() => void handleSend()}
+              disabled={isStreaming || !chatIn.trim() || !isConnected}
+              styles={{
+                root: {
+                  background: "var(--ap-brand)",
+                  border: "none",
+                  borderRadius: 8,
+                  color: "var(--mantine-color-brand-filled)",
+                  "&:hover": { background: "var(--ap-brand-hover)" },
+                  "&[data-disabled]": {
+                    background: "var(--ap-bg-elevated)",
+                    color: "var(--ap-text-tertiary)",
+                    opacity: 1,
+                  },
+                },
+              }}
+            >
+              <IconSend size={14} />
+            </ActionIcon>
+          </div>
         </div>
-      </div>
       )}
 
       {/* ── Footer status bar ───────────────────────────────────── */}
       {(isConnected || isConnecting) && (
-      <div className="chat-footer">
-        {isStreaming ? (
-          /* Streaming state */
-          <div className="chat-footer-row">
-            <div className="chat-footer-dots">
-              <span className="chat-bounce" style={{ animationDelay: "0ms" }} />
-              <span
-                className="chat-bounce"
-                style={{ animationDelay: "150ms" }}
-              />
-              <span
-                className="chat-bounce"
-                style={{ animationDelay: "300ms" }}
-              />
+        <div className="chat-footer">
+          {isStreaming ? (
+            /* Streaming state */
+            <div className="chat-footer-row">
+              <div className="chat-footer-dots">
+                <span
+                  className="chat-bounce"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <span
+                  className="chat-bounce"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <span
+                  className="chat-bounce"
+                  style={{ animationDelay: "300ms" }}
+                />
+              </div>
+              <span className="chat-footer-label">Streaming via Arlopass</span>
+              {contextInfo.maxTokens > 0 && (
+                <span className="chat-footer-ctx">
+                  {formatTokenCount(contextInfo.usedTokens)}/
+                  {formatTokenCount(contextInfo.maxTokens)} context
+                </span>
+              )}
             </div>
-            <span className="chat-footer-label">Streaming via Arlopass</span>
-            {contextInfo.maxTokens > 0 && (
-              <span className="chat-footer-ctx">
-                {formatTokenCount(contextInfo.usedTokens)}/
-                {formatTokenCount(contextInfo.maxTokens)} context
+          ) : (
+            /* Idle state */
+            <div className="chat-footer-row">
+              <span
+                className="chat-footer-dot-status"
+                style={{
+                  background: isConnected
+                    ? "var(--ap-success)"
+                    : "var(--ap-text-tertiary)",
+                }}
+              />
+              <span className="chat-footer-label">
+                {isConnected ? "Connected via Arlopass" : "Disconnected"}
               </span>
-            )}
-          </div>
-        ) : (
-          /* Idle state */
-          <div className="chat-footer-row">
-            <span
-              className="chat-footer-dot-status"
-              style={{
-                background: isConnected
-                  ? "var(--ap-success)"
-                  : "var(--ap-text-tertiary)",
-              }}
-            />
-            <span className="chat-footer-label">
-              {isConnected ? "Connected via Arlopass" : "Disconnected"}
-            </span>
-            {modelLabel && (
-              <span className="chat-footer-model">{modelLabel}</span>
-            )}
-          </div>
-        )}
-      </div>
+              {modelLabel && (
+                <span className="chat-footer-model">{modelLabel}</span>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -10,7 +10,7 @@ export type ArlopassExtensionGateProps = Readonly<{
    * Default: null (hides the feature silently).
    */
   fallback?: ReactNode | ((props: { installUrl: string }) => ReactNode);
-  /** Extension install URL. Default: "https://arlopass.ai/install". */
+  /** Extension install URL. Default: "https://arlopass.com/install". */
   installUrl?: string;
   children: ReactNode;
 }>;
@@ -40,7 +40,7 @@ export type ArlopassExtensionGateProps = Readonly<{
  */
 export function ArlopassExtensionGate({
   fallback = null,
-  installUrl = "https://arlopass.ai/install",
+  installUrl = "https://arlopass.com/install",
   children,
 }: ArlopassExtensionGateProps): ReactNode {
   const { transportAvailable } = useArlopassContext();
