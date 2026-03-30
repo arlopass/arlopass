@@ -75,7 +75,7 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const [stateContextInfo, setStateContextInfo] = useState<ContextWindowInfo>({
         maxTokens: 0, usedTokens: 0, reservedOutputTokens: 0, remainingTokens: 0, usageRatio: 0,
     });
-    const [toolActivity, setToolActivity] = useState<ToolActivityState>(TOOL_ACTIVITY_IDLE);
+    const [toolActivity, setToolActivityState] = useState<ToolActivityState>(TOOL_ACTIVITY_IDLE);
 
     const messagesRef = useRef<TrackedChatMessage[]>(options?.initialMessages ?? []);
     const abortRef = useRef<AbortController | null>(null);
@@ -83,6 +83,13 @@ export function useConversation(options?: UseConversationOptions): UseConversati
     const lastRequestRef = useRef<{ type: "send" | "stream"; content: string; pinned?: boolean } | null>(null);
     const subsRef = useRef(new Subscriptions());
     const usedToolsRef = useRef<string[]>([]);
+    const toolActivityRef = useRef<ToolActivityState>(TOOL_ACTIVITY_IDLE);
+
+    // Keep ref in sync so the streaming loop can read current phase synchronously.
+    const setToolActivity = useCallback((next: ToolActivityState) => {
+        toolActivityRef.current = next;
+        setToolActivityState(next);
+    }, []);
 
     const managerRef = useRef<ConversationManager | null>(null);
     if (managerRef.current === null) {
@@ -287,6 +294,12 @@ export function useConversation(options?: UseConversationOptions): UseConversati
                 if (event.type === "chunk") {
                     accumulated += event.delta;
                     const current = accumulated;
+                    // Clear lingering tool activity indicator when post-tool
+                    // response chunks start arriving, so the streaming bubble
+                    // replaces the "tool done" indicator immediately.
+                    if (toolActivityRef.current.phase !== "idle") {
+                        setToolActivity(TOOL_ACTIVITY_IDLE);
+                    }
                     if (typeof requestAnimationFrame === "function") {
                         requestAnimationFrame(() => {
                             setStreamingContent(current);

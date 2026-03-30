@@ -133,7 +133,7 @@ jobs:
         if: matrix.os == 'win'
         shell: pwsh
         run: |
-          npx --yes @electron/rcedit "${{ matrix.binary }}" `
+          npx --yes rcedit "${{ matrix.binary }}" `
             --set-icon "apps/bridge/assets/icon.ico" `
             --set-version-string "FileDescription" "Arlopass Bridge" `
             --set-version-string "ProductName" "Arlopass Bridge" `

@@ -595,7 +595,10 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
               return null;
 
             return (
-              <div key={m.id} className={`chat-msg${streamedMsgIdsRef.current.has(m.id) ? "" : " chat-msg-enter"}`}>
+              <div
+                key={m.id}
+                className={`chat-msg${streamedMsgIdsRef.current.has(m.id) ? "" : " chat-msg-enter"}`}
+              >
                 {/* Avatar */}
                 <div
                   className={
