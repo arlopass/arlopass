@@ -865,10 +865,14 @@ export async function resolveCloudAdapter(
 
   const workspaceSourceEntry =
     WORKSPACE_ADAPTER_SOURCE_ENTRY_BY_PROVIDER_ID[normalizedProviderId];
-  const workspaceSourceUrl =
-    workspaceSourceEntry !== undefined
-      ? new URL(workspaceSourceEntry, import.meta.url)
-      : undefined;
+  let workspaceSourceUrl: URL | undefined;
+  if (workspaceSourceEntry !== undefined) {
+    try {
+      workspaceSourceUrl = new URL(workspaceSourceEntry, import.meta.url);
+    } catch {
+      // import.meta.url is unavailable in SEA / CJS bundles — skip workspace source
+    }
+  }
 
   if (
     workspaceSourceUrl !== undefined &&
