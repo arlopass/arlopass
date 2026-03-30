@@ -5,9 +5,7 @@ on:
     secrets:
       EDGE_CLIENT_ID:
         required: true
-      EDGE_CLIENT_SECRET:
-        required: true
-      EDGE_ACCESS_TOKEN_URL:
+      EDGE_API_KEY:
         required: true
 
 permissions:
@@ -24,43 +22,102 @@ jobs:
         with:
           name: extension-chromium
 
-      - name: Get Edge access token
-        id: token
-        env:
-          CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.EDGE_CLIENT_SECRET }}
-          TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
-        run: |
-          TOKEN=$(curl -fsSL -X POST "${TOKEN_URL}" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "client_id=${CLIENT_ID}&scope=https://api.addons.microsoftedge.microsoft.com/.default&client_secret=${CLIENT_SECRET}&grant_type=client_credentials" \
-            | jq -r '.access_token')
-          echo "::add-mask::${TOKEN}"
-          echo "token=${TOKEN}" >> "$GITHUB_OUTPUT"
-
-      - name: Upload to Edge Add-ons
+      - name: Upload package to Edge Add-ons
+        id: upload
         env:
           PRODUCT_ID: ${{ vars.EDGE_PRODUCT_ID }}
-          TOKEN: ${{ steps.token.outputs.token }}
+          CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          API_KEY: ${{ secrets.EDGE_API_KEY }}
         run: |
           set -euo pipefail
+          API="https://api.addons.microsoftedge.microsoft.com"
           RETRY=0
           MAX_RETRIES=3
+
           until [ $RETRY -ge $MAX_RETRIES ]; do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-              -X POST "https://api.addons.microsoftedge.microsoft.com/v1/products/${PRODUCT_ID}/submissions/draft/package" \
-              -H "Authorization: Bearer ${TOKEN}" \
+            RESPONSE=$(curl -si -X POST \
+              "${API}/v1/products/${PRODUCT_ID}/submissions/draft/package" \
+              -H "Authorization: ApiKey ${API_KEY}" \
+              -H "X-ClientID: ${CLIENT_ID}" \
               -H "Content-Type: application/zip" \
-              --data-binary @arlopass-extension-chromium.zip)
+              -T arlopass-extension-chromium.zip)
+
+            HTTP_CODE=$(echo "$RESPONSE" | head -1 | grep -oP '\d{3}')
             if [ "${HTTP_CODE}" = "202" ] || [ "${HTTP_CODE}" = "200" ]; then
-              echo "✅ Upload succeeded (HTTP ${HTTP_CODE})"
+              echo "✅ Upload accepted (HTTP ${HTTP_CODE})"
+              OPERATION_ID=$(echo "$RESPONSE" | grep -i '^Location:' | awk '{print $2}' | tr -d '\r')
+              echo "operation_id=${OPERATION_ID}" >> "$GITHUB_OUTPUT"
               break
             fi
             RETRY=$((RETRY + 1))
             echo "⚠️  Upload attempt ${RETRY}/${MAX_RETRIES} failed (HTTP ${HTTP_CODE}), retrying..."
             sleep $((RETRY * 15))
           done
+
           if [ $RETRY -ge $MAX_RETRIES ]; then
             echo "::error::Edge Add-ons upload failed after ${MAX_RETRIES} attempts"
+            exit 1
+          fi
+
+      - name: Wait for upload processing
+        env:
+          PRODUCT_ID: ${{ vars.EDGE_PRODUCT_ID }}
+          CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          API_KEY: ${{ secrets.EDGE_API_KEY }}
+          OPERATION_ID: ${{ steps.upload.outputs.operation_id }}
+        run: |
+          set -euo pipefail
+          API="https://api.addons.microsoftedge.microsoft.com"
+          POLL=0
+          MAX_POLLS=20
+
+          while [ $POLL -lt $MAX_POLLS ]; do
+            STATUS_BODY=$(curl -fsS \
+              "${API}/v1/products/${PRODUCT_ID}/submissions/draft/package/operations/${OPERATION_ID}" \
+              -H "Authorization: ApiKey ${API_KEY}" \
+              -H "X-ClientID: ${CLIENT_ID}")
+
+            STATUS=$(echo "$STATUS_BODY" | jq -r '.status')
+            echo "Upload status: ${STATUS}"
+
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "✅ Upload processing complete"
+              exit 0
+            elif [ "$STATUS" = "Failed" ]; then
+              echo "::error::Upload processing failed"
+              echo "$STATUS_BODY" | jq .
+              exit 1
+            fi
+
+            POLL=$((POLL + 1))
+            sleep 10
+          done
+
+          echo "::error::Upload processing timed out after $((MAX_POLLS * 10))s"
+          exit 1
+
+      - name: Publish submission
+        id: publish
+        env:
+          PRODUCT_ID: ${{ vars.EDGE_PRODUCT_ID }}
+          CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          API_KEY: ${{ secrets.EDGE_API_KEY }}
+        run: |
+          set -euo pipefail
+          API="https://api.addons.microsoftedge.microsoft.com"
+
+          RESPONSE=$(curl -si -X POST \
+            "${API}/v1/products/${PRODUCT_ID}/submissions" \
+            -H "Authorization: ApiKey ${API_KEY}" \
+            -H "X-ClientID: ${CLIENT_ID}" \
+            -H "Content-Type: application/json" \
+            -d '{"notes":"Automated publish via CI/CD"}')
+
+          HTTP_CODE=$(echo "$RESPONSE" | head -1 | grep -oP '\d{3}')
+          if [ "${HTTP_CODE}" = "202" ] || [ "${HTTP_CODE}" = "200" ]; then
+            echo "✅ Publish request accepted (HTTP ${HTTP_CODE})"
+          else
+            echo "::error::Publish request failed (HTTP ${HTTP_CODE})"
+            echo "$RESPONSE"
             exit 1
           fi
