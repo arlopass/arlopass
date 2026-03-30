@@ -15,15 +15,15 @@ on:
 permissions:
   contents: write
 
-env:
-  ARLOPASS_CHROME_EXTENSION_ID: ${{ vars.ARLOPASS_CHROME_EXTENSION_ID }}
-  ARLOPASS_EDGE_EXTENSION_ID: ${{ vars.ARLOPASS_EDGE_EXTENSION_ID }}
-  ARLOPASS_FIREFOX_EXTENSION_ID: ${{ vars.ARLOPASS_FIREFOX_EXTENSION_ID }}
-
 jobs:
   upload-installers:
     name: Upload installer scripts
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      ARLOPASS_CHROME_EXTENSION_ID: ${{ vars.ARLOPASS_CHROME_EXTENSION_ID }}
+      ARLOPASS_EDGE_EXTENSION_ID: ${{ vars.ARLOPASS_EDGE_EXTENSION_ID }}
+      ARLOPASS_FIREFOX_EXTENSION_ID: ${{ vars.ARLOPASS_FIREFOX_EXTENSION_ID }}
     steps:
       - uses: actions/checkout@v4
 
