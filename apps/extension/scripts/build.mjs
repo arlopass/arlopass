@@ -263,6 +263,27 @@ async function copyStaticAssets() {
       .replace(/href="dist\//g, 'href="');
     await writeFile(path.join(distRoot, asset), rewritten);
   }
+
+  // Copy _locales directory for i18n (required by default_locale in manifest)
+  const localesSrc = path.join(packageRoot, "_locales");
+  const localesDst = path.join(distRoot, "_locales");
+  try {
+    await access(localesSrc);
+    const { readdir } = await import("node:fs/promises");
+    const locales = await readdir(localesSrc, { withFileTypes: true });
+    for (const entry of locales) {
+      if (entry.isDirectory()) {
+        const langDir = path.join(localesDst, entry.name);
+        await mkdir(langDir, { recursive: true });
+        await copyFile(
+          path.join(localesSrc, entry.name, "messages.json"),
+          path.join(langDir, "messages.json"),
+        );
+      }
+    }
+  } catch {
+    // _locales directory is optional
+  }
 }
 
 async function copyExtensionIcons() {
