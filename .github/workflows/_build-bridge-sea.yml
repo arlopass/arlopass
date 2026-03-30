@@ -141,7 +141,8 @@ jobs:
           npm init -y 2>&1 | Out-Null
           npm install rcedit
           node -e "
-            const rcedit = require('rcedit');
+            const mod = require('rcedit');
+            const rcedit = mod.default || mod;
             rcedit('$($binaryAbs -replace '\\','/')', {
               icon: '$($iconAbs -replace '\\','/')',
               'file-version': '${{ inputs.version }}.0',
