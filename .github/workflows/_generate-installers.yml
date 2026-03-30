@@ -15,6 +15,11 @@ on:
 permissions:
   contents: write
 
+env:
+  ARLOPASS_CHROME_EXTENSION_ID: ${{ vars.ARLOPASS_CHROME_EXTENSION_ID }}
+  ARLOPASS_EDGE_EXTENSION_ID: ${{ vars.ARLOPASS_EDGE_EXTENSION_ID }}
+  ARLOPASS_FIREFOX_EXTENSION_ID: ${{ vars.ARLOPASS_FIREFOX_EXTENSION_ID }}
+
 jobs:
   upload-installers:
     name: Upload installer scripts
@@ -26,6 +31,41 @@ jobs:
         run: |
           test -f scripts/installers/install.ps1 || { echo "::error::install.ps1 not found"; exit 1; }
           test -f scripts/installers/install.sh || { echo "::error::install.sh not found"; exit 1; }
+
+      - name: Stamp extension IDs into installer scripts
+        run: |
+          CHROME_ID="${ARLOPASS_CHROME_EXTENSION_ID}"
+          EDGE_ID="${ARLOPASS_EDGE_EXTENSION_ID}"
+          FIREFOX_ID="${ARLOPASS_FIREFOX_EXTENSION_ID}"
+
+          if [ -z "${CHROME_ID}" ]; then
+            echo "::error::ARLOPASS_CHROME_EXTENSION_ID is not set — configure it as a GitHub repository variable"
+            exit 1
+          fi
+          if [ -z "${FIREFOX_ID}" ]; then
+            echo "::error::ARLOPASS_FIREFOX_EXTENSION_ID is not set — configure it as a GitHub repository variable"
+            exit 1
+          fi
+
+          # install.sh — replace default values
+          sed -i "s|CHROME_EXT_ID=\"\${ARLOPASS_CHROME_EXTENSION_ID:-\${ARLOPASS_CHROME_EXT_ID:-[^}]*}}\"| CHROME_EXT_ID=\"\${ARLOPASS_CHROME_EXTENSION_ID:-\${ARLOPASS_CHROME_EXT_ID:-${CHROME_ID}}}\"|"\
+            scripts/installers/install.sh
+          sed -i "s|EDGE_EXT_ID=\"\${ARLOPASS_EDGE_EXTENSION_ID:-\${ARLOPASS_EDGE_EXT_ID:-[^}]*}}\"| EDGE_EXT_ID=\"\${ARLOPASS_EDGE_EXTENSION_ID:-\${ARLOPASS_EDGE_EXT_ID:-${EDGE_ID}}}\"|"\
+            scripts/installers/install.sh
+          sed -i "s|FIREFOX_EXT_ID=\"\${ARLOPASS_FIREFOX_EXTENSION_ID:-\${ARLOPASS_FIREFOX_EXT_ID:-[^}]*}}\"| FIREFOX_EXT_ID=\"\${ARLOPASS_FIREFOX_EXTENSION_ID:-\${ARLOPASS_FIREFOX_EXT_ID:-${FIREFOX_ID}}}\"|"\
+            scripts/installers/install.sh
+
+          # install.ps1 — replace the env-fallback expressions
+          sed -i "s|\"gebhamhhckkjfjibomllkpicongnebkh\"|\"${CHROME_ID}\"|g" scripts/installers/install.ps1
+          sed -i "s|\"arlopass-wallet@arlopass.com\"|\"${FIREFOX_ID}\"|g" scripts/installers/install.ps1
+
+          # allowed-extensions.json — update canonical reference
+          jq --arg chrome "${CHROME_ID}" --arg edge "${EDGE_ID:-}" --arg firefox "${FIREFOX_ID}" \
+            '.chromium.chrome = $chrome | .chromium.edge = $edge | .firefox.id = $firefox' \
+            scripts/installers/allowed-extensions.json > scripts/installers/allowed-extensions.tmp.json
+          mv scripts/installers/allowed-extensions.tmp.json scripts/installers/allowed-extensions.json
+
+          echo "✅ Extension IDs stamped: chrome=${CHROME_ID} edge=${EDGE_ID:-<empty>} firefox=${FIREFOX_ID}"
 
       - name: Upload installers to release
         env:

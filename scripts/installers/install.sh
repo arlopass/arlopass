@@ -4,7 +4,7 @@
 # Uninstall: curl -fsSL https://arlopass.com/install.sh | sh -s -- --uninstall
 #
 # Override extension IDs:
-#   ARLOPASS_CHROME_EXT_ID=... ARLOPASS_EDGE_EXT_ID=... ARLOPASS_FIREFOX_EXT_ID=... sh install.sh
+#   ARLOPASS_CHROME_EXTENSION_ID=... ARLOPASS_EDGE_EXTENSION_ID=... ARLOPASS_FIREFOX_EXTENSION_ID=... sh install.sh
 set -eu
 
 REPO="Arlopass/arlopass"
@@ -12,10 +12,11 @@ INSTALL_DIR="${HOME}/.local/bin"
 BINARY_NAME="arlopass-bridge"
 NATIVE_HOST_NAME="com.arlopass.bridge"
 
-# Default extension IDs — override via env vars above
-CHROME_EXT_ID="${ARLOPASS_CHROME_EXT_ID:-gebhamhhckkjfjibomllkpicongnebkh}"
-EDGE_EXT_ID="${ARLOPASS_EDGE_EXT_ID:-}"
-FIREFOX_EXT_ID="${ARLOPASS_FIREFOX_EXT_ID:-arlopass-wallet@arlopass.com}"
+# Default extension IDs — override via env vars
+# Accepts both naming conventions: ARLOPASS_CHROME_EXTENSION_ID (canonical) or ARLOPASS_CHROME_EXT_ID (legacy)
+CHROME_EXT_ID="${ARLOPASS_CHROME_EXTENSION_ID:-${ARLOPASS_CHROME_EXT_ID:-gebhamhhckkjfjibomllkpicongnebkh}}"
+EDGE_EXT_ID="${ARLOPASS_EDGE_EXTENSION_ID:-${ARLOPASS_EDGE_EXT_ID:-}}"
+FIREFOX_EXT_ID="${ARLOPASS_FIREFOX_EXTENSION_ID:-${ARLOPASS_FIREFOX_EXT_ID:-arlopass-wallet@arlopass.com}}"
 
 log()   { printf '\033[1;34m%s\033[0m\n' "$*"; }
 ok()    { printf '\033[1;32m%s\033[0m\n' "$*"; }

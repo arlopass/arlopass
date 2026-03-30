@@ -51,10 +51,11 @@ function Get-LatestRelease {
     throw "No bridge release found"
 }
 
-# ---- Default extension IDs (overridden via -ChromeExtId / -EdgeExtId / -FirefoxExtId) ----
-$DEFAULT_CHROME_EXT_ID  = "gebhamhhckkjfjibomllkpicongnebkh"
-$DEFAULT_EDGE_EXT_ID    = ""   # Set after Edge Add-ons store publishing
-$DEFAULT_FIREFOX_EXT_ID = "arlopass-wallet@arlopass.com"
+# ---- Default extension IDs ----
+# Priority: CLI param > env var > hardcoded default
+$DEFAULT_CHROME_EXT_ID  = if ($env:ARLOPASS_CHROME_EXTENSION_ID)  { $env:ARLOPASS_CHROME_EXTENSION_ID  } else { "gebhamhhckkjfjibomllkpicongnebkh" }
+$DEFAULT_EDGE_EXT_ID    = if ($env:ARLOPASS_EDGE_EXTENSION_ID)    { $env:ARLOPASS_EDGE_EXTENSION_ID    } else { "" }
+$DEFAULT_FIREFOX_EXT_ID = if ($env:ARLOPASS_FIREFOX_EXTENSION_ID) { $env:ARLOPASS_FIREFOX_EXTENSION_ID } else { "arlopass-wallet@arlopass.com" }
 
 function Register-NativeHosts {
     param(

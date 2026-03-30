@@ -6,16 +6,16 @@ import {
 } from "../config/authenticated-origin-policy.js";
 
 describe("authenticated-origin-policy", () => {
-  it("allows loopback origins by default and denies non-loopback origins", () => {
+  it("allows all origins by default (extension handles consent)", () => {
     const policy = createAuthenticatedOriginPolicyFromEnv({});
 
     expect(policy.authenticatedOriginMatcher("http://127.0.0.1:4172")).toBe(true);
     expect(policy.authenticatedOriginMatcher("http://localhost:3000")).toBe(true);
     expect(policy.authenticatedOriginMatcher("http://[::1]:5173")).toBe(true);
-    expect(policy.authenticatedOriginMatcher("https://app.example.com")).toBe(false);
+    expect(policy.authenticatedOriginMatcher("https://app.example.com")).toBe(true);
   });
 
-  it("allows explicitly configured non-loopback origins", () => {
+  it("restricts to explicit origins when ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS is set", () => {
     const policy = createAuthenticatedOriginPolicyFromEnv({
       ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS: "https://app.example.com, https://staging.example.com",
     });
@@ -44,15 +44,18 @@ describe("authenticated-origin-policy", () => {
       ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS: "*",
     });
 
+    // Wildcard is not a valid origin, so the policy has entries but none match
     expect(policy.authenticatedOriginMatcher("https://app.example.com")).toBe(false);
   });
 
-  it("supports disabling default loopback allowances explicitly", () => {
+  it("supports disabling default loopback allowances when policy is set", () => {
     const policy = createAuthenticatedOriginPolicyFromEnv({
+      ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS: "https://only-this.example.com",
       ARLOPASS_BRIDGE_ALLOW_LOOPBACK_ORIGINS: "false",
     });
 
     expect(policy.authenticatedOriginMatcher("http://127.0.0.1:4172")).toBe(false);
+    expect(policy.authenticatedOriginMatcher("https://only-this.example.com")).toBe(true);
   });
 });
 

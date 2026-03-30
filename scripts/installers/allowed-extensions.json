@@ -3,7 +3,7 @@
     "$comment": "Canonical extension IDs for every supported browser. Installers read this file to generate per-browser native messaging host manifests. Update the IDs here after publishing to each store, then re-run the installer (or `arlopass-bridge --update-hosts`).",
     "chromium": {
         "$comment": "Shared by Chrome and Edge. Both use allowed_origins with the chrome-extension:// scheme.",
-        "chrome": "injgegpnengphfopjggfkjglaomkmgcc",
+        "chrome": "gebhamhhckkjfjibomllkpicongnebkh",
         "edge": ""
     },
     "firefox": {

@@ -15,6 +15,39 @@ import { fileURLToPath } from "node:url";
 
 import { build, context } from "esbuild";
 
+// ---- Load .env from workspace root (env vars take precedence) ----
+const workspaceRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "..",
+);
+
+async function loadDotEnv() {
+  const dotenvPath = path.join(workspaceRoot, ".env");
+  try {
+    const content = await readFile(dotenvPath, "utf-8");
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx === -1) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      const value = trimmed.slice(eqIdx + 1).trim();
+      // Only set if not already in environment (env vars take precedence)
+      if (process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  } catch {
+    // .env file is optional
+  }
+}
+await loadDotEnv();
+
+const FIREFOX_EXTENSION_ID =
+  process.env.ARLOPASS_FIREFOX_EXTENSION_ID || "arlopass-wallet@arlopass.com";
+
 const isWatchMode = process.argv.includes("--watch");
 const targetArg = process.argv.find((a) => a.startsWith("--target="));
 const target = targetArg ? targetArg.split("=")[1] : "chromium";
@@ -186,8 +219,10 @@ async function processManifest() {
   }
 
   // The `key` field pins the extension ID during local unpacked development.
-  // It must be stripped for all store uploads — the store assigns its own key.
-  delete manifest.key;
+  // Strip it only for production builds — store uploads get their own key.
+  if (!isWatchMode) {
+    delete manifest.key;
+  }
 
   if (isFirefox) {
     // Firefox uses background.scripts instead of background.service_worker
@@ -201,7 +236,7 @@ async function processManifest() {
     // Add Firefox-specific settings
     manifest.browser_specific_settings = {
       gecko: {
-        id: "arlopass-wallet@arlopass.com",
+        id: FIREFOX_EXTENSION_ID,
         strict_min_version: "109.0",
         data_collection_permissions: {
           required: ["none"],

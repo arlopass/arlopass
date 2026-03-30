@@ -948,7 +948,7 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
     expect(cloudConnectionService.completeConnection).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects cloud.chat.execute for non-loopback origins when authenticated-origin allowlist is unset", async () => {
+  it("allows cloud.chat.execute for any origin when no authenticated-origin policy is set", async () => {
     const cloudConnectionService = createCloudService();
     const cloudChatExecutor = createCloudChatExecutor();
     const sessionKeyRegistry = new SessionKeyRegistry({
@@ -978,11 +978,11 @@ describe("BridgeHandler cloud control-plane dispatch", () => {
       }),
     );
 
-    expect(response).toMatchObject({
+    // Without an explicit policy, all origins are trusted (extension handles consent)
+    expect(response).not.toMatchObject({
       type: "error",
       reasonCode: "auth.invalid",
     });
-    expect(cloudChatExecutor.execute).not.toHaveBeenCalled();
   });
 
   it("allows cloud.chat.execute for explicitly configured non-loopback authenticated origins", async () => {

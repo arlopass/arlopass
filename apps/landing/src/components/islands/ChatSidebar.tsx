@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionIcon,
-  Button,
   Menu,
   Popover,
   ScrollArea,
@@ -12,7 +11,7 @@ import {
 } from "@mantine/core";
 import {
   IconChevronDown,
-  IconPlugConnected,
+  IconDownload,
   IconSearch,
   IconSend,
   IconTool,
@@ -272,7 +271,6 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
 
   // React SDK hooks
   const {
-    state: connState,
     isConnected,
     isConnecting,
     error: connError,
@@ -531,36 +529,35 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
 
       {/* ── Connection fallback ─────────────────────────────────── */}
       {!isConnected && !isConnecting && (
-        <div className="chat-connect-banner">
+        <div className="chat-connect-empty">
+          <div className="chat-connect-icon">
+            <img src="/ArlopassIcon.svg" alt="Arlopass" width="28" height="28" />
+          </div>
+          <span className="chat-connect-title">Arlopass Extension Required</span>
+          <span className="chat-connect-subtitle">
+            Install the browser extension to chat with any AI model — your keys, your choice.
+          </span>
           {connError !== null && (
-            <Text fz={11} c="var(--ap-danger)" mb={4}>
-              {connError.message}
-            </Text>
+            <span className="chat-connect-error">{connError.message}</span>
           )}
-          {connState === "disconnected" && (
-            <Text fz={11} c="var(--ap-text-tertiary)" mb={6}>
-              Extension not detected. Load the Arlopass extension first.
-            </Text>
-          )}
-          <Button
-            size="xs"
-            leftSection={<IconPlugConnected size={14} />}
-            onClick={() => void (connRetry ?? connect)()}
-            fullWidth
-            styles={{
-              root: {
-                background: "var(--ap-brand)",
-                border: "none",
-                "&:hover": { background: "var(--ap-brand-hover)" },
-              },
-            }}
+          <a
+            href="/docs/getting-started/install"
+            className="chat-connect-install-btn"
           >
-            {connError ? "Retry connection" : "Connect to Arlopass"}
-          </Button>
+            <IconDownload size={14} />
+            Install Extension
+          </a>
+          <button
+            className="chat-connect-retry"
+            onClick={() => void (connRetry ?? connect)()}
+          >
+            Already installed? Try again
+          </button>
         </div>
       )}
 
       {/* ── Chat messages area ──────────────────────────────────── */}
+      {(isConnected || isConnecting) && (
       <div className="chat-messages-wrapper">
         {/* Scroll fade gradient */}
         <div className="chat-fade-top" style={{ opacity: showFade ? 1 : 0 }} />
@@ -848,8 +845,10 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
           )}
         </div>
       </div>
+      )}
 
       {/* ── Input area ──────────────────────────────────────────── */}
+      {(isConnected || isConnecting) && (
       <div className="chat-input-area">
         {/* Provider/model selectors */}
         {isConnected && providers.length > 0 && (
@@ -982,8 +981,10 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
           </ActionIcon>
         </div>
       </div>
+      )}
 
       {/* ── Footer status bar ───────────────────────────────────── */}
+      {(isConnected || isConnecting) && (
       <div className="chat-footer">
         {isStreaming ? (
           /* Streaming state */
@@ -1027,6 +1028,7 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

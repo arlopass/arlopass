@@ -118,6 +118,11 @@ export function createAuthenticatedOriginPolicyFromEnv(
 ): AuthenticatedOriginPolicy {
   const authenticatedOrigins = new Set<string>();
 
+  const originsEnvProvided =
+    normalizeNonEmpty(env["ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS"]) !== undefined;
+  const extensionIdsEnvProvided =
+    normalizeNonEmpty(env["ARLOPASS_BRIDGE_AUTHENTICATED_EXTENSION_IDS"]) !== undefined;
+
   for (const entry of parseCsvEnv(env["ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS"])) {
     const normalizedOrigin = normalizeAuthenticatedOrigin(entry);
     if (normalizedOrigin !== undefined) {
@@ -138,7 +143,18 @@ export function createAuthenticatedOriginPolicyFromEnv(
     env["ARLOPASS_BRIDGE_ALLOW_LOOPBACK_ORIGINS"],
     true,
   );
+
+  // Trust all origins by default. The bridge only accepts requests via native
+  // messaging from a pinned extension ID — the extension already enforces
+  // per-origin user consent before forwarding anything here. An explicit
+  // ARLOPASS_BRIDGE_AUTHENTICATED_ORIGINS or ARLOPASS_BRIDGE_AUTHENTICATED_EXTENSION_IDS
+  // env var switches to enterprise lockdown mode where only listed origins pass.
+  const hasPolicyRestriction = originsEnvProvided || extensionIdsEnvProvided;
+
   const authenticatedOriginMatcher = (origin: string): boolean => {
+    if (!hasPolicyRestriction) {
+      return true;
+    }
     const normalizedOrigin = normalizeAuthenticatedOrigin(origin);
     if (normalizedOrigin !== undefined && authenticatedOrigins.has(normalizedOrigin)) {
       return true;

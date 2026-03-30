@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  ARLOPASS_FIREFOX_EXTENSION_ID: ${{ vars.ARLOPASS_FIREFOX_EXTENSION_ID }}
+
 jobs:
   build:
     name: Build extension (${{ matrix.target }})
