@@ -33,19 +33,19 @@ jobs:
           API="https://api.addons.microsoftedge.microsoft.com"
           RETRY=0
           MAX_RETRIES=3
+          HEADERS_FILE=$(mktemp)
 
           until [ $RETRY -ge $MAX_RETRIES ]; do
-            RESPONSE=$(curl -si -X POST \
-              "${API}/v1/products/${PRODUCT_ID}/submissions/draft/package" \
+            HTTP_CODE=$(curl -s -w "%{http_code}" -o /dev/null -D "$HEADERS_FILE" \
+              -X POST "${API}/v1/products/${PRODUCT_ID}/submissions/draft/package" \
               -H "Authorization: ApiKey ${API_KEY}" \
               -H "X-ClientID: ${CLIENT_ID}" \
               -H "Content-Type: application/zip" \
               -T arlopass-extension-chromium.zip)
 
-            HTTP_CODE=$(echo "$RESPONSE" | head -1 | grep -oP '\d{3}')
             if [ "${HTTP_CODE}" = "202" ] || [ "${HTTP_CODE}" = "200" ]; then
               echo "✅ Upload accepted (HTTP ${HTTP_CODE})"
-              OPERATION_ID=$(echo "$RESPONSE" | grep -i '^Location:' | awk '{print $2}' | tr -d '\r')
+              OPERATION_ID=$(grep -i '^Location:' "$HEADERS_FILE" | awk '{print $2}' | tr -d '\r')
               echo "operation_id=${OPERATION_ID}" >> "$GITHUB_OUTPUT"
               break
             fi
@@ -54,6 +54,7 @@ jobs:
             sleep $((RETRY * 15))
           done
 
+          rm -f "$HEADERS_FILE"
           if [ $RETRY -ge $MAX_RETRIES ]; then
             echo "::error::Edge Add-ons upload failed after ${MAX_RETRIES} attempts"
             exit 1
