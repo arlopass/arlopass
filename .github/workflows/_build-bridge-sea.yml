@@ -133,16 +133,24 @@ jobs:
         if: matrix.os == 'win'
         shell: pwsh
         run: |
-          npx --yes rcedit "${{ matrix.binary }}" `
-            --set-icon "apps/bridge/assets/icon.ico" `
-            --set-version-string "FileDescription" "Arlopass Bridge" `
-            --set-version-string "ProductName" "Arlopass Bridge" `
-            --set-version-string "CompanyName" "Arlopass" `
-            --set-version-string "LegalCopyright" "Copyright (c) Arlopass. MIT License." `
-            --set-version-string "OriginalFilename" "arlopass-bridge.exe" `
-            --set-version-string "InternalName" "arlopass-bridge" `
-            --set-file-version "${{ inputs.version }}.0" `
-            --set-product-version "${{ inputs.version }}"
+          npm install --no-save @electron/rcedit
+          node -e "
+            const rcedit = require('@electron/rcedit');
+            rcedit('${{ matrix.binary }}', {
+              icon: 'apps/bridge/assets/icon.ico',
+              'file-version': '${{ inputs.version }}.0',
+              'product-version': '${{ inputs.version }}',
+              'version-string': {
+                FileDescription: 'Arlopass Bridge',
+                ProductName: 'Arlopass Bridge',
+                CompanyName: 'Arlopass',
+                LegalCopyright: 'Copyright (c) Arlopass. MIT License.',
+                OriginalFilename: 'arlopass-bridge.exe',
+                InternalName: 'arlopass-bridge'
+              }
+            }).then(() => console.log('rcedit: metadata stamped'))
+              .catch(e => { console.error(e); process.exit(1); });
+          "
 
       - name: Post-process (macOS ad-hoc re-sign)
         if: matrix.os == 'macos'
