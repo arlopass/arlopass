@@ -133,9 +133,14 @@ jobs:
         if: matrix.os == 'win'
         shell: pwsh
         run: |
-          npm install --no-save @electron/rcedit
+          $rceditDir = Join-Path $env:RUNNER_TEMP "rcedit"
+          New-Item -ItemType Directory -Path $rceditDir -Force | Out-Null
+          Push-Location $rceditDir
+          npm init -y 2>&1 | Out-Null
+          npm install rcedit
+          Pop-Location
           node -e "
-            const rcedit = require('@electron/rcedit');
+            const rcedit = require('$($rceditDir -replace '\\','/')/node_modules/rcedit');
             rcedit('${{ matrix.binary }}', {
               icon: 'apps/bridge/assets/icon.ico',
               'file-version': '${{ inputs.version }}.0',
