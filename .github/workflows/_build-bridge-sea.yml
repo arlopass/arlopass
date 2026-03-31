@@ -42,7 +42,7 @@ jobs:
             runner: ubuntu-latest
             binary: arlopass-bridge-linux-arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: pnpm/action-setup@v4
       - name: Setup Node.js

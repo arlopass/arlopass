@@ -31,7 +31,7 @@ jobs:
       extension_version: ${{ steps.detect.outputs.extension_version }}
       adapters_json: ${{ steps.detect.outputs.adapters_json }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
 
@@ -123,7 +123,7 @@ jobs:
     if: needs.detect.outputs.core_bumped == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -145,7 +145,7 @@ jobs:
     if: needs.detect.outputs.extension_bumped == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -171,7 +171,7 @@ jobs:
       matrix:
         adapter: ${{ fromJson(needs.detect.outputs.adapters_json) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
