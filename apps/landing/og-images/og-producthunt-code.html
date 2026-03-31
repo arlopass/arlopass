@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Arlopass — ProductHunt Code Hero</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #1c1917;
+    --bg-code: #1a1412;
+    --bg-surface: #292524;
+    --bg-elevated: #3d3835;
+    --border: #44403c;
+    --border-strong: #57534e;
+    --text-primary: #fafaf9;
+    --text-body: #d6d3d1;
+    --text-secondary: #a8a29e;
+    --text-tertiary: #78716c;
+    --brand: #DB4D12;
+    --success: #4d7c0f;
+
+    /* Syntax colors — warm palette, no cool blues */
+    --syn-keyword: #d6d3d1;      /* import, const, await, for */
+    --syn-string: #DB4D12;        /* terracotta strings */
+    --syn-comment: #78716c;       /* comments */
+    --syn-func: #d6d3d1;          /* function calls */
+    --syn-prop: #a8a29e;          /* property names */
+    --syn-punct: #57534e;         /* brackets, braces, parens */
+    --syn-var: #fafaf9;           /* variable names */
+    --syn-type: #d97706;          /* type/class names — amber */
+    --syn-method: #d6d3d1;        /* method names */
+    --syn-line-nr: #3d3835;       /* line numbers */
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    overflow: hidden;
+  }
+
+  /* ── Stripe bar ── */
+  .stripe-bar {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Editor header (tab bar) ── */
+  .editor-header {
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    height: 36px;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .editor-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .editor-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border-strong);
+  }
+  .editor-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 100%;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-right: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    background: var(--bg-code);
+    margin-left: 8px;
+  }
+  .editor-tab-icon {
+    width: 12px; height: 12px;
+    color: var(--syn-type);
+  }
+  .editor-spacer { flex: 1; }
+  .editor-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+  }
+
+  /* ── Code area ── */
+  .code-area {
+    background: var(--bg-code);
+    overflow: hidden;
+    display: flex;
+  }
+
+  /* Line numbers gutter */
+  .gutter {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0 20px 24px;
+    width: 56px;
+    text-align: right;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .ln {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 24px;
+    color: var(--syn-line-nr);
+    padding-right: 16px;
+  }
+
+  /* Code content */
+  .code {
+    flex: 1;
+    padding: 20px 24px 20px 0;
+    overflow: hidden;
+  }
+  .code pre {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 13px;
+    line-height: 24px;
+    color: var(--text-body);
+    white-space: pre;
+  }
+
+  /* Syntax classes */
+  .k  { color: var(--syn-keyword); font-weight: 500; }  /* keyword */
+  .s  { color: var(--syn-string); }                       /* string */
+  .c  { color: var(--syn-comment); font-style: italic; }  /* comment */
+  .f  { color: var(--syn-func); }                         /* function */
+  .p  { color: var(--syn-punct); }                        /* punctuation */
+  .v  { color: var(--syn-var); }                          /* variable */
+  .t  { color: var(--syn-type); }                         /* type */
+  .m  { color: var(--syn-method); }                       /* method */
+  .pr { color: var(--syn-prop); }                         /* property */
+
+  /* ── Bottom bar ── */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 48px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+  }
+  .bottom-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .bottom-logo { height: 22px; width: auto; }
+  .bottom-tagline {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .bottom-tagline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+  .bottom-right {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Editor header -->
+  <div class="editor-header">
+    <div class="editor-dots">
+      <div class="editor-dot"></div>
+      <div class="editor-dot"></div>
+      <div class="editor-dot"></div>
+    </div>
+    <div class="editor-tab">
+      <svg class="editor-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+      app.ts
+    </div>
+    <div class="editor-spacer"></div>
+    <span class="editor-label">The entire integration</span>
+  </div>
+
+  <!-- Code area -->
+  <div class="code-area">
+    <div class="gutter">
+      <span class="ln">1</span>
+      <span class="ln">2</span>
+      <span class="ln">3</span>
+      <span class="ln">4</span>
+      <span class="ln">5</span>
+      <span class="ln">6</span>
+      <span class="ln">7</span>
+      <span class="ln">8</span>
+      <span class="ln">9</span>
+      <span class="ln">10</span>
+      <span class="ln">11</span>
+      <span class="ln">12</span>
+      <span class="ln">13</span>
+      <span class="ln">14</span>
+      <span class="ln">15</span>
+      <span class="ln">16</span>
+      <span class="ln">17</span>
+      <span class="ln">18</span>
+    </div>
+    <div class="code"><pre><span class="c">// The entire integration</span>
+<span class="k">import</span> <span class="p">{</span> <span class="t">ArlopassClient</span> <span class="p">}</span> <span class="k">from</span> <span class="s">"@arlopass/web-sdk"</span><span class="p">;</span>
+
+<span class="k">const</span> <span class="v">client</span> <span class="p">=</span> <span class="k">new</span> <span class="t">ArlopassClient</span><span class="p">({</span> <span class="pr">transport</span><span class="p">:</span> <span class="v">window</span><span class="p">.</span><span class="pr">arlopass</span> <span class="p">});</span>
+<span class="k">await</span> <span class="v">client</span><span class="p">.</span><span class="m">connect</span><span class="p">({</span> <span class="pr">appId</span><span class="p">:</span> <span class="s">"com.acme.app"</span> <span class="p">});</span>
+
+<span class="k">const</span> <span class="p">{</span> <span class="v">providers</span> <span class="p">}</span> <span class="p">=</span> <span class="k">await</span> <span class="v">client</span><span class="p">.</span><span class="m">listProviders</span><span class="p">();</span>
+<span class="k">await</span> <span class="v">client</span><span class="p">.</span><span class="m">selectProvider</span><span class="p">({</span>
+  <span class="pr">providerId</span><span class="p">:</span> <span class="v">providers</span><span class="p">[</span><span class="v">0</span><span class="p">].</span><span class="pr">providerId</span><span class="p">,</span>
+  <span class="pr">modelId</span><span class="p">:</span> <span class="v">providers</span><span class="p">[</span><span class="v">0</span><span class="p">].</span><span class="pr">models</span><span class="p">[</span><span class="v">0</span><span class="p">],</span>
+<span class="p">});</span>
+
+<span class="k">for await</span> <span class="p">(</span><span class="k">const</span> <span class="v">event</span> <span class="k">of</span> <span class="v">client</span><span class="p">.</span><span class="pr">chat</span><span class="p">.</span><span class="m">stream</span><span class="p">({</span>
+  <span class="pr">messages</span><span class="p">: [{</span> <span class="pr">role</span><span class="p">:</span> <span class="s">"user"</span><span class="p">,</span> <span class="pr">content</span><span class="p">:</span> <span class="s">"Hello!"</span> <span class="p">}],</span>
+<span class="p">}))</span> <span class="p">{</span>
+  <span class="v">process</span><span class="p">.</span><span class="pr">stdout</span><span class="p">.</span><span class="m">write</span><span class="p">(</span><span class="v">event</span><span class="p">.</span><span class="pr">delta</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <div class="bottom-left">
+      <img class="bottom-logo" src="../public/ArlopassLogo-Dark.svg" alt="Arlopass" />
+    </div>
+    <span class="bottom-tagline"><em>10 lines.</em> Any model. Zero key management.</span>
+    <span class="bottom-right">Free · Open Source · MIT Licensed</span>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Arlopass — Architecture Diagram</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #1c1917;
+    --bg-surface: #292524;
+    --bg-elevated: #3d3835;
+    --border: #44403c;
+    --border-strong: #57534e;
+    --text-primary: #fafaf9;
+    --text-body: #d6d3d1;
+    --text-secondary: #a8a29e;
+    --text-tertiary: #78716c;
+    --brand: #DB4D12;
+    --brand-subtle: #2c1a0e;
+    --success: #4d7c0f;
+    --success-subtle: #1a2e05;
+    --amber: #d97706;
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    overflow: hidden;
+  }
+
+  /* ── Stripes ── */
+  .stripe-bar {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px 40px 0;
+    text-align: center;
+  }
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+  .headline {
+    font-size: 36px;
+    font-weight: 750;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+
+  /* ── Diagram area ── */
+  .diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 60px 0;
+    position: relative;
+  }
+
+  /* ── Nodes ── */
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 200px;
+    flex-shrink: 0;
+  }
+  .node-box {
+    width: 180px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    position: relative;
+  }
+  .node-box-brand {
+    border-color: var(--brand);
+    background: var(--brand-subtle);
+  }
+  .node-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .node-icon svg {
+    width: 20px; height: 20px;
+  }
+  .icon-neutral {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+  }
+  .icon-brand {
+    background: var(--brand);
+  }
+  .icon-success {
+    background: var(--success-subtle);
+    border: 1px solid rgba(77, 124, 15, 0.3);
+  }
+  .icon-amber {
+    background: rgba(217, 119, 6, 0.1);
+    border: 1px solid rgba(217, 119, 6, 0.25);
+  }
+  .node-title {
+    font-size: 14px;
+    font-weight: 650;
+    color: var(--text-primary);
+  }
+  .node-desc {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+  }
+
+  /* ── Arrows between nodes ── */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100px;
+    flex-shrink: 0;
+  }
+  .arrow-line {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  .arrow-dash {
+    flex: 1;
+    height: 1px;
+    background: repeating-linear-gradient(
+      to right,
+      var(--brand) 0px,
+      var(--brand) 6px,
+      transparent 6px,
+      transparent 10px
+    );
+  }
+  .arrow-head {
+    width: 0; height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 8px solid var(--brand);
+    flex-shrink: 0;
+  }
+  .arrow-label {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 8px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  /* ── Bridge node (below center) ── */
+  .bridge-connector {
+    position: absolute;
+    top: calc(50% + 56px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .bridge-line {
+    width: 1px;
+    height: 24px;
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--brand) 0px,
+      var(--brand) 4px,
+      transparent 4px,
+      transparent 7px
+    );
+  }
+  .bridge-node {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .bridge-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bridge-icon svg {
+    width: 14px; height: 14px;
+  }
+  .bridge-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .bridge-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .bridge-desc {
+    font-size: 9px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Bottom bar ── */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 52px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+  }
+  .bottom-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .bottom-logo { height: 20px; width: auto; }
+  .bottom-sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    max-width: 520px;
+    line-height: 1.4;
+  }
+  .bottom-sub strong {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .bottom-right {
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <span class="pixel-label">Zero-Trust Architecture</span>
+    <h1 class="headline">Keys stay on your machine. <em>Always.</em></h1>
+  </div>
+
+  <!-- Diagram -->
+  <div class="diagram">
+    <!-- Web App node -->
+    <div class="node">
+      <div class="node-box">
+        <div class="node-icon icon-neutral">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a8a29e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </div>
+        <span class="node-title">Web App</span>
+        <span class="node-desc">Never sees your keys.<br/>Requests go through Arlopass.</span>
+      </div>
+    </div>
+
+    <!-- Arrow 1 -->
+    <div class="arrow">
+      <span class="arrow-label">Request</span>
+      <div class="arrow-line">
+        <div class="arrow-dash"></div>
+        <div class="arrow-head"></div>
+      </div>
+    </div>
+
+    <!-- Arlopass node (brand highlighted) -->
+    <div class="node">
+      <div class="node-box node-box-brand">
+        <div class="node-icon icon-brand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fafaf9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+        <span class="node-title">Arlopass</span>
+        <span class="node-desc">Consent + policy engine.<br/>Per-request approval.</span>
+      </div>
+    </div>
+
+    <!-- Arrow 2 -->
+    <div class="arrow">
+      <span class="arrow-label">Approved</span>
+      <div class="arrow-line">
+        <div class="arrow-dash"></div>
+        <div class="arrow-head"></div>
+      </div>
+    </div>
+
+    <!-- AI Provider node -->
+    <div class="node">
+      <div class="node-box">
+        <div class="node-icon icon-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#4d7c0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <span class="node-title">Your AI Provider</span>
+        <span class="node-desc">Ollama, Claude, GPT,<br/>Gemini, Bedrock, Grok</span>
+      </div>
+    </div>
+
+    <!-- Bridge node (below Arlopass) -->
+    <div class="bridge-connector">
+      <div class="bridge-line"></div>
+      <div class="bridge-node">
+        <div class="bridge-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+        </div>
+        <div class="bridge-meta">
+          <span class="bridge-title">Local Bridge</span>
+          <span class="bridge-desc">Secure vault on your PC · OS Keychain</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <div class="bottom-left">
+      <img class="bottom-logo" src="../public/ArlopassLogo-Dark.svg" alt="Arlopass" />
+    </div>
+    <span class="bottom-sub"><strong>HMAC handshakes</strong> · ephemeral sessions · anti-replay nonces · AES-256-GCM vault</span>
+    <span class="bottom-right">Free · Open Source · MIT</span>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+</body>
+</html>

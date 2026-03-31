@@ -1,0 +1,155 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import PageHero from "../../components/ui/PageHero.astro";
+import Divider from "../../components/Divider.astro";
+
+const posts = (await getCollection("blog"))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
+
+/* ── Structured data: Blog + BlogPosting list ──── */
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  name: "Arlopass Blog",
+  description:
+    "Tutorials, architecture deep-dives, and updates on building the open AI access layer for the web. Learn how to integrate AI into web apps without managing API keys.",
+  url: "https://arlopass.com/blog",
+  publisher: {
+    "@type": "Organization",
+    name: "Arlopass",
+    url: "https://arlopass.com",
+    logo: { "@type": "ImageObject", url: "https://arlopass.com/logo.svg" },
+  },
+  inLanguage: "en-US",
+  blogPost: posts.map((post) => {
+    const slug = post.id.replace(/\.mdx?$/, "");
+    return {
+      "@type": "BlogPosting",
+      headline: post.data.title,
+      description: post.data.description,
+      datePublished: post.data.published.toISOString(),
+      url: `https://arlopass.com/blog/${slug}`,
+      author: { "@type": "Organization", name: "Arlopass" },
+    };
+  }),
+};
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: "https://arlopass.com",
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Blog",
+      item: "https://arlopass.com/blog",
+    },
+  ],
+};
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function formatShortDate(d: Date): string {
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+---
+
+<Layout
+  title="Blog — Arlopass | Tutorials, Guides & Updates on AI Access Management"
+  description="Tutorials, architecture deep-dives, and updates from the Arlopass team. Learn how to use AI in web apps without exposing API keys."
+  canonicalUrl="https://arlopass.com/blog"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
+  <Nav />
+  <main>
+    <PageHero
+      label="Blog"
+      title="From the team"
+      description="Tutorials, architecture deep-dives, and updates on building the open AI access layer for the web."
+    />
+
+    <Divider />
+
+    {/* ── Post list — matches changelog grid pattern ───────── */}
+    <div class="border-b border-[var(--ap-border)]">
+      {
+        posts.length === 0 ? (
+          <div class="p-8 sm:p-10">
+            <p class="text-sm text-[var(--ap-text-tertiary)]">
+              No posts yet. Check back soon.
+            </p>
+          </div>
+        ) : (
+          posts.map((post, i) => {
+            const slug = post.id.replace(/\.mdx?$/, "");
+            return (
+              <a
+                href={`/blog/${slug}`}
+                class:list={[
+                  "group grid grid-cols-1 md:grid-cols-[200px_1fr] no-underline transition-colors duration-200",
+                  i > 0 && "border-t border-[var(--ap-border)]",
+                ]}
+              >
+                {/* Date sidebar */}
+                <div class="p-6 sm:p-8 md:border-r border-[var(--ap-border)] bg-[var(--ap-bg-surface)] group-hover:bg-[var(--ap-bg-base)] transition-colors duration-200">
+                  <time
+                    class="block text-xs text-[var(--ap-text-tertiary)] font-mono tabular-nums"
+                    datetime={post.data.published.toISOString()}
+                  >
+                    {formatShortDate(post.data.published)}
+                  </time>
+                  {post.data.tags.length > 0 && (
+                    <span class="inline-block mt-2 text-xs font-pixel tracking-[0.05em] text-brand">
+                      {post.data.tags[0]}
+                    </span>
+                  )}
+                </div>
+
+                {/* Content area */}
+                <div class="p-6 sm:p-8 group-hover:bg-[var(--ap-bg-surface)] transition-colors duration-200">
+                  <h2 class="text-base font-semibold text-[var(--ap-text-primary)] group-hover:text-brand transition-colors duration-200 leading-snug mb-2">
+                    {post.data.title}
+                  </h2>
+                  <p class="text-sm text-[var(--ap-text-secondary)] leading-relaxed line-clamp-2 mb-3">
+                    {post.data.description}
+                  </p>
+                  {post.data.tags.length > 1 && (
+                    <div class="flex gap-2 flex-wrap">
+                      {post.data.tags.slice(1).map((tag: string) => (
+                        <span class="text-xs px-2 py-0.5 rounded bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] text-[var(--ap-text-tertiary)] group-hover:bg-[var(--ap-bg-base)] transition-colors duration-200">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </a>
+            );
+          })
+        )
+      }
+    </div>
+  </main>
+  <Footer />
+</Layout>

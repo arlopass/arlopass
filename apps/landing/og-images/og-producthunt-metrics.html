@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Arlopass — Key Metrics</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #1c1917;
+    --bg-surface: #292524;
+    --bg-elevated: #3d3835;
+    --border: #44403c;
+    --border-strong: #57534e;
+    --text-primary: #fafaf9;
+    --text-body: #d6d3d1;
+    --text-secondary: #a8a29e;
+    --text-tertiary: #78716c;
+    --brand: #DB4D12;
+    --brand-subtle: #2c1a0e;
+    --success: #4d7c0f;
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    grid-template-rows: auto auto auto 1fr auto auto auto;
+    overflow: hidden;
+  }
+
+  /* ── Stripes ── */
+  .stripe-bar {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-logo { height: 22px; width: auto; }
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+  .header-right {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Metric grid ── */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 28px 28px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-base);
+  }
+  .metric:last-child { border-right: none; }
+  .metric:hover { background: var(--bg-surface); }
+  .metric-value {
+    font-size: 28px;
+    font-weight: 780;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+  .metric-value em {
+    font-style: normal;
+    color: var(--brand);
+  }
+  .metric-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+  .metric-detail {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+  }
+
+  /* ── Provider strip ── */
+  .provider-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .provider-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    border-right: 1px solid var(--border);
+  }
+  .provider-item:last-child { border-right: none; }
+  .provider-item img {
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+    filter: brightness(0) invert(0.55);
+  }
+
+  /* ── Bottom bar ── */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 44px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+  }
+  .bottom-tagline {
+    font-size: 15px;
+    font-weight: 650;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .bottom-tagline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+  .bottom-right {
+    font-size: 10px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <img class="header-logo" src="../public/ArlopassLogo-Dark.svg" alt="Arlopass" />
+      <span class="pixel-label">By the Numbers</span>
+    </div>
+    <span class="header-right">Free · Open Source · MIT Licensed</span>
+  </div>
+
+  <!-- Metric grid -->
+  <div class="metric-grid">
+    <div class="metric">
+      <span class="metric-value"><em>9</em></span>
+      <span class="metric-label">AI adapters</span>
+      <span class="metric-detail">Ollama · Claude · GPT<br/>Bedrock · Vertex · Gemini<br/>Perplexity · Foundry · CLI</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value"><em>MIT</em></span>
+      <span class="metric-label">Fully open source</span>
+      <span class="metric-detail">No vendor lock-in.<br/>Fork it, extend it,<br/>ship it.</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value"><em>Zero</em></span>
+      <span class="metric-label">Cloud dependency</span>
+      <span class="metric-detail">No Arlopass backend.<br/>No accounts. No<br/>phone-home.</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value"><em>10</em> lines</span>
+      <span class="metric-label">Full SDK integration</span>
+      <span class="metric-detail">Fastest AI integration<br/>for web apps.<br/>Async iterators built in.</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value"><em>TS</em>-first</span>
+      <span class="metric-label">Type-safe everywhere</span>
+      <span class="metric-detail">Zod validation.<br/>Full inference.<br/>Zero runtime surprises.</span>
+    </div>
+  </div>
+
+  <!-- Provider strip -->
+  <div class="provider-strip">
+    <div class="provider-item">
+      <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/ollama.svg" alt="" />
+      Ollama
+    </div>
+    <div class="provider-item">
+      <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/claude-color.svg" alt="" />
+      Anthropic
+    </div>
+    <div class="provider-item">
+      <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/openai.svg" alt="" />
+      OpenAI
+    </div>
+    <div class="provider-item">
+      <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/bedrock-color.svg" alt="" />
+      AWS
+    </div>
+    <div class="provider-item">
+      <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini-color.svg" alt="" />
+      Google
+    </div>
+    <div class="provider-item">
+      <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/azure.svg" alt="" />
+      Microsoft
+    </div>
+    <div class="provider-item">
+      <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/perplexity-color.svg" alt="" />
+      Perplexity
+    </div>
+  </div>
+
+  <!-- Spacer -->
+  <div style="flex:1"></div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <span class="bottom-tagline">Your AI. Your models. Your <em>rules</em>.</span>
+    <span class="bottom-right">arlopass.com</span>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+</body>
+</html>

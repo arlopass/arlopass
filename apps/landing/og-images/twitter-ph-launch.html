@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1600" />
+<title>Arlopass — Twitter/X Launch Card</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #1c1917;
+    --bg-surface: #292524;
+    --bg-elevated: #3d3835;
+    --border: #44403c;
+    --border-strong: #57534e;
+    --text-primary: #fafaf9;
+    --text-body: #d6d3d1;
+    --text-secondary: #a8a29e;
+    --text-tertiary: #78716c;
+    --brand: #DB4D12;
+    --brand-subtle: #2c1a0e;
+    --success: #4d7c0f;
+    --success-subtle: #1a2e05;
+    --mosaic-overlay: rgba(28, 25, 23, 0.4);
+    --glass-bg: rgba(38, 35, 32, 0.6);
+    --glass-ring: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    width: 1600px;
+    height: 900px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  /* ── Canvas ── */
+  .canvas {
+    position: relative;
+    width: 1600px;
+    height: 900px;
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Stripe bars ── */
+  .stripe-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 18px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 18px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Left panel ── */
+  .left-panel {
+    background: var(--bg-base);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 72px 80px;
+    gap: 32px;
+  }
+
+  .logo { height: 32px; width: fit-content; }
+
+  /* ── Launch badge ── */
+  .launch-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    align-self: flex-start;
+    padding: 8px 20px;
+    background: var(--brand-subtle);
+    border: 1px solid rgba(219, 77, 18, 0.2);
+  }
+  .launch-badge-icon {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+  }
+  .launch-badge-text {
+    font-family: "Geist Pixel", monospace;
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+  }
+
+  .headline {
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.045em;
+    color: var(--text-primary);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+
+  .subline {
+    font-size: 22px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 560px;
+  }
+
+  /* ── Provider row ── */
+  .providers {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    align-self: flex-start;
+  }
+  .provider-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    border-right: 1px solid var(--border);
+  }
+  .provider-item:last-child { border-right: none; }
+  .provider-item img {
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+    filter: brightness(0) invert(0.55);
+  }
+
+  /* ── Right panel (mosaic + glass-framed screenshot) ── */
+  .right-panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-base);
+  }
+  .mosaic-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--mosaic-overlay);
+  }
+
+  /* ── Product Hunt upvote card ── */
+  .ph-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    z-index: 2;
+  }
+
+  .ph-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+  }
+  .ph-card-header-icon {
+    width: 18px; height: 18px;
+    flex-shrink: 0;
+  }
+  .ph-card-header-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    font-family: "Geist Mono", ui-monospace, monospace;
+  }
+
+  .ph-card-body {
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .ph-app-icon {
+    width: 80px; height: 80px;
+    border-radius: 20px;
+    background: var(--brand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 24px rgba(219, 77, 18, 0.25);
+  }
+  .ph-app-icon svg {
+    width: 44px; height: 44px;
+  }
+
+  .ph-app-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ph-app-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .ph-app-tagline {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .ph-topics {
+    display: flex;
+    gap: 8px;
+  }
+  .ph-topic {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+  }
+
+  .ph-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+    padding-top: 24px;
+  }
+
+  .ph-upvote {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 24px;
+    background: var(--brand);
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  .ph-upvote-arrow {
+    width: 0; height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 12px solid #fafaf9;
+  }
+  .ph-upvote-count {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fafaf9;
+  }
+
+  .ph-comment-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+  }
+  .ph-comment-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .ph-comment-sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Bottom bar ── */
+  .bottom-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 80px;
+    height: 52px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+  }
+  .bottom-url {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 13px;
+    font-weight: 450;
+    color: var(--text-tertiary);
+  }
+  .bottom-right {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 400px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(160).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Left panel -->
+  <div class="left-panel">
+    <img class="logo" src="../public/ArlopassLogo-Dark.svg" alt="Arlopass" />
+
+    <!-- ProductHunt launch badge -->
+    <div class="launch-badge">
+      <!-- PH cat icon -->
+      <svg class="launch-badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13.5 8H10v4h3.5a2 2 0 000-4z" fill="#DB4D12"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM8 7h5.5a4 4 0 010 8H10v3H8V7z" fill="#DB4D12"/>
+      </svg>
+      <span class="launch-badge-text">Live on Product Hunt</span>
+    </div>
+
+    <h1 class="headline">Stop pasting<br/>API keys into<br/>web <em>apps.</em></h1>
+
+    <p class="subline">Open-source browser extension that lets web apps use your AI providers — without ever seeing your credentials.</p>
+
+    <!-- Provider strip -->
+    <div class="providers">
+      <div class="provider-item">
+        <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/claude-color.svg" alt="" />
+        Claude
+      </div>
+      <div class="provider-item">
+        <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/openai.svg" alt="" />
+        GPT
+      </div>
+      <div class="provider-item">
+        <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini-color.svg" alt="" />
+        Gemini
+      </div>
+      <div class="provider-item">
+        <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/ollama.svg" alt="" />
+        Ollama
+      </div>
+      <div class="provider-item">
+        <img src="https://unpkg.com/@lobehub/icons-static-svg@latest/icons/bedrock-color.svg" alt="" />
+        Bedrock
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel: mosaic + glass-framed extension screenshot -->
+  <div class="right-panel">
+    <canvas class="mosaic-canvas" data-mosaic-src="../public/img/bg2.webp"></canvas>
+    <div class="mosaic-overlay"></div>
+
+    <div class="ph-card">
+      <div class="ph-card-header">
+        <svg class="ph-card-header-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.5 8H10v4h3.5a2 2 0 000-4z" fill="#DB4D12"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM8 7h5.5a4 4 0 010 8H10v3H8V7z" fill="#DB4D12"/>
+        </svg>
+        <span class="ph-card-header-text">producthunt.com/posts/arlopass</span>
+      </div>
+
+      <div class="ph-card-body">
+        <!-- App icon -->
+        <div class="ph-app-icon">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M64.2735 0C72.959 0 80 7.04099 80 15.7265V64.2735C80 72.959 72.959 80 64.2735 80H15.7265C7.04099 80 1.37671e-07 72.959 0 64.2735V15.7265C0 7.04099 7.04099 1.37662e-07 15.7265 0H64.2735ZM56.7521 9.57265C49.1995 9.57265 43.0769 15.6953 43.0769 23.2479C43.0769 30.8005 49.1995 36.9231 56.7521 36.9231C64.3048 36.9231 70.4274 30.8005 70.4274 23.2479C70.4274 15.6953 64.3048 9.57265 56.7521 9.57265Z" fill="#fafaf9"/>
+          </svg>
+        </div>
+
+        <div class="ph-app-meta">
+          <span class="ph-app-name">Arlopass</span>
+          <span class="ph-app-tagline">Open-source AI access management.<br/>Your keys never leave your device.</span>
+        </div>
+
+        <div class="ph-topics">
+          <span class="ph-topic">Open Source</span>
+          <span class="ph-topic">Developer Tools</span>
+          <span class="ph-topic">Artificial Intelligence</span>
+        </div>
+
+        <div class="ph-actions">
+          <div class="ph-upvote">
+            <div class="ph-upvote-arrow"></div>
+            <span class="ph-upvote-count">UPVOTE</span>
+          </div>
+          <div class="ph-comment-group">
+            <span class="ph-comment-label">Support us on launch day!</span>
+            <span class="ph-comment-sub">Free &middot; MIT Licensed &middot; No account needed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <span class="bottom-url">arlopass.com</span>
+    <span class="bottom-right">Free &middot; Open Source &middot; MIT Licensed</span>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(160).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+<script src="mosaic.js"></script>
+</body>
+</html>

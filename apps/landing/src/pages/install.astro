@@ -258,13 +258,53 @@ const howToSchema = {
         </p>
       </div>
 
-      <Divider />
-      <BridgeDownloads client:load />
-
-      {/* ── Step 3: Connect providers ────────────────────────── */}
       <div
         class="grid grid-cols-1 lg:grid-cols-2 border border-[var(--ap-border)]"
       >
+        {/* Left — download options */}
+        <div
+          class="bg-[var(--ap-bg-card)] border-b lg:border-b-0 lg:border-r border-[var(--ap-border)]"
+        >
+          <BridgeDownloads client:load />
+        </div>
+
+        {/* Right — mosaic background + SmartScreen preview */}
+        <div class="relative min-h-[420px] lg:min-h-0 overflow-hidden">
+          <canvas
+            data-mosaic-src="/img/bg5.webp"
+            class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 bg-[var(--ap-mosaic-overlay)]"></div>
+          <div
+            class="relative z-10 flex flex-col items-center justify-center h-full p-8 lg:p-12 gap-6"
+          >
+            <div
+              class="w-full max-w-[360px] w-fit rounded-2xl bg-[var(--ap-glass-bg)] p-1 shadow-2xl ring shadow-black/80 ring-[var(--ap-glass-ring)] backdrop-blur-lg overflow-hidden"
+            >
+              <div
+                class="rounded-xl bg-[var(--ap-bg-base)] w-fit overflow-hidden"
+              >
+                {/* Replace src with your SmartScreen walkthrough GIF */}
+                <img
+                  src="/img/smartscreen-walkthrough.gif"
+                  alt="Windows SmartScreen walkthrough: click 'More info' then 'Run anyway'"
+                  class="w-full h-auto block max-w-[360px]"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            <p
+              class="text-xs text-center leading-relaxed max-w-[360px] rounded-lg px-4 py-3 bg-[var(--ap-bg-base)]/80 backdrop-blur-sm"
+              style="color: var(--ap-text-secondary)"
+            >
+              The bridge isn't code-signed yet. After downloading on Windows,
+              follow the steps above to whitelist Arlopass.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Divider />
+      <div class="grid grid-cols-1 lg:grid-cols-2">
         {/* macOS / Linux */}
         <div
           class="border-b lg:border-b-0 lg:border-r border-[var(--ap-border)] bg-[var(--ap-bg-card)] p-8 sm:p-10"
@@ -431,5 +471,53 @@ const howToSchema = {
         if (checkExtension()) showDetected();
       }, 800);
     }
+  </script>
+
+  <script>
+    // Mosaic canvas renderer for the bridge download section
+    const TILE = 16;
+    document
+      .querySelectorAll<HTMLCanvasElement>("[data-mosaic-src]")
+      .forEach((canvas) => {
+        const src = canvas.dataset.mosaicSrc!;
+        const ctx = canvas.getContext("2d")!;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+        img.onload = () => {
+          const draw = () => {
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            if (!w || !h) return;
+            canvas.width = w;
+            canvas.height = h;
+            const cols = Math.ceil(w / TILE);
+            const rows = Math.ceil(h / TILE);
+            const imgRatio = img.naturalWidth / img.naturalHeight;
+            const canvasRatio = w / h;
+            let sx = 0,
+              sy = 0,
+              sw = img.naturalWidth,
+              sh = img.naturalHeight;
+            if (imgRatio > canvasRatio) {
+              sw = img.naturalHeight * canvasRatio;
+              sx = (img.naturalWidth - sw) / 2;
+            } else {
+              sh = img.naturalWidth / canvasRatio;
+              sy = (img.naturalHeight - sh) / 2;
+            }
+            const off = document.createElement("canvas");
+            off.width = cols;
+            off.height = rows;
+            off
+              .getContext("2d")!
+              .drawImage(img, sx, sy, sw, sh, 0, 0, cols, rows);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(off, 0, 0, cols, rows, 0, 0, w, h);
+          };
+          draw();
+          new ResizeObserver(draw).observe(canvas);
+        };
+      });
   </script>
 </Layout>

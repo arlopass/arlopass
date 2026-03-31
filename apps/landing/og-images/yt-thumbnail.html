@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920" />
+<title>Arlopass — YouTube Thumbnail</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #fafaf9;
+    --bg-surface: #ffffff;
+    --border: #e7e5e4;
+    --border-strong: #d6d3d1;
+    --text-primary: #1c1917;
+    --text-body: #292524;
+    --text-secondary: #78716c;
+    --text-tertiary: #a8a29e;
+    --brand: #DB4D12;
+    --brand-hover: #9a3412;
+    --brand-subtle: #fff7ed;
+    --success: #4d7c0f;
+    --mosaic-overlay: rgba(255, 247, 237, 0.4);
+  }
+
+  body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: var(--bg-surface);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  /* ── Canvas ── */
+  .canvas {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 55% 45%;
+    overflow: hidden;
+  }
+
+  /* ── Stripes ── */
+  .stripe-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 14px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    height: 14px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Left panel — BIG text, optimized for mobile readability ── */
+  .left-panel {
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 72px 80px;
+    gap: 36px;
+  }
+
+  /*
+   * ╔══════════════════════════════════════════════╗
+   * ║  EDIT per video:                             ║
+   * ║  - badge-text for video type                 ║
+   * ║  - headline (keep to 3-5 words!)             ║
+   * ║  - optional: swap mosaic src on right panel  ║
+   * ╚══════════════════════════════════════════════╝
+   */
+
+  /* Badge — high contrast pill, readable even at tiny sizes */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    font-family: "Geist Pixel", monospace;
+    font-size: 20px;
+    letter-spacing: 0.06em;
+    color: var(--brand);
+    background: var(--brand-subtle);
+    border: 1px solid rgba(219, 77, 18, 0.2);
+    padding: 8px 22px;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--brand);
+    flex-shrink: 0;
+  }
+
+  /* Headline — HUGE, readable at 168x94px mobile thumbnail */
+  .headline {
+    font-size: 100px;
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    color: var(--text-primary);
+  }
+  .headline em {
+    font-style: normal;
+    color: var(--brand);
+  }
+
+  /* Kicker — short, punchy, replaces the old subline */
+  .kicker {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.3;
+    max-width: 640px;
+  }
+
+  /* Logo — bottom of left panel */
+  .logo { height: 48px; width: fit-content; margin-top: 72px; }
+
+  /* ── Right panel — mosaic + overlapping screenshot ── */
+  .right-panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-base);
+  }
+  .mosaic-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .mosaic-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--mosaic-overlay);
+  }
+
+  /* Glass frame — positioned to bleed past the left border for visual overlap */
+  .glass-frame {
+    position: absolute;
+    top: 50%;
+    left: 48%;
+    transform: translate(-50%, -50%);
+    background: rgba(38, 35, 32, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 5px;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+  .glass-inner {
+    background: #1c1917;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Browser chrome */
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #292524;
+    border-bottom: 1px solid #44403c;
+  }
+  .browser-dots { display: flex; gap: 6px; }
+  .browser-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #57534e;
+  }
+  .browser-url {
+    flex: 1;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: #a8a29e;
+    background: #1c1917;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #44403c;
+  }
+  .browser-ext-icon {
+    width: 18px; height: 18px;
+    flex-shrink: 0;
+  }
+
+  /* Screenshot */
+  .screenshot-area {
+    width: 480px;
+    height: 720px;
+    background: #1c1917;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .screenshot-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transform: scale(1.02); /* slight zoom to hide any edges */
+  }
+  .screenshot-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #57534e;
+    font-size: 12px;
+    text-align: center;
+  }
+  .screenshot-placeholder svg {
+    width: 24px; height: 24px;
+    opacity: 0.3;
+  }
+
+  /* ── Accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 400px;
+    height: 5px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(140).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Left panel: BIG text -->
+  <div class="left-panel">
+    <!-- Badge — video category -->
+    <div class="badge">
+      <div class="badge-dot"></div>
+      Demo
+    </div>
+
+    <!-- Headline — 3-5 words max, readable at any size -->
+    <h1 class="headline">Stop pasting<br/><em>API keys.</em></h1>
+
+    <!-- Kicker — one short line of context -->
+    <span class="kicker">Use any AI model without giving apps your credentials.</span>
+
+    <!-- Logo at bottom -->
+    <img class="logo" src="../public/ArlopassLogo-Light.svg" alt="Arlopass" />
+  </div>
+
+  <!-- Right panel: mosaic + glass-framed screenshot -->
+  <div class="right-panel">
+    <canvas class="mosaic-canvas" data-mosaic-src="../public/img/bg1.webp"></canvas>
+    <div class="mosaic-overlay"></div>
+
+    <div class="glass-frame">
+      <div class="glass-inner">
+          <img src="main-wallet-providers.png"
+               class="screenshot-img"
+               alt="Arlopass extension popup" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(140).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+<script src="mosaic.js"></script>
+</body>
+</html>

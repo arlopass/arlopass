@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200" />
+<title>Arlopass — Comparison Table</title>
+<style>
+  @font-face {
+    font-family: "Geist Sans";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistSansVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistMonoVariable.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Geist Pixel";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../public/fonts/GeistPixel.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-base: #1c1917;
+    --bg-surface: #292524;
+    --bg-elevated: #3d3835;
+    --border: #44403c;
+    --border-strong: #57534e;
+    --text-primary: #fafaf9;
+    --text-body: #d6d3d1;
+    --text-secondary: #a8a29e;
+    --text-tertiary: #78716c;
+    --brand: #DB4D12;
+    --brand-subtle: #2c1a0e;
+    --success: #4d7c0f;
+    --success-subtle: #1a2e05;
+  }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg-base);
+    font-family: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--text-body);
+  }
+
+  .canvas {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    overflow: hidden;
+  }
+
+  /* ── Stripes ── */
+  .stripe-bar {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe-bar-bottom {
+    display: flex;
+    align-items: stretch;
+    height: 16px;
+    border-top: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .stripe {
+    flex: 1;
+    min-width: 3px;
+    border-left: 1px solid var(--border);
+    background: linear-gradient(to right, var(--bg-base), var(--bg-surface));
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-logo { height: 20px; width: auto; }
+  .pixel-label {
+    font-family: "Geist Pixel", monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+  }
+  .header-right {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── Table ── */
+  .table {
+    display: grid;
+    grid-template-columns: 240px 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Column header row */
+  .th {
+    padding: 14px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .th:first-child {
+    text-align: left;
+    color: var(--text-secondary);
+  }
+  .th:last-child { border-right: none; }
+
+  /* Arlopass column header — highlighted */
+  .th-brand {
+    color: var(--brand);
+    background: var(--brand-subtle);
+    font-weight: 700;
+    border-bottom-color: var(--brand);
+  }
+
+  /* Data cells */
+  .td {
+    padding: 11px 20px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .td:last-child { border-right: none; }
+
+  /* Capability label (first column) */
+  .td-label {
+    justify-content: flex-start;
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-body);
+  }
+
+  /* Arlopass column cells — subtle highlight */
+  .td-brand {
+    background: var(--brand-subtle);
+    border-right-color: var(--border);
+    border-left: 1px solid rgba(219, 77, 18, 0.15);
+  }
+
+  /* Last row — no bottom border */
+  .row-last { border-bottom: none; }
+
+  /* Check/X marks */
+  .check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--success-subtle);
+    border: 1px solid rgba(77, 124, 15, 0.25);
+    flex-shrink: 0;
+  }
+  .check svg {
+    width: 11px; height: 11px;
+    color: var(--success);
+  }
+
+  .cross {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+  }
+
+  .partial {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
+  .mono-val {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .mono-brand {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  /* ── Bottom bar ── */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 48px;
+    height: 48px;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+  }
+  .bottom-quote {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+  .bottom-quote em {
+    font-style: normal;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  /* ── Accent ── */
+  .accent-line {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 3px;
+    background: var(--brand);
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <!-- Top stripe -->
+  <div class="stripe-bar">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <img class="header-logo" src="../public/ArlopassLogo-Dark.svg" alt="Arlopass" />
+      <span class="pixel-label">How It Compares</span>
+    </div>
+    <span class="header-right">Free · Open Source · MIT Licensed</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table">
+    <!-- Header row -->
+    <div class="th">Capability</div>
+    <div class="th th-brand">Arlopass</div>
+    <div class="th">Paste API Key</div>
+    <div class="th">AI Gateways</div>
+    <div class="th">Vendor SDKs</div>
+
+    <!-- Row 1 -->
+    <div class="td td-label">User chooses model</div>
+    <div class="td td-brand"><div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+    <div class="td"><span class="cross">✕</span></div>
+    <div class="td"><span class="cross">✕</span></div>
+    <div class="td"><span class="cross">✕</span></div>
+
+    <!-- Row 2 -->
+    <div class="td td-label">Keys on user's device</div>
+    <div class="td td-brand"><div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+    <div class="td"><span class="cross">✕</span></div>
+    <div class="td"><span class="cross">✕</span></div>
+    <div class="td"><span class="cross">✕</span></div>
+
+    <!-- Row 3 -->
+    <div class="td td-label">Works with local models</div>
+    <div class="td td-brand"><div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+    <div class="td"><span class="partial">Rare</span></div>
+    <div class="td"><span class="partial">Sometimes</span></div>
+    <div class="td"><span class="cross">✕</span></div>
+
+    <!-- Row 4 -->
+    <div class="td td-label">Zero server infrastructure</div>
+    <div class="td td-brand"><div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+    <div class="td"><span class="cross">✕</span></div>
+    <div class="td"><span class="cross">✕</span></div>
+    <div class="td"><span class="cross">✕</span></div>
+
+    <!-- Row 5 -->
+    <div class="td td-label">Dev integration effort</div>
+    <div class="td td-brand"><span class="mono-brand">~10 lines</span></div>
+    <div class="td"><span class="mono-val">~40+ lines</span></div>
+    <div class="td"><span class="mono-val">~30 lines</span></div>
+    <div class="td"><span class="mono-val">~15 lines</span></div>
+
+    <!-- Row 6 -->
+    <div class="td td-label">Enterprise policy &amp; audit</div>
+    <div class="td td-brand"><div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+    <div class="td"><span class="cross">✕</span></div>
+    <div class="td"><div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+    <div class="td"><span class="cross">✕</span></div>
+
+    <!-- Row 7 -->
+    <div class="td td-label row-last">Open source (MIT)</div>
+    <div class="td td-brand row-last"><div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></div>
+    <div class="td row-last"><span class="partial">Varies</span></div>
+    <div class="td row-last"><span class="partial">Some</span></div>
+    <div class="td row-last"><span class="partial">Some</span></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <span class="bottom-quote">Others ask you to trust them with your keys. <em>Arlopass asks you to keep them.</em></span>
+  </div>
+
+  <!-- Bottom stripe -->
+  <div class="stripe-bar-bottom">
+    <script>document.write(Array(120).fill('<div class="stripe"></div>').join(''))</script>
+  </div>
+
+  <div class="accent-line"></div>
+</div>
+</body>
+</html>

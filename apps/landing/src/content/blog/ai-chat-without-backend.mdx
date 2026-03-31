@@ -1,0 +1,203 @@
+---
+title: "Building an AI Chat App Without Backend Infrastructure"
+description: "How to add AI chat to a web app with zero server-side code. No Express routes, no API key proxies, no cloud functions. The user brings their own AI through a browser extension."
+published: 2026-04-07
+author: "Arlopass Team"
+tags: ["architecture", "ai-chat", "serverless", "web-sdk"]
+keywords:
+  [
+    "ai chat no backend",
+    "serverless ai chat",
+    "ai chat without server",
+    "browser ai chat",
+    "no backend ai",
+    "client side ai chat",
+    "ai chat web app",
+    "build ai chat app",
+    "zero infrastructure ai",
+    "user provided ai",
+  ]
+draft: false
+---
+
+Every AI chat tutorial assumes you have a backend. An Express server, a Next.js API route, a Cloudflare Worker — something that holds your API key and proxies requests to OpenAI. This is so universal that most developers don't question it: if you want AI in a web app, you need a server.
+
+You don't. This article explains an architecture where the user brings their own AI provider and your web app has zero server-side infrastructure for AI features.
+
+## The standard architecture and its costs
+
+Here's what a typical AI chat web app looks like:
+
+```
+Browser → Your Server (API route) → OpenAI / Claude / etc.
+```
+
+Your server holds the API key in an environment variable. Every user request passes through your server, which forwards it to the AI provider and streams the response back. You pay for every inference call. You handle rate limiting, key rotation, and credential security.
+
+The cost breakdown for a typical chat app with 1,000 daily active users:
+
+| Cost | Monthly estimate |
+|------|:---:|
+| AI inference (GPT-4o @ ~$5/1M tokens) | $150–500 |
+| Server hosting (handling streaming) | $20–50 |
+| Developer time on proxy/auth code | 2–5 days initial + ongoing |
+| Security liability for stored API keys | Unquantifiable |
+
+For hobby projects and small tools, this is often the reason AI features don't get built. The infrastructure cost isn't worth it for a side project.
+
+## The alternative: user-provided AI
+
+What if the user already has an AI subscription? Most developers using AI tools already have at least one of: an OpenAI key, a Claude key, an Ollama instance running locally, or access to a cloud provider like Bedrock or Vertex AI.
+
+Instead of your app proxying requests through your server with your key, the user's browser extension routes requests to their provider with their credentials. Your app sends a message, gets a response, and never sees a key.
+
+```
+Browser → Arlopass Extension (in browser) → Local Bridge → User's AI Provider
+```
+
+The architecture shift: your app is a frontend-only client. The AI pipeline runs entirely on the user's machine.
+
+## How it works in practice
+
+[Arlopass](https://arlopass.com) is an open-source browser extension that implements this pattern. Here's the actual integration:
+
+### 1. Install the SDK
+
+```bash
+npm install @arlopass/web-sdk
+```
+
+### 2. Connect and chat
+
+```typescript
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({
+  transport: window.arlopass,
+  origin: location.origin,
+});
+
+await client.connect({ appId: "com.myapp.chat" });
+
+// Send a message — routes to whatever the user selected
+const reply = await client.chat.send({
+  messages: [{ role: "user", content: "What's new in TypeScript 5.8?" }],
+});
+console.log(reply.message.content);
+```
+
+### 3. Stream responses
+
+```typescript
+for await (const event of client.chat.stream({
+  messages: [{ role: "user", content: "Explain React Suspense" }],
+})) {
+  if (event.type === "chunk") {
+    document.getElementById("output").textContent += event.delta;
+  }
+}
+```
+
+That's the entire AI integration. No server file. No API route. No environment variable.
+
+## What the user sees
+
+When your app calls `client.connect()`, the Arlopass extension shows a consent prompt:
+
+1. The user sees which app is requesting AI access
+2. They select a provider from their connected list (Ollama, OpenAI, Claude, etc.)
+3. They pick a specific model (llama3.2, gpt-4o, claude-3.5-sonnet)
+4. They approve the connection
+
+From that point, your app can send messages and receive responses. The user can change their model at any time through the extension popup — your code doesn't change.
+
+## The architecture in detail
+
+```
+┌──────────────────────────────────┐
+│         Your Web App             │
+│     @arlopass/web-sdk            │
+│ (10 lines, no credentials)      │
+└──────────────┬───────────────────┘
+               │ window.arlopass (injected transport)
+┌──────────────▼───────────────────┐
+│     Arlopass Browser Extension   │
+│  Consent UI · Permission store   │
+│  HMAC handshake · Anti-replay    │
+└──────────────┬───────────────────┘
+               │ Chrome native messaging (stdio)
+┌──────────────▼───────────────────┐
+│       Local Bridge Daemon        │
+│  Adapter host · Session manager  │
+│  Policy enforcement              │
+├──────┬──────┬──────┬─────────────┤
+│Ollama│OpenAI│Claude│ 6 more...   │
+└──────┴──────┴──────┴─────────────┘
+```
+
+**Trust boundaries at every layer:**
+- Web app ↔ Extension: Origin isolation, per-request consent
+- Extension ↔ Bridge: HMAC challenge/response, ephemeral session keys, nonce replay protection
+- Bridge ↔ Provider: OS keychain credential storage, least-privilege auth, request timeouts
+
+The user's API keys are in their OS keychain (Windows Credential Manager, macOS Keychain, Linux Secret Service) — not in browser storage, not in your app, not on any server.
+
+## When this architecture makes sense
+
+**Good fit:**
+- Developer tools where every user has their own AI preference
+- Productivity apps (writing assistants, code tools, summarizers)
+- Internal tools where teams already have API keys
+- Open-source projects where you can't afford inference costs
+- Privacy-sensitive applications where prompts shouldn't leave the user's machine
+- Hobby projects where $0 infrastructure cost matters
+
+**Not a good fit:**
+- SaaS products where you control the AI model and behavior (your product, your API key)
+- Apps that need server-side pre/post-processing of AI responses
+- Apps where you need to rate-limit or meter AI usage per user
+- Consumer apps where asking users to install a browser extension is a dealbreaker
+
+## Comparison: backend proxy vs. user-provided AI
+
+| | Backend proxy | User-provided AI (Arlopass) |
+|---|:---:|:---:|
+| **Server infrastructure** | Required | None |
+| **API keys in your code** | Yes (`.env`) | None |
+| **AI inference cost** | You pay | User pays |
+| **Provider flexibility** | You pick one | User picks any |
+| **Lines of integration code** | 40–80 | ~10 |
+| **Works offline** | No | Yes (with Ollama) |
+| **User installs extension** | No | Yes |
+| **Security liability for keys** | High | None |
+
+The extension installation is the honest trade-off. It's a higher adoption friction than a pure web app. But for the right audience — developers, power users, people who already run Ollama — it's a small ask that eliminates entire categories of infrastructure.
+
+## Frequently asked questions
+
+**What if the user doesn't have Arlopass installed?**
+
+The SDK detects this immediately. The React SDK provides guard components (`ArlopassRequiredGate`) that render an install prompt. In vanilla JS, check for `window.arlopass` before connecting. Your app should gracefully degrade or show an onboarding flow.
+
+**Can I use this with Next.js / Remix / Astro?**
+
+Yes. The SDK is client-only — it runs in the browser. Your framework's SSR doesn't need to know about it. Import the SDK in a client component (`"use client"` in Next.js) and use it like any browser API.
+
+**What if the user switches providers mid-session?**
+
+The SDK fires a `providersChanged` event. Your app can listen via `client.onProvidersChanged()` or the React SDK's `useProviders` hook, which auto-updates when the user changes their selection.
+
+**Is streaming really real-time?**
+
+Yes. The SDK uses async iterators that yield chunks as they arrive from the provider. In the React SDK, `useChat` accumulates streaming content via `requestAnimationFrame` for smooth UI updates. There's no buffering in the extension or bridge layer — chunks are forwarded immediately.
+
+**How much overhead does the extension add?**
+
+Typically under 5 ms per request. The extension doesn't parse or transform the AI response — it's a routing layer. Streaming chunks are forwarded as they arrive with no queuing.
+
+## Try it
+
+- [Web SDK quickstart](https://arlopass.com/docs/getting-started/quickstart-web-sdk) — Get running in 5 minutes
+- [React SDK quickstart](https://arlopass.com/docs/getting-started/quickstart-react) — Hooks and guard components
+- [Starter template](https://github.com/arlopass/arlopass/tree/main/templates/react-vite) — Clone and run
+- [GitHub](https://github.com/arlopass/arlopass) — MIT licensed, open source

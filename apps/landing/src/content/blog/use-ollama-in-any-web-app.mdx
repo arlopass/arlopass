@@ -1,0 +1,220 @@
+---
+title: "How to Use Ollama in Any Web App — Without a Backend"
+description: "Connect your local Ollama models to any web application using Arlopass. No server proxy, no API key management, no cloud dependency. Step-by-step guide with code examples."
+published: 2026-03-30
+author: "Arlopass Team"
+tags: ["ollama", "local-ai", "web-sdk", "tutorial"]
+keywords:
+  [
+    "ollama web app",
+    "ollama browser",
+    "local llm web app",
+    "ollama react",
+    "use ollama in website",
+    "ollama javascript",
+    "local ai web application",
+    "ollama client side",
+    "ollama without backend",
+    "ollama no server",
+  ]
+draft: false
+---
+
+Arlopass lets any web app connect to your local Ollama instance through a browser extension — no backend proxy, no API keys, no server infrastructure. Install the extension, connect Ollama, and call `client.chat.send()` from your frontend code. The entire pipeline runs on your machine.
+
+This guide walks through integrating Ollama into a web app in 4 steps using the Arlopass Web SDK.
+
+## Why Ollama in the browser needs a different approach
+
+Ollama runs at `http://localhost:11434`. Browsers can't call it directly from frontend JavaScript due to CORS restrictions and security policies. The standard workaround is a backend proxy — a server that sits between your web app and Ollama, forwarding requests.
+
+That works, but it adds infrastructure you have to build, deploy, and maintain:
+
+| Approach                                      | Lines of code | Server required |     API keys exposed     |  Provider switching   |
+| --------------------------------------------- | :-----------: | :-------------: | :----------------------: | :-------------------: |
+| **Backend proxy** (Express/Next.js API route) |     40–80     |       Yes       |   In `.env` on server    | Requires code change  |
+| **Direct fetch** (CORS hack)                  |     15–20     |       No        | N/A (Ollama has no keys) |       Hardcoded       |
+| **Arlopass Web SDK**                          |      ~10      |       No        |   Never leaves device    | User picks at runtime |
+
+Arlopass replaces the proxy pattern. Your web app talks to the Arlopass browser extension via an injected transport (`window.arlopass`). The extension routes requests through a local bridge daemon to Ollama. No server. No CORS issues. No credential management.
+
+## What you'll build
+
+A chat interface that connects to your local Ollama models through Arlopass. The user picks the model, approves the connection, and responses stream in — all client-side.
+
+## Prerequisites
+
+- [Ollama](https://ollama.com) installed and running locally with at least one model pulled (e.g., `ollama pull llama3.2`)
+- [Arlopass browser extension](https://arlopass.com/install) installed
+- [Arlopass Bridge](https://github.com/arlopass/arlopass/releases) running
+- Node.js 20+
+
+## Step 1: Install the Arlopass Web SDK
+
+```bash
+npm install @arlopass/web-sdk
+```
+
+The SDK is 12 KB gzipped, has zero runtime dependencies, and is fully tree-shakeable.
+
+## Step 2: Connect to the Arlopass extension
+
+```typescript
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+const client = new ArlopassClient({
+  transport: window.arlopass,
+  origin: location.origin,
+});
+
+await client.connect({ appId: "com.example.ollama-chat" });
+```
+
+When `connect()` is called, the Arlopass extension shows a consent prompt in the browser. The user approves the connection, selects their Ollama provider and a model (e.g., `llama3.2`, `mistral`, `codellama`), and the session is established.
+
+**Key point:** Your web app never configures or touches Ollama directly. The user's Arlopass extension handles provider selection, authentication, and routing.
+
+## Step 3: Send a message to Ollama
+
+```typescript
+const reply = await client.chat.send({
+  messages: [
+    {
+      role: "user",
+      content: "Explain zero-trust architecture in 3 sentences.",
+    },
+  ],
+});
+
+console.log(reply.message.content);
+```
+
+The response comes back through the same local pipeline: extension → bridge → Ollama → bridge → extension → your app. Typical latency overhead from the Arlopass layer is under 5 ms per request.
+
+## Step 4: Stream responses for real-time chat
+
+For a chat experience where text appears incrementally:
+
+```typescript
+for await (const event of client.chat.stream({
+  messages: [{ role: "user", content: "Write a haiku about local AI." }],
+})) {
+  if (event.type === "chunk") {
+    process.stdout.write(event.delta);
+  }
+}
+```
+
+Streaming uses async iterators — the same pattern as the Fetch API's `ReadableStream`. Each chunk arrives as soon as Ollama generates it.
+
+## How the request pipeline works
+
+```
+Web App (your code)
+    │  client.chat.send()
+    ▼
+Arlopass Extension (in browser)
+    │  Permission check + routing
+    ▼
+Local Bridge Daemon (on your machine)
+    │  Adapter selection
+    ▼
+Ollama (http://localhost:11434)
+    │  Model inference
+    ▼
+Response streams back through the same path
+```
+
+1. Your web app calls `client.chat.send()` or `client.chat.stream()`
+2. The Arlopass extension receives the request via the injected `window.arlopass` transport
+3. The extension verifies permissions and routes to the local bridge daemon
+4. The bridge's Ollama adapter forwards the request to `http://localhost:11434`
+5. The response streams back through the same path
+
+Your credentials (if any) never leave your machine. For Ollama specifically, there are no keys at all — it's fully local. Zero data leaves your network.
+
+## Switching models or providers at runtime
+
+Because model selection happens in the Arlopass extension — not in your code — the user can switch between Ollama models (or even switch to a cloud provider like Claude or GPT) without any code change on your side:
+
+```typescript
+// This code works regardless of which provider/model the user selects.
+// Switch from llama3.2 to mistral? From Ollama to Claude? No code change.
+const reply = await client.chat.send({
+  messages: [{ role: "user", content: "Hello!" }],
+});
+```
+
+This is the core value proposition: your app is provider-agnostic. The user decides what AI powers it.
+
+## When to use Arlopass vs. a backend proxy
+
+**Use Arlopass when:**
+
+- You want users to bring their own AI providers (Ollama, OpenAI, Claude, etc.)
+- You don't want to manage API keys or pay for inference
+- You're building a tool that should work with local models
+- You want zero server infrastructure for AI features
+
+**Use a backend proxy when:**
+
+- You control the AI provider and model selection (e.g., your SaaS uses GPT-4o for all users)
+- You need server-side processing of AI responses before returning them
+- You're rate-limiting or billing per API call
+
+## Frequently asked questions
+
+**Does Arlopass work with all Ollama models?**
+Yes. Arlopass connects to whatever models you have pulled in Ollama. Run `ollama list` to see available models. The user selects the model in the extension popup.
+
+**Do I need the Arlopass Bridge for Ollama?**
+Yes. The bridge daemon runs locally and handles communication between the browser extension and Ollama. It's a lightweight process — typically under 20 MB of RAM.
+
+**Can users switch between Ollama and cloud providers?**
+Yes. If a user has both Ollama and an OpenAI API key configured in Arlopass, they can switch between them per-request. Your code stays the same.
+
+**What happens if Ollama isn't running?**
+The Arlopass extension will show an error state indicating the provider is unavailable. Your app receives an error through the SDK that you can handle gracefully.
+
+**Is there any latency overhead?**
+The Arlopass transport layer adds less than 5 ms of overhead per request. For streaming responses, chunks are forwarded as they arrive with no buffering.
+
+## Complete working example
+
+Here's a minimal HTML + JavaScript example you can save as a single file and open in a browser:
+
+```typescript
+import { ArlopassClient } from "@arlopass/web-sdk";
+
+async function main() {
+  const client = new ArlopassClient({
+    transport: window.arlopass,
+    origin: location.origin,
+  });
+
+  // Connect — user approves in extension popup
+  await client.connect({ appId: "com.example.ollama-demo" });
+
+  // Stream a response
+  const chunks: string[] = [];
+  for await (const event of client.chat.stream({
+    messages: [{ role: "user", content: "What is Ollama?" }],
+  })) {
+    if (event.type === "chunk") {
+      chunks.push(event.delta);
+    }
+  }
+
+  console.log(chunks.join(""));
+  await client.disconnect();
+}
+
+main();
+```
+
+## Next steps
+
+- [React SDK with useChat hook](/docs/getting-started/quickstart-react) — Build a full chat UI in React
+- [Streaming responses guide](/docs/tutorials/streaming-responses) — Advanced streaming patterns
+- [Provider selection](/docs/tutorials/provider-selection) — Let users choose between multiple providers
+- [Full SDK reference](/docs/reference/web-sdk/client) — Complete API documentation
