@@ -559,7 +559,7 @@ export function BridgeInstallGuide({
                     span
                     size="sm"
                     component="a"
-                    href="https://discord.gg/arlopass"
+                    href="https://discord.gg/HwNA78mqUy"
                     target="_blank"
                     rel="noopener noreferrer"
                     c={tokens.color.textPrimary}
