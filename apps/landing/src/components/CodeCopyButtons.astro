@@ -1,0 +1,58 @@
+---
+/**
+ * CodeCopyButtons — injects a copy-to-clipboard button on every <pre> block.
+ *
+ * Drop this component into any layout that renders code blocks.
+ * Uses `astro:page-load` for SPA-safe re-initialization.
+ *
+ * @prop {string} [selector="pre"] — CSS selector for code blocks to target
+ */
+interface Props {
+  selector?: string;
+}
+const { selector = "pre" } = Astro.props;
+---
+
+<script define:vars={{ selector }}>
+  function initCodeCopyButtons() {
+    document.querySelectorAll(selector).forEach((pre) => {
+      // Skip if already wrapped or inside a CodeBlock component (has its own button)
+      if (
+        pre.parentElement?.hasAttribute("data-code-copy-wrap") ||
+        pre.closest("[data-copy-code]")
+      )
+        return;
+
+      // Wrap pre in a relative container so the button can be positioned
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("data-code-copy-wrap", "");
+      wrapper.style.position = "relative";
+      wrapper.classList.add("group");
+      pre.parentNode?.insertBefore(wrapper, pre);
+      wrapper.appendChild(pre);
+
+      const copyIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+      const checkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+      const btn = document.createElement("button");
+      btn.setAttribute("aria-label", "Copy code");
+      btn.className =
+        "absolute top-2 right-2 z-10 flex items-center justify-center w-8 h-8 rounded-md bg-[var(--ap-bg-elevated)] border border-[var(--ap-border)] text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-primary)] hover:border-[var(--ap-border-strong)] transition-all cursor-pointer opacity-0 group-hover:opacity-100";
+      btn.innerHTML = copyIcon;
+      wrapper.appendChild(btn);
+
+      btn.addEventListener("click", () => {
+        const text = pre.textContent || "";
+        navigator.clipboard.writeText(text).then(() => {
+          btn.innerHTML = checkIcon;
+          btn.classList.add("!text-[var(--ap-success)]");
+          setTimeout(() => {
+            btn.innerHTML = copyIcon;
+            btn.classList.remove("!text-[var(--ap-success)]");
+          }, 2000);
+        });
+      });
+    });
+  }
+  document.addEventListener("astro:page-load", initCodeCopyButtons);
+</script>

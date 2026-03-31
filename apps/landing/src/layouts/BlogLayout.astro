@@ -3,6 +3,7 @@ import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import CodeCopyButtons from "../components/CodeCopyButtons.astro";
 
 interface Props {
   frontmatter: {
@@ -263,7 +264,7 @@ const breadcrumbLd = {
             [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:tracking-tight [&>h3]:text-[var(--ap-text-primary)] [&>h3]:mt-8 [&>h3]:mb-3
             [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-4 [&>ul]:space-y-1.5 [&>ul]:text-[var(--ap-text-body)]
             [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:mb-4 [&>ol]:space-y-1.5 [&>ol]:text-[var(--ap-text-body)]
-            [&>pre]:rounded-lg [&>pre]:bg-[var(--ap-bg-code)] [&>pre]:p-5 [&>pre]:overflow-x-auto [&>pre]:my-6 [&>pre]:text-sm [&>pre]:leading-[1.7]
+            [&_pre]:rounded-lg [&_pre]:bg-[var(--ap-bg-code)] [&_pre]:p-5 [&_pre]:overflow-x-auto [&_pre]:overflow-hidden [&_pre]:my-6 [&_pre]:text-sm [&_pre]:leading-[1.7]
             [&>blockquote]:border-l-2 [&>blockquote]:border-[var(--ap-border-strong)] [&>blockquote]:pl-4 [&>blockquote]:text-[var(--ap-text-secondary)] [&>blockquote]:my-4
             [&_code]:font-mono [&_:not(pre)>code]:text-amber [&_:not(pre)>code]:bg-[var(--ap-bg-surface)] [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:px-1.5 [&_:not(pre)>code]:rounded [&_:not(pre)>code]:text-[0.875em]
             [&_a]:text-[var(--ap-text-link)] [&_a]:no-underline hover:[&_a]:text-[var(--ap-text-link-hover)] [&_a]:transition-colors
@@ -278,6 +279,8 @@ const breadcrumbLd = {
             </div>
           </div>
         </article>
+
+        <CodeCopyButtons selector="article pre" />
 
         {/* ── Back to blog CTA  ────────────────────────────── */}
         <div

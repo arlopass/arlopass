@@ -3,7 +3,17 @@ title: "gstack + Arlopass: Ship AI Apps With Zero API Keys"
 description: "Build AI-powered web apps using gstack's sprint workflow. Let users bring their own AI providers with Arlopass — no API keys, no backend proxy, no credential liability."
 published: 2026-03-31
 author: "Arlopass Team"
-tags: ["gstack", "ai-apps", "workflow", "web-sdk", "tutorial", "bring-your-own-model", "garry-tan", "y-combinator"]
+tags:
+  [
+    "gstack",
+    "ai-apps",
+    "workflow",
+    "web-sdk",
+    "tutorial",
+    "bring-your-own-model",
+    "garry-tan",
+    "y-combinator",
+  ]
 keywords:
   [
     "gstack arlopass",
@@ -40,9 +50,28 @@ You can build an AI-powered web app and ship it to production without ever touch
 
 **Arlopass** is an open-source browser extension that lets users bring their own AI providers — Ollama, Claude, GPT, Bedrock, Gemini — without sharing API keys with your app. Your app calls `stream()`. The extension routes to whatever model the user chose. You never see a key.
 
-The gap between them: gstack gives you a world-class build process, but every AI app still needs to solve the credentials problem. Where do API keys live? Who pays for inference? How do you avoid committing secrets to your repo? Arlopass answers all three.
+The gap between them: gstack gives you a strong build process, but every AI app still needs to solve the credentials problem. Where do API keys live? Who pays for inference? How do you avoid committing secrets to your repo? Arlopass answers all three.
 
-This article walks through building an AI chat feature from scratch using gstack's sprint workflow, with Arlopass handling the AI layer.
+**The complete integration is 10 lines.** Here's the punchline — the rest of this article explains each piece and how it fits with gstack:
+
+```tsx
+import { ArlopassProvider, useChat } from "@arlopass/react";
+
+function App() {
+  return (
+    <ArlopassProvider appId="com.yourcompany.app" supportedModels={["gpt-4o", "claude-3-sonnet", "llama3"]}>
+      <Chat />
+    </ArlopassProvider>
+  );
+}
+
+function Chat() {
+  const { messages, streamingContent, isStreaming, stream, stop } = useChat();
+  // render messages, call stream(text) on submit, call stop() to cancel
+}
+```
+
+No server. No API key. The user picks the model in the Arlopass extension.
 
 ## Why API keys are the weakest link in AI apps
 
@@ -260,9 +289,29 @@ gstack's `/review` acts as a staff engineer reviewing your diff. For an Arlopass
 
 If `/review` finds issues, it auto-fixes obvious ones and flags the rest for your approval.
 
+Here's the error handling pattern `/review` expects:
+
+```tsx
+import { ArlopassSDKError } from "@arlopass/react";
+
+try {
+  await client.chat.send({ messages });
+} catch (err) {
+  if (err instanceof ArlopassSDKError) {
+    console.error(err.machineCode);   // e.g. "PROVIDER_UNAVAILABLE"
+    console.error(err.reasonCode);    // e.g. "provider.unavailable"
+    if (err.retryable) {
+      // show retry button
+    }
+  }
+}
+```
+
+The React hooks surface errors through their `error` property and provide a `retry` function when the error is retryable — so you rarely need this `try/catch` directly.
+
 ### Step 5: `/qa` — Test in a real browser
 
-This is where gstack shines. `/qa` opens a real Chromium browser, navigates to your app, clicks through flows, and finds bugs. With Arlopass installed in the test browser, it tests the actual user flow:
+`/qa` opens a real Chromium browser, navigates to your app, clicks through flows, and finds bugs. With Arlopass installed in the test browser, it tests the actual user flow:
 
 1. Extension detects the app's `connect()` call
 2. Consent prompt appears — user approves
@@ -288,7 +337,7 @@ That's the sprint. Six gstack commands, one Arlopass integration, a shipped feat
 
 The reason they pair well isn't technical compatibility — it's philosophical alignment.
 
-**gstack's thesis:** A single builder with the right AI tooling can ship like a team of twenty. Garry Tan proves this daily — the Y Combinator CEO ships 10,000+ lines per day, part-time, running 10–15 parallel Claude Code sprints through gstack. In the last 60 days, he's produced over 600,000 lines of production code (35% tests). Before gstack, Tan's peak output was 772 GitHub contributions in 2013 when he built Bookface, YC's internal social network. In 2026, he hit 1,237 contributions in three months. Same person. Different tooling.
+**gstack's thesis:** A single builder with the right AI tooling can ship like a team of twenty. Garry Tan uses it daily — the Y Combinator CEO ships 10,000+ lines per day, part-time, running 10–15 parallel Claude Code sprints through gstack. In the last 60 days, he produced over 600,000 lines of production code (35% tests). Before gstack, Tan's peak output was 772 GitHub contributions in 2013 when he built Bookface, YC's internal social network. In 2026, he hit 1,237 contributions in three months. Same person. Different tooling.
 
 **Arlopass's thesis:** The user should own their AI relationship. The app developer ships the feature; the user decides which model powers it.
 
@@ -384,10 +433,10 @@ The SDK ships with a demo transport for development. Set `transport: "demo"` in 
 The fastest path from zero to a working AI chat feature:
 
 1. **Clone the starter template** — includes ArlopassProvider, connection state, model picker, and streaming chat:
-    ```bash
-    npx degit arlopass/arlopass/templates/react-vite my-ai-app
-    cd my-ai-app && npm install && npm run dev
-    ```
+   ```bash
+   npx degit arlopass/arlopass/templates/react-vite my-ai-app
+   cd my-ai-app && npm install && npm run dev
+   ```
 2. **Install the Arlopass extension** — [Chrome Web Store](https://arlopass.com/install)
 3. **Connect a provider** — Ollama (local), OpenAI, Claude, or any supported provider
 4. **Start chatting** — open `http://localhost:5173` and send a message
