@@ -25,7 +25,7 @@ jobs:
       ARLOPASS_EDGE_EXTENSION_ID: ${{ vars.ARLOPASS_EDGE_EXTENSION_ID }}
       ARLOPASS_FIREFOX_EXTENSION_ID: ${{ vars.ARLOPASS_FIREFOX_EXTENSION_ID }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate installer scripts exist
         run: |
