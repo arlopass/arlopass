@@ -1,7 +1,7 @@
 ---
 title: "Building an AI Chat App Without Backend Infrastructure"
 description: "How to add AI chat to a web app with zero server-side code. No Express routes, no API key proxies, no cloud functions. The user brings their own AI through a browser extension."
-published: 2026-04-07
+published: 2026-03-30
 author: "Arlopass Team"
 tags: ["architecture", "ai-chat", "serverless", "web-sdk"]
 keywords:
@@ -36,12 +36,12 @@ Your server holds the API key in an environment variable. Every user request pas
 
 The cost breakdown for a typical chat app with 1,000 daily active users:
 
-| Cost | Monthly estimate |
-|------|:---:|
-| AI inference (GPT-4o @ ~$5/1M tokens) | $150–500 |
-| Server hosting (handling streaming) | $20–50 |
-| Developer time on proxy/auth code | 2–5 days initial + ongoing |
-| Security liability for stored API keys | Unquantifiable |
+| Cost                                   |      Monthly estimate      |
+| -------------------------------------- | :------------------------: |
+| AI inference (GPT-4o @ ~$5/1M tokens)  |          $150–500          |
+| Server hosting (handling streaming)    |           $20–50           |
+| Developer time on proxy/auth code      | 2–5 days initial + ongoing |
+| Security liability for stored API keys |       Unquantifiable       |
 
 For hobby projects and small tools, this is often the reason AI features don't get built. The infrastructure cost isn't worth it for a side project.
 
@@ -136,6 +136,7 @@ From that point, your app can send messages and receive responses. The user can 
 ```
 
 **Trust boundaries at every layer:**
+
 - Web app ↔ Extension: Origin isolation, per-request consent
 - Extension ↔ Bridge: HMAC challenge/response, ephemeral session keys, nonce replay protection
 - Bridge ↔ Provider: OS keychain credential storage, least-privilege auth, request timeouts
@@ -145,6 +146,7 @@ The user's API keys are in their OS keychain (Windows Credential Manager, macOS 
 ## When this architecture makes sense
 
 **Good fit:**
+
 - Developer tools where every user has their own AI preference
 - Productivity apps (writing assistants, code tools, summarizers)
 - Internal tools where teams already have API keys
@@ -153,6 +155,7 @@ The user's API keys are in their OS keychain (Windows Credential Manager, macOS 
 - Hobby projects where $0 infrastructure cost matters
 
 **Not a good fit:**
+
 - SaaS products where you control the AI model and behavior (your product, your API key)
 - Apps that need server-side pre/post-processing of AI responses
 - Apps where you need to rate-limit or meter AI usage per user
@@ -160,16 +163,16 @@ The user's API keys are in their OS keychain (Windows Credential Manager, macOS 
 
 ## Comparison: backend proxy vs. user-provided AI
 
-| | Backend proxy | User-provided AI (Arlopass) |
-|---|:---:|:---:|
-| **Server infrastructure** | Required | None |
-| **API keys in your code** | Yes (`.env`) | None |
-| **AI inference cost** | You pay | User pays |
-| **Provider flexibility** | You pick one | User picks any |
-| **Lines of integration code** | 40–80 | ~10 |
-| **Works offline** | No | Yes (with Ollama) |
-| **User installs extension** | No | Yes |
-| **Security liability for keys** | High | None |
+|                                 | Backend proxy | User-provided AI (Arlopass) |
+| ------------------------------- | :-----------: | :-------------------------: |
+| **Server infrastructure**       |   Required    |            None             |
+| **API keys in your code**       | Yes (`.env`)  |            None             |
+| **AI inference cost**           |    You pay    |          User pays          |
+| **Provider flexibility**        | You pick one  |       User picks any        |
+| **Lines of integration code**   |     40–80     |             ~10             |
+| **Works offline**               |      No       |      Yes (with Ollama)      |
+| **User installs extension**     |      No       |             Yes             |
+| **Security liability for keys** |     High      |            None             |
 
 The extension installation is the honest trade-off. It's a higher adoption friction than a pure web app. But for the right audience — developers, power users, people who already run Ollama — it's a small ask that eliminates entire categories of infrastructure.
 
