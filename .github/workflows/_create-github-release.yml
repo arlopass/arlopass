@@ -31,14 +31,14 @@ jobs:
           fetch-depth: 0
 
       - name: Download all bridge binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: bridge-binary-*
           path: ./release-assets
           merge-multiple: true
 
       - name: Download signed checksums
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: bridge-binaries-signed
           path: ./release-assets
