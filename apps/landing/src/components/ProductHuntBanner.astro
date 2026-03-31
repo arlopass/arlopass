@@ -1,0 +1,75 @@
+---
+
+---
+
+<div
+  id="ph-banner"
+  class="relative flex items-center justify-center py-2 px-12 bg-[var(--ap-brand-subtle)] border-b border-[color-mix(in_oklch,var(--color-brand)_20%,var(--ap-border))]"
+>
+  <a
+    href="https://www.producthunt.com/posts/arlopass"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="inline-flex items-center gap-2.5 text-[13px] text-[var(--ap-text-secondary)] no-underline hover:text-[var(--ap-text-primary)] transition-colors"
+  >
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 40 40"
+      class="shrink-0"
+      aria-hidden="true"
+      ><circle cx="20" cy="20" r="20" fill="var(--color-brand)"></circle><path
+        d="M15 10h7.5a7.5 7.5 0 010 15H19v5h-4V10zm4 4v7h3.5a3.5 3.5 0 000-7H19z"
+        fill="#fff"></path></svg
+    >
+    <span
+      >We're live on <strong
+        class="font-semibold text-[var(--ap-text-primary)]">Product Hunt</strong
+      ></span
+    >
+    <span class="text-brand font-medium hidden sm:inline"
+      >Support us &rarr;</span
+    >
+  </a>
+  <button
+    id="ph-banner-close"
+    class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded bg-transparent border-none text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-primary)] cursor-pointer transition-colors"
+    aria-label="Dismiss announcement"
+  >
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      ><line x1="18" y1="6" x2="6" y2="18"></line><line
+        x1="6"
+        y1="6"
+        x2="18"
+        y2="18"></line></svg
+    >
+  </button>
+</div>
+
+<script>
+  const banner = document.getElementById("ph-banner");
+  const closeBtn = document.getElementById("ph-banner-close");
+
+  if (localStorage.getItem("ph-banner-dismissed")) {
+    banner?.remove();
+  }
+
+  closeBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (banner) {
+      banner.style.transition = "opacity 150ms ease";
+      banner.style.opacity = "0";
+      localStorage.setItem("ph-banner-dismissed", "true");
+      setTimeout(() => banner.remove(), 150);
+    }
+  });
+</script>

@@ -1,32 +1,48 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActionIcon,
   Menu,
   Popover,
   ScrollArea,
   Text,
-  Textarea,
   TextInput,
   UnstyledButton,
 } from "@mantine/core";
-import {
-  IconChevronDown,
-  IconDownload,
-  IconSearch,
-  IconSend,
-  IconTool,
-  IconUser,
-  IconX,
-} from "@tabler/icons-react";
+import { IconChevronDown, IconDownload, IconSearch } from "@tabler/icons-react";
 import { useConnection, useProviders, useConversation } from "@arlopass/react";
 import type { ContextWindowInfo, ToolDefinition } from "@arlopass/react";
 import { searchDocs } from "./docs-search";
-// TODO: Re-enable when navigate_to_page tool is restored
-// import { DOCS_NAV as NAVIGATION } from "../../data/docs-nav";
-import { Markdown } from "./Markdown";
+
+// AI Elements components
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+} from "../ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageMeta,
+  MessageResponse,
+} from "../ai-elements/message";
+import { Persona } from "../ai-elements/persona";
+import {
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputSubmit,
+} from "../ai-elements/prompt-input";
+import {
+  ToolActivity,
+  ToolPill,
+  BounceDots,
+  StreamingCursor,
+} from "../ai-elements/tool";
+
+// ─── Constants ───────────────────────────────────────────────────────
 
 const CHAT_PROV_KEY = "arlopass.examples.chat.lastProvider";
 const CHAT_MODEL_KEY = "arlopass.examples.chat.lastModel";
+
+// ─── Helpers ─────────────────────────────────────────────────────────
 
 function fmtModel(m: string): string {
   return m
@@ -37,6 +53,15 @@ function fmtModel(m: string): string {
     )
     .join(" ");
 }
+
+function formatTokenCount(n: number): string {
+  if (n >= 1_000_000)
+    return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}k`;
+  return String(n);
+}
+
+// ─── Types ───────────────────────────────────────────────────────────
 
 export type ChatSidebarProps = {
   onClose: () => void;
@@ -57,31 +82,6 @@ Important:
 - If asked about implementation, show @arlopass/web-sdk TypeScript code`;
 
 function buildTools(): ToolDefinition[] {
-  // const onNavigateRef = ...;
-  // const allPageIds = NAVIGATION.flatMap((cat) =>
-  //   cat.items.map((item) => item.slug),
-  // );
-  // const allItems = NAVIGATION.flatMap((cat) =>
-  //   cat.items.map((item) => ({ ...item, category: cat.label })),
-  // );
-  // const pageList = allItems
-  //   .map((item) => `${item.slug}: ${item.label} (${item.category})`)
-  //   .join(", ");
-
-  // function resolvePageId(input: string): string | null {
-  //   if (allPageIds.includes(input)) return input;
-  //   const bySegment = allPageIds.find((id) => id.endsWith(`/${input}`));
-  //   if (bySegment) return bySegment;
-  //   const lower = input.toLowerCase();
-  //   const byLabel = allItems.find((item) => item.label.toLowerCase() === lower);
-  //   if (byLabel) return byLabel.slug;
-  //   const byPartial = allItems.find((item) =>
-  //     item.label.toLowerCase().includes(lower),
-  //   );
-  //   if (byPartial) return byPartial.slug;
-  //   return null;
-  // }
-
   return [
     {
       name: "search_docs",
@@ -114,39 +114,10 @@ function buildTools(): ToolDefinition[] {
         );
       },
     },
-    // TODO: Re-enable once View Transition style persistence is solid
-    // {
-    //   name: "navigate_to_page",
-    //   description: `Navigate the user to a specific page in the docs. Available pages: ${pageList}. Use this when the user asks to see a demo, example, or specific page.`,
-    //   parameters: {
-    //     type: "object",
-    //     properties: {
-    //       page_id: {
-    //         type: "string",
-    //         description: "The page slug to navigate to",
-    //         enum: allPageIds,
-    //       },
-    //     },
-    //     required: ["page_id"],
-    //   },
-    //   handler: async (args) => {
-    //     const raw = typeof args.page_id === "string" ? args.page_id : "";
-    //     const pageId = resolvePageId(raw);
-    //     if (!pageId) {
-    //       return JSON.stringify({
-    //         success: false,
-    //         error: `Unknown page: ${raw}. Available: ${allPageIds.join(", ")}`,
-    //       });
-    //     }
-    //     onNavigateRef.current?.(pageId);
-    //     const label = allItems.find((i) => i.slug === pageId)?.label ?? pageId;
-    //     return JSON.stringify({ success: true, navigated_to: pageId, label });
-    //   },
-    // },
   ];
 }
 
-// ─── Model Dropdown ──────────────────────────────────────────────────
+// ─── ModelDropdown ────────────────────────────────────────────────────
 
 function ModelDropdown({
   models,
@@ -262,14 +233,170 @@ function ModelDropdown({
   );
 }
 
-// ─── Component ───────────────────────────────────────────────────────
+// ─── ContextBar ──────────────────────────────────────────────────────
+
+function ContextBar({ info }: { info: ContextWindowInfo }) {
+  const pct = Math.round(info.usageRatio * 100);
+  const color =
+    pct > 90
+      ? "var(--ap-danger)"
+      : pct > 70
+        ? "var(--ap-warning)"
+        : "var(--ap-text-tertiary)";
+
+  return (
+    <div className="chat-context-bar">
+      <span style={{ color, fontVariantNumeric: "tabular-nums" }}>
+        {formatTokenCount(info.usedTokens)}/{formatTokenCount(info.maxTokens)} (
+        {pct}%)
+      </span>
+    </div>
+  );
+}
+
+// ─── ConnectionEmptyState ────────────────────────────────────────────
+
+function ConnectionEmptyState({
+  error,
+  onRetry,
+}: {
+  error: { message: string } | null;
+  onRetry: () => void;
+}) {
+  return (
+    <ConversationEmptyState className="flex-1">
+      <div className="chat-connect-icon">
+        <img src="/ArlopassIcon.svg" alt="Arlopass" width="28" height="28" />
+      </div>
+      <span className="chat-connect-title">Arlopass Extension Required</span>
+      <span className="chat-connect-subtitle">
+        Install the browser extension to chat with any AI model — your keys,
+        your choice.
+      </span>
+      {error !== null && (
+        <span className="chat-connect-error">{error.message}</span>
+      )}
+      <a href="/install" className="chat-connect-install-btn">
+        <IconDownload size={14} />
+        Install Extension
+      </a>
+      <button className="chat-connect-retry" onClick={onRetry} type="button">
+        Already installed? Try again
+      </button>
+    </ConversationEmptyState>
+  );
+}
+
+// ─── ToolActivityBubble ──────────────────────────────────────────────
+
+const ToolIcon = () => (
+  <svg
+    width="11"
+    height="11"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="var(--ap-text-tertiary)"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+  </svg>
+);
+
+function ToolActivityBubble({
+  phase,
+  tools,
+  name,
+  detail,
+}: {
+  phase: string;
+  tools?: readonly string[];
+  name?: string;
+  detail: string | undefined;
+}) {
+  return (
+    <div className="flex gap-2 items-start chat-msg-enter">
+      <Persona role="assistant" />
+      <div className="rounded-lg px-2.5 py-1.5 bg-[var(--ap-brand-subtle,#2c1a0e)] border border-[color-mix(in_srgb,var(--ap-brand,#db4d12)_10%,transparent)]">
+        {phase === "priming" && (
+          <ToolActivity>
+            <IconSearch size={11} color="var(--ap-brand)" />
+            <span className="text-[var(--ap-text-secondary)] font-medium">
+              Looking for tools…
+            </span>
+            <BounceDots />
+          </ToolActivity>
+        )}
+        {phase === "matched" && (
+          <ToolActivity>
+            <ToolIcon />
+            <span className="text-[var(--ap-text-secondary)] font-medium">
+              Found:
+            </span>
+            {tools?.map((t) => (
+              <ToolPill key={t}>{t.replace(/_/g, " ")}</ToolPill>
+            ))}
+          </ToolActivity>
+        )}
+        {phase === "executing" && (
+          <ToolActivity>
+            <BounceDots />
+            <ToolPill variant="brand">
+              {(name ?? "").replace(/_/g, " ")}
+            </ToolPill>
+            {detail && (
+              <span className="text-[var(--ap-text-tertiary)] max-w-[120px] truncate">
+                {detail}
+              </span>
+            )}
+          </ToolActivity>
+        )}
+        {phase === "result" && (
+          <ToolActivity>
+            <span className="text-[var(--ap-text-tertiary)]">✓</span>
+            <ToolPill>{(name ?? "").replace(/_/g, " ")}</ToolPill>
+            <span className="text-[var(--ap-text-tertiary)]">done</span>
+          </ToolActivity>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── CloseButton ─────────────────────────────────────────────────────
+
+function CloseButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center justify-center w-5 h-5 rounded text-[var(--ap-text-tertiary)] hover:text-[var(--ap-text-secondary)] hover:bg-[var(--ap-bg-elevated)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ap-brand)] focus-visible:ring-offset-1"
+      aria-label="Close chat"
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M18 6L6 18" />
+        <path d="M6 6l12 12" />
+      </svg>
+    </button>
+  );
+}
+
+// ─── ChatSidebar ─────────────────────────────────────────────────────
 
 export function ChatSidebar({ onClose }: ChatSidebarProps) {
-  // TODO: Re-enable when navigate_to_page tool is restored
-  // const onNavigateRef = useRef(onNavigate);
-  // onNavigateRef.current = onNavigate;
-
-  // React SDK hooks
+  // ── Arlopass React SDK hooks ───────────────────────────────────────
   const {
     isConnected,
     isConnecting,
@@ -279,7 +406,7 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
   } = useConnection();
   const { providers, selectedProvider, selectProvider } = useProviders();
 
-  // Stable tools ref (built once)
+  // Stable tools ref (built once, never changes)
   const toolsRef = useRef<ToolDefinition[] | null>(null);
   if (toolsRef.current === null) {
     toolsRef.current = buildTools();
@@ -300,15 +427,15 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
     maxToolRounds: 3,
   });
 
-  // Local UI state
+  // ── Local UI state ─────────────────────────────────────────────────
   const [chatIn, setChatIn] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputHistoryRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const draftRef = useRef("");
 
-  // Track message IDs that were streamed so we skip the enter animation.
-  // Updated synchronously during render (before JSX) so refs are current.
+  // Track which message IDs were streamed in (skip the enter animation)
   const streamedMsgIdsRef = useRef<Set<string>>(new Set());
   const prevStreamingRef = useRef(isStreaming);
   if (prevStreamingRef.current && !isStreaming) {
@@ -319,12 +446,12 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
   }
   prevStreamingRef.current = isStreaming;
 
-  // Track which provider/model was active for each assistant message
+  // Track provider/model per assistant message for attribution labels
   const msgMetaRef = useRef<Map<string, { provider: string; model: string }>>(
     new Map(),
   );
 
-  // Provider/model selection with localStorage persistence
+  // ── Provider/model selection with localStorage persistence ─────────
   const [selProv, setSelProv] = useState<string | null>(() =>
     typeof window !== "undefined" ? localStorage.getItem(CHAT_PROV_KEY) : null,
   );
@@ -366,7 +493,6 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
 
     const currentProvider = providers.find((p) => p.providerId === selProv);
     if (!currentProvider) {
-      // Provider was removed — pick next available
       const fallback = providers[0];
       if (fallback) {
         const model = fallback.models[0];
@@ -387,7 +513,6 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
       return;
     }
 
-    // Provider exists but selected model was removed
     if (selModel !== null && !currentProvider.models.includes(selModel)) {
       const model = currentProvider.models[0] ?? null;
       setSelModel(model);
@@ -411,30 +536,40 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
     }
   }, [trackedMessages, selProvider, selProv, selModel]);
 
-  // Auto-scroll: pin to bottom during streaming via rAF loop
-  const isStreamingRef = useRef(isStreaming);
-  isStreamingRef.current = isStreaming;
+  // ── Auto-scroll (rAF loop for streaming, smooth for completions) ───
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
+    if (!isStreaming) return;
     const tick = () => {
       const el = scrollRef.current;
-      if (el && isStreamingRef.current) {
-        el.scrollTop = el.scrollHeight;
-      }
+      if (el) el.scrollTop = el.scrollHeight;
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+  }, [isStreaming]);
 
-  // Smooth scroll for non-streaming changes (new completed messages)
   useEffect(() => {
     if (isStreaming) return;
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [trackedMessages, isStreaming]);
+
+  // ── Scroll fade gradient ───────────────────────────────────────────
+  const chatAreaRef = useRef<HTMLDivElement>(null);
+  const [showFade, setShowFade] = useState(false);
+
+  useEffect(() => {
+    const el = chatAreaRef.current;
+    if (!el) return;
+    const onScroll = () => setShowFade(el.scrollTop > 4);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // ── Handlers ───────────────────────────────────────────────────────
 
   const handleProviderChange = useCallback(
     async (providerId: string) => {
@@ -470,21 +605,58 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
     [selProv, selectProvider],
   );
 
-  const handleSend = useCallback(async () => {
-    const txt = chatIn.trim();
-    if (!txt || isStreaming || !isConnected) return;
-    setChatIn("");
-    inputHistoryRef.current.push(txt);
-    historyIndexRef.current = -1;
-    draftRef.current = "";
-    try {
-      await convStream(txt);
-    } catch {
-      /* error exposed via hook */
-    }
-  }, [chatIn, isStreaming, isConnected, convStream]);
+  const handleSend = useCallback(
+    async (text?: string) => {
+      const txt = (text ?? chatIn).trim();
+      if (!txt || isStreaming || !isConnected) return;
+      setChatIn("");
+      inputHistoryRef.current.push(txt);
+      historyIndexRef.current = -1;
+      draftRef.current = "";
+      try {
+        await convStream(txt);
+      } catch {
+        /* error exposed via hook */
+      }
+    },
+    [chatIn, isStreaming, isConnected, convStream],
+  );
 
-  // Derive tool activity detail for display
+  const handleTextareaKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Enter is handled by PromptInputTextarea → form submit
+      const history = inputHistoryRef.current;
+      if (history.length === 0) return;
+
+      if (e.key === "ArrowUp") {
+        const el = e.currentTarget;
+        if (el.selectionStart !== 0 || el.selectionEnd !== 0) return;
+        e.preventDefault();
+        if (historyIndexRef.current === -1) {
+          draftRef.current = chatIn;
+          historyIndexRef.current = history.length - 1;
+        } else if (historyIndexRef.current > 0) {
+          historyIndexRef.current -= 1;
+        }
+        setChatIn(history[historyIndexRef.current] ?? "");
+      }
+      if (e.key === "ArrowDown") {
+        if (historyIndexRef.current === -1) return;
+        e.preventDefault();
+        if (historyIndexRef.current < history.length - 1) {
+          historyIndexRef.current += 1;
+          setChatIn(history[historyIndexRef.current] ?? "");
+        } else {
+          historyIndexRef.current = -1;
+          setChatIn(draftRef.current);
+        }
+      }
+    },
+    [chatIn],
+  );
+
+  // ── Derived values for render ──────────────────────────────────────
+
   const toolDetail = useMemo(() => {
     if (toolActivity.phase !== "executing") return undefined;
     const args = toolActivity.arguments;
@@ -495,83 +667,36 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
     return undefined;
   }, [toolActivity]);
 
-  // Scroll fade gradient visibility
-  const chatAreaRef = useRef<HTMLDivElement>(null);
-  const [showFade, setShowFade] = useState(false);
-
-  useEffect(() => {
-    const el = chatAreaRef.current;
-    if (!el) return;
-    const onScroll = () => setShowFade(el.scrollTop > 4);
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // ─── Render ──────────────────────────────────────────────────────────
-
   const modelLabel = selModel ? fmtModel(selModel) : null;
+
+  // ── Render ─────────────────────────────────────────────────────────
 
   return (
     <div className="chat-sidebar">
-      {/* ── Header ──────────────────────────────────────────────── */}
+      {/* ── Header ────────────────────────────────────────────── */}
       <div className="chat-header">
         <span className="chat-header-title">Documentation Assistant</span>
         <div style={{ flex: 1 }} />
-        <ActionIcon
-          variant="subtle"
-          size="xs"
-          onClick={onClose}
-          style={{ color: "var(--ap-text-tertiary)" }}
-        >
-          <IconX size={12} />
-        </ActionIcon>
+        <CloseButton onClick={onClose} />
       </div>
 
-      {/* ── Connection fallback ─────────────────────────────────── */}
+      {/* ── Connection fallback ───────────────────────────────── */}
       {!isConnected && !isConnecting && (
-        <div className="chat-connect-empty">
-          <div className="chat-connect-icon">
-            <img
-              src="/ArlopassIcon.svg"
-              alt="Arlopass"
-              width="28"
-              height="28"
-            />
-          </div>
-          <span className="chat-connect-title">
-            Arlopass Extension Required
-          </span>
-          <span className="chat-connect-subtitle">
-            Install the browser extension to chat with any AI model — your keys,
-            your choice.
-          </span>
-          {connError !== null && (
-            <span className="chat-connect-error">{connError.message}</span>
-          )}
-          <a href="/install" className="chat-connect-install-btn">
-            <IconDownload size={14} />
-            Install Extension
-          </a>
-          <button
-            className="chat-connect-retry"
-            onClick={() => void (connRetry ?? connect)()}
-          >
-            Already installed? Try again
-          </button>
-        </div>
+        <ConnectionEmptyState
+          error={connError}
+          onRetry={() => void (connRetry ?? connect)()}
+        />
       )}
 
-      {/* ── Chat messages area ──────────────────────────────────── */}
+      {/* ── Chat messages area ────────────────────────────────── */}
       {(isConnected || isConnecting) && (
         <div className="chat-messages-wrapper">
-          {/* Scroll fade gradient */}
           <div
             className="chat-fade-top"
             style={{ opacity: showFade ? 1 : 0 }}
           />
 
-          <div
-            className="chat-messages"
+          <Conversation
             ref={(node) => {
               (
                 chatAreaRef as React.MutableRefObject<HTMLDivElement | null>
@@ -580,289 +705,143 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
                 scrollRef as React.MutableRefObject<HTMLDivElement | null>
               ).current = node;
             }}
+            className="chat-messages"
           >
-            {/* Empty state */}
-            {trackedMessages.length === 0 && !streamingContent && (
-              <div className="chat-empty">
-                {isConnected
-                  ? "Ask anything about Arlopass."
-                  : "Connect to start chatting."}
-              </div>
-            )}
+            <ConversationContent className="gap-2.5 p-3.5">
+              {/* Empty state */}
+              {trackedMessages.length === 0 && !streamingContent && (
+                <ConversationEmptyState
+                  title={
+                    isConnected ? "Ask anything about Arlopass." : "Connecting…"
+                  }
+                  className="h-[120px]"
+                />
+              )}
 
-            {/* Messages */}
-            {trackedMessages.map((m) => {
-              if (
-                m.role === "assistant" &&
-                m.content.trim().length === 0 &&
-                (m.usedTools === undefined || m.usedTools.length === 0)
-              )
-                return null;
+              {/* Completed messages */}
+              {trackedMessages.map((m) => {
+                if (
+                  m.role === "assistant" &&
+                  m.content.trim().length === 0 &&
+                  (m.usedTools === undefined || m.usedTools.length === 0)
+                )
+                  return null;
 
-              return (
-                <div
-                  key={m.id}
-                  className={`chat-msg${streamedMsgIdsRef.current.has(m.id) ? "" : " chat-msg-enter"}`}
-                >
-                  {/* Avatar */}
+                const wasStreamed = streamedMsgIdsRef.current.has(m.id);
+                const meta = msgMetaRef.current.get(m.id);
+                const metaLabel = meta
+                  ? [meta.model ? fmtModel(meta.model) : null, meta.provider]
+                      .filter(Boolean)
+                      .join(" · ")
+                  : null;
+
+                return (
                   <div
-                    className={
-                      m.role === "user" ? "chat-avatar-user" : "chat-avatar-ai"
-                    }
+                    key={m.id}
+                    className={wasStreamed ? undefined : "chat-msg-enter"}
                   >
-                    {m.role === "user" ? (
-                      <IconUser size={10} color="var(--ap-text-tertiary)" />
-                    ) : (
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--ap-text-tertiary)"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                        <path d="M2 17l10 5 10-5" />
-                        <path d="M2 12l10 5 10-5" />
-                      </svg>
-                    )}
-                  </div>
-
-                  {/* Bubble */}
-                  <div>
                     <div
                       className={
                         m.role === "user"
-                          ? "chat-bubble-user"
-                          : "chat-bubble-ai"
+                          ? "flex gap-2 items-start flex-row-reverse"
+                          : "flex gap-2 items-start"
                       }
                     >
-                      {m.role === "assistant" ? (
-                        <Markdown
-                          content={m.content}
-                          className="chat-markdown"
-                        />
-                      ) : (
-                        <span>{m.content}</span>
-                      )}
-                    </div>
-                    {/* Provider & model attribution */}
-                    {m.role === "assistant" &&
-                      (() => {
-                        const meta = msgMetaRef.current.get(m.id);
-                        if (!meta) return null;
-                        const label = [
-                          meta.model ? fmtModel(meta.model) : null,
-                          meta.provider,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ");
-                        if (!label) return null;
-                        return <div className="chat-msg-meta">{label}</div>;
-                      })()}
-                    {/* Tool pills */}
-                    {m.role === "assistant" &&
-                      m.usedTools !== undefined &&
-                      m.usedTools.length > 0 && (
-                        <div className="chat-tool-pills">
-                          <IconTool size={9} color="var(--ap-text-tertiary)" />
-                          {m.usedTools.map((t) => (
-                            <span key={t} className="chat-tool-pill">
-                              {t.replace(/_/g, " ")}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                </div>
-              );
-            })}
+                      <Persona role={m.role as "user" | "assistant"} />
+                      <div className="min-w-0 flex-1">
+                        <Message from={m.role as "user" | "assistant"}>
+                          <MessageContent>
+                            {m.role === "assistant" ? (
+                              <MessageResponse>{m.content}</MessageResponse>
+                            ) : (
+                              <span className="text-[12px] text-[var(--ap-text-body)]">
+                                {m.content}
+                              </span>
+                            )}
+                          </MessageContent>
+                        </Message>
 
-            {/* Typing indicator */}
-            {isStreaming &&
-              streamingContent.trim().length === 0 &&
-              toolActivity.phase === "idle" && (
-                <div className="chat-msg chat-msg-enter">
-                  <div className="chat-avatar-ai">
-                    <svg
-                      width="11"
-                      height="11"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="var(--ap-text-tertiary)"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                      <path d="M2 17l10 5 10-5" />
-                      <path d="M2 12l10 5 10-5" />
-                    </svg>
+                        {/* Provider & model attribution */}
+                        {m.role === "assistant" && metaLabel && (
+                          <MessageMeta>{metaLabel}</MessageMeta>
+                        )}
+
+                        {/* Tool pills */}
+                        {m.role === "assistant" &&
+                          m.usedTools !== undefined &&
+                          m.usedTools.length > 0 && (
+                            <div className="flex items-center gap-1 mt-0.5 ml-0.5">
+                              <ToolIcon />
+                              {m.usedTools.map((t) => (
+                                <ToolPill key={t}>
+                                  {t.replace(/_/g, " ")}
+                                </ToolPill>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="chat-bubble-ai chat-typing-dots">
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <span
-                      className="chat-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
+                );
+              })}
+
+              {/* Typing indicator (streaming, no content yet, no tool activity) */}
+              {isStreaming &&
+                streamingContent.trim().length === 0 &&
+                toolActivity.phase === "idle" && (
+                  <div
+                    className="flex gap-2 items-start chat-msg-enter"
+                    aria-live="polite"
+                  >
+                    <Persona role="assistant" />
+                    <div className="rounded-lg px-2.5 py-2 bg-[var(--ap-brand-subtle,#2c1a0e)] border border-[color-mix(in_srgb,var(--ap-brand,#db4d12)_10%,transparent)]">
+                      <BounceDots />
+                    </div>
+                  </div>
+                )}
+
+              {/* Tool activity indicators */}
+              {isStreaming && toolActivity.phase !== "idle" && (
+                <ToolActivityBubble
+                  phase={toolActivity.phase}
+                  tools={
+                    toolActivity.phase === "matched"
+                      ? toolActivity.tools
+                      : undefined
+                  }
+                  name={
+                    toolActivity.phase === "executing" ||
+                    toolActivity.phase === "result"
+                      ? toolActivity.name
+                      : undefined
+                  }
+                  detail={toolDetail}
+                />
+              )}
+
+              {/* Streaming content */}
+              {isStreaming && streamingContent.trim().length > 0 && (
+                <div
+                  className="flex gap-2 items-start chat-msg-enter"
+                  aria-live="polite"
+                >
+                  <Persona role="assistant" />
+                  <div className="min-w-0 flex-1">
+                    <Message from="assistant">
+                      <MessageContent>
+                        <MessageResponse>{streamingContent}</MessageResponse>
+                        <StreamingCursor />
+                      </MessageContent>
+                    </Message>
                   </div>
                 </div>
               )}
-
-            {/* Tool activity indicators */}
-            {isStreaming && toolActivity.phase !== "idle" && (
-              <div className="chat-msg chat-msg-enter">
-                <div className="chat-avatar-ai">
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--ap-text-tertiary)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                    <path d="M2 17l10 5 10-5" />
-                    <path d="M2 12l10 5 10-5" />
-                  </svg>
-                </div>
-                <div className="chat-bubble-ai">
-                  {toolActivity.phase === "priming" && (
-                    <div className="chat-tool-activity">
-                      <IconSearch size={11} color="var(--ap-brand)" />
-                      <span
-                        style={{
-                          color: "var(--ap-text-secondary)",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Looking for tools…
-                      </span>
-                      <span
-                        className="chat-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="chat-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="chat-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
-                    </div>
-                  )}
-                  {toolActivity.phase === "matched" && (
-                    <div className="chat-tool-activity">
-                      <IconTool size={11} color="var(--ap-text-tertiary)" />
-                      <span
-                        style={{
-                          color: "var(--ap-text-secondary)",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Found:
-                      </span>
-                      {toolActivity.tools.map((t) => (
-                        <span key={t} className="chat-tool-pill">
-                          {t.replace(/_/g, " ")}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {toolActivity.phase === "executing" && (
-                    <div className="chat-tool-activity">
-                      <span
-                        className="chat-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="chat-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="chat-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
-                      <span className="chat-tool-pill chat-tool-pill-brand">
-                        {toolActivity.name.replace(/_/g, " ")}
-                      </span>
-                      {toolDetail && (
-                        <span
-                          style={{
-                            color: "var(--ap-text-tertiary)",
-                            maxWidth: 120,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {toolDetail}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {toolActivity.phase === "result" && (
-                    <div className="chat-tool-activity">
-                      <span style={{ color: "var(--ap-text-tertiary)" }}>
-                        ✓
-                      </span>
-                      <span className="chat-tool-pill">
-                        {toolActivity.name.replace(/_/g, " ")}
-                      </span>
-                      <span style={{ color: "var(--ap-text-tertiary)" }}>
-                        done
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Streaming content bubble */}
-            {isStreaming && streamingContent.trim().length > 0 && (
-              <div className="chat-msg chat-msg-enter">
-                <div className="chat-avatar-ai">
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--ap-text-tertiary)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                    <path d="M2 17l10 5 10-5" />
-                    <path d="M2 12l10 5 10-5" />
-                  </svg>
-                </div>
-                <div className="chat-bubble-ai">
-                  <Markdown
-                    content={streamingContent}
-                    className="chat-markdown"
-                  />
-                  <span className="chat-stream-cursor" />
-                </div>
-              </div>
-            )}
-          </div>
+            </ConversationContent>
+          </Conversation>
         </div>
       )}
 
-      {/* ── Input area ──────────────────────────────────────────── */}
+      {/* ── Input area ────────────────────────────────────────── */}
       {(isConnected || isConnecting) && (
         <div className="chat-input-area">
           {/* Provider/model selectors */}
@@ -919,107 +898,31 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
             </div>
           )}
 
-          <div className="chat-input-row">
-            <Textarea
-              placeholder="Ask about Arlopass..."
+          <PromptInput
+            onSubmit={(text) => void handleSend(text)}
+            disabled={!isConnected}
+          >
+            <PromptInputTextarea
+              ref={textareaRef}
               value={chatIn}
               onChange={(e) => setChatIn(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void handleSend();
-                  return;
-                }
-                const history = inputHistoryRef.current;
-                if (history.length === 0) return;
-                if (e.key === "ArrowUp") {
-                  const el = e.currentTarget;
-                  if (el.selectionStart !== 0 || el.selectionEnd !== 0) return;
-                  e.preventDefault();
-                  if (historyIndexRef.current === -1) {
-                    draftRef.current = chatIn;
-                    historyIndexRef.current = history.length - 1;
-                  } else if (historyIndexRef.current > 0) {
-                    historyIndexRef.current -= 1;
-                  }
-                  setChatIn(history[historyIndexRef.current] ?? "");
-                }
-                if (e.key === "ArrowDown") {
-                  if (historyIndexRef.current === -1) return;
-                  e.preventDefault();
-                  if (historyIndexRef.current < history.length - 1) {
-                    historyIndexRef.current += 1;
-                    setChatIn(history[historyIndexRef.current] ?? "");
-                  } else {
-                    historyIndexRef.current = -1;
-                    setChatIn(draftRef.current);
-                  }
-                }
-              }}
-              minRows={1}
-              maxRows={4}
-              autosize
-              size="sm"
-              disabled={!isConnected}
-              styles={{
-                root: { flex: 1 },
-                input: {
-                  fontSize: 12,
-                  background: "var(--ap-bg-base)",
-                  border: "1px solid var(--ap-border)",
-                  color: "var(--ap-text-body)",
-                  borderRadius: 8,
-                  padding: "7px 10px",
-                  lineHeight: 1.4,
-                  "&:focus": { borderColor: "var(--ap-brand)" },
-                },
-              }}
+              onKeyDown={handleTextareaKeyDown}
             />
-            <ActionIcon
-              size={32}
-              variant="filled"
-              onClick={() => void handleSend()}
+            <PromptInputSubmit
+              isStreaming={isStreaming}
               disabled={isStreaming || !chatIn.trim() || !isConnected}
-              styles={{
-                root: {
-                  background: "var(--ap-brand)",
-                  border: "none",
-                  borderRadius: 8,
-                  color: "var(--mantine-color-brand-filled)",
-                  "&:hover": { background: "var(--ap-brand-hover)" },
-                  "&[data-disabled]": {
-                    background: "var(--ap-bg-elevated)",
-                    color: "var(--ap-text-tertiary)",
-                    opacity: 1,
-                  },
-                },
-              }}
-            >
-              <IconSend size={14} />
-            </ActionIcon>
-          </div>
+            />
+          </PromptInput>
         </div>
       )}
 
-      {/* ── Footer status bar ───────────────────────────────────── */}
+      {/* ── Footer status bar ─────────────────────────────────── */}
       {(isConnected || isConnecting) && (
         <div className="chat-footer">
           {isStreaming ? (
-            /* Streaming state */
             <div className="chat-footer-row">
               <div className="chat-footer-dots">
-                <span
-                  className="chat-bounce"
-                  style={{ animationDelay: "0ms" }}
-                />
-                <span
-                  className="chat-bounce"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <span
-                  className="chat-bounce"
-                  style={{ animationDelay: "300ms" }}
-                />
+                <BounceDots />
               </div>
               <span className="chat-footer-label">Streaming via Arlopass</span>
               {contextInfo.maxTokens > 0 && (
@@ -1030,7 +933,6 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
               )}
             </div>
           ) : (
-            /* Idle state */
             <div className="chat-footer-row">
               <span
                 className="chat-footer-dot-status"
@@ -1050,34 +952,6 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────
-
-function formatTokenCount(n: number): string {
-  if (n >= 1_000_000)
-    return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(n % 1_000 === 0 ? 0 : 1)}k`;
-  return String(n);
-}
-
-function ContextBar({ info }: { info: ContextWindowInfo }) {
-  const pct = Math.round(info.usageRatio * 100);
-  const color =
-    pct > 90
-      ? "var(--ap-danger)"
-      : pct > 70
-        ? "var(--ap-warning)"
-        : "var(--ap-text-tertiary)";
-
-  return (
-    <div className="chat-context-bar">
-      <span style={{ color, fontVariantNumeric: "tabular-nums" }}>
-        {formatTokenCount(info.usedTokens)}/{formatTokenCount(info.maxTokens)} (
-        {pct}%)
-      </span>
     </div>
   );
 }

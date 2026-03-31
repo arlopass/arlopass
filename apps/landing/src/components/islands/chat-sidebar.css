@@ -20,7 +20,7 @@
   color: #d6d3d1;
 }
 #arlopass-chat-panel .chat-markdown code {
-  font-family: var(--font-mono, 'Geist Mono Variable', monospace);
+  font-family: var(--font-mono, "Geist Mono Variable", monospace);
   font-size: 0.875em;
 }
 #arlopass-chat-panel .chat-markdown :not(pre) > code {
@@ -198,8 +198,14 @@
   animation: chat-msg-enter-anim 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes chat-msg-enter-anim {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Avatars */
@@ -239,7 +245,8 @@
 }
 #arlopass-chat-panel .chat-bubble-ai {
   background: var(--ap-brand-subtle, #2c1a0e);
-  border: 1px solid color-mix(in srgb, var(--ap-brand, #db4d12) 10%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--ap-brand, #db4d12) 10%, transparent);
 }
 
 /* Typing dots */
@@ -250,8 +257,14 @@
   padding: 8px 10px;
 }
 @keyframes chat-bounce-anim {
-  0%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-4px); }
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-4px);
+  }
 }
 #arlopass-chat-panel .chat-bounce {
   display: inline-block;
@@ -273,8 +286,13 @@
   animation: chat-cursor-pulse 1s ease-in-out infinite;
 }
 @keyframes chat-cursor-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* Tool activity */
@@ -346,7 +364,7 @@
   margin-left: auto;
   font-size: 10px;
   font-weight: 500;
-  font-family: var(--font-mono, 'Geist Mono Variable', monospace);
+  font-family: var(--font-mono, "Geist Mono Variable", monospace);
 }
 #arlopass-chat-panel .chat-footer-row {
   display: flex;
@@ -377,13 +395,20 @@
 #arlopass-chat-panel .chat-footer-model,
 #arlopass-chat-panel .chat-footer-ctx {
   font-size: 10px;
-  font-family: var(--font-mono, 'Geist Mono Variable', monospace);
+  font-family: var(--font-mono, "Geist Mono Variable", monospace);
   color: var(--ap-text-tertiary);
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  #arlopass-chat-panel .chat-msg-enter { animation: none; }
-  #arlopass-chat-panel .chat-bounce { animation: none; }
-  #arlopass-chat-panel .chat-stream-cursor { animation: none; opacity: 1; }
+  #arlopass-chat-panel .chat-msg-enter {
+    animation: none;
+  }
+  #arlopass-chat-panel .chat-bounce {
+    animation: none;
+  }
+  #arlopass-chat-panel .chat-stream-cursor {
+    animation: none;
+    opacity: 1;
+  }
 }

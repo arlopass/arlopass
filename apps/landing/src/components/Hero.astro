@@ -70,11 +70,36 @@ import StreamingChat from "./previews/StreamingChat.astro";
     <div
       class="max-w-[540px] max-lg:text-center max-lg:max-w-full max-lg:mx-auto"
     >
-      <div
-        class="inline-flex items-center gap-2 text-xs font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-full py-1.5 px-3.5 mb-6"
-      >
-        <span class="w-1.5 h-1.5 rounded-full bg-success shrink-0"></span>
-        Free &middot; Open Source &middot; MIT Licensed
+      <div class="flex flex-wrap items-center gap-2 mb-6 max-lg:justify-center">
+        <a
+          href="https://www.producthunt.com/posts/arlopass"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 text-xs font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-brand-subtle)] border border-[color-mix(in_oklch,var(--color-brand)_20%,var(--ap-border))] rounded-full py-1.5 px-3.5 no-underline hover:text-[var(--ap-text-primary)] hover:border-[color-mix(in_oklch,var(--color-brand)_40%,var(--ap-border))] transition-all"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-brand shrink-0"></span>
+          Live on Product Hunt
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="opacity-50"
+            aria-hidden="true"
+            ><line x1="7" y1="17" x2="17" y2="7"></line><polyline
+              points="7 7 17 7 17 17"></polyline></svg
+          >
+        </a>
+        <div
+          class="inline-flex items-center gap-2 text-xs font-medium text-[var(--ap-text-secondary)] bg-[var(--ap-bg-surface)] border border-[var(--ap-border)] rounded-full py-1.5 px-3.5"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-success shrink-0"></span>
+          Free &middot; Open Source &middot; MIT Licensed
+        </div>
       </div>
 
       <h1

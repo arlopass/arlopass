@@ -10,19 +10,13 @@ import "./chat-sidebar.css";
 import "@mantine/core/styles/global.layer.css";
 import "@mantine/core/styles/default-css-variables.layer.css";
 import "@mantine/core/styles/UnstyledButton.layer.css";
-import "@mantine/core/styles/Button.layer.css";
-import "@mantine/core/styles/ActionIcon.layer.css";
 import "@mantine/core/styles/Text.layer.css";
 import "@mantine/core/styles/Input.layer.css";
 import "@mantine/core/styles/ScrollArea.layer.css";
 import "@mantine/core/styles/Menu.layer.css";
 import "@mantine/core/styles/Popover.layer.css";
-import "@mantine/core/styles/Pill.layer.css";
-import "@mantine/core/styles/Tooltip.layer.css";
 import "@mantine/core/styles/ModalBase.layer.css";
 import "@mantine/core/styles/Overlay.layer.css";
-import "@mantine/core/styles/Loader.layer.css";
-import "@mantine/core/styles/CloseButton.layer.css";
 
 // Force dark mode vars on the panel. The default-css-variables.layer.css
 // defines dark vars under :root[data-mantine-color-scheme='dark'] which
