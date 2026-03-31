@@ -81,18 +81,18 @@ prompt.
 
 **Provider props:**
 
-| Prop | Type | Default | Purpose |
-|------|------|---------|---------|
-| `appId` | `string` | derived from origin | Unique app identifier |
-| `appName` | `string` | — | Name shown in extension popup |
-| `appDescription` | `string` | — | Description shown to user |
-| `appIcon` | `string` | — | Square icon URL (https or data URI) |
-| `defaultProvider` | `string` | — | Auto-select this provider |
-| `defaultModel` | `string` | — | Auto-select this model |
-| `supportedModels` | `string[]` | — | At least one must be available |
-| `requiredModels` | `string[]` | — | All must be available |
-| `autoConnect` | `boolean` | `true` | Connect on mount |
-| `onError` | `(err) => void` | — | Global error callback |
+| Prop              | Type            | Default             | Purpose                             |
+| ----------------- | --------------- | ------------------- | ----------------------------------- |
+| `appId`           | `string`        | derived from origin | Unique app identifier               |
+| `appName`         | `string`        | —                   | Name shown in extension popup       |
+| `appDescription`  | `string`        | —                   | Description shown to user           |
+| `appIcon`         | `string`        | —                   | Square icon URL (https or data URI) |
+| `defaultProvider` | `string`        | —                   | Auto-select this provider           |
+| `defaultModel`    | `string`        | —                   | Auto-select this model              |
+| `supportedModels` | `string[]`      | —                   | At least one must be available      |
+| `requiredModels`  | `string[]`      | —                   | All must be available               |
+| `autoConnect`     | `boolean`       | `true`              | Connect on mount                    |
+| `onError`         | `(err) => void` | —                   | Global error callback               |
 
 ### Step 2: Build the chat UI
 
@@ -101,14 +101,8 @@ import { useChat, useConnection } from "@arlopass/react";
 
 export function Chat() {
   const { isConnected, isConnecting } = useConnection();
-  const {
-    messages,
-    streamingContent,
-    isStreaming,
-    error,
-    stream,
-    stop,
-  } = useChat({ systemPrompt: "You are a helpful assistant." });
+  const { messages, streamingContent, isStreaming, error, stream, stop } =
+    useChat({ systemPrompt: "You are a helpful assistant." });
 
   if (isConnecting) return <p>Connecting to Arlopass...</p>;
   if (!isConnected) return <InstallPrompt />;
@@ -116,21 +110,35 @@ export function Chat() {
   return (
     <div>
       {messages.map((msg) => (
-        <div key={msg.id} className={msg.role}>{msg.content}</div>
+        <div key={msg.id} className={msg.role}>
+          {msg.content}
+        </div>
       ))}
 
       {isStreaming && <div className="assistant">{streamingContent}</div>}
 
-      <form onSubmit={async (e) => {
-        e.preventDefault();
-        const input = e.currentTarget.elements.namedItem("msg") as HTMLInputElement;
-        await stream(input.value);
-        input.value = "";
-      }}>
-        <input name="msg" placeholder="Ask anything..." disabled={isStreaming} />
-        {isStreaming
-          ? <button type="button" onClick={stop}>Stop</button>
-          : <button type="submit">Send</button>}
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const input = e.currentTarget.elements.namedItem(
+            "msg",
+          ) as HTMLInputElement;
+          await stream(input.value);
+          input.value = "";
+        }}
+      >
+        <input
+          name="msg"
+          placeholder="Ask anything..."
+          disabled={isStreaming}
+        />
+        {isStreaming ? (
+          <button type="button" onClick={stop}>
+            Stop
+          </button>
+        ) : (
+          <button type="submit">Send</button>
+        )}
       </form>
 
       {error && <p className="error">{error.message}</p>}
@@ -147,7 +155,8 @@ That's the full chat UI. Streaming, error handling, stop button. 30 lines.
 import { useProviders } from "@arlopass/react";
 
 export function ModelPicker() {
-  const { providers, selectedProvider, selectProvider, isLoading } = useProviders();
+  const { providers, selectedProvider, selectProvider, isLoading } =
+    useProviders();
 
   if (isLoading) return <p>Loading providers...</p>;
   if (providers.length === 0) return <p>No providers connected.</p>;
@@ -159,7 +168,9 @@ export function ModelPicker() {
         p.models.map((model) => (
           <button
             key={`${p.providerId}-${model}`}
-            onClick={() => selectProvider({ providerId: p.providerId, modelId: model })}
+            onClick={() =>
+              selectProvider({ providerId: p.providerId, modelId: model })
+            }
             data-selected={
               selectedProvider?.providerId === p.providerId &&
               selectedProvider?.modelId === model
@@ -167,7 +178,7 @@ export function ModelPicker() {
           >
             {p.providerName} — {model}
           </button>
-        ))
+        )),
       )}
     </div>
   );
@@ -194,14 +205,14 @@ function InstallPrompt() {
 
 ## All Hooks
 
-| Hook | Returns | When to use |
-|------|---------|-------------|
-| `useConnection()` | `state, isConnected, isConnecting, error, connect, disconnect, retry` | Connection lifecycle |
-| `useProviders()` | `providers, selectedProvider, isLoading, error, selectProvider, listProviders` | Provider/model selection |
-| `useChat()` | `messages, streamingContent, isStreaming, error, send, stream, stop, clearMessages` | Simple chat |
-| `useConversation()` | `messages, streamingContent, isStreaming, tokenCount, contextInfo, toolActivity, send, stream, stop, submitToolResult, pinMessage` | Chat with tool calling + context tracking |
-| `useClient()` | `ArlopassClient \| null` | Raw SDK access |
-| `useModelAvailability()` | `satisfied, missingRequired, availableSupported` | Check model requirements |
+| Hook                     | Returns                                                                                                                            | When to use                               |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `useConnection()`        | `state, isConnected, isConnecting, error, connect, disconnect, retry`                                                              | Connection lifecycle                      |
+| `useProviders()`         | `providers, selectedProvider, isLoading, error, selectProvider, listProviders`                                                     | Provider/model selection                  |
+| `useChat()`              | `messages, streamingContent, isStreaming, error, send, stream, stop, clearMessages`                                                | Simple chat                               |
+| `useConversation()`      | `messages, streamingContent, isStreaming, tokenCount, contextInfo, toolActivity, send, stream, stop, submitToolResult, pinMessage` | Chat with tool calling + context tracking |
+| `useClient()`            | `ArlopassClient \| null`                                                                                                           | Raw SDK access                            |
+| `useModelAvailability()` | `satisfied, missingRequired, availableSupported`                                                                                   | Check model requirements                  |
 
 ---
 
@@ -295,20 +306,20 @@ try {
   await client.chat.send({ messages });
 } catch (err) {
   if (err instanceof ArlopassSDKError) {
-    err.machineCode;    // "ARLOPASS_PROVIDER_UNAVAILABLE"
-    err.reasonCode;     // "provider.unavailable"
-    err.retryable;      // true
-    err.correlationId;  // "corr.abc123"
+    err.machineCode; // "ARLOPASS_PROVIDER_UNAVAILABLE"
+    err.reasonCode; // "provider.unavailable"
+    err.retryable; // true
+    err.correlationId; // "corr.abc123"
   }
 }
 ```
 
-| Error class | When | Retryable |
-|-------------|------|-----------|
-| `ArlopassStateError` | Wrong state for operation | No |
-| `ArlopassProtocolBoundaryError` | Extension returned error | Depends |
-| `ArlopassTransportError` | Communication failed | Yes |
-| `ArlopassTimeoutError` | Request timed out | Yes |
+| Error class                     | When                      | Retryable |
+| ------------------------------- | ------------------------- | --------- |
+| `ArlopassStateError`            | Wrong state for operation | No        |
+| `ArlopassProtocolBoundaryError` | Extension returned error  | Depends   |
+| `ArlopassTransportError`        | Communication failed      | Yes       |
+| `ArlopassTimeoutError`          | Request timed out         | Yes       |
 
 React hooks surface errors through their `error` property and provide `retry`
 when the error is retryable.
@@ -343,7 +354,7 @@ Follow this sequence when wiring Arlopass into a web app:
 ## Starter Template
 
 ```bash
-npx degit arlopass/byom-web/templates/react-vite my-ai-app
+npx degit arlopass/arlopass/templates/react-vite my-ai-app
 cd my-ai-app && npm install && npm run dev
 ```
 
@@ -383,6 +394,6 @@ relationship. You ship the feature.
 ## Links
 
 - **Docs:** https://arlopass.com/docs
-- **GitHub:** https://github.com/ArloPRM/byom-web
+- **GitHub:** https://github.com/arlopass/arlopass
 - **Extension:** Chrome Web Store — search "Arlopass"
 - **npm:** `@arlopass/react` | `@arlopass/web-sdk` | `@arlopass/protocol`
