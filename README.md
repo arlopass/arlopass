@@ -1,6 +1,6 @@
 # Arlopass
 
-Let web applications use your AI providers — local models, paid subscriptions, CLI tools — without exposing your credentials.
+Arlopass is a browser extension + SDK that lets web apps use your AI providers (Ollama, Claude, GPT, Bedrock) without ever seeing your API keys. You install the extension, connect your providers, and approve each request. The app gets AI; your credentials never leave your machine.
 
 ```ts
 import { ArlopassClient } from "@arlopass/web-sdk";
@@ -26,6 +26,7 @@ await client.disconnect();
 The Arlopass extension injects a transport at `window.arlopass`. The web app never sees your API keys or tokens — they stay on your machine, routed through a local bridge to your chosen provider.
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/arlopass/arlopass/build.yml?style=flat-square&label=Build)](https://github.com/arlopass/arlopass/actions)
+[![npm](https://img.shields.io/npm/v/@arlopass/web-sdk?style=flat-square&label=npm)](https://www.npmjs.com/package/@arlopass/web-sdk)
 [![Node.js](https://img.shields.io/badge/Node.js->=20-3c873a?style=flat-square)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
@@ -41,6 +42,17 @@ The Arlopass extension injects a transport at `window.arlopass`. The web app nev
 3. The user selects a provider and model from their connected accounts
 4. Requests route through a local bridge to the chosen provider
 5. Policy, audit, and telemetry are enforced at every trust boundary
+
+## Try it in 5 minutes
+
+1. **Install the extension** — [Chrome Web Store](https://chrome.google.com/webstore) (or [load unpacked](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked) from `apps/extension` for development)
+2. **Start the bridge** — `pnpm run dev:bridge` (or [download a release](https://github.com/arlopass/arlopass/releases))
+3. **Open the demo app** — `pnpm run dev:e2e-harness` → visit `http://localhost:5173`
+4. **Connect a provider** — Open the extension popup, add your Ollama / OpenAI / Claude credentials
+5. **Send a message** — The demo app requests AI through the extension. You approve, pick a model, done.
+
+> [!TIP]
+> No API keys? [Install Ollama](https://ollama.com) locally for a free, zero-cloud setup.
 
 ## Architecture
 
@@ -113,10 +125,10 @@ This installs dependencies, starts build watchers, launches the bridge, and regi
 ### Examples App
 
 ```bash
-pnpm run dev:examples
+pnpm run dev:e2e-harness
 ```
 
-Opens at `http://127.0.0.1:4172` — demonstrates connect/disconnect, provider selection, chat, streaming, and error handling.
+Opens at `http://localhost:5173` — demonstrates connect/disconnect, provider selection, chat, streaming, and error handling.
 
 ## Streaming
 
@@ -200,13 +212,16 @@ This monorepo is organized into three workspace groups:
 | Package | Provider | Status |
 |---------|----------|--------|
 | [`@arlopass/adapter-ollama`](adapters/adapter-ollama/) | Local Ollama models | Implemented |
-| [`@arlopass/adapter-claude-subscription`](adapters/adapter-claude-subscription/) | Anthropic Claude API | Auth in progress |
+| [`@arlopass/adapter-openai`](adapters/adapter-openai/) | OpenAI (GPT-4o, o1, etc.) | Implemented |
+| [`@arlopass/adapter-claude-subscription`](adapters/adapter-claude-subscription/) | Anthropic Claude API | Implemented |
+| [`@arlopass/adapter-gemini`](adapters/adapter-gemini/) | Google Gemini API | Implemented |
+| [`@arlopass/adapter-perplexity`](adapters/adapter-perplexity/) | Perplexity API | Implemented |
+| [`@arlopass/adapter-amazon-bedrock`](adapters/adapter-amazon-bedrock/) | Amazon Bedrock | Implemented |
+| [`@arlopass/adapter-google-vertex-ai`](adapters/adapter-google-vertex-ai/) | Google Vertex AI | Implemented |
+| [`@arlopass/adapter-microsoft-foundry`](adapters/adapter-microsoft-foundry/) | Azure AI Foundry | Implemented |
 | [`@arlopass/adapter-local-cli-bridge`](adapters/adapter-local-cli-bridge/) | Local CLI tools (Copilot CLI, Claude Desktop) | Implemented |
-| [`@arlopass/adapter-amazon-bedrock`](adapters/adapter-amazon-bedrock/) | Amazon Bedrock | Planned |
-| [`@arlopass/adapter-google-vertex-ai`](adapters/adapter-google-vertex-ai/) | Google Vertex AI | Planned |
-| [`@arlopass/adapter-microsoft-foundry`](adapters/adapter-microsoft-foundry/) | Azure AI Foundry | Planned |
-| [`@arlopass/adapter-runtime`](adapters/runtime/) | Adapter host lifecycle, sandbox, health checks, manifest validation |
-| [`@arlopass/adapter-tooling`](adapters/tooling/) | Development utilities for building adapters |
+| [`@arlopass/adapter-runtime`](adapters/runtime/) | Adapter host lifecycle, sandbox, health checks, manifest validation | — |
+| [`@arlopass/adapter-tooling`](adapters/tooling/) | Development utilities for building adapters | — |
 
 ### Applications (`apps/`)
 
@@ -214,7 +229,7 @@ This monorepo is organized into three workspace groups:
 |---------|-------------|
 | [`@arlopass/bridge`](apps/bridge/) | Native messaging daemon — routes requests between extension and adapters |
 | [`@arlopass/extension`](apps/extension/) | Chrome Manifest V3 extension — consent UI, permissions, provider selection |
-| [`@arlopass/examples-web`](apps/examples-web/) | React + Mantine demo app with all SDK integration patterns |
+| [`@arlopass/e2e-harness`](apps/e2e-harness/) | Vite + React demo app — connect, chat, stream, provider selection |
 
 ### Operations (`ops/`)
 
@@ -309,14 +324,20 @@ For detailed setup, production deployment, and advanced usage patterns, see the 
 | Component | Status |
 |-----------|--------|
 | Protocol & Envelope | Complete |
-| Web SDK (ArlopassClient) | Core API complete |
-| Policy Engine | Schema ready, evaluator in progress |
-| Audit & Telemetry | Core schema and metrics defined |
-| Adapter Runtime | Host lifecycle, sandbox, loader ready |
+| Web SDK (ArlopassClient) | Complete |
+| React SDK (@arlopass/react) | Complete |
+| Policy Engine | Complete |
+| Audit & Telemetry | Complete |
+| Adapter Runtime | Complete |
 | Ollama Adapter | Complete |
-| Claude Adapter | Auth flow in progress |
+| Claude Adapter | Complete |
+| OpenAI Adapter | Complete |
+| Gemini Adapter | Complete |
+| Perplexity Adapter | Complete |
+| Amazon Bedrock Adapter | Complete |
+| Google Vertex AI Adapter | Complete |
+| Azure AI Foundry Adapter | Complete |
 | CLI Bridge Adapter | Complete |
-| Cloud Adapters (AWS, GCP, Azure) | Planned |
-| Bridge Daemon | Message routing + native host ready |
-| Wallet Extension | UI, content scripts, service worker implemented |
-| Examples App | Runnable |
+| Bridge Daemon | Complete |
+| Wallet Extension | Complete |
+| Examples App | Complete |

@@ -1,0 +1,172 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1c1917;
+  --bg-surface: #292524;
+  --text: #d6d3d1;
+  --text-secondary: #a8a29e;
+  --brand: #db4d12;
+  --border: #44403c;
+  --success: #4d7c0f;
+  --radius: 8px;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.status {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.status.connected {
+  color: var(--success);
+}
+
+.notice {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.notice a {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.notice a:hover {
+  text-decoration: underline;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+.message.user {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.message.assistant {
+  align-self: flex-start;
+  max-width: 85%;
+}
+
+.message.streaming {
+  opacity: 0.85;
+}
+
+.role {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.message.user .role {
+  color: var(--brand);
+}
+
+.input-form {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.input-form input {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.625rem 0.875rem;
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.input-form input:focus {
+  border-color: var(--brand);
+}
+
+.input-form input:disabled {
+  opacity: 0.5;
+}
+
+.input-form button {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 150ms;
+}
+
+.input-form button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.input-form button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stop-btn {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}

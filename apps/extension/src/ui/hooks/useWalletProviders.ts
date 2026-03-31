@@ -18,7 +18,7 @@ function deriveProviderKey(provider: WalletProvider): string {
     if (nameLower.includes("deepseek")) return "deepseek";
     if (nameLower.includes("mistral") || nameLower.includes("mixtral")) return "mistral";
     if (nameLower.includes("cohere")) return "cohere";
-    if (nameLower.includes("groq")) return "groq";
+    if (nameLower.includes("grok")) return "grok";
     if (nameLower.includes("together")) return "together";
     if (nameLower.includes("fireworks")) return "fireworks";
     if (nameLower.includes("replicate")) return "replicate";
