@@ -94,17 +94,28 @@ jobs:
       AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
       AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
 
-  release-notes:
-    name: Create GitHub release notes
+  github-release:
+    name: Publish GitHub Release
     runs-on: ubuntu-latest
-    needs: [parse-tag, build, deploy-chrome, deploy-edge, deploy-firefox, production-gate]
+    needs: [parse-tag, build, production-gate]
     if: ${{ github.event.inputs.dry_run != 'true' }}
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download extension artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: extension-*
+          path: ./release-assets
+          merge-multiple: true
+
+      - name: List release assets
+        run: ls -la ./release-assets/
+
       - name: Extract changelog section
+        id: changelog
         shell: bash
         run: |
           set -euo pipefail
@@ -119,12 +130,47 @@ jobs:
           ' CHANGELOG.md > release-notes.md
 
           if [ ! -s release-notes.md ]; then
-            printf "Release %s\n\nExtension store deployment completed.\n" "$VERSION" > release-notes.md
+            printf "Release %s\n" "$VERSION" > release-notes.md
           fi
+
+          {
+            echo "notes<<EOF"
+            cat release-notes.md
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.parse-tag.outputs.tag }}
-          name: Extension v${{ needs.parse-tag.outputs.version }}
-          body_path: release-notes.md
+          name: "Arlopass Extension v${{ needs.parse-tag.outputs.version }}"
+          body: |
+            ## Arlopass Extension v${{ needs.parse-tag.outputs.version }}
+
+            ### Install from extension stores
+
+            - **Chrome:** [Chrome Web Store](https://chromewebstore.google.com/detail/arlopass)
+            - **Edge:** [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/arlopass)
+            - **Firefox:** [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/arlopass)
+
+            > Store listings may take time to review. Use the manual install below to get started immediately.
+
+            ### Manual install (sideload)
+
+            **Chromium (Chrome / Edge / Brave / Arc):**
+            1. Download `arlopass-extension-chromium.zip` below
+            2. Unzip to a folder
+            3. Go to `chrome://extensions` (or `edge://extensions`)
+            4. Enable **Developer mode**
+            5. Click **Load unpacked** and select the unzipped folder
+
+            **Firefox:**
+            1. Download `arlopass-extension-firefox.zip` below
+            2. Go to `about:debugging#/runtime/this-firefox`
+            3. Click **Load Temporary Add-on** and select the zip file
+
+            ### Changes
+            ${{ steps.changelog.outputs.notes }}
+          files: ./release-assets/*
+          draft: false
+          prerelease: ${{ contains(needs.parse-tag.outputs.version, '-') }}
