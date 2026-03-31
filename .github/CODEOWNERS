@@ -2,10 +2,10 @@
 * @Arlopass
 
 # Core packages
-/packages/ @Arlopass
-/adapters/ @Arlopass
-/apps/bridge/ @Arlopass
-/apps/extension/ @Arlopass
-/apps/e2e-harness/ @Arlopass
-/apps/landing/ @Arlopass
-/ops/ @Arlopass
+/packages/ @arlopass
+/adapters/ @arlopass
+/apps/bridge/ @arlopass
+/apps/extension/ @arlopass
+/apps/e2e-harness/ @arlopass
+/apps/landing/ @arlopass
+/ops/ @arlopass
