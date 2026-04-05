@@ -27,7 +27,7 @@
     "@arlopass/web-sdk": "workspace:*",
     "@lobehub/icons-static-svg": "^1.82.0",
     "@mantine/core": "^8.3.18",
-    "@mantine/hooks": "^8.3.18",
+    "@mantine/hooks": "^9.0.0",
     "@tabler/icons-react": "^3.40.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
