@@ -20,7 +20,7 @@ jobs:
     environment: production
     steps:
       - name: Download Chromium extension zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: extension-chromium
 
