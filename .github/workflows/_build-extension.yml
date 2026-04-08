@@ -84,7 +84,7 @@ jobs:
           zip -r "../../../../arlopass-extension-${{ matrix.target }}.zip" .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extension-${{ matrix.target }}
           path: arlopass-extension-${{ matrix.target }}.zip
