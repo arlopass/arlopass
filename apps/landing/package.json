@@ -18,7 +18,7 @@
     "@arlopass/web-sdk": "workspace:*",
     "@astrojs/check": "^0.9.8",
     "@astrojs/mdx": "^5.0.3",
-    "@astrojs/react": "^5.0.2",
+    "@astrojs/react": "^5.0.3",
     "@astrojs/sitemap": "^3.7.2",
     "@mantine/core": "^8.3.18",
     "@mantine/hooks": "^8.3.18",
