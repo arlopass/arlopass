@@ -21,7 +21,7 @@
     "@astrojs/react": "^5.0.2",
     "@astrojs/sitemap": "^3.7.2",
     "@mantine/core": "^8.3.18",
-    "@mantine/hooks": "^8.3.18",
+    "@mantine/hooks": "^9.0.1",
     "@tabler/icons-react": "^3.41.0",
     "@tailwindcss/vite": "^4.2.2",
     "astro": "^6.1.1",
